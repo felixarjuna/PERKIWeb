@@ -1,0 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Satoshi-Medium";
+  src: url("./assets/fonts/Satoshi-Medium.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "FoundersGrotesk-Regular";
+  src: url("./assets/fonts/FoundersGrotesk-Regular.otf") format("opentype");
+  font-weight: 400;
+}
+
+@layer base {
+  * {
+    @apply bg-cream-default;
+  }
+}
