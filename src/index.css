@@ -17,8 +17,8 @@
   font-weight: 400;
 }
 
-@layer base {
+/* @layer base {
   * {
     @apply bg-cream-default;
   }
-}
+} */
