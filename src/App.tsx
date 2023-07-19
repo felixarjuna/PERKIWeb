@@ -1,6 +1,7 @@
 import './index.css';
 import Home from "./components/homepage";
-import AboutUs from "./components/aboutus";
+import AboutUs from "./components/about-us";
+import WhatWeDo from "./components/what-we-do";
 
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
     <>
       <Home />
       <AboutUs />
+      <WhatWeDo />
     </>
   );
 }

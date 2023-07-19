@@ -26,7 +26,7 @@ export default function AboutUs() {
         </div>
 
         <div className="px-24 ">
-          <p className="float-right max-w-[830px] text-justify text-3xl pt-24">
+          <p className="float-right max-w-[860px] text-justify text-3xl pt-24">
             Lorem, ipsum dolor sit amet consectetur adipisicing elit. Rem
             pariatur sint veritatis reprehenderit magni tempore numquam ullam
             perferendis voluptatibus optio! Lorem ipsum dolor sit, amet
