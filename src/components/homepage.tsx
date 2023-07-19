@@ -1,5 +1,6 @@
 import React from "react";
 import { getVOTD } from "../api/api";
+import { CircleBackground } from "./ui/circle-background";
 
 export default function Home() {
   const [verse, setVerse] = React.useState<string>("hello");
@@ -14,6 +15,25 @@ export default function Home() {
 
   return (
     <>
+      <div className="overflow-hidden">
+        <CircleBackground
+          r={90}
+          blur
+          className={
+            "mix-blend-multiply bg-gradient-to-r from-light-green-400 via-green-400 to-dark-green-400 "
+          }
+        />
+        <CircleBackground
+          r={100}
+          blur
+          className={
+            "mix-blend-multiply bg-gradient-to-r from-light-green-400 via-green-400 to-dark-green-400 "
+          }
+          duration={25}
+          reverse
+        />
+      </div>
+
       <div className="absolute top-10 h-[0.7px] bg-black/10 w-[90%] inset-x-0 mx-auto"></div>
       <div className="absolute top-20 w-full">
         <div className="relative flex overflow-hidden gap-1 text-3xl">
@@ -22,7 +42,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="h-screen flex items-center justify-center flex-col border-t-[0.7px] border-black/10 text-green-default gap-7">
+      <div className="h-screen flex items-center justify-center flex-col border-t-[0.7px] border-black/10 text-green-default gap-7 ">
         <h3 className="font-satoshi text-3xl">Welcome to our fellowship</h3>
         <h1 className="font-lora text-9xl">Perki Aachen</h1>
         <div className="flex gap-20">
@@ -31,9 +51,7 @@ export default function Home() {
             <div className="h-[1px] w-24 bg-green-default"></div>
             <p className="font-satoshi">1990</p>
           </div>
-          <div className="font-satoshi text-2xl uppercase">
-            Non-denominational church
-          </div>
+          <div className="font-satoshi text-2xl uppercase">Non-denominational church</div>
         </div>
       </div>
     </>
