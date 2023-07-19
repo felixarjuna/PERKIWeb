@@ -6,7 +6,7 @@ import Steffen from "../images/Steffen.png";
 export default function AboutUs() {
   return (
     <>
-      <div className=" bg-dark-green-default text-light-green-default font-founders">
+      <div className="bg-dark-green-default text-light-green-default font-founders">
         <div className="flex-col items-center gap-2 p-12">
           <div className="flex items-center gap-2 ">
             <h1 className="text-4xl ">About Us</h1>
@@ -36,7 +36,7 @@ export default function AboutUs() {
         </div>
 
         <div className="flex flex-row gap-10 px-24">
-          <p className=" max-w-[830px] text-justify text-3xl pt-24">
+          <p className="max-w-[830px] text-justify text-3xl pt-24">
             Lorem, ipsum dolor sit amet consectetur adipisicing elit. Rem
             pariatur sint veritatis reprehenderit magni tempore numquam ullam
             perferendis voluptatibus optio! Lorem ipsum dolor sit, amet
@@ -44,7 +44,7 @@ export default function AboutUs() {
           </p>
           <img src={Pandya} alt="Pandya" />
         </div>
-        <div>
+        <div className="pb-14">
           <div className="h-[1px] w-screen bg-light-green-default mb-10"></div>
           <div className="flex flex-row justify-center items-center gap-2 p-12">
             <div className="h-[1px] w-24 bg-light-green-default"></div>

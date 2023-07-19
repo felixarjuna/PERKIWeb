@@ -44,7 +44,7 @@ export default function Home() {
       </div>
       <div className="h-screen flex items-center justify-center flex-col border-t-[0.7px] border-black/10 text-green-default gap-7 ">
         <h3 className="font-satoshi text-3xl">Welcome to our fellowship</h3>
-        <h1 className="font-lora text-9xl">Perki Aachen</h1>
+        <h1 className="font-lora text-[160px]">Perki Aachen</h1>
         <div className="flex gap-20">
           <div className="flex items-center uppercase gap-2 text-2xl font-satoshi">
             <p>since</p>

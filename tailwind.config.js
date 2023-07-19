@@ -21,7 +21,7 @@ export default {
           800: "#60574c",
           900: "#4f483f",
           950: "#292521",
-          default: "#eae9e3",
+          default: "#d7dfcb",
         },
         "light-green": {
           50: "#f4f6ef",
@@ -63,7 +63,7 @@ export default {
           800: "#085d50",
           900: "#074d43",
           950: "#021f1c",
-          default: "#021f1c",
+          default: "#031f1c",
         },
       },
       animation: {
