@@ -1,7 +1,8 @@
 import React from "react";
 import Chen from "../images/Chen.png";
-import Pandya from "../images/Pandya.png";
 import Steffen from "../images/Steffen.png";
+import Pandya from "../images/Pandya.png";
+
 
 export default function AboutUs() {
   return (

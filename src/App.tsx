@@ -1,9 +1,11 @@
 import React from "react";
 import './index.css';
+import { Mouse } from "./components/ui/mouse";
 import Home from "./components/homepage";
 import AboutUs from "./components/about-us";
 import WhatWeDo from "./components/what-we-do";
-import { Mouse } from "./components/ui/mouse";
+import OurPastors from "./components/our-pastors";
+
 
 type Position = {
   x: number;
@@ -26,6 +28,7 @@ function App() {
       <Home />
       <AboutUs />
       <WhatWeDo />
+      <OurPastors />
     </div>
   );
 }

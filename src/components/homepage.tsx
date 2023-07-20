@@ -2,7 +2,7 @@ import React from "react";
 import { getVOTD } from "../api/api";
 import { CircleBackground } from "./ui/circle-background";
 
-export default function Home() {
+export default function Homepage() {
   const [verse, setVerse] = React.useState<string>("hello");
 
   React.useEffect(() => {
