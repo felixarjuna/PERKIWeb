@@ -1,5 +1,5 @@
 import Perki from "../images/S__3186691.jpg";
-import { events } from "../lib/events";
+import { events } from "../lib/data";
 
 export default function Home() {
   return (
