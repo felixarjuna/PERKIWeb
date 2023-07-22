@@ -3,6 +3,7 @@ import Pandya from "../images/Pandya.png";
 import Steffen from "../images/Steffen.png";
 
 import { ParallaxImage } from "./ui/parallax-image";
+import { VisionAndMission } from "./vision-and-mission";
 
 export default function AboutUs() {
   return (
@@ -44,31 +45,9 @@ export default function AboutUs() {
           </p>
           <ParallaxImage img={Pandya} />
         </div>
-
-        {/* <div className="pb-14">
-          <div className="h-[1px] w-screen bg-light-green-default mb-10"></div>
-          <div className="flex flex-row justify-center items-center gap-2 p-12">
-            <div className="h-[1px] w-24 bg-light-green-default"></div>
-            <h1 className="text-4xl ">Make Disciples of All Nations</h1>
-            <div className="h-[1px] w-24 bg-light-green-default"></div>
-          </div>
-          <div className="flex flex-row justify-center text-center gap-10">
-            <div className="flex flex-col gap-5 justify-center items-center p-1 max-w-[500px]">
-              <h1 className="text-4xl">Vision</h1>
-              <p className="text-2xl">
-                Become a church based on the Full Gospel to take root, grow and bear fruit for
-                Christ.
-              </p>
-            </div>
-            <div className="flex flex-col gap-5 justify-center items-center p-12 max-w-[500px]">
-              <h1 className="text-4xl">Mission</h1>
-              <p className="text-2xl">
-                Building a Christian family that loves and serves God and people.
-              </p>
-            </div>
-          </div>
-        </div> */}
       </div>
+
+      <VisionAndMission />
     </div>
   );
 }
