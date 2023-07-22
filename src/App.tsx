@@ -1,11 +1,10 @@
 import React from "react";
-import './index.css';
-import { Mouse } from "./components/ui/mouse";
-import Home from "./components/homepage";
 import AboutUs from "./components/about-us";
-import WhatWeDo from "./components/what-we-do";
+import Home from "./components/homepage";
 import OurPastors from "./components/our-pastors";
-
+import { Mouse } from "./components/ui/mouse";
+import WhatWeDo from "./components/what-we-do";
+import "./index.css";
 
 type Position = {
   x: number;
