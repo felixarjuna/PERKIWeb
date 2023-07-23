@@ -37,7 +37,7 @@ export const CircleBackground = ({
       }}
       style={{ width: `${r}rem`, height: `${r}rem` }}
       className={cn(
-        `absolute rounded-full opacity-50 -z-10 filter animate-gradient-x mx-auto inset-0 `,
+        `absolute rounded-full opacity-50 filter animate-gradient-x mx-auto inset-0`,
         className,
         blur && "blur-3xl"
       )}

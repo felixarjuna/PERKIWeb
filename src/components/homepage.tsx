@@ -2,7 +2,7 @@ import { CircleBackground } from "./ui/circle-background";
 
 export default function Homepage() {
   return (
-    <>
+    <div className="bg-cream-default">
       <div className="overflow-hidden">
         <CircleBackground
           r={90}
@@ -34,6 +34,6 @@ export default function Homepage() {
           <div className="text-3xl uppercase">Non-denominational church</div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

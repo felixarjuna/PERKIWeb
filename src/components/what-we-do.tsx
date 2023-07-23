@@ -1,7 +1,10 @@
+import { Link, useNavigate } from "react-router-dom";
 import Perki from "../assets/images/S__3186691.jpg";
 import { events } from "../lib/data";
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-cream-default text-dark-green-default py-40">
       <div className="flex items-center justify-center px-40 pb-40">
@@ -17,13 +20,16 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-28">
           {events.map((event) => {
             return (
-              <div className="max-w-xl">
+              <div className="max-w-lg flex flex-col">
                 <h1 className="text-3xl">{event.name}</h1>
                 {/* <div className="h-[2px] w-[312px] bg-dark-green-default -translate-y-1"></div> */}
-                <div className="mt-2 text-xl bg-green-default rounded-lg w-fit items-center flex text-cream-default p-2">
+                <div className="mt-2 text-xl bg-green-default rounded-lg w-fit items-center flex text-cream-default p-2 px-4">
                   <p>{event.time} </p>
                 </div>
                 <p className="text-xl mt-4">{event.description}</p>
+                <div className="mt-4 self-end underline underline-offset-2">
+                  <Link to={"/activity"}>Learn more</Link>
+                </div>
               </div>
             );
           })}

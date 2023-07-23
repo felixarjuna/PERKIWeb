@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import React from "react";
+import { Link } from "react-router-dom";
 import Chen from "../assets/images/Chen.png";
 import { pastors } from "../lib/data";
 
@@ -22,11 +23,16 @@ export default function OurPastors() {
         <div ref={ref} className="flex flex-col">
           {pastors.map((pastor) => (
             <div className="flex my-5">
-              <div>
+              <div className="flex flex-col">
                 <p className="text-3xl mb-2">{pastor.name}</p>
                 <p className="text-lg max-w-lg mr-20">{pastor.description}</p>
+
+                <div className="mt-4 self-end underline underline-offset-2 -translate-x-20">
+                  <Link to={"/pastors"}>Learn more</Link>
+                </div>
               </div>
-              <motion.div style={{ rotate: deg }} className="bg-green-default rounded-lg p-3">
+
+              <motion.div style={{ rotate: deg }} className="bg-green-default rounded-lg p-3 h-48">
                 <img src={Chen} alt="Chen" className="rounded-lg" />
               </motion.div>
             </div>

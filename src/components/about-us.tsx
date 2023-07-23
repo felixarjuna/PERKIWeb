@@ -8,7 +8,7 @@ import { VisionAndMission } from "./vision-and-mission";
 
 export default function AboutUs() {
   return (
-    <div className="bg-dark-green-default text-light-green-default font-satoshi py-20">
+    <div className="bg-dark-green-default text-light-green-default py-20">
       <div className="px-24">
         <div className="flex items-center justify-center gap-8 py-16 ">
           <h1 className="text-9xl">About Us</h1>
