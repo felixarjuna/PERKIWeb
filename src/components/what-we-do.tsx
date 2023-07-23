@@ -1,4 +1,4 @@
-import Perki from "../images/S__3186691.jpg";
+import Perki from "../assets/images/S__3186691.jpg";
 import { events } from "../lib/data";
 
 export default function Home() {
@@ -8,10 +8,10 @@ export default function Home() {
         <img src={Perki} alt="perki" className="rounded-lg" />
       </div>
 
-      <div className="flex items-center gap-x-32">
-        <div className="ml-16 -rotate-90 whitespace-nowrap h-fit">
-          <h1 className="text-5xl text-green-default">What We Do?</h1>
-          <div className="h-[2px] bg-green-default"></div>
+      <div className="flex items-center">
+        <div className="-rotate-90 whitespace-nowrap h-fit">
+          <h1 className="text-7xl text-green-default">What We Do</h1>
+          {/* <div className="h-[2px] bg-green-default"></div> */}
         </div>
 
         <div className="grid grid-cols-2 gap-28">
