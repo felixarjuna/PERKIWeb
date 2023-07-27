@@ -1,23 +1,21 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Perki from "../assets/images/S__3186691.jpg";
 import { events } from "../lib/data";
 
 export default function Home() {
-  const navigate = useNavigate();
-
   return (
-    <div className="bg-cream-default text-dark-green-default py-40">
+    <div className="bg-cream-default text-dark-green-default pt-32">
       <div className="flex items-center justify-center px-40 pb-40">
         <img src={Perki} alt="perki" className="rounded-lg" />
       </div>
 
-      <div className="flex items-center">
-        <div className="-rotate-90 whitespace-nowrap h-fit">
+      <div className="grid grid-cols-4">
+        <div className="my-auto -rotate-90 col-span-1 whitespace-nowrap h-fit">
           <h1 className="text-7xl text-green-default">What We Do</h1>
           {/* <div className="h-[2px] bg-green-default"></div> */}
         </div>
 
-        <div className="grid grid-cols-2 gap-28">
+        <div className="col-span-3 grid grid-cols-2 gap-28 pr-40">
           {events.map((event) => {
             return (
               <div className="max-w-lg flex flex-col">
