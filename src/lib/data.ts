@@ -30,20 +30,18 @@ import titus from "../assets/images/Titus.png";
 export const pastors = [
   {
     name: "Pdt. John Kusuma",
-    description:
-      "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Architecto quisquam tempora sit aut nulla quos voluptatum illum, molestias laboriosam qui.",
+    description: "All honor and glory be to the Lord Jesus Christ!",
     img: john,
   },
   {
     name: "Pdt. Titus Christanto",
-    description:
-      "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Architecto quisquam tempora sit aut nulla quos voluptatum illum, molestias laboriosam qui.",
+    description: "He who has Jesus has life.",
     img: titus,
   },
   {
     name: "Ev. Riggruben",
     description:
-      "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Architecto consequuntur cupiditate accusantium necessitatibus modi delectus saepe magni id facilis adipisci, quas doloremque beatae provident, nesciunt veniam distinctio laudantium velit animi.",
+      "My ministry is of Christ, belongs to Christ, and is for Christ alone. May God be glorified always through my life.",
     img: riggrubben,
   },
 ];

@@ -15,12 +15,12 @@ export default function OurPastors() {
 
         <div ref={ref} className="flex flex-col gap-y-8">
           {pastors.map((pastor) => (
-            <div className="flex my-5 gap-x-20 items-center">
-              <div className="flex flex-col">
+            <div className="grid grid-cols-3 my-5 gap-x-20 items-center">
+              <div className="col-span-2 flex flex-col">
                 <p className="text-5xl mb-2">{pastor.name}</p>
                 <p className="text-2xl max-w-2xl mr-20">{pastor.description}</p>
 
-                <div className="mt-4 self-end underline underline-offset-2 -translate-x-20">
+                <div className="mt-4 self-start underline underline-offset-2">
                   <Link to={"/pastors"}>Learn more</Link>
                 </div>
               </div>

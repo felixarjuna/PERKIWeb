@@ -45,10 +45,20 @@ export const Pastors = () => {
         <div className="text-2xl space-y-4">
           <h1 className="text-6xl">Ev. Riggruben</h1>
           <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Praesentium soluta minima cum
-            perspiciatis exercitationem incidunt voluptatem dolorem sequi? Veniam placeat, quam,
-            cupiditate, quisquam esse aliquam aliquid ab molestias ipsum architecto laborum
-            accusamus suscipit natus impedit voluptate eum at id aperiam!
+            "When I accepted God's call as a full-time pastor, I had no idea at the time where I
+            would serve. My prayer was more or less, lead me where God is calling me and give me an
+            obedient heart and strength to live it. Four times I practiced ministry (assigned by
+            SAAT) located in Eastern Indonesia, namely in Palu, Bali, Papua, and Makassar. But this
+            year it feels like the direction of the wind of ministry has changed and pushed my
+            ministry heart to the West. This is where I am anchored, at FeG Immanuel Berlin".
+          </p>
+          <p>
+            "I completed my bachelor's degree in Theology at Southeast Asia Bible Seminary in 2019
+            and continued my post-graduate program in 2020. In my ministry practice, I served for
+            one year at Kalam Kudus Church in Makassar. My ministry is also fully supported by my
+            loving family. My father is a doctor and my mother is a teacher. I am the third of three
+            children, where my older siblings also serve as doctors and servants of God. They also
+            fully support my ministry in this place"
           </p>
         </div>
 
