@@ -10,7 +10,7 @@ export const Footer = () => {
       </div>
       <div className="flex gap-4 items-center text-2xl">
         <Phone className="w-6 h-6" />
-        <a href="tel:+49 17637503305">+49 17637503305</a>
+        <a href="tel:+49 17637503305">+49 1745277265</a>
       </div>
       <div className="flex gap-4 items-center text-2xl">
         <Instagram className="w-6 h-6" />

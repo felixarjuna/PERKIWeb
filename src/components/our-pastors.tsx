@@ -1,16 +1,9 @@
-import { motion, useScroll, useTransform } from "framer-motion";
 import React from "react";
 import { Link } from "react-router-dom";
-import Chen from "../assets/images/Chen.png";
 import { pastors } from "../lib/data";
 
 export default function OurPastors() {
   const ref = React.useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-  });
-
-  const deg = useTransform(scrollYProgress, [0, 1], ["10deg", "0deg"]);
 
   return (
     <div className="bg-cream-default text-dark-green-default py-40">
@@ -20,21 +13,21 @@ export default function OurPastors() {
           {/* <div className="h-[2px] bg-green-default"></div> */}
         </div>
 
-        <div ref={ref} className="flex flex-col">
+        <div ref={ref} className="flex flex-col gap-y-8">
           {pastors.map((pastor) => (
-            <div className="flex my-5">
+            <div className="flex my-5 gap-x-20 items-center">
               <div className="flex flex-col">
-                <p className="text-3xl mb-2">{pastor.name}</p>
-                <p className="text-lg max-w-lg mr-20">{pastor.description}</p>
+                <p className="text-5xl mb-2">{pastor.name}</p>
+                <p className="text-2xl max-w-2xl mr-20">{pastor.description}</p>
 
                 <div className="mt-4 self-end underline underline-offset-2 -translate-x-20">
                   <Link to={"/pastors"}>Learn more</Link>
                 </div>
               </div>
 
-              <motion.div style={{ rotate: deg }} className="bg-green-default rounded-lg p-3 h-48">
-                <img src={Chen} alt="Chen" className="rounded-lg" />
-              </motion.div>
+              <div className="bg-green-default rounded-full h-64 w-64 overflow-hidden border-4 border-green-default">
+                <img src={pastor.img} alt="Chen" className="rounded-lg object-cover" />
+              </div>
             </div>
           ))}
         </div>
