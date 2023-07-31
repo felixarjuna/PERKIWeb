@@ -22,16 +22,16 @@ export default function Homepage() {
         />
       </div>
 
-      <div className="h-screen flex items-center justify-center flex-col border-t-[0.7px] text-light-green-default gap-7 ">
-        <h3 className="text-3xl uppercase">Welcome to our fellowship</h3>
-        <h1 className="text-[12vw] font-reimbrandt">Perki Aachen</h1>
+      <div className="h-screen flex items-center justify-center flex-col text-light-green-default gap-5 ">
+        <h3 className="text-[1.75vw] uppercase">Welcome to our fellowship</h3>
+        <h1 className="text-[14vw] font-reimbrandt">Perki Aachen</h1>
         <div className="flex gap-20">
-          <div className="flex items-center uppercase gap-2 text-3xl">
+          <div className="flex items-center uppercase gap-2 text-[1.75vw]">
             <p>since</p>
-            {/* <div className="h-[3px] w-24 bg-green-default"></div> */}
+            <div className="h-[0.1vw] w-[7vw] bg-light-green-default"></div>
             <p>1990</p>
           </div>
-          <div className="text-3xl uppercase">Non-denominational church</div>
+          <div className="text-[1.75vw] uppercase">Non-denominational church</div>
         </div>
       </div>
       <div className="h-[1px] opacity-10 w-screen bg-light-green-default"></div>
