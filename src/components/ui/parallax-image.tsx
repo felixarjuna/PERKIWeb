@@ -23,7 +23,7 @@ export const ParallaxImage = ({ img, className }: ParallaxImageProps) => {
       ref={targetRef}
       className={cn("absolute right-5 top-0 rounded-lg", className)}
     >
-      <img src={img} alt="Chen" className="scale-125 filter brightness-50 rounded-lg" />
+      <img src={img} alt="Chen" className="scale-125 filter brightness-50 rounded-lg lg:scale-110 md:scale-95 sm:scale-75 xs:scale-75" />
     </motion.div>
   );
 };
