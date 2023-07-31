@@ -17,6 +17,12 @@
   font-weight: 400;
 }
 
+@font-face {
+  font-family: "Reimbrandt-Regular";
+  src: url("./assets/fonts/Reimbrandt-Regular.otf") format("opentype");
+  font-weight: 400;
+}
+
 @layer base {
   * {
     @apply font-satoshi;

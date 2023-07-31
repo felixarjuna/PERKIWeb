@@ -21,6 +21,7 @@ export default {
         lora: ["Lora", "serif"],
         satoshi: ["Satoshi-Medium", "sans-serif"],
         founders: ["FoundersGrotesk-Regular", "sans-serif"],
+        reimbrandt: ["Reimbrandt-Regular", "serif"],
       },
       colors: {
         cream: {
