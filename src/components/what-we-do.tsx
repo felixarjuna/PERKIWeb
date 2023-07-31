@@ -4,9 +4,9 @@ import { events } from "../lib/data";
 
 export default function Home() {
   return (
-    <div className="bg-cream-default text-dark-green-default pt-32">
-      <div className="flex items-center justify-center px-40 pb-40">
-        <img src={Perki} alt="perki" className="rounded-lg" />
+    <div className="bg-cream-default text-dark-green-default">
+      <div className="flex items-center justify-center pb-20">
+        <img src={Perki} alt="perki" className="w-full object-cover" />
       </div>
 
       <div className="grid grid-cols-4">

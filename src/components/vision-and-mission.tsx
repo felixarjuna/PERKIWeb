@@ -1,7 +1,7 @@
 export const VisionAndMission = () => {
   return (
     <div className="pb-14">
-      <div className="h-[1px] w-screen bg-light-green-default mb-10"></div>
+      <div className="h-[1px] opacity-10 w-screen bg-light-green-default mb-10"></div>
       <div className="flex flex-row justify-center items-center gap-2 p-12">
         {/* <div className="h-[1px] w-24 bg-light-green-default"></div> */}
         <h1 className="text-6xl ">Make Disciples of All Nations</h1>
