@@ -11,7 +11,7 @@ export default function Home() {
 
       <div className="grid grid-cols-4">
         <div className="my-auto -rotate-90 col-span-1 whitespace-nowrap h-fit">
-          <h1 className="text-7xl text-green-default">What We Do</h1>
+          <h1 className="text-8xl text-green-default font-reimbrandt">What We Do</h1>
           {/* <div className="h-[2px] bg-green-default"></div> */}
         </div>
 

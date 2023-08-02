@@ -6,7 +6,7 @@ export default function Home() {
     <>
       <div className=" bg-cream-default text-dark-green-default">
         <div className="relative">
-          <h1 className="text-7xl text-green-default text-center absolute inset-0 mx-auto top-20">
+          <h1 className="text-8xl text-green-default text-center absolute inset-0 mx-auto top-20 font-reimbrandt">
             Where Are We
           </h1>
           <MapPin className="w-12 h-12 absolute inset-0 mx-auto my-auto left-16 bottom-12 text-green-default/80" />

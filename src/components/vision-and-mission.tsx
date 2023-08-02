@@ -4,7 +4,7 @@ export const VisionAndMission = () => {
       <div className="h-[1px] opacity-10 w-screen bg-light-green-default mb-10"></div>
       <div className="flex flex-row justify-center items-center gap-2 p-12">
         {/* <div className="h-[1px] w-24 bg-light-green-default"></div> */}
-        <h1 className="text-6xl ">Make Disciples of All Nations</h1>
+        <h1 className="text-7xl font-reimbrandt">Make Disciples of All Nations</h1>
         {/* <div className="h-[1px] w-24 bg-light-green-default"></div> */}
       </div>
       <div className="flex flex-row justify-center text-center gap-10">
