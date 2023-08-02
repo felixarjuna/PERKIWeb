@@ -1,5 +1,5 @@
 import { MapPin } from "lucide-react";
-import MapsicleMap from "../images/MapsicleMap.png";
+import MapsicleMap from "../assets/images/MapsicleMap.png";
 
 export default function Home() {
   return (
