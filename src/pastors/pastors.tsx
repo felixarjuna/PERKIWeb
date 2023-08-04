@@ -8,7 +8,6 @@ export const Pastors = () => {
       <div className="pt-20 px-24">
         <div className="flex items-center justify-center gap-8 py-16 ">
           <h1 className="text-9xl font-reimbrandt">Pastors</h1>
-          {/* <Separator className="h-1 rounded-sm" /> */}
         </div>
       </div>
 
