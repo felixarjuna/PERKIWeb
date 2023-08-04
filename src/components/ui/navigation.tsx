@@ -37,6 +37,12 @@ export default function Navigation({ showNav }: NavigationProps) {
             </span>
             <p>Service Schedule</p>
           </Link>
+          <Link to="/takeaway" className="flex gap-2 cursor-pointer items-center">
+            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+              🧠
+            </span>
+            <p>Takeaways</p>
+          </Link>
         </motion.div>
       ) : null}
     </AnimatePresence>

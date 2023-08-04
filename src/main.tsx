@@ -7,6 +7,7 @@ import "./index.css";
 import { Pastors } from "./pastors/pastors.tsx";
 import Prayers from "./prayers/prayers.tsx";
 import Schedule from "./schedule/schedule.tsx";
+import Takeaway from "./takeaway/page.tsx";
 
 const router = createBrowserRouter([
   { path: "/", element: <App /> },
@@ -14,6 +15,7 @@ const router = createBrowserRouter([
   { path: "/activity", element: <Activity /> },
   { path: "/prayers", element: <Prayers /> },
   { path: "/schedule", element: <Schedule /> },
+  { path: "/takeaway", element: <Takeaway /> },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
