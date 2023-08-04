@@ -28,3 +28,25 @@
     @apply font-satoshi;
   }
 }
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme(colors.dark-green.default) theme(colors.green.default);
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: theme(colors.dark-green.default);
+  border-radius: 0px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: theme(colors.green.default);
+  border-radius: 10px;
+  border: 5px solid theme(colors.green.default);
+}

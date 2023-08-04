@@ -28,7 +28,7 @@ export default function Prayers() {
 
         <div className="mb-4">
           <h3 className="text-2xl font-reimbrandt">
-            Let's pray together every Wednesday at 18.00 a.m 😍
+            Let's pray together every Wednesday at 18.30 a.m 😍
           </h3>
         </div>
 
