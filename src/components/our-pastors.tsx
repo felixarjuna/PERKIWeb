@@ -14,8 +14,8 @@ export default function OurPastors() {
         </div>
 
         <div ref={ref} className="col-span-3 flex flex-col gap-y-8 pr-40 text-green-default">
-          {pastors.map((pastor) => (
-            <div className="grid grid-cols-3 my-5 gap-x-20 items-center">
+          {pastors.map((pastor, index) => (
+            <div className="grid grid-cols-3 my-5 gap-x-20 items-center" key={index}>
               <div className="col-span-2 flex flex-col">
                 <p className="text-5xl mb-2 text-dark-green-default">{pastor.name}</p>
                 <p className="text-2xl 2xl:mr-20">{pastor.description}</p>

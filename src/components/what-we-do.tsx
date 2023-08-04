@@ -16,9 +16,9 @@ export default function Home() {
         </div>
 
         <div className="col-span-3 grid grid-cols-2 gap-28 pr-40">
-          {events.map((event) => {
+          {events.map((event, index) => {
             return (
-              <div className="max-w-lg flex flex-col">
+              <div key={index} className="max-w-lg flex flex-col">
                 <h1 className="text-3xl">{event.name}</h1>
                 {/* <div className="h-[2px] w-[312px] bg-dark-green-default -translate-y-1"></div> */}
                 <div className="mt-2 text-xl bg-green-default rounded-lg w-fit items-center flex text-cream-default p-2 px-4">
