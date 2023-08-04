@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
 import Chen from "../assets/images/Chen.png";
 import Learn from "../assets/images/Learn.jpg";
 import Pandya from "../assets/images/Pandya.png";
@@ -6,6 +5,7 @@ import Steffen from "../assets/images/Steffen.png";
 
 import React from "react";
 import { useIntersection } from "react-use";
+import Navigation from "./ui/navigation";
 import { ParallaxImage } from "./ui/parallax-image";
 import { VisionAndMission } from "./vision-and-mission";
 
@@ -30,36 +30,7 @@ export default function AboutUs() {
 
   return (
     <div className="bg-dark-green-default text-light-green-default py-20 relative">
-      <AnimatePresence>
-        {showNav ? (
-          <motion.div
-            key="navigation"
-            initial={{ opacity: 0 }}
-            animate={{
-              y: [0, 20, 0],
-              opacity: 1,
-              transition: {
-                y: { ease: [0.6, 0.01, -0.05, 0.95], duration: 0.8 },
-              },
-            }}
-            exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-            className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50"
-          >
-            <div className="flex gap-2 cursor-pointer items-center">
-              <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
-                🙏
-              </span>
-              <p>Let's pray together</p>
-            </div>
-            <div className="flex gap-2 cursor-pointer items-center">
-              <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
-                📅
-              </span>
-              <p>Service Schedule</p>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <Navigation showNav={showNav} />
 
       <div className="px-24">
         <div className="flex items-center justify-center gap-8">
