@@ -1,14 +1,66 @@
+import { AnimatePresence, motion } from "framer-motion";
 import Chen from "../assets/images/Chen.png";
 import Learn from "../assets/images/Learn.jpg";
 import Pandya from "../assets/images/Pandya.png";
 import Steffen from "../assets/images/Steffen.png";
 
+import React from "react";
+import { useIntersection } from "react-use";
 import { ParallaxImage } from "./ui/parallax-image";
 import { VisionAndMission } from "./vision-and-mission";
 
 export default function AboutUs() {
+  const [showNav, setShowNav] = React.useState<boolean>(false);
+  const intersectionRef = React.useRef(null);
+  const intersection = useIntersection(intersectionRef, {
+    root: null,
+    rootMargin: "0px",
+    threshold: 1,
+  });
+
+  React.useEffect(() => {
+    if (intersection && intersection.boundingClientRect.y < 0) {
+      setShowNav(true);
+      return;
+    }
+
+    if (intersection && intersection.intersectionRatio < 1) setShowNav(false);
+    else if (intersection && intersection?.intersectionRatio == 1) setShowNav(true);
+  }, [intersection, intersection?.boundingClientRect]);
+
   return (
-    <div className="bg-dark-green-default text-light-green-default py-20">
+    <div className="bg-dark-green-default text-light-green-default py-20 relative">
+      <AnimatePresence>
+        {showNav ? (
+          <motion.div
+            key="navigation"
+            initial={{ opacity: 0 }}
+            animate={{
+              y: [0, 20, 0],
+              opacity: 1,
+              transition: {
+                y: { ease: [0.6, 0.01, -0.05, 0.95], duration: 0.8 },
+              },
+            }}
+            exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
+            className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50"
+          >
+            <div className="flex gap-2 cursor-pointer items-center">
+              <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+                🙏
+              </span>
+              <p>Let's pray together</p>
+            </div>
+            <div className="flex gap-2 cursor-pointer items-center">
+              <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+                📅
+              </span>
+              <p>Service Schedule</p>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <div className="px-24">
         <div className="flex items-center justify-center gap-8">
           <h1 className="text-9xl lg:text-7xl md:text-6xl sm:text-5xl xs:text-4xl font-reimbrandt tracking-wide">
@@ -19,7 +71,7 @@ export default function AboutUs() {
       </div>
 
       <div className="mt-20 overflow-hidden flex flex-col px-28 gap-y-72 xl:px-24 xl:gap-y-64 lg:px-20 lg:gap-y-56 md:px-16 md:gap-y-52 sm:px-12 sm:gap-y-48 xs:px-8 xs:gap-y-44">
-        <div className="flex flex-row relative">
+        <div ref={intersectionRef} className="flex flex-row relative">
           <p className="max-w-[90%] text-6xl z-10 leading-[4.5rem] xl:text-5xl xl:leading-[4rem] lg:text-4xl lg:leading-[3.5rem] md:text-3xl md:leading-[3rem] sm:text-2xl sm:leading-[2.5rem] xs:text-xl xs:leading-[2rem]">
             <span className="font-reimbrandt text-8xl xl:text-7xl lg:text-6xl md:text-5xl sm:text-4xl xs:text-3xl">
               Perki
