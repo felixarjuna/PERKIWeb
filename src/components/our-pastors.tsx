@@ -18,7 +18,7 @@ export default function OurPastors() {
             <div className="grid grid-cols-3 my-5 gap-x-20 items-center" key={index}>
               <div className="col-span-2 flex flex-col">
                 <p className="text-5xl mb-2 text-dark-green-default">{pastor.name}</p>
-                <p className="text-2xl 2xl:mr-20">{pastor.description}</p>
+                <p className="text-2xl 2xl:mr-20">{pastor.favoriteVerse}</p>
 
                 <div className="mt-4 self-start underline underline-offset-2">
                   <Link to={"/pastors"}>Learn more</Link>
