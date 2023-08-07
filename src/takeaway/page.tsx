@@ -1,15 +1,13 @@
-import React from "react";
+import Tabs from "@/components/ui/tabs";
 import Navigation from "../components/ui/navigation";
 
+const tabs = [
+  { id: "church-service", label: "Church service" },
+  { id: "bg-bible-study", label: "Big group bible study" },
+  { id: "sg-bible-study", label: "Small group bible study" },
+];
+
 export default function Takeaway() {
-  const [takeaways, setPrayers] = React.useState<string[]>([]);
-
-  const onAddTakeaways = (prayer: string) => {
-    setPrayers((prevPrayers) => [...prevPrayers, prayer]);
-  };
-
-  const [prayer, setPrayer] = React.useState<string>("");
-
   return (
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
       <Navigation showNav={true} />
@@ -25,8 +23,12 @@ export default function Takeaway() {
 
         <div className="mb-4">
           <h3 className="text-2xl font-reimbrandt">
-            Let's keep burning each other and grow together 🔥
+            Let's share what you have learned, keep burning each other and grow together 🔥
           </h3>
+        </div>
+
+        <div className="self-start px-[29rem] mt-4">
+          <Tabs tabs={tabs} />
         </div>
       </div>
     </section>
