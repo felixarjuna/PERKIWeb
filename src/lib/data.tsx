@@ -126,3 +126,46 @@ export const services: Service[] = [
     ),
   },
 ];
+
+export const speakers = [
+  "Oliver Renaldi",
+  "Danny Kurniawan",
+  "Billy Lugito",
+  "Steffen Josua",
+  "Clarissa Adelyne",
+  "Arya Bangun",
+];
+
+export const liturgos = [
+  "Danny Kurniawan",
+  "Toni Setiawan",
+  "Sofian Oeij",
+  "Jordie Yonathan",
+  "Albertus Pandya",
+];
+
+export const musicians = [
+  "Felix Arjuna",
+  "Reggy Irawan",
+  "Clarissa Adelyne",
+  "Danny Kurniawan",
+  "Albertus Pandya",
+  "Jordie Yonathan",
+];
+
+export const multimedia = [
+  "Danny Kurniawan",
+  "Arya Wisnu",
+  "Reggy Irawan",
+  "Jordie Yonathan",
+  "Felix Arjuna",
+  "Victor Jordan",
+];
+export const accommodation = [
+  "Oliver Renaldi",
+  "Danny Kurniawan",
+  "Jordie Yonathan",
+  "Reggy Irawan",
+];
+
+export const groups = ["Group 1", "Group 2", "Group 3", "Group 4", "Group 5", "Group 6"];
