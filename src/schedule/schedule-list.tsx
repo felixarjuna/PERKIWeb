@@ -1,7 +1,6 @@
 import { Bed, Music, PersonStanding, Sparkles, Utensils } from "lucide-react";
 
 type Content = {
-  tabId: string;
   title: string;
   date: string;
   speaker: string;
@@ -17,7 +16,6 @@ type Content = {
 
 const contents: Content[] = [
   {
-    tabId: "fellowship-schedule",
     title: "Sent to Bring Freedom",
     date: "Aug 12",
     speaker: "Pdt. Titus Christanto",
@@ -32,7 +30,6 @@ const contents: Content[] = [
     cleaningGroup: "Group 6",
   },
   {
-    tabId: "fellowship-schedule",
     title: "Sent to Bear Witness",
     date: "Aug 5",
     speaker: "Steffen Josua",
@@ -47,7 +44,6 @@ const contents: Content[] = [
     cleaningGroup: "Group 4",
   },
   {
-    tabId: "fellowship-schedule",
     title: "Sent to show Christ's Glory",
     date: "July 29",
     speaker: "Danny Kurniawan",

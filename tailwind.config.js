@@ -3,17 +3,17 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     screens: {
-      'xs': {'min': '320px', 'max': '480px'},
+      xs: { min: "320px", max: "480px" },
       // mobile devices
-      'sm': {'min': '481px', 'max': '767px'},
+      sm: { min: "481px", max: "767px" },
       // tablets
-      'md': {'min': '768px', 'max': '1023px'},
+      md: { min: "768px", max: "1023px" },
       // ipad, ipad mini
-      'lg': {'min': '1024px', 'max': '1279px'},
+      lg: { min: "1024px", max: "1279px" },
       // ipad air, ipad pro
-      'xl': {'min': '1280px', 'max': '1535px'},
+      xl: { min: "1280px", max: "1535px" },
       // laptops
-      '2xl': {'min': '1536px'},
+      "2xl": { min: "1536px" },
       // desktops
     },
     extend: {
@@ -89,6 +89,8 @@ export default {
         "gradient-x": "gradient-x 10s ease infinite",
         "gradient-y": "gradient-y 10s ease infinite",
         "gradient-xy": "gradient-xy 10s ease infinite",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
       keyframes: {
         marquee: {
@@ -149,8 +151,16 @@ export default {
             "background-position": "right center",
           },
         },
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
