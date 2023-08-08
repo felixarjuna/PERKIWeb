@@ -1,3 +1,5 @@
+import { LinkIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navigation from "../components/ui/navigation";
 import ScheduleList from "./schedule-list";
 
@@ -17,6 +19,17 @@ export default function Schedule() {
         </div>
 
         <div className="self-start px-[25rem] w-full">
+          <div className="px-6 p-3 bg-green-default/60 mt-8 rounded-lg w-fit">
+            <h3>
+              You find something's missing? Add them{" "}
+              <Link to="/create-schedule" className="">
+                <span className="inline-flex items-center gap-x-1 underline underline-offset-2">
+                  <p>here</p>
+                  <LinkIcon className="w-4 h-4" />
+                </span>
+              </Link>
+            </h3>
+          </div>
           <ScheduleList />
         </div>
       </div>
