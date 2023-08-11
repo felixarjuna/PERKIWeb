@@ -61,49 +61,49 @@ const contents: Content[] = [
 
 export default function ScheduleList() {
   return (
-    <div className="mt-8 space-y-4">
+    <div className="mt-8 space-y-4 xs:mt-4">
       {contents.map((content, index) => {
         return (
-          <div key={index} className="grid grid-cols-4 gap-x-4">
-            <div className="col-span-3 p-6 bg-green-default/60 rounded-lg w-full hover:bg-green-default/80 shadow-lg transition duration-300 cursor-pointer">
+          <div key={index} className="grid grid-cols-4 gap-x-4 gap-y-2">
+            <div className="col-span-3 p-6 bg-green-default/60 rounded-lg w-full hover:bg-green-default/80 shadow-lg transition duration-300 cursor-pointer xs:col-span-4">
               <h1 className="text-2xl font-reimbrandt tracking-wide">{content.title}</h1>
-              <div className="flex items-center gap-x-2 text-green-400/80 font-reimbrandt">
+              <div className="flex items-center gap-x-2 text-green-400/80 font-reimbrandt xs:text-xs xs:gap-x-1 xs:flex-wrap">
                 <p>{content.speaker}</p>
                 <span>&middot;</span>
                 <p>{content.bibleVerse}</p>
                 <span>&middot;</span>
                 <p>{content.date}</p>
               </div>
-              <p className="mt-4">{content.summary}</p>
+              <p className="mt-4 xs:text-sm">{content.summary}</p>
             </div>
-            <div className="col-span-1 bg-green-default/60 rounded-lg w-full p-6 space-y-2 flex flex-col justify-center hover:bg-green-default/80 shadow-lg transition duration-300">
+            <div className="col-span-1 bg-green-default/60 rounded-lg w-full p-6 space-y-2 flex flex-col justify-center hover:bg-green-default/80 shadow-lg transition duration-300 xs:col-span-4 xs:text-sm">
               <div className="flex gap-x-2 items-center">
-                <div className="w-7 h-7 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
+                <div className="w-7 h-7 xs:w-6 xs:h-6 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
                   <PersonStanding className="w-5 h-5" />
                 </div>
                 <p>{content.liturgos ?? "-"}</p>
               </div>
               <div className="flex gap-x-2 items-center">
-                <div className="w-7 h-7 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
-                  <Music className="w-4 h-4" />
+                <div className="w-7 h-7 xs:w-6 xs:h-6 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
+                  <Music className="w-4 h-4 xs:h-3 xs:w-3" />
                 </div>
                 <p>{content.musician ?? "-"}</p>
               </div>
               <div className="flex gap-x-2 items-center">
-                <div className="w-7 h-7 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
-                  <Bed className="w-4 h-4" />
+                <div className="w-7 h-7 xs:w-6 xs:h-6 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
+                  <Bed className="w-4 h-4 xs:h-3 xs:w-3" />
                 </div>
                 <p>{content.accommodation ?? "-"}</p>
               </div>
               <div className="flex gap-x-2 items-center">
-                <div className="w-7 h-7 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
-                  <Utensils className="w-4 h-4" />
+                <div className="w-7 h-7 xs:w-6 xs:h-6 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
+                  <Utensils className="w-4 h-4 xs:h-3 xs:w-3" />
                 </div>
                 <p>{content.cookingGroup ?? "-"}</p>
               </div>
               <div className="flex gap-x-2 items-center">
-                <div className="w-7 h-7 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
+                <div className="w-7 h-7 xs:w-6 xs:h-6 bg-green-default/60 rounded-lg p-1 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 xs:h-3 xs:w-3" />
                 </div>
                 <p>{content.cleaningGroup}</p>
               </div>
