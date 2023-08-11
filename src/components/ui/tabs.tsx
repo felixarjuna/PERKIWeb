@@ -68,7 +68,7 @@ export default function Tabs({ tabs, className }: TabsProps) {
 
   return (
     <div className="space-y-8">
-      <div className={cn("flex space-x-1", className)}>
+      <div className={cn("flex space-x-1 xs:flex-col xs:text-sm", className)}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -129,9 +129,9 @@ interface TabContentProps {
 
 function TabContent(props: TabContentProps) {
   return (
-    <div className="p-6 bg-green-default/60 rounded-lg w-full hover:bg-green-default/80 shadow-lg transition duration-300 cursor-pointer">
-      <h1 className="text-xl font-reimbrandt tracking-wide">{props.title}</h1>
-      <div className="flex items-center gap-x-2 text-green-400/80 font-reimbrandt">
+    <div className="p-6 bg-green-default/60 rounded-lg w-full hover:bg-green-default/80 shadow-lg transition duration-300 cursor-pointer xs:p-4">
+      <h1 className="text-2xl font-reimbrandt tracking-wide xs:text-lg">{props.title}</h1>
+      <div className="flex items-center gap-x-2 text-green-400/80 font-reimbrandt xs:text-xs xs:gap-1 xs:flex-wrap">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
@@ -140,7 +140,7 @@ function TabContent(props: TabContentProps) {
         <span>&middot;</span>
         <p>{props.author}</p>
       </div>
-      <p className="mt-4">{props.summary}</p>
+      <p className="mt-4 xs:text-sm">{props.summary}</p>
     </div>
   );
 }
