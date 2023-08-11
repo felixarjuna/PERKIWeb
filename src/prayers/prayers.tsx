@@ -14,8 +14,8 @@ export default function Prayers() {
   return (
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
       <Navigation showNav={true} />
-      <div className="pt-20 px-24 flex flex-col items-center xs:px-12 xs:pt-20">
-        <div className="flex w-1/2 items-center justify-center gap-8 py-16 flex-col xs:w-full xs:py-8">
+      <div className="pt-20 px-10 flex flex-col items-center xs:px-12 xs:pt-20">
+        <div className="flex max-w-5xl px-14 items-center justify-center gap-8 py-16 flex-col xs:w-full xs:py-8 xs:px-0">
           <h1 className="text-9xl font-reimbrandt xs:text-4xl">Pray together</h1>
           <div className="text-2xl flex flex-col gap-y-2 xs:text-base">
             <p>
@@ -26,13 +26,11 @@ export default function Prayers() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <h3 className="text-2xl font-reimbrandt xs:text-base">
+        <div className="flex flex-col max-w-5xl w-full px-14 gap-y-4 mt-4 xs:w-full xs:px-0">
+          <h3 className="text-2xl font-reimbrandt xs:text-base mb-8 xs:mb-4">
             Let's pray together every Wednesday at 18.30 a.m 😍
           </h3>
-        </div>
 
-        <div className="flex flex-col w-1/2 justify-center items-center gap-y-4 mt-4 xs:w-full">
           <div className="self-start flex gap-x-4 w-full xs:gap-2">
             <input
               className="px-8 py-4 flex-1 bg-green-default/70 rounded-lg placeholder-cream-default outline-none text-xl xs:text-sm xs:px-4 xs:py-3"

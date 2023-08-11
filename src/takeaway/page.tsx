@@ -12,8 +12,8 @@ export default function Takeaway() {
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
       <Navigation showNav={true} />
 
-      <div className="pt-20 px-24 flex flex-col items-center xs:px-12">
-        <div className="flex w-1/2 items-center justify-center gap-8 py-16 flex-col xs:w-full xs:py-8">
+      <div className="pt-20 px-10 flex flex-col items-center xs:px-12">
+        <div className="flex max-w-5xl px-14 items-center justify-center gap-8 py-16 flex-col xs:w-full xs:py-8 xs:px-0">
           <h1 className="text-9xl font-reimbrandt xs:text-4xl">Takeaways</h1>
           <div className="text-2xl flex flex-col gap-y-2 xs:text-base">
             <p>“Your word is a lamp to my feet and a light to my path”</p>
@@ -21,13 +21,11 @@ export default function Takeaway() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <h3 className="text-2xl font-reimbrandt xs:text-base">
+        <div className="max-w-5xl px-14 mt-4 w-full mx-auto xs:px-0">
+          <h3 className="text-2xl font-reimbrandt xs:text-base mb-8 xs:mb-4">
             Let's share what you have learned, keep burning each other and grow together 🔥
           </h3>
-        </div>
 
-        <div className="self-start 2xl:px-[29rem] mt-4 w-full">
           <Tabs tabs={tabs} />
         </div>
       </div>
