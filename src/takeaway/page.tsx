@@ -27,7 +27,7 @@ export default function Takeaway() {
           </h3>
         </div>
 
-        <div className="self-start px-[29rem] mt-4 w-full">
+        <div className="self-start 2xl:px-[29rem] mt-4 w-full">
           <Tabs tabs={tabs} />
         </div>
       </div>

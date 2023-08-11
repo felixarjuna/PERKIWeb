@@ -71,13 +71,13 @@ export default function AboutUs() {
           <ParallaxImage img={Pandya} />
         </div>
 
-        <div className="flex flex-row relative justify-end pb-60">
+        <div className="flex flex-row relative justify-end pb-60 xs:pb-24">
           <p className="max-w-[90%] text-right text-6xl z-10 leading-[4.5rem] xl:text-5xl xl:leading-[4rem] lg:text-4xl lg:leading-[3.5rem] md:text-3xl md:leading-[3rem] sm:text-2xl sm:leading-[2.5rem] xs:text-xl xs:leading-[2rem]">
             Through regular gatherings, prayer meetings, and outreach programs, our members are
             equipped to serve as ambassadors of Christ in their local communities and beyond. But
             still, we are just sinners who want to grow together :)
           </p>
-          <ParallaxImage img={Learn} className="left-16 w-[900px]" />
+          <ParallaxImage img={Learn} className="left-16 w-[900px] xs:left-0 xs:bottom-20" />
         </div>
       </div>
 

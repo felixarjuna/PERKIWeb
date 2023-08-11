@@ -20,25 +20,25 @@ export default function Navigation({ showNav }: NavigationProps) {
             },
           }}
           exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-          className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50"
+          className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50 xs:mx-4 xs:text-[0.6rem] xs:gap-1 xs:px-4 xs:py-2"
         >
-          <Link to="/" className="font-reimbrandt text-2xl">
+          <Link to="/" className="font-reimbrandt text-2xl xs:text-[0.7rem]">
             Perki Aachen
           </Link>
-          <Link to="/prayers" className="flex gap-2 cursor-pointer items-center">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+          <Link to="/prayers" className="flex gap-2 cursor-pointer items-center xs:gap-1">
+            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[0px] xs:w-5 xs:h-5 flex items-center justify-center">
               🙏
             </span>
             <p>Let's pray together</p>
           </Link>
-          <Link to="/schedule" className="flex gap-2 cursor-pointer items-center">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+          <Link to="/schedule" className="flex gap-2 cursor-pointer items-center xs:gap-1">
+            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[0px] xs:w-5 xs:h-5 flex items-center justify-center">
               📅
             </span>
             <p>Schedule</p>
           </Link>
-          <Link to="/takeaway" className="flex gap-2 cursor-pointer items-center">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px]">
+          <Link to="/takeaway" className="flex gap-2 cursor-pointer items-center xs:gap-1">
+            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[0px] xs:w-5 xs:h-5 flex items-center justify-center">
               🧠
             </span>
             <p>Takeaways</p>
