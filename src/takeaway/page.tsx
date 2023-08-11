@@ -12,7 +12,7 @@ export default function Takeaway() {
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
       <Navigation showNav={true} />
 
-      <div className="pt-20 px-24 flex flex-col items-center xs:px-12 xs:pt-20">
+      <div className="pt-20 px-24 flex flex-col items-center xs:px-12">
         <div className="flex w-1/2 items-center justify-center gap-8 py-16 flex-col xs:w-full xs:py-8">
           <h1 className="text-9xl font-reimbrandt xs:text-4xl">Takeaways</h1>
           <div className="text-2xl flex flex-col gap-y-2 xs:text-base">
