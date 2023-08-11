@@ -116,7 +116,7 @@ function AddScheduleForm() {
                             <Button
                               variant={"default"}
                               className={cn(
-                                "pl-3 text-left font-normal",
+                                "pl-3 text-left font-normal !text-cream-default",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
