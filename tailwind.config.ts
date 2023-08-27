@@ -2,30 +2,32 @@ import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 import { schadcnPreset } from "./schadcn-preset";
 
-const config = {
+const config: Config = {
   presets: [schadcnPreset],
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
-    screens: {
-      xs: { min: "320px", max: "480px" },
-      // mobile devices
-      sm: { min: "481px", max: "767px" },
-      // tablets
-      md: { min: "768px", max: "1023px" },
-      // ipad, ipad mini
-      lg: { min: "1024px", max: "1279px" },
-      // ipad air, ipad pro
-      xl: { min: "1280px", max: "1535px" },
-      // laptops
-      "2xl": { min: "1536px" },
-      // desktops
-    },
     extend: {
+      screens: {
+        xs: { min: "320px", max: "480px" },
+        // mobile devices
+        sm: { min: "481px", max: "767px" },
+        // tablets
+        md: { min: "768px", max: "1023px" },
+        // ipad, ipad mini
+        lg: { min: "1024px", max: "1279px" },
+        // ipad air, ipad pro
+        xl: { min: "1280px", max: "1535px" },
+        // laptops
+        "2xl": { min: "1536px" },
+        // desktops
+      },
       fontFamily: {
-        lora: ["Lora", "serif"],
-        satoshi: ["Satoshi-Medium", "sans-serif", ...fontFamily.sans],
-        founders: ["FoundersGrotesk-Regular", "sans-serif", ...fontFamily.sans],
-        reimbrandt: ["Reimbrandt-Regular", "serif", ...fontFamily.serif],
+        satoshi: ["var(--font-satoshi)", "sans-serif", ...fontFamily.sans],
+        reimbrandt: ["var(--font-reimbrandt)", "serif", ...fontFamily.serif],
       },
       colors: {
         cream: {
@@ -156,6 +158,6 @@ const config = {
       },
     },
   },
-} satisfies Config;
-
+  plugins: [],
+};
 export default config;

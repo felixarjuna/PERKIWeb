@@ -1,6 +1,6 @@
 import { CircleBackground } from "./circle-background";
 
-export default function Homepage() {
+export default function Welcome() {
   return (
     <div className="bg-dark-green-default">
       <div className="overflow-hidden">

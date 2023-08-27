@@ -23,10 +23,6 @@ export const events = [
   },
 ];
 
-import john from "../assets/images/John.jpg";
-import riggrubben from "../assets/images/Riggrubben.jpg";
-import titus from "../assets/images/Titus.png";
-
 type Pastor = {
   name: string;
   favoriteVerse: string;
@@ -38,14 +34,14 @@ export const pastors: Pastor[] = [
   {
     name: "Pdt. John Kusuma",
     favoriteVerse: "All honor and glory be to the Lord Jesus Christ!",
-    img: john,
+    img: "/images/john.jpg",
     story:
       "John Kusuma wurde in Banda Aceh geboren und lebte bis zu seinem 13. Lebensjahr in der Methodist Junior High School Banda Aceh, wo er die 1. Danach besuchte er die Methodist 2 Junior High School und die Sutomo High School in Medan. 1989-1999 setzte er sein Studium der Chemietechnik an der TU Berlin fort. Von 1999-2003 setzte er sein Studium an der SAAT Malang fort und leistete ein Jahr praktischen Dienst (2003-2004) in der Abdiel Christian Church (GKA) Gracia, Surabaya. Danach diente er von 2004-2011 als Pastor der Gemeinde am selben Ort. Seit Januar 2012 dient er in der Jemaat Kristen Immanuel Berlin (seit Sept. 2015 FeG Immanuel Berlin) als Pastor und wurde am 25. März 2012 von der FeG-Synode zum Pastor der FeG Immanuel Berlin ordiniert.",
   },
   {
     name: "Pdt. Titus Christanto",
     favoriteVerse: "He who has Jesus has life.",
-    img: titus,
+    img: "/images/titus.png",
     story:
       "Titus Christianto serves at PERKI Aachen every second week of the month. He began his ministry by entering the Southeast Asian Bible Seminary (SAAT). After his studies, he was sent to serve the Pasamuan Urip Anyar Suriname (PUAS) congregation in Pamaribo, Suriname. Here he began his commitment to expand the kingdom of God and in early 2015 he was called to an outreach ministry to the Indonesian Diaspora community in the city of Hamburg, Germany. After receiving his Bachelor of Theology (S.Th) he was ordained as a pastor for FeG Maranatha Hamburg on December 10, 2017.",
   },
@@ -53,7 +49,7 @@ export const pastors: Pastor[] = [
     name: "Ev. Riggruben",
     favoriteVerse:
       "My ministry is of Christ, belongs to Christ, and is for Christ alone. May God be glorified always through my life.",
-    img: riggrubben,
+    img: "/images/riggrubben.jpg",
     story:
       "When I accepted God's call as a full-time pastor, I had no idea at the time where I would serve. My prayer was more or less, lead me where God is calling me and give me an obedient heart and strength to live it. Four times I practiced ministry (assigned by SAAT) located in Eastern Indonesia, namely in Palu, Bali, Papua, and Makassar. But this year it feels like the direction of the wind of ministry has changed and pushed my ministry heart to the West. This is where I am anchored, at FeG Immanuel Berlin \n I completed my bachelor's degree in Theology at Southeast Asia Bible Seminary in 2019 and continued my post-graduate program in 2020. In my ministry practice, I served for one year at Kalam Kudus Church in Makassar. My ministry is also fully supported by my loving family. My father is a doctor and my mother is a teacher. I am the third of three children, where my older siblings also serve as doctors and servants of God. They also fully support my ministry in this place.",
   },

@@ -1,5 +1,5 @@
+import Link from "next/link";
 import React from "react";
-import { Link } from "react-router-dom";
 import { pastors } from "../lib/data";
 
 export default function OurPastors() {
@@ -31,7 +31,7 @@ export default function OurPastors() {
                 <p className="text-2xl 2xl:mr-20 xs:text-base xs:mr-0">{pastor.favoriteVerse}</p>
 
                 <div className="mt-4 self-start underline underline-offset-2 xs:text-sm">
-                  <Link to={"/pastors"}>Learn more</Link>
+                  <Link href={"/pastors"}>Learn more</Link>
                 </div>
               </div>
 

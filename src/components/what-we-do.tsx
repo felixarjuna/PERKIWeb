@@ -1,12 +1,18 @@
-import { Link } from "react-router-dom";
-import Perki from "../assets/images/S__3186691.jpg";
+import Image from "next/image";
+import Link from "next/link";
 import { events } from "../lib/data";
 
 export default function Home() {
   return (
     <div className="bg-cream-default text-dark-green-default">
       <div className="flex items-center justify-center pb-20">
-        <img src={Perki} alt="perki" className="w-full object-cover" />
+        <Image
+          src={"/images/perkiAachen.jpg"}
+          alt="perki"
+          className="w-full object-cover"
+          width={2500}
+          height={2500}
+        />
       </div>
 
       <div className="grid grid-cols-4">
@@ -28,7 +34,7 @@ export default function Home() {
                 </div>
                 <p className="text-xl mt-4 xs:text-base xs:mt-2">{event.description}</p>
                 <div className="mt-4 self-end underline underline-offset-2 xs:text-sm">
-                  <Link to={"/activity"}>Learn more</Link>
+                  <Link href={"/activity"}>Learn more</Link>
                 </div>
               </div>
             );

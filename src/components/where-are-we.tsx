@@ -1,5 +1,5 @@
 import { MapPin } from "lucide-react";
-import MapsicleMap from "../assets/images/MapsicleMap.png";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -7,7 +7,14 @@ export default function Home() {
       <div className="bg-cream-default text-dark-green-default relative">
         <div className="relative">
           <MapPin className="w-12 h-12 absolute inset-0 mx-auto my-auto left-16 bottom-12 text-green-default/80" />
-          <img src={MapsicleMap} alt="MapsicleMap" className="object-cover h-screen w-screen" />
+          <Image
+            src={"/images/mapsicleMap.png"}
+            alt="MapsicleMap"
+            className="object-cover h-screen w-screen"
+            width={2000}
+            height={2000}
+            quality={100}
+          />
           <div className="absolute bg-cream-default/60 h-full w-[1/3] 2xl:w-1/4 bottom-0 left-0 text-green-default text-2xl flex flex-col justify-center gap-y-8 px-16 2xl:px-20 z-0 xs:text-sm xs:w-full xs:h-1/3">
             <div>
               <h1>FEG Aachen Germany</h1>

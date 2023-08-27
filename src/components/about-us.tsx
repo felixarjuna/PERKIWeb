@@ -1,12 +1,8 @@
-import Chen from "../assets/images/Chen.png";
-import Learn from "../assets/images/Learn.jpg";
-import Pandya from "../assets/images/Pandya.png";
-import Steffen from "../assets/images/Steffen.png";
-
 import React from "react";
 import { useIntersection } from "react-use";
-import Navigation from "./ui/navigation";
-import { ParallaxImage } from "./ui/parallax-image";
+
+import Navigation from "./navigation";
+import { ParallaxImage } from "./parallax-image";
 import { VisionAndMission } from "./vision-and-mission";
 
 export default function AboutUs() {
@@ -51,7 +47,7 @@ export default function AboutUs() {
             beliefs, teachings and life on the entire content of the Old and New Testament Bibles
             which it recognizes as the inspired Words of God.
           </p>
-          <ParallaxImage img={Chen} />
+          <ParallaxImage img={"/images/chen.png"} alt="Photo of Chen" width={400} height={400} />
         </div>
 
         <div className="flex flex-row relative justify-end">
@@ -59,7 +55,13 @@ export default function AboutUs() {
             Our fellowship is not affiliated with any particular church group. All activities are
             aimed at supporting the Realization of the Great Commission of the Lord Jesus Christ.
           </p>
-          <ParallaxImage img={Steffen} className="left-0" />
+          <ParallaxImage
+            img={"/images/steffen.png"}
+            className="left-0"
+            alt="Photo of Steffen"
+            width={400}
+            height={400}
+          />
         </div>
 
         <div className="flex flex-row relative">
@@ -68,7 +70,12 @@ export default function AboutUs() {
             encouraging ourselves to live out their faith authentically and share the message of
             God's love and salvation with others.
           </p>
-          <ParallaxImage img={Pandya} />
+          <ParallaxImage
+            img={"/images/pandya.png"}
+            alt="Photo of Pandya"
+            width={400}
+            height={400}
+          />
         </div>
 
         <div className="flex flex-row relative justify-end pb-60 xs:pb-24">
@@ -77,7 +84,13 @@ export default function AboutUs() {
             equipped to serve as ambassadors of Christ in their local communities and beyond. But
             still, we are just sinners who want to grow together :)
           </p>
-          <ParallaxImage img={Learn} className="left-16 w-[900px] xs:left-0 xs:bottom-20" />
+          <ParallaxImage
+            img={"/images/learn.jpg"}
+            className="left-16 w-[900px] xs:left-0 xs:bottom-20"
+            alt="Photo of people learning together"
+            width={600}
+            height={600}
+          />
         </div>
       </div>
 
