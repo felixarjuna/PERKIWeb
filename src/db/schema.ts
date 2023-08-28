@@ -1,4 +1,4 @@
-import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const todos = sqliteTable("todos", {
   id: integer("id").primaryKey(),
@@ -7,11 +7,12 @@ export const todos = sqliteTable("todos", {
 });
 
 export const takeaways = sqliteTable("takeaways", {
-  takeawayId: integer("takeawayId").primaryKey(),
+  id: integer("id").primaryKey(),
+  takeawayId: text("takeawayId").notNull(),
   title: text("title").notNull(),
   date: text("date").notNull(),
   speaker: text("speaker").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
   summary: text("summary").notNull(),
-  contributors: blob("contributors", { mode: "json" }).$type<string[]>(),
+  contributors: text("contributors").notNull(),
 });

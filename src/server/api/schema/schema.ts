@@ -1,12 +1,23 @@
 import { z } from "zod";
 
 export const addTakeawaySchema = z.object({
+  takeawayId: z.string(),
   title: z.string(),
   date: z.date(),
   speaker: z.string(),
   bibleVerse: z.string(),
   summary: z.string(),
-  contributors: z.array(z.string()),
+  contributors: z.string(),
+});
+
+export const addTakeawaySchemaBackend = z.object({
+  takeawayId: z.string(),
+  title: z.string(),
+  date: z.string(),
+  speaker: z.string(),
+  bibleVerse: z.string(),
+  summary: z.string(),
+  contributors: z.string(),
 });
 
 export const addScheduleSchema = z.object({

@@ -92,9 +92,9 @@ export const services: Service[] = [
         congregation is given the opportunity to choose a hymn to sing together or share their life
         experiences with God. Through this activity, fellowship members are expected to learn to
         witness, get to know each other more deeply and also love. After the word prayer, the
-        caretaker on duty will lead the exposition of God's Word and the congregation is allowed to
-        discuss or ask questions at the end of the reflection. The service then ends with prayer,
-        offerings and announcements.
+        caretaker on duty will lead the exposition of God&apos;s Word and the congregation is
+        allowed to discuss or ask questions at the end of the reflection. The service then ends with
+        prayer, offerings and announcements.
       </p>
     ),
   },
@@ -123,6 +123,8 @@ export const services: Service[] = [
   },
 ];
 
+export const takeawayIds = ["church-service", "bg-bible-study", "sg-bible-study"];
+
 export const speakers = [
   "Oliver Renaldi",
   "Danny Kurniawan",
@@ -130,6 +132,9 @@ export const speakers = [
   "Steffen Josua",
   "Clarissa Adelyne",
   "Arya Bangun",
+  "Pdt. John Kusuma",
+  "Pdt. Titus Christanto",
+  "Ev. Nehemiah Riggruben",
 ];
 
 export const liturgos = [
