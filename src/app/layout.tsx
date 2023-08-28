@@ -2,6 +2,7 @@ import { MouseTrackingLayout } from "@/components/mouse-tracking-layout";
 import { cn } from "@/lib/utils";
 import localFont from "@next/font/local";
 import type { Metadata } from "next";
+import Provider from "./_trpc/Provider";
 import "./globals.css";
 
 const satoshi = localFont({
@@ -23,7 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={cn(satoshi.variable, reimbrandt.variable)}>
-        <MouseTrackingLayout>{children}</MouseTrackingLayout>
+        <Provider>
+          <MouseTrackingLayout>{children}</MouseTrackingLayout>
+        </Provider>
       </body>
     </html>
   );
