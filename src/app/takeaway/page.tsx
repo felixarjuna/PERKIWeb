@@ -1,5 +1,7 @@
 import Navigation from "@/components/navigation";
 import Tabs from "@/components/ui/tabs";
+import { LinkIcon } from "lucide-react";
+import Link from "next/link";
 
 const tabs = [
   { id: "church-service", label: "Church service" },
@@ -25,6 +27,18 @@ export default function Takeaway() {
           <h3 className="text-2xl font-reimbrandt xs:text-base mb-8 xs:mb-4">
             Let&apos;s share what you have learned, keep burning each other and grow together 🔥
           </h3>
+
+          <div className="px-6 p-3 bg-green-default/60 my-8 rounded-lg w-fit xs:text-sm">
+            <h3>
+              You find something&apos;s missing? Add them{" "}
+              <Link href="/create-takeaway" className="">
+                <span className="inline-flex items-center gap-x-1 underline underline-offset-2">
+                  <p>here</p>
+                  <LinkIcon className="w-4 h-4 xs:w-3 xs:h-3" />
+                </span>
+              </Link>
+            </h3>
+          </div>
 
           <Tabs tabs={tabs} />
         </div>
