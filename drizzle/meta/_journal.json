@@ -36,6 +36,20 @@
       "when": 1693335476974,
       "tag": "0004_bent_pretty_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1693336610289,
+      "tag": "0005_spooky_iron_patriot",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1693336828321,
+      "tag": "0006_sharp_demogoblin",
+      "breakpoints": true
     }
   ]
 }
