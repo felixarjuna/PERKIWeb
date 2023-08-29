@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { DateTime } from "luxon";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -22,4 +23,9 @@ export const calculateYAxes = (
     const scale = 2 / (3 - Math.cos(2 * index * step));
     return ((scale * Math.sin(2 * step * index)) / 2) * multiplier;
   });
+};
+
+export const dateTimeFormatter = (date: string) => {
+  const datetime = DateTime.fromJSDate(new Date(date));
+  return datetime.toFormat("LLL dd, yyyy");
 };
