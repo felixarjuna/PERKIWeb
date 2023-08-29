@@ -14,5 +14,5 @@ export const takeaways = sqliteTable("takeaways", {
   speaker: text("speaker").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
   summary: text("summary").notNull(),
-  contributors: text("contributors").notNull(),
+  contributors: text("contributors").notNull().$type<string[]>(),
 });

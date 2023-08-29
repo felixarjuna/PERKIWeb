@@ -7,7 +7,7 @@ export const addTakeawaySchema = z.object({
   speaker: z.string(),
   bibleVerse: z.string(),
   summary: z.string(),
-  contributors: z.string(),
+  contributors: z.array(z.string()),
 });
 
 export const addTakeawaySchemaBackend = z.object({
@@ -17,7 +17,7 @@ export const addTakeawaySchemaBackend = z.object({
   speaker: z.string(),
   bibleVerse: z.string(),
   summary: z.string(),
-  contributors: z.string(),
+  contributors: z.array(z.string()),
 });
 
 export const addScheduleSchema = z.object({

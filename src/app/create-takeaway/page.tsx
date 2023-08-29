@@ -66,12 +66,14 @@ function AddTakeawayForm() {
   // 1. Define form.
   const form = useForm<z.infer<typeof addTakeawaySchema>>({
     resolver: zodResolver(addTakeawaySchema),
-    defaultValues: {},
+    defaultValues: {
+      // TODO: Automatically take contributors name from the username
+      contributors: ["felixarjuna"],
+    },
   });
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof addTakeawaySchema>) {
-    console.log(values);
     addTodo.mutate({ ...values, date: values.date.toString() });
   }
 
@@ -217,21 +219,6 @@ function AddTakeawayForm() {
                     <FormLabel className="text-md">Key points</FormLabel>
                     <FormControl>
                       <Textarea className="resize-none h-48" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="xs:col-span-2 col-span-2">
-              <FormField
-                control={form.control}
-                name="contributors"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-md">Contributors</FormLabel>
-                    <FormControl>
-                      <Input {...field}></Input>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

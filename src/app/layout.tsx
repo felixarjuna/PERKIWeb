@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={cn(satoshi.variable, reimbrandt.variable)}>
+      <body className={cn(satoshi.variable, reimbrandt.variable)} suppressHydrationWarning>
         <Provider>
           <MouseTrackingLayout>{children}</MouseTrackingLayout>
         </Provider>

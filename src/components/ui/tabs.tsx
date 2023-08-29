@@ -62,7 +62,7 @@ interface TabContentProps {
   speaker: string;
   bibleVerse: string;
   summary: string;
-  contributors: string;
+  contributors: Array<string>;
 }
 
 function TabContent(props: TabContentProps) {
