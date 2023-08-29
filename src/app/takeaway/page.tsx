@@ -28,9 +28,9 @@ export default function Takeaway() {
             Let&apos;s share what you have learned, keep burning each other and grow together 🔥
           </h3>
 
-          <div className="px-6 p-3 bg-green-default/60 my-8 rounded-lg w-fit xs:text-sm">
+          <div className="px-6 p-3 bg-green-default/60 my-8 rounded-lg w-fit xs:text-sm xs:px-4 xs:py-2">
             <h3>
-              You find something&apos;s missing? Add them{" "}
+              Let&apos;s share what you have learned{" "}
               <Link href="/create-takeaway" className="">
                 <span className="inline-flex items-center gap-x-1 underline underline-offset-2">
                   <p>here</p>
