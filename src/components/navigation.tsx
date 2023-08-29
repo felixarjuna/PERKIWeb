@@ -22,7 +22,7 @@ export default function Navigation({ showNav }: NavigationProps) {
             },
           }}
           exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-          className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50 xs:mx-4 xs:text-xs xs:gap-1 xs:px-4 xs:py-3"
+          className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50 xs:text-xs xs:gap-1 xs:px-4 xs:py-3 xs:mx-auto"
         >
           <Link href={"/"} className="font-reimbrandt text-2xl xs:text-sm xs:mr-2">
             Perki Aachen
