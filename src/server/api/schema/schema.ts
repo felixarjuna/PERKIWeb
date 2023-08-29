@@ -27,7 +27,7 @@ export const addScheduleSchema = z.object({
   multimedia: z.string().min(2).max(50).optional(),
   accommodation: z.string().min(2).max(50).optional(),
   cookingGroup: z.string().min(2).max(50).optional(),
-  cleaningGroup: z.string().min(2).max(50).optional(),
+  cleaningGroup: z.string().min(2).max(50),
 });
 
 export const addScheduleSchemaBackend = addScheduleSchema.extend({ date: z.string() });
