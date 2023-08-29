@@ -4,7 +4,7 @@ import { publicProcedure, router } from "@/server/trpc";
 import { addTakeawaySchemaBackend } from "../schema/schema";
 
 export const takeawayRouter = router({
-  getTakeaway: publicProcedure.query(async () => {
+  getTakeaways: publicProcedure.query(async () => {
     return db.select().from(takeaways).all();
   }),
   addTakeaway: publicProcedure.input(addTakeawaySchemaBackend).mutation(async ({ input }) => {
