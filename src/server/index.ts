@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { router } from "./trpc";
 
 import Database from "better-sqlite3";
+import { prayerRouter } from "./api/routers/prayers";
 import { scheduleRouter } from "./api/routers/schedules";
 import { takeawayRouter } from "./api/routers/takeaway";
 import { todoRouter } from "./api/routers/todo";
@@ -13,6 +14,7 @@ export const appRouter = router({
   todos: todoRouter,
   takeaways: takeawayRouter,
   schedules: scheduleRouter,
+  prayers: prayerRouter,
 });
 
 export type AppRouter = typeof appRouter;
