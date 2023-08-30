@@ -9,12 +9,17 @@ export const prayerRouter = router({
     return db.select().from(prayers).all();
   }),
   addPrayer: publicProcedure.input(addPrayerSchema).mutation(async ({ input }) => {
+    console.log(input);
     return db
       .insert(prayers)
       .values({ ...input })
       .run();
   }),
   updatePrayerCount: publicProcedure.input(addPrayerCountSchema).mutation(async ({ input }) => {
-    return db.update(prayers).set({ count: input.count }).where(eq(prayers.id, input.id)).run();
+    return db
+      .update(prayers)
+      .set({ count: input.count, prayerNames: input.prayerNames })
+      .where(eq(prayers.id, input.id))
+      .run();
   }),
 });
