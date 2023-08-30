@@ -1,4 +1,4 @@
-export const VisionAndMission = () => {
+export default function VisionAndMission() {
   return (
     <div className="pb-14 xs:pb-4">
       <div className="h-[1px] opacity-10 w-screen bg-light-green-default mb-10"></div>
@@ -29,4 +29,4 @@ export const VisionAndMission = () => {
       </div>
     </div>
   );
-};
+}

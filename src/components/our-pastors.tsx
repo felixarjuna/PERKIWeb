@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { pastors } from "../lib/data";
@@ -36,7 +37,13 @@ export default function OurPastors() {
               </div>
 
               <div className="bg-green-default rounded-full h-64 w-64 overflow-hidden border-4 border-green-default xs:h-44 xs:w-44 xs:mt-8 xs:col-span-3 xs:mx-auto">
-                <img src={pastor.img} alt="Chen" className="rounded-lg object-cover mx-auto" />
+                <Image
+                  src={pastor.img}
+                  alt="Chen"
+                  className="rounded-lg object-cover mx-auto"
+                  width={500}
+                  height={500}
+                />
               </div>
             </div>
           ))}

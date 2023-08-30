@@ -1,4 +1,4 @@
-import { MouseTrackingLayout } from "@/components/mouse-tracking-layout";
+import MouseTrackingLayout from "@/components/mouse-tracking-layout";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import localFont from "@next/font/local";

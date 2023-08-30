@@ -11,7 +11,7 @@ interface IMouse extends React.HTMLAttributes<HTMLDivElement> {
   blur?: boolean;
 }
 
-export const Mouse = ({ r, x, y, className, blur = true }: IMouse) => {
+export default function Mouse({ r, x, y, className, blur = true }: IMouse) {
   return (
     <motion.div
       animate={{
@@ -27,4 +27,4 @@ export const Mouse = ({ r, x, y, className, blur = true }: IMouse) => {
       )}
     ></motion.div>
   );
-};
+}

@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { Mouse } from "./mouse";
+import Mouse from "./mouse";
 
 type Position = {
   x: number;
   y: number;
 };
 
-export const MouseTrackingLayout = ({ children }: { children: React.ReactNode }) => {
+export default function MouseTrackingLayout({ children }: { children: React.ReactNode }) {
   const [position, setPosition] = React.useState<Position>({
     x: typeof window !== "undefined" ? window?.innerWidth / 2 : 0,
     y: typeof window !== "undefined" ? window?.innerHeight / 2 : 0,
@@ -25,4 +25,4 @@ export const MouseTrackingLayout = ({ children }: { children: React.ReactNode })
       {children}
     </div>
   );
-};
+}

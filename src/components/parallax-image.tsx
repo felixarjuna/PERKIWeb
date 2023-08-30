@@ -12,7 +12,7 @@ interface ParallaxImageProps extends React.HTMLAttributes<HTMLDivElement> {
   height: number;
 }
 
-export const ParallaxImage = ({ img, alt, width, height, className }: ParallaxImageProps) => {
+export default function ParallaxImage({ img, alt, width, height, className }: ParallaxImageProps) {
   const targetRef = React.useRef(null);
 
   const { scrollYProgress } = useScroll({
@@ -39,4 +39,4 @@ export const ParallaxImage = ({ img, alt, width, height, className }: ParallaxIm
       />
     </motion.div>
   );
-};
+}

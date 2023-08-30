@@ -2,8 +2,9 @@ import React from "react";
 import { useIntersection } from "react-use";
 
 import Navigation from "./navigation";
-import { ParallaxImage } from "./parallax-image";
-import { VisionAndMission } from "./vision-and-mission";
+
+import ParallaxImage from "./parallax-image";
+import VisionAndMission from "./vision-and-mission";
 
 export default function AboutUs() {
   const [showNav, setShowNav] = React.useState<boolean>(false);
@@ -68,7 +69,7 @@ export default function AboutUs() {
           <p className="max-w-[90%] text-6xl z-10 leading-[4.5rem] xl:text-5xl xl:leading-[4rem] lg:text-4xl lg:leading-[3.5rem] md:text-3xl md:leading-[3rem] sm:text-2xl sm:leading-[2.5rem] xs:text-xl xs:leading-[2rem]">
             We seek to foster a strong sense of community and spiritual growth among our members,
             encouraging ourselves to live out their faith authentically and share the message of
-            God's love and salvation with others.
+            God&apos;s love and salvation with others.
           </p>
           <ParallaxImage
             img={"/images/pandya.png"}

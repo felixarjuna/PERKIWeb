@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation";
 import { services } from "@/lib/data";
 
-export const Activity = () => {
+export default function Activity() {
   return (
     <section className="bg-dark-green-default text-cream-default pb-40">
       <Navigation showNav={true} />
@@ -24,4 +24,4 @@ export const Activity = () => {
       </div>
     </section>
   );
-};
+}

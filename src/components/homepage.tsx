@@ -1,4 +1,4 @@
-import { CircleBackground } from "./circle-background";
+import CircleBackground from "./circle-background";
 
 export default function Homepage() {
   return (

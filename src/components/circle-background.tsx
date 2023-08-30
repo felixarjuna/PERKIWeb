@@ -11,14 +11,14 @@ interface IRoundedBackground extends React.HTMLAttributes<HTMLDivElement> {
   reverse?: boolean;
 }
 
-export const CircleBackground = ({
+export default function CircleBackground({
   r,
   className,
   delay = 0,
   blur = true,
   duration = 20,
   reverse = false,
-}: IRoundedBackground) => {
+}: IRoundedBackground) {
   return (
     <motion.div
       layout
@@ -43,4 +43,4 @@ export const CircleBackground = ({
       )}
     />
   );
-};
+}
