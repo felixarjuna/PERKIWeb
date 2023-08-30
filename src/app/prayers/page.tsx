@@ -1,17 +1,14 @@
 "use client";
 
 import Navigation from "@/components/navigation";
-import { Plus } from "lucide-react";
-import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Toggle } from "@/components/ui/toggle";
+import { trpc } from "../_trpc/client";
+import { AddPrayerForm } from "./add-prayer-form";
 
 export default function Prayers() {
-  const [prayers, setPrayers] = React.useState<string[]>([]);
-
-  const onAddPrayer = (prayer: string) => {
-    setPrayers((prevPrayers) => [...prevPrayers, prayer]);
-  };
-
-  const [prayer, setPrayer] = React.useState<string>("");
+  const { data: prayers } = trpc.prayers.getPrayers.useQuery();
+  const updatePrayerCount = trpc.prayers.updatePrayerCount.useMutation();
 
   return (
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
@@ -30,33 +27,38 @@ export default function Prayers() {
 
         <div className="flex flex-col max-w-5xl w-full px-14 gap-y-4 mt-4 xs:w-full xs:px-0">
           <h3 className="text-2xl font-reimbrandt xs:text-base mb-8 xs:mb-4">
-            Let's pray together every Wednesday at 18.30 a.m 😍
+            Let&apos;s pray together every Wednesday at 18.30 a.m 😍
           </h3>
 
-          <div className="self-start flex gap-x-4 w-full xs:gap-2">
-            <input
-              className="px-8 py-4 flex-1 bg-green-default/70 rounded-lg placeholder-cream-default outline-none text-xl xs:text-sm xs:px-4 xs:py-3"
-              type="text"
-              placeholder="Insert your prayer here ..."
-              value={prayer}
-              onChange={(e) => {
-                setPrayer(e.target.value);
-              }}
-            />
-            <button
-              className="bg-green-default/70 px-4 py-2 rounded-lg flex items-center gap-x-1 hover:bg-green-default xs:text-xs xs:px-2 xs:py-1"
-              onClick={() => onAddPrayer(prayer)}
-            >
-              <Plus className="w-5 h-5 xs:w-4 xs:h-4" />
-              Add
-            </button>
-          </div>
-
+          <AddPrayerForm />
           <div className="bg-green-default/80 w-full rounded-lg px-8 py-4 min-h-[300px] xs:px-4 xs:py-2">
-            <h2 className="text-3xl font-reimbrandt xs:text-xl">Prayer's list</h2>
+            <h2 className="text-3xl font-reimbrandt xs:text-xl">Prayer&apos;s list</h2>
             <ul className="flex flex-col gap-2 my-4 xs:my-2">
-              {prayers.map((prayer) => {
-                return <li className="text-xl xs:text-base">{prayer}</li>;
+              {prayers?.map((prayer, index) => {
+                return (
+                  <li className="text-base xs:text-base flex justify-between" key={index}>
+                    {prayer.content}
+                    <div className="flex gap-x-2 items-center">
+                      <Badge variant={"secondary"} className="font-thin">
+                        {prayer.name}
+                      </Badge>
+                      <Toggle
+                        className="h-6 w-6 p-1"
+                        onPressedChange={(pressed) => {
+                          updatePrayerCount.mutate({
+                            id: prayer.id,
+                            count: pressed ? prayer.count++ : prayer.count--,
+                          });
+                        }}
+                      >
+                        🙏
+                      </Toggle>
+                      <Badge variant={"secondary"} className="w-8 flex items-center justify-center">
+                        {prayer.count}
+                      </Badge>
+                    </div>
+                  </li>
+                );
               })}
             </ul>
           </div>

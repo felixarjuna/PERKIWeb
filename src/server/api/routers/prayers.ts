@@ -14,7 +14,7 @@ export const prayerRouter = router({
       .values({ ...input })
       .run();
   }),
-  addPrayerCount: publicProcedure.input(addPrayerCountSchema).mutation(async ({ input }) => {
+  updatePrayerCount: publicProcedure.input(addPrayerCountSchema).mutation(async ({ input }) => {
     return db.update(prayers).set({ count: input.count }).where(eq(prayers.id, input.id)).run();
   }),
 });
