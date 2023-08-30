@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const todos = sqliteTable("todos", {
   id: integer("id").primaryKey(),
@@ -22,6 +22,7 @@ export const prayers = sqliteTable("prayers", {
   name: text("name"),
   content: text("content").notNull(),
   count: integer("count").notNull().default(0),
+  prayerNames: blob("prayerNames", { mode: "json" }).notNull().$type<string[]>(),
 });
 
 export const schedules = sqliteTable("schedules", {

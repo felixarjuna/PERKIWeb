@@ -35,9 +35,11 @@ export const addScheduleSchemaBackend = addScheduleSchema.extend({ date: z.strin
 export const addPrayerSchema = z.object({
   name: z.string().optional(),
   content: z.string().min(2).max(50),
+  prayerNames: z.array(z.string()),
 });
 
 export const addPrayerCountSchema = z.object({
   id: z.number(),
   count: z.number(),
+  prayerNames: z.array(z.string()),
 });
