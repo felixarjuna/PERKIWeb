@@ -53,7 +53,10 @@ export default function Prayers() {
                       >
                         🙏
                       </Toggle>
-                      <Badge variant={"secondary"} className="w-8 flex items-center justify-center">
+                      <Badge
+                        variant={"secondary"}
+                        className="w-8 flex items-center justify-center font-thin"
+                      >
                         {prayer.count}
                       </Badge>
                     </div>

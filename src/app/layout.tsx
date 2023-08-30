@@ -1,4 +1,5 @@
 import { MouseTrackingLayout } from "@/components/mouse-tracking-layout";
+import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import localFont from "@next/font/local";
 import type { Metadata } from "next";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={cn(satoshi.variable, reimbrandt.variable)} suppressHydrationWarning>
         <Provider>
           <MouseTrackingLayout>{children}</MouseTrackingLayout>
+          <Toaster />
         </Provider>
       </body>
     </html>

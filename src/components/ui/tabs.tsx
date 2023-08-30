@@ -15,7 +15,7 @@ export default function Tabs({ tabs, className }: TabsProps) {
   const [takeawayId, setTakeawayId] = React.useState<string>("");
 
   const takeaways = React.useMemo(() => {
-    return isEmpty(takeawayId)
+    return isEmpty(takeawayId) || takeawayId === "all"
       ? data
       : data?.filter((takeaway) => takeaway.takeawayId === takeawayId);
   }, [data, takeawayId]);

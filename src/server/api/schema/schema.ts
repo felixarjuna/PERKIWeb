@@ -21,7 +21,7 @@ export const addScheduleSchema = z.object({
     required_error: "Please select a speaker for the service.",
   }),
   bibleVerse: z.string().min(2).max(50),
-  summary: z.string().min(2).max(50),
+  summary: z.string().min(10),
   liturgos: z.string().min(2).max(50).optional(),
   musician: z.string().min(2).max(50).optional(),
   multimedia: z.string().min(2).max(50).optional(),

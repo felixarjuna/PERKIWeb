@@ -7,6 +7,7 @@ const tabs = [
   { id: "church-service", label: "Church service" },
   { id: "bg-bible-study", label: "Big group bible study" },
   { id: "sg-bible-study", label: "Small group bible study" },
+  { id: "all", label: "All services" },
 ];
 
 export default function Takeaway() {
