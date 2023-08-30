@@ -36,8 +36,10 @@ import { trpc } from "../_trpc/client";
 export default function AddScheduleForm() {
   const { toast } = useToast();
   const addSchedule = trpc.schedules.addSchedule.useMutation({
-    onSuccess: () =>
-      toast({ title: "New schedule added! 🎉", description: "Thanks for your contributions!" }),
+    onSuccess: () => {
+      toast({ title: "New schedule added! 🎉", description: "Thanks for your contributions!" });
+      router.push("/schedule");
+    },
   });
 
   const router = useRouter();
