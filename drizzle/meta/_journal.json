@@ -50,6 +50,83 @@
       "when": 1693336828321,
       "tag": "0006_sharp_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1693421030762,
+      "tag": "0007_ambiguous_madrox",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1693421820881,
+      "tag": "0008_medical_sheva_callister",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1693421888510,
+      "tag": "0009_tan_the_hood",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1693422029882,
+      "tag": "0010_spotty_charles_xavier",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1693422045917,
+      "tag": "0011_rapid_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1693422064213,
+      "tag": "0012_aromatic_queen_noir",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1693422325349,
+      "tag": "0013_smooth_the_leader",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1693422346330,
+      "tag": "0014_broken_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1693422406685,
+      "tag": "0015_lying_daredevil",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1693422497922,
+      "tag": "0016_striped_ultimates",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1693422535118,
+      "tag": "0017_round_mephisto",
+      "breakpoints": true
     }
   ]
 }
