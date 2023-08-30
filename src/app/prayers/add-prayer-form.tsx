@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
 import { addPrayerSchema } from "@/server/api/schema/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -22,7 +23,17 @@ const AddPrayerFormSchema = z.object({
 });
 
 export function AddPrayerForm() {
-  const addPrayer = trpc.prayers.addPrayer.useMutation();
+  const { toast } = useToast();
+  const utils = trpc.useContext();
+  const addPrayer = trpc.prayers.addPrayer.useMutation({
+    onSuccess: () => {
+      utils.prayers.invalidate();
+      toast({
+        title: "Your prayer is submitted! 🙏",
+        description: "Feel free to add another prayer!",
+      });
+    },
+  });
 
   const form = useForm<z.infer<typeof AddPrayerFormSchema>>({
     resolver: zodResolver(AddPrayerFormSchema),
