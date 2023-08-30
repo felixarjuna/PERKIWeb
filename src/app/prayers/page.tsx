@@ -7,8 +7,11 @@ import { trpc } from "../_trpc/client";
 import { AddPrayerForm } from "./add-prayer-form";
 
 export default function Prayers() {
+  const utils = trpc.useContext();
   const { data: prayers } = trpc.prayers.getPrayers.useQuery();
-  const updatePrayerCount = trpc.prayers.updatePrayerCount.useMutation();
+  const updatePrayerCount = trpc.prayers.updatePrayerCount.useMutation({
+    onSuccess: () => utils.prayers.invalidate(),
+  });
 
   return (
     <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
@@ -47,7 +50,7 @@ export default function Prayers() {
                         onPressedChange={(pressed) => {
                           updatePrayerCount.mutate({
                             id: prayer.id,
-                            count: pressed ? prayer.count++ : prayer.count--,
+                            count: pressed ? prayer.count + 1 : prayer.count - 1,
                           });
                         }}
                       >
