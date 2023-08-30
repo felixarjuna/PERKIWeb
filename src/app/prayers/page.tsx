@@ -6,9 +6,12 @@ import { Toggle } from "@/components/ui/toggle";
 import { trpc } from "../_trpc/client";
 import { AddPrayerForm } from "./add-prayer-form";
 
+const username = "felixarjuna";
+
 export default function Prayers() {
   const utils = trpc.useContext();
   const { data: prayers } = trpc.prayers.getPrayers.useQuery();
+
   const updatePrayerCount = trpc.prayers.updatePrayerCount.useMutation({
     onSuccess: () => utils.prayers.invalidate(),
   });
@@ -47,11 +50,23 @@ export default function Prayers() {
                       </Badge>
                       <Toggle
                         className="h-6 w-6 p-1"
+                        pressed={prayer.prayerNames.includes(username)}
                         onPressedChange={(pressed) => {
-                          updatePrayerCount.mutate({
-                            id: prayer.id,
-                            count: pressed ? prayer.count + 1 : prayer.count - 1,
-                          });
+                          if (pressed) {
+                            updatePrayerCount.mutate({
+                              id: prayer.id,
+                              count: pressed ? prayer.count + 1 : prayer.count - 1,
+                              prayerNames: [...prayer.prayerNames, username],
+                            });
+                          } else {
+                            updatePrayerCount.mutate({
+                              id: prayer.id,
+                              count: pressed ? prayer.count + 1 : prayer.count - 1,
+                              prayerNames: prayer.prayerNames.filter(
+                                (name) => !name.includes(username)
+                              ),
+                            });
+                          }
                         }}
                       >
                         🙏

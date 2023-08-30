@@ -46,6 +46,7 @@ export function AddPrayerForm() {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
       name: data.anonymous ? "anonymous" : "username",
+      prayerNames: new Array(),
     };
     addPrayer.mutate(request);
   }
