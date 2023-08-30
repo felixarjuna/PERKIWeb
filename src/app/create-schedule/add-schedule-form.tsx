@@ -1,4 +1,5 @@
-import Navigation from "@/components/navigation";
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -10,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
@@ -19,57 +21,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { accommodation, groups, liturgos, multimedia, musicians, speakers } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { addScheduleSchema } from "@/server/api/schema/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { ArrowLeft, CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { trpc } from "../_trpc/client";
 
-export default function AddSchedulePage() {
-  return (
-    <section className="bg-dark-green-default text-cream-default pb-40 min-h-screen">
-      <Navigation showNav={true} />
+export default function AddScheduleForm() {
+  const { toast } = useToast();
+  const addSchedule = trpc.schedules.addSchedule.useMutation({
+    onSuccess: () =>
+      toast({ title: "New schedule added! 🎉", description: "Thanks for your contributions!" }),
+  });
 
-      <div className="pt-20 px-24 flex flex-col items-center xs:px-12">
-        <div className="flex w-1/2 items-center justify-center gap-8 py-16 pb-4 flex-col xs:w-full xs:py-8">
-          <h1 className="text-9xl font-reimbrandt xs:text-4xl">Schedule</h1>
-          <div className="text-2xl flex flex-col gap-y-2 xs:text-base">
-            <p>
-              “There is a time for everything, and a season for every activity under the heavens.”
-            </p>
-            <p>– Ecclesiastes 3:1</p>
-          </div>
-        </div>
-
-        <div className="w-1/2 xs:w-full">
-          <AddScheduleForm />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const addScheduleSchema = z.object({
-  title: z.string().min(2, { message: "Title must be at least 2 characters." }).max(50),
-  date: z.date({
-    required_error: "A date of service is required.",
-  }),
-  speaker: z.string({
-    required_error: "Please select a speaker for the service.",
-  }),
-  bibleVerse: z.string().min(2).max(50),
-  summary: z.string().min(2).max(50),
-  liturgos: z.string().min(2).max(50).optional(),
-  musician: z.string().min(2).max(50).optional(),
-  multimedia: z.string().min(2).max(50).optional(),
-  accommodation: z.string().min(2).max(50).optional(),
-  cookingGroup: z.string().min(2).max(50).optional(),
-  cleaningGroup: z.string().min(2).max(50).optional(),
-});
-
-function AddScheduleForm() {
+  const router = useRouter();
   // 1. Define form.
   const form = useForm<z.infer<typeof addScheduleSchema>>({
     resolver: zodResolver(addScheduleSchema),
@@ -78,7 +49,8 @@ function AddScheduleForm() {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof addScheduleSchema>) {
-    console.log(values);
+    const request = { ...values, date: values.date.toString() };
+    addSchedule.mutate(request);
   }
 
   return (
@@ -376,9 +348,15 @@ function AddScheduleForm() {
           </section>
         </div>
 
-        <Button type="submit" variant={"default"}>
-          Add schedule
-        </Button>
+        <div className="flex justify-between">
+          <Button type="submit" variant={"default"}>
+            Add schedule
+          </Button>
+          <Button className="flex gap-x-2" onClick={() => router.back()}>
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+        </div>
       </form>
     </Form>
   );
