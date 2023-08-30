@@ -5,7 +5,11 @@ import { addScheduleSchemaBackend } from "../schema/schema";
 
 export const scheduleRouter = router({
   getSchedules: publicProcedure.query(async () => {
-    return db.select().from(schedules).all();
+    return db
+      .select()
+      .from(schedules)
+      .all()
+      .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
   }),
   addSchedule: publicProcedure.input(addScheduleSchemaBackend).mutation(async ({ input }) => {
     return db
