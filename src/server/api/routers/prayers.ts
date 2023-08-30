@@ -9,7 +9,6 @@ export const prayerRouter = router({
     return db.select().from(prayers).all();
   }),
   addPrayer: publicProcedure.input(addPrayerSchema).mutation(async ({ input }) => {
-    console.log(input);
     return db
       .insert(prayers)
       .values({ ...input })
