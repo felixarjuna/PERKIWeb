@@ -50,21 +50,19 @@ export default function Prayers() {
                       </Badge>
                       <Toggle
                         className="h-6 w-6 p-1"
-                        pressed={prayer.prayerNames.includes(username)}
+                        pressed={prayer.prayers.map((x) => x.name).includes(username)}
                         onPressedChange={(pressed) => {
                           if (pressed) {
                             updatePrayerCount.mutate({
                               id: prayer.id,
                               count: pressed ? prayer.count + 1 : prayer.count - 1,
-                              prayerNames: [...prayer.prayerNames, username],
+                              prayerId: 1,
                             });
                           } else {
                             updatePrayerCount.mutate({
                               id: prayer.id,
                               count: pressed ? prayer.count + 1 : prayer.count - 1,
-                              prayerNames: prayer.prayerNames.filter(
-                                (name) => !name.includes(username)
-                              ),
+                              prayerId: 1,
                             });
                           }
                         }}
