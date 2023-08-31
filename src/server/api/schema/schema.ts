@@ -1,3 +1,4 @@
+import { type RouterOutputs } from "@/server/index";
 import { z } from "zod";
 
 export const addTakeawaySchema = z.object({
@@ -7,7 +8,7 @@ export const addTakeawaySchema = z.object({
   speaker: z.string(),
   bibleVerse: z.string(),
   summary: z.string(),
-  contributors: z.array(z.string()),
+  contributorId: z.number(),
 });
 
 export const addScheduleSchema = z.object({
@@ -28,14 +29,64 @@ export const addScheduleSchema = z.object({
   cleaningGroup: z.string().min(2).max(50),
 });
 
+export type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
+export type Takeaway = RouterOutputs["takeaways"]["getTakeaways"][number];
+
+const prayerSchema = z
+  .object({
+    prayers: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      })
+    ),
+  })
+  .and(
+    z.object({
+      id: z.bigint(),
+      name: z.string().nullable(),
+      content: z.string(),
+      count: z.number(),
+    })
+  );
+
+const takeawaySchema = z
+  .object({
+    contributors: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      })
+    ),
+  })
+  .and(
+    z.object({
+      id: z.bigint(),
+      takeawayId: z.string(),
+      title: z.string(),
+      date: z.date(),
+      speaker: z.string(),
+      bibleVerse: z.string(),
+      summary: z.string(),
+    })
+  );
+
+export const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  prayersPrayed: z.array(prayerSchema),
+  takeaways: z.array(takeawaySchema),
+});
+
 export const addPrayerSchema = z.object({
   name: z.string().optional(),
   content: z.string().min(2).max(50),
-  prayerNames: z.array(z.string()),
+  count: z.number().optional().default(0),
+  prayerId: z.number(),
 });
 
 export const addPrayerCountSchema = z.object({
   id: z.number(),
   count: z.number(),
-  prayerNames: z.array(z.string()),
+  prayerId: z.number(),
 });
