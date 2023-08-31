@@ -4,11 +4,11 @@ import { publicProcedure, router } from "@/server/trpc";
 import { addTakeawaySchema } from "../schema/schema";
 
 export const takeawayRouter = router({
-  getTakeaways: publicProcedure.query(() => {
-    return db.select().from(takeaways);
+  getTakeaways: publicProcedure.query(async () => {
+    return await db.select().from(takeaways);
   }),
-  addTakeaway: publicProcedure.input(addTakeawaySchema).mutation(({ input }) => {
-    return db.insert(takeaways).values({
+  addTakeaway: publicProcedure.input(addTakeawaySchema).mutation(async ({ input }) => {
+    return await db.insert(takeaways).values({
       title: input.title,
       takeawayId: input.takeawayId,
       date: input.date,
