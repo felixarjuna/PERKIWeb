@@ -4,7 +4,7 @@ import { publicProcedure, router } from "@/server/trpc";
 import { z } from "zod";
 
 export const todoRouter = router({
-  getTodos: publicProcedure.query(async () => {
+  getTodos: publicProcedure.query(() => {
     return db.select().from(todos);
   }),
   addTodo: publicProcedure.input(z.string()).mutation(async (opts) => {

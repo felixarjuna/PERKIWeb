@@ -4,10 +4,10 @@ import { publicProcedure, router } from "@/server/trpc";
 import { addScheduleSchema } from "../schema/schema";
 
 export const scheduleRouter = router({
-  getSchedules: publicProcedure.query(async () => {
+  getSchedules: publicProcedure.query(() => {
     return db.select().from(schedules).orderBy(schedules.date);
   }),
-  addSchedule: publicProcedure.input(addScheduleSchema).mutation(async ({ input }) => {
+  addSchedule: publicProcedure.input(addScheduleSchema).mutation(({ input }) => {
     return db.insert(schedules).values({
       title: input.title,
       date: input.date,
