@@ -51,8 +51,7 @@ export default function AddScheduleForm() {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof addScheduleSchema>) {
-    const request = { ...values, date: values.date.toString() };
-    addSchedule.mutate(request);
+    addSchedule.mutate(values);
   }
 
   return (
