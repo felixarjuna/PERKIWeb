@@ -42,7 +42,7 @@ export default function Tabs({ tabs, className }: TabsProps) {
               key={index}
               tabId={takeaway.takeawayId}
               title={takeaway.title}
-              date={dateTimeFormatter(takeaway.date)}
+              date={dateTimeFormatter(takeaway.date.toString())}
               speaker={takeaway.speaker}
               bibleVerse={takeaway.bibleVerse}
               summary={takeaway.summary}

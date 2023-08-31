@@ -19,7 +19,7 @@ export default function ScheduleList() {
                 <span>&middot;</span>
                 <p>{schedule.bibleVerse}</p>
                 <span>&middot;</span>
-                <p>{dateTimeFormatter(schedule.date)}</p>
+                <p>{dateTimeFormatter(schedule.date.toString())}</p>
               </div>
               <p className="mt-4 xs:text-sm">{schedule.summary}</p>
             </div>
