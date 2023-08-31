@@ -1,34 +1,34 @@
-import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { datetime, int, json, mysqlTable, serial, text } from "drizzle-orm/mysql-core";
 
-export const todos = sqliteTable("todos", {
-  id: integer("id").primaryKey(),
+export const todos = mysqlTable("todos", {
+  id: serial("id").primaryKey(),
   content: text("content"),
-  done: integer("done"),
+  done: int("done"),
 });
 
-export const takeaways = sqliteTable("takeaways", {
-  id: integer("id").primaryKey(),
+export const takeaways = mysqlTable("takeaways", {
+  id: serial("id").primaryKey(),
   takeawayId: text("takeawayId").notNull(),
   title: text("title").notNull(),
-  date: text("date").notNull(),
+  date: datetime("date").notNull(),
   speaker: text("speaker").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
   summary: text("summary").notNull(),
   contributors: text("contributors").notNull().$type<string[]>(),
 });
 
-export const prayers = sqliteTable("prayers", {
-  id: integer("id").primaryKey(),
+export const prayers = mysqlTable("prayers", {
+  id: serial("id").primaryKey(),
   name: text("name"),
   content: text("content").notNull(),
-  count: integer("count").notNull().default(0),
-  prayerNames: blob("prayerNames", { mode: "json" }).notNull().$type<string[]>(),
+  count: int("count").notNull().default(0),
+  prayerNames: json("prayerNames").notNull().$type<string[]>(),
 });
 
-export const schedules = sqliteTable("schedules", {
-  id: integer("id").primaryKey(),
+export const schedules = mysqlTable("schedules", {
+  id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  date: text("date").notNull(),
+  date: datetime("date").notNull(),
   speaker: text("speaker").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
   summary: text("summary").notNull(),
