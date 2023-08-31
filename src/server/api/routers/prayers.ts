@@ -1,20 +1,22 @@
-import { prayers } from "@/db/schema";
-import { db } from "@/server";
 import { publicProcedure, router } from "@/server/trpc";
-import { eq } from "drizzle-orm";
 import { addPrayerCountSchema, addPrayerSchema } from "../schema/schema";
 
 export const prayerRouter = router({
-  getPrayers: publicProcedure.query(async () => {
-    return db.select().from(prayers);
+  getPrayers: publicProcedure.query(({ ctx }) => {
+    return ctx.prisma.prayers.findMany({ include: { prayers: true } });
   }),
-  addPrayer: publicProcedure.input(addPrayerSchema).mutation(async ({ input }) => {
-    return db.insert(prayers).values({ ...input });
+  addPrayer: publicProcedure.input(addPrayerSchema).mutation(({ ctx, input }) => {
+    return ctx.prisma.prayers.create({
+      data: { ...input, prayers: { connect: { id: input.prayerId } } },
+    });
   }),
-  updatePrayerCount: publicProcedure.input(addPrayerCountSchema).mutation(async ({ input }) => {
-    return db
-      .update(prayers)
-      .set({ count: input.count, prayerNames: input.prayerNames })
-      .where(eq(prayers.id, input.id));
+  updatePrayerCount: publicProcedure.input(addPrayerCountSchema).mutation(({ ctx, input }) => {
+    return ctx.prisma.prayers.update({
+      where: { id: input.id },
+      data: {
+        count: input.count,
+        prayers: { connect: { id: input.prayerId } },
+      },
+    });
   }),
 });
