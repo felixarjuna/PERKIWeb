@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "../_trpc/client";
 
 export default function TodoList() {
-  const { data: todos } = trpc.todos.getTodos.useQuery();
-  const addTodo = trpc.todos.addTodo.useMutation();
+  const getTodos = trpc.todos.getTodos.useQuery();
+  const addTodo = trpc.todos.addTodo.useMutation({
+    onSettled: () => getTodos.refetch(),
+  });
 
   return (
     <div className="p-20 text-cream-default">
       <h2>Todo Test endpoint</h2>
-      {todos?.map((todo, index) => {
+      {getTodos.data?.map((todo, index) => {
         return <div key={index}>{JSON.stringify(todo)}</div>;
       })}
       <Button
