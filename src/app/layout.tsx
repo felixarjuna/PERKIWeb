@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import localFont from "@next/font/local";
 import type { Metadata } from "next";
+import { AxiomWebVitals } from "next-axiom";
 import Provider from "./_trpc/Provider";
 import "./globals.css";
 
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <AxiomWebVitals />
       <body className={cn(satoshi.variable, reimbrandt.variable)} suppressHydrationWarning>
         <Provider>
           <MouseTrackingLayout>{children}</MouseTrackingLayout>
