@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import localFont from "next/font/local";
 import MouseTrackingLayout from "~/components/mouse-tracking-layout";
 import { Toaster } from "~/components/ui/toaster";
@@ -13,11 +12,6 @@ const reimbrandt = localFont({
   src: "./../fonts/Reimbrandt-Regular.otf",
   variable: "--font-reimbrandt",
 });
-
-export const metadata: Metadata = {
-  title: "Perki Aachen",
-  description: "Perki Aachen Website",
-};
 
 export default function RootLayout({
   children,
