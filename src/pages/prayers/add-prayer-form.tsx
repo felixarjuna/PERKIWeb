@@ -24,7 +24,7 @@ const AddPrayerFormSchema = z.object({
   content: z.string().min(2),
 });
 
-export function AddPrayerForm() {
+export default function AddPrayerForm() {
   const { toast } = useToast();
   const utils = api.useContext();
   const addPrayer = api.prayers.addPrayer.useMutation({

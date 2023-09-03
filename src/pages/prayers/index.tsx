@@ -4,7 +4,7 @@ import Navigation from "~/components/navigation";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { api } from "~/utils/api";
-import { AddPrayerForm } from "./add-prayer-form";
+import AddPrayerForm from "./add-prayer-form";
 
 const username = "felixarjuna";
 
