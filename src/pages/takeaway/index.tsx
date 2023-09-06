@@ -1,7 +1,7 @@
 import { LinkIcon } from "lucide-react";
 import Link from "next/link";
 import Navigation from "~/components/navigation";
-import TakeawayList from "~/components/ui/tabs";
+import TakeawayList from "~/pages/takeaway/takeaway-list";
 
 const tabs = [
   { id: "church-service", label: "Church service" },
