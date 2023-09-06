@@ -50,7 +50,7 @@ export default function Prayers() {
                 {prayers?.map((prayer, index) => {
                   return (
                     <li
-                      className="relative flex justify-between gap-y-1 rounded-lg bg-green-default/80 px-8 py-4 text-sm xs:flex-col xs:px-4 xs:py-3 xs:text-base"
+                      className="relative flex justify-between gap-y-1 rounded-lg bg-green-default/80 p-6 text-sm xs:flex-col xs:px-4 xs:py-4 xs:text-base"
                       key={index}
                     >
                       <p className="xs:px-2 xs:text-xs">{prayer.content}</p>

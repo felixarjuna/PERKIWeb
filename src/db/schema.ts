@@ -1,4 +1,12 @@
-import { datetime, int, json, mysqlTable, serial, text } from "drizzle-orm/mysql-core";
+import {
+  boolean,
+  datetime,
+  int,
+  json,
+  mysqlTable,
+  serial,
+  text,
+} from "drizzle-orm/mysql-core";
 
 export const todos = mysqlTable("todos", {
   id: serial("id").primaryKey(),
@@ -20,6 +28,7 @@ export const takeaways = mysqlTable("takeaways", {
 export const prayers = mysqlTable("prayers", {
   id: serial("id").primaryKey(),
   name: text("name"),
+  isAnonymous: boolean("isAnonymous").default(false),
   content: text("content").notNull(),
   count: int("count").notNull().default(0),
   prayerNames: json("prayerNames").notNull().$type<string[]>(),

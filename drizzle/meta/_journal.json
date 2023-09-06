@@ -8,6 +8,20 @@
       "when": 1693725456559,
       "tag": "0000_neat_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1694021332269,
+      "tag": "0001_lean_tyrannus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1694021370644,
+      "tag": "0002_lyrical_bastion",
+      "breakpoints": true
     }
   ]
 }
