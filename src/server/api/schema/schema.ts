@@ -11,7 +11,10 @@ export const addTakeawaySchema = z.object({
 });
 
 export const addScheduleSchema = z.object({
-  title: z.string().min(2, { message: "Title must be at least 2 characters." }).max(50),
+  title: z
+    .string()
+    .min(2, { message: "Title must be at least 2 characters." })
+    .max(50),
   date: z.date({
     required_error: "A date of service is required.",
   }),
@@ -38,4 +41,8 @@ export const addPrayerCountSchema = z.object({
   id: z.number(),
   count: z.number(),
   prayerNames: z.array(z.string()),
+});
+
+export const deletePrayerSchema = z.object({
+  id: z.number(),
 });

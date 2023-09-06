@@ -4,17 +4,29 @@ import ActionButton from "~/components/action-button";
 import Navigation from "~/components/navigation";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
+import { useToast } from "~/components/ui/use-toast";
 import { api } from "~/utils/api";
 import AddPrayerForm from "./add-prayer-form";
 
 const username = "felixarjuna";
 
 export default function Prayers() {
+  const { toast } = useToast();
   const utils = api.useContext();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
 
   const updatePrayerCount = api.prayers.updatePrayerCount.useMutation({
     onSuccess: () => utils.prayers.invalidate(),
+  });
+
+  const deletePrayer = api.prayers.deletePrayer.useMutation({
+    onSuccess: async () => {
+      await utils.prayers.invalidate();
+      toast({
+        title: "Prayer successfully deleted! 😥",
+        description: "Don't be shy, it's okay!",
+      });
+    },
   });
 
   return (
@@ -96,7 +108,9 @@ export default function Prayers() {
                             <ActionButton
                               className="flex gap-x-2"
                               onEditClick={() => alert("dont edit me")}
-                              onDeleteClick={() => alert("Dont delete me")}
+                              onDeleteClick={() =>
+                                deletePrayer.mutate({ id: prayer.id })
+                              }
                             />
                           ) : null}
                         </div>
