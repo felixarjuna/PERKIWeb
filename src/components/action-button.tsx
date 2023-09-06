@@ -39,7 +39,7 @@ export default function ActionButton({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete your prayer and cannot be undone. 😥
+              This will permanently delete your entry and cannot be undone. 😥
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

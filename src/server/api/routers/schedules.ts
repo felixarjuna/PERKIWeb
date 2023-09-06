@@ -1,6 +1,7 @@
+import { eq } from "drizzle-orm";
 import { schedules } from "~/db/schema";
 import { db } from "~/server";
-import { addScheduleSchema } from "../schema/schema";
+import { addScheduleSchema, deleteEntitySchema } from "../schema/schema";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
@@ -23,5 +24,10 @@ export const scheduleRouter = createTRPCRouter({
         cookingGroup: input.cookingGroup,
         cleaningGroup: input.cleaningGroup,
       });
+    }),
+  deleteSchedule: publicProcedure
+    .input(deleteEntitySchema)
+    .mutation(async ({ input }) => {
+      return await db.delete(schedules).where(eq(schedules.id, input.id));
     }),
 });

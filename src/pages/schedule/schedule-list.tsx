@@ -4,12 +4,24 @@ import { Bed, Music, PersonStanding, Sparkles, Utensils } from "lucide-react";
 import { useRouter } from "next/router";
 import ActionButton from "~/components/action-button";
 import { Separator } from "~/components/ui/separator";
+import { useToast } from "~/components/ui/use-toast";
 
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
 
 export default function ScheduleList() {
+  const { toast } = useToast();
+  const utils = api.useContext();
   const { data: schedules } = api.schedules.getSchedules.useQuery();
+
+  const deleteSchedule = api.schedules.deleteSchedule.useMutation({
+    onSuccess: async () => {
+      await utils.schedules.invalidate();
+      toast({
+        title: "Schedule successfully deleted! 🥸",
+      });
+    },
+  });
 
   const router = useRouter();
   return (
@@ -32,7 +44,9 @@ export default function ScheduleList() {
                   onEditClick={() =>
                     void router.push(`/edit-schedule/${schedule.id}`)
                   }
-                  onDeleteClick={() => alert("dont delete me")}
+                  onDeleteClick={() =>
+                    deleteSchedule.mutate({ id: schedule.id })
+                  }
                 />
               </div>
               <div className="flex items-center gap-x-2  font-reimbrandt text-green-400/80 xs:flex-wrap xs:gap-x-1 xs:text-xs">
@@ -88,7 +102,7 @@ export default function ScheduleList() {
               onEditClick={() =>
                 void router.push(`/edit-schedule/${schedule.id}`)
               }
-              onDeleteClick={() => alert("Don't delete me")}
+              onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
             />
           </div>
         );

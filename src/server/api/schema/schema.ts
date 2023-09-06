@@ -43,6 +43,6 @@ export const addPrayerCountSchema = z.object({
   prayerNames: z.array(z.string()),
 });
 
-export const deletePrayerSchema = z.object({
+export const deleteEntitySchema = z.object({
   id: z.number(),
 });
