@@ -1,6 +1,7 @@
 import { type AppType } from "next/app";
 
 import localFont from "next/font/local";
+import Head from "next/head";
 import MouseTrackingLayout from "~/components/mouse-tracking-layout";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
@@ -20,6 +21,12 @@ const reimbrandt = localFont({
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <main className={cn(reimbrandt.variable, satoshi.variable)}>
+      <Head>
+        <title>PerkiWEB</title>
+        <meta name="description" content="Website from Perki Aachen" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
       <MouseTrackingLayout>
         <Component {...pageProps} />
       </MouseTrackingLayout>
