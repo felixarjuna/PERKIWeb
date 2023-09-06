@@ -24,6 +24,7 @@ const AddPrayerFormSchema = z.object({
   content: z.string().min(2),
 });
 
+const username = "felixarjuna";
 export default function AddPrayerForm() {
   const { toast } = useToast();
   const utils = api.useContext();
@@ -47,7 +48,7 @@ export default function AddPrayerForm() {
   function onSubmit(data: z.infer<typeof AddPrayerFormSchema>) {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
-      name: data.anonymous ? "anonymous" : "username",
+      name: username,
       prayerNames: [],
     };
     addPrayer.mutate(request);
