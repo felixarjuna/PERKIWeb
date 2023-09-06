@@ -1,6 +1,7 @@
+import { eq } from "drizzle-orm";
 import { takeaways } from "~/db/schema";
 import { db } from "~/server";
-import { addTakeawaySchema } from "../schema/schema";
+import { addTakeawaySchema, deleteEntitySchema } from "../schema/schema";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
@@ -19,5 +20,10 @@ export const takeawayRouter = createTRPCRouter({
         summary: input.summary,
         contributors: input.contributors,
       });
+    }),
+  deleteTakeaway: publicProcedure
+    .input(deleteEntitySchema)
+    .mutation(async ({ input }) => {
+      return await db.delete(takeaways).where(eq(takeaways.id, input.id));
     }),
 });

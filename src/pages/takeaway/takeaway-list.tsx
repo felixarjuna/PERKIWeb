@@ -5,6 +5,7 @@
 import { isEmpty } from "lodash";
 import { useRouter } from "next/router";
 import React from "react";
+import { useToast } from "~/components/ui/use-toast";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
 import ActionButton from "../../components/action-button";
@@ -78,7 +79,19 @@ interface TakeawayItemProps {
 }
 
 function TakeawayItem(props: TakeawayItemProps) {
+  const { toast } = useToast();
+  const utils = api.useContext();
+
   const router = useRouter();
+
+  const deleteTakeaway = api.takeaways.deleteTakeaway.useMutation({
+    onSuccess: async () => {
+      toast({
+        title: "Takeaway successfully deleted! 🥸",
+      });
+      await utils.takeaways.invalidate();
+    },
+  });
 
   return (
     <div className="w-full cursor-pointer rounded-lg bg-green-default/60 p-6 shadow-lg transition duration-300 hover:bg-green-default/80 xs:p-4">
@@ -86,11 +99,11 @@ function TakeawayItem(props: TakeawayItemProps) {
         {props.title}
         <div className="flex gap-x-2">
           <ActionButton
-            className="flex gap-x-2 xs:hidden"
+            className="flex items-center gap-x-2 xs:hidden"
             onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
-            onDeleteClick={() => alert("Don't delete me!")}
+            onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
           />
-          <span className="my-auto rounded-lg bg-light-green-default px-2 py-1 text-sm text-green-default xs:p-1 xs:text-xs">
+          <span className="my-auto flex h-6 items-center rounded-lg bg-light-green-default px-2 text-sm text-green-default xs:p-1 xs:text-xs">
             {props.tabId}
           </span>
         </div>
@@ -109,7 +122,7 @@ function TakeawayItem(props: TakeawayItemProps) {
       <ActionButton
         className=" flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden xs:visible"
         onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
-        onDeleteClick={() => alert("Don't delete me")}
+        onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
       />
     </div>
   );
