@@ -8,14 +8,14 @@ import React from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
-import ActionButton from "../../components/action-button";
+import ActionButton from "../action-button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "../ui/select";
 
 interface TakeawayListProps extends React.HTMLAttributes<HTMLDivElement> {
   tabs: { id: string; label: string }[];
