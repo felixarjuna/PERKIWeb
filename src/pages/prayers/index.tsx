@@ -1,12 +1,13 @@
 "use client";
 
-import ActionButton from "~/components/action-button";
+import { DeleteButton } from "~/components/action-button";
 import Navigation from "~/components/navigation";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { useToast } from "~/components/ui/use-toast";
 import { api } from "~/utils/api";
 import AddPrayerForm from "./add-prayer-form";
+import EditPrayerDialog from "./edit-prayer-dialog";
 
 const username = "felixarjuna";
 
@@ -62,7 +63,7 @@ export default function Prayers() {
                 {prayers?.map((prayer, index) => {
                   return (
                     <li
-                      className="relative flex justify-between gap-y-1 rounded-lg bg-green-default/80 p-6 text-sm xs:flex-col xs:px-4 xs:py-4 xs:text-base"
+                      className="relative flex justify-between gap-y-1 rounded-lg bg-green-default/80 p-6 text-sm xs:flex-col xs:p-4 xs:text-base"
                       key={index}
                     >
                       <p className="xs:px-2 xs:text-xs">{prayer.content}</p>
@@ -105,13 +106,15 @@ export default function Prayers() {
                           </Toggle>
 
                           {username === prayer.name ? (
-                            <ActionButton
-                              className="flex gap-x-2"
-                              onEditClick={() => alert("dont edit me")}
-                              onDeleteClick={() =>
-                                deletePrayer.mutate({ id: prayer.id })
-                              }
-                            />
+                            <div className="flex gap-x-2">
+                              <EditPrayerDialog prayer={prayer} />
+
+                              <DeleteButton
+                                onDeleteClick={() =>
+                                  deletePrayer.mutate({ id: prayer.id })
+                                }
+                              />
+                            </div>
                           ) : null}
                         </div>
                       </div>

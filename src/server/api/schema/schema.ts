@@ -46,6 +46,8 @@ export const addPrayerSchema = z.object({
   prayerNames: z.array(z.string()),
 });
 
+export const editPrayerSchema = addPrayerSchema.extend({ id: z.number() });
+
 export const addPrayerCountSchema = z.object({
   id: z.number(),
   count: z.number(),
