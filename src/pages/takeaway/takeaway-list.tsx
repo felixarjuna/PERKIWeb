@@ -114,7 +114,6 @@ function TakeawayItem(props: TakeawayItemProps) {
         <p>{props.bibleVerse}</p>
         <span>&middot;</span>
         <p>{props.date}</p>
-        <span>&middot;</span>
       </div>
       <p className="mt-4 xs:text-sm">{props.summary}</p>
       <p className="mt-4 text-green-400/80 xs:text-xs">{props.contributors}</p>
