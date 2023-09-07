@@ -7,6 +7,24 @@ interface NavigationProps {
   showNav: boolean;
 }
 
+const navigations = [
+  {
+    icon: "🙏",
+    name: "Prayer",
+    href: "/prayers",
+  },
+  {
+    icon: "📅",
+    name: "Schedule",
+    href: "/schedule",
+  },
+  {
+    icon: "🧠",
+    name: "Takeaway",
+    href: "/takeaway",
+  },
+];
+
 export default function Navigation({ showNav }: NavigationProps) {
   return (
     <AnimatePresence>
@@ -22,29 +40,28 @@ export default function Navigation({ showNav }: NavigationProps) {
             },
           }}
           exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-          className="fixed isolate top-10 left-0 right-0 mx-auto bg-green-default/40 w-fit h-fit text-cream-default text-xl px-8 py-4 rounded-lg flex gap-6 z-50 xs:text-xs xs:gap-1 xs:px-4 xs:py-3 xs:mx-auto"
+          className="fixed left-0 right-0 top-10 isolate z-50 mx-auto flex h-fit w-fit items-center gap-6 rounded-lg bg-green-default/40 px-8 py-4 text-xl text-cream-default xs:mx-auto xs:max-w-[18rem] xs:gap-1 xs:gap-x-3 xs:py-3 xs:text-xs"
         >
-          <Link href={"/"} className="font-reimbrandt text-2xl xs:text-sm xs:mr-2">
+          <Link
+            href={"/"}
+            className="text-center font-reimbrandt text-2xl xs:my-auto xs:mr-2 xs:text-base"
+          >
             Perki Aachen
           </Link>
-          <Link href="/prayers" className="flex gap-2 cursor-pointer items-center xs:gap-1">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[1px] xs:w-5 xs:h-5 flex items-center justify-center">
-              🙏
-            </span>
-            <p>Prayers</p>
-          </Link>
-          <Link href="/schedule" className="flex gap-2 cursor-pointer items-center xs:gap-1">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[1px] xs:w-5 xs:h-5 flex items-center justify-center">
-              📅
-            </span>
-            <p>Schedule</p>
-          </Link>
-          <Link href="/takeaway" className="flex gap-2 cursor-pointer items-center xs:gap-1">
-            <span className="bg-gradient-to-r from-light-green-default/50 to-green-default rounded-lg p-[2px] xs:p-[1px] xs:w-5 xs:h-5 flex items-center justify-center">
-              🧠
-            </span>
-            <p>Takeaways</p>
-          </Link>
+          {navigations.map((nav, index) => {
+            return (
+              <Link
+                key={index}
+                href={nav.href}
+                className="flex cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
+              >
+                <span className="flex items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xs:h-6 xs:w-6 xs:p-[1px]">
+                  {nav.icon}
+                </span>
+                <p>{nav.name}</p>
+              </Link>
+            );
+          })}
         </motion.div>
       ) : null}
     </AnimatePresence>
