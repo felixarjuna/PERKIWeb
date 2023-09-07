@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { useRouter } from "next/router";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -42,7 +43,9 @@ export default function EditTakeawayForm() {
 
   const id = router.query.id as string;
   const { data } = api.takeaways.getTakeawayById.useQuery({ id: parseInt(id) });
-  const takeaway = data?.at(0);
+  const takeaway = React.useMemo(() => {
+    return data?.at(0);
+  }, [data]);
 
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
@@ -58,13 +61,7 @@ export default function EditTakeawayForm() {
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
     defaultValues: {
-      id: takeaway?.id,
-      takeawayId: takeaway?.takeawayId,
-      title: takeaway?.title,
-      date: takeaway?.date,
-      speaker: takeaway?.speaker,
-      bibleVerse: takeaway?.bibleVerse,
-      summary: takeaway?.summary,
+      ...takeaway,
       // TODO: Automatically take contributors name from the username
       contributors: ["felixarjuna"],
     },

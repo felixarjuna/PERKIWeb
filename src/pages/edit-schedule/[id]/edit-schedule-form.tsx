@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
+import React from "react";
+
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -38,31 +40,45 @@ import {
   speakers,
 } from "~/lib/data";
 import { cn } from "~/lib/utils";
-import { addScheduleSchema } from "~/server/api/schema/schema";
+import { updateScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 export default function EditScheduleForm() {
   const { toast } = useToast();
-  const addSchedule = api.schedules.addSchedule.useMutation({
-    onSuccess: () => {
+  const router = useRouter();
+
+  const id = router.query.id as string;
+  const { data } = api.schedules.getScheduleById.useQuery({ id: parseInt(id) });
+  const schedule = React.useMemo(() => {
+    return data?.at(0);
+  }, [data]);
+
+  const updateSchedule = api.schedules.updateSchedule.useMutation({
+    onSuccess: async () => {
       toast({
-        title: "New schedule added! 🎉",
+        title: "Schedule updated successfully! ✨",
         description: "Thanks for your contributions!",
       });
-      router.push("/schedule");
+      await router.push("/schedule");
     },
   });
 
-  const router = useRouter();
   // 1. Define form.
-  const form = useForm<z.infer<typeof addScheduleSchema>>({
-    resolver: zodResolver(addScheduleSchema),
-    defaultValues: {},
+  const form = useForm<z.infer<typeof updateScheduleSchema>>({
+    resolver: zodResolver(updateScheduleSchema),
+    defaultValues: {
+      ...schedule,
+      liturgos: schedule?.liturgos ?? undefined,
+      musician: schedule?.musician ?? undefined,
+      multimedia: schedule?.multimedia ?? undefined,
+      accommodation: schedule?.accommodation ?? undefined,
+      cookingGroup: schedule?.cookingGroup ?? undefined,
+    },
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof addScheduleSchema>) {
-    addSchedule.mutate(values);
+  function onSubmit(values: z.infer<typeof updateScheduleSchema>) {
+    updateSchedule.mutate(values);
   }
 
   return (

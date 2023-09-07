@@ -35,6 +35,10 @@ export const addScheduleSchema = z.object({
   cleaningGroup: z.string().min(2).max(50),
 });
 
+export const updateScheduleSchema = addScheduleSchema.extend({
+  id: z.number(),
+});
+
 export const addPrayerSchema = z.object({
   name: z.string().optional(),
   content: z.string().min(2).max(50),

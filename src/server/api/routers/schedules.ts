@@ -1,7 +1,11 @@
 import { eq } from "drizzle-orm";
 import { schedules } from "~/db/schema";
 import { db } from "~/server";
-import { addScheduleSchema, queryByIdSchema } from "../schema/schema";
+import {
+  addScheduleSchema,
+  queryByIdSchema,
+  updateScheduleSchema,
+} from "../schema/schema";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
@@ -29,5 +33,21 @@ export const scheduleRouter = createTRPCRouter({
     .input(queryByIdSchema)
     .mutation(async ({ input }) => {
       return await db.delete(schedules).where(eq(schedules.id, input.id));
+    }),
+  getScheduleById: publicProcedure
+    .input(queryByIdSchema)
+    .query(async ({ input }) => {
+      return await db
+        .select()
+        .from(schedules)
+        .where(eq(schedules.id, input.id));
+    }),
+  updateSchedule: publicProcedure
+    .input(updateScheduleSchema)
+    .mutation(async ({ input }) => {
+      return await db
+        .update(schedules)
+        .set({ ...input })
+        .where(eq(schedules.id, input.id));
     }),
 });
