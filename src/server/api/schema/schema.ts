@@ -10,6 +10,10 @@ export const addTakeawaySchema = z.object({
   contributors: z.array(z.string()),
 });
 
+export const updateTakeawaySchema = addTakeawaySchema.extend({
+  id: z.number(),
+});
+
 export const addScheduleSchema = z.object({
   title: z
     .string()
@@ -43,6 +47,6 @@ export const addPrayerCountSchema = z.object({
   prayerNames: z.array(z.string()),
 });
 
-export const deleteEntitySchema = z.object({
+export const queryByIdSchema = z.object({
   id: z.number(),
 });

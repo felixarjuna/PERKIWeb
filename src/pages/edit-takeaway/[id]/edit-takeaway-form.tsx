@@ -33,35 +33,46 @@ import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import { speakers, takeawayIds } from "~/lib/data";
 import { cn } from "~/lib/utils";
-import { addTakeawaySchema } from "~/server/api/schema/schema";
+import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 export default function EditTakeawayForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const addTodo = api.takeaways.addTakeaway.useMutation({
+  const id = router.query.id as string;
+  const { data } = api.takeaways.getTakeawayById.useQuery({ id: parseInt(id) });
+  const takeaway = data?.at(0);
+
+  const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
       toast({
-        title: "Your takeaway has been submitted! ✨",
-        description: "Thanks for sharing!",
+        title: "Your changes has been saved successfully! ✨",
+        description: "Thanks for your contribution!",
       });
       await router.push("/takeaway");
     },
   });
 
   // 1. Define form.
-  const form = useForm<z.infer<typeof addTakeawaySchema>>({
-    resolver: zodResolver(addTakeawaySchema),
+  const form = useForm<z.infer<typeof updateTakeawaySchema>>({
+    resolver: zodResolver(updateTakeawaySchema),
     defaultValues: {
+      id: takeaway?.id,
+      takeawayId: takeaway?.takeawayId,
+      title: takeaway?.title,
+      date: takeaway?.date,
+      speaker: takeaway?.speaker,
+      bibleVerse: takeaway?.bibleVerse,
+      summary: takeaway?.summary,
       // TODO: Automatically take contributors name from the username
       contributors: ["felixarjuna"],
     },
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof addTakeawaySchema>) {
-    addTodo.mutate({ ...values });
+  function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
+    updateTakeaway.mutate(values);
   }
 
   return (
@@ -115,7 +126,7 @@ export default function EditTakeawayForm() {
                   <FormItem>
                     <FormLabel className="text-md">Title</FormLabel>
                     <FormControl>
-                      <Input {...field}></Input>
+                      <Input {...field} defaultValue={field.value} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -152,7 +163,7 @@ export default function EditTakeawayForm() {
                         <PopoverContent className="w-auto p-1" align="start">
                           <Calendar
                             mode="single"
-                            selected={field.value}
+                            selected={field.value ?? takeaway?.date}
                             onSelect={field.onChange}
                             disabled={(date) =>
                               date > new Date() || date < new Date("1900-01-01")
@@ -207,7 +218,7 @@ export default function EditTakeawayForm() {
                   <FormItem>
                     <FormLabel className="text-md">Bible Verse</FormLabel>
                     <FormControl>
-                      <Input {...field}></Input>
+                      <Input {...field} defaultValue={field.value} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -222,7 +233,11 @@ export default function EditTakeawayForm() {
                   <FormItem>
                     <FormLabel className="text-md">Key points</FormLabel>
                     <FormControl>
-                      <Textarea className="h-48 resize-none" {...field} />
+                      <Textarea
+                        className="h-48 resize-none"
+                        {...field}
+                        defaultValue={field.value}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

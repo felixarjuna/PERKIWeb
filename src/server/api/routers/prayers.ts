@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   addPrayerCountSchema,
   addPrayerSchema,
-  deleteEntitySchema,
+  queryByIdSchema,
 } from "../schema/schema";
 
 export const prayerRouter = createTRPCRouter({
@@ -26,7 +26,7 @@ export const prayerRouter = createTRPCRouter({
         .where(eq(prayers.id, input.id));
     }),
   deletePrayer: publicProcedure
-    .input(deleteEntitySchema)
+    .input(queryByIdSchema)
     .mutation(async ({ input }) => {
       return await db.delete(prayers).where(eq(prayers.id, input.id));
     }),

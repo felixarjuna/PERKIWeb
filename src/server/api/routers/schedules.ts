@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { schedules } from "~/db/schema";
 import { db } from "~/server";
-import { addScheduleSchema, deleteEntitySchema } from "../schema/schema";
+import { addScheduleSchema, queryByIdSchema } from "../schema/schema";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
@@ -26,7 +26,7 @@ export const scheduleRouter = createTRPCRouter({
       });
     }),
   deleteSchedule: publicProcedure
-    .input(deleteEntitySchema)
+    .input(queryByIdSchema)
     .mutation(async ({ input }) => {
       return await db.delete(schedules).where(eq(schedules.id, input.id));
     }),
