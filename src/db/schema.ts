@@ -6,6 +6,7 @@ import {
   mysqlTable,
   serial,
   text,
+  timestamp,
 } from "drizzle-orm/mysql-core";
 
 export const todos = mysqlTable("todos", {
@@ -32,6 +33,7 @@ export const prayers = mysqlTable("prayers", {
   content: text("content").notNull(),
   count: int("count").notNull().default(0),
   prayerNames: json("prayerNames").notNull().$type<string[]>(),
+  createdAt: timestamp("createdAt").defaultNow(),
 });
 
 export const schedules = mysqlTable("schedules", {
