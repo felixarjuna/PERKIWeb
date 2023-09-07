@@ -42,6 +42,7 @@ export const updateScheduleSchema = addScheduleSchema.extend({
 export const addPrayerSchema = z.object({
   name: z.string().optional(),
   content: z.string().min(2).max(50),
+  isAnonymous: z.boolean(),
   prayerNames: z.array(z.string()),
 });
 

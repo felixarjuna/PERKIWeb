@@ -20,7 +20,7 @@ import { type addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 const AddPrayerFormSchema = z.object({
-  anonymous: z.boolean().default(false).optional(),
+  isAnonymous: z.boolean().default(false),
   content: z.string().min(2),
 });
 
@@ -41,7 +41,7 @@ export default function AddPrayerForm() {
   const form = useForm<z.infer<typeof AddPrayerFormSchema>>({
     resolver: zodResolver(AddPrayerFormSchema),
     defaultValues: {
-      anonymous: false,
+      isAnonymous: false,
     },
   });
 
@@ -49,6 +49,7 @@ export default function AddPrayerForm() {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
       name: username,
+      isAnonymous: data.isAnonymous,
       prayerNames: [],
     };
     addPrayer.mutate(request);
@@ -64,7 +65,7 @@ export default function AddPrayerForm() {
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="anonymous"
+              name="isAnonymous"
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-2 space-y-0">
                   <FormControl>

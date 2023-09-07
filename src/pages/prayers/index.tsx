@@ -69,7 +69,7 @@ export default function Prayers() {
 
                       <div className="flex items-center gap-x-2 xs:justify-between">
                         <Badge variant={"secondary"} className="font-thin">
-                          {prayer.name}
+                          {prayer.isAnonymous ? "unknown" : prayer.name}
                         </Badge>
 
                         <div className="flex gap-x-2">
