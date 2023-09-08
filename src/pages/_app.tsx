@@ -1,8 +1,8 @@
 import { type AppType } from "next/app";
+import dynamic from "next/dynamic";
 
 import localFont from "next/font/local";
 import Head from "next/head";
-import MouseTrackingLayout from "~/components/mouse-tracking-layout";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -18,6 +18,10 @@ const reimbrandt = localFont({
   variable: "--font-reimbrandt",
 });
 
+const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
+  ssr: false,
+});
+
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <main className={cn(reimbrandt.variable, satoshi.variable)}>
@@ -27,10 +31,34 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <MouseTrackingLayout>
+      <div className="relative overflow-hidden">
+        <AnimatedCursor
+          color={"255, 255, 255"}
+          innerSize={64}
+          outerSize={0}
+          outerAlpha={0.2}
+          innerScale={2}
+          outerScale={2}
+          clickables={[
+            "a",
+            'input[type="text"]',
+            'input[type="email"]',
+            'input[type="number"]',
+            'input[type="submit"]',
+            'input[type="image"]',
+            "label[for]",
+            "select",
+            "textarea",
+            "button",
+            ".link",
+          ]}
+          innerStyle={{
+            mixBlendMode: "difference",
+          }}
+        />
         <Component {...pageProps} />
-      </MouseTrackingLayout>
-      <Toaster />
+        <Toaster />
+      </div>
     </main>
   );
 };

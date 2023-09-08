@@ -21,7 +21,7 @@ export default function Mouse({ r, x, y, className, blur = true }: IMouse) {
       }}
       style={{ width: `${r}rem`, height: `${r}rem` }}
       className={cn(
-        `absolute z-10 rounded-full border border-green-default`,
+        `pointer-events-none absolute z-10 rounded-full border border-green-default bg-white mix-blend-difference`,
         className,
         blur && "blur-3xl filter",
       )}
