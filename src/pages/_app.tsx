@@ -34,9 +34,9 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       <div className="relative overflow-hidden">
         <AnimatedCursor
           color={"255, 255, 255"}
-          innerSize={64}
-          outerSize={0}
-          outerAlpha={0.2}
+          innerSize={0}
+          outerSize={64}
+          outerAlpha={1}
           innerScale={2}
           outerScale={2}
           clickables={[
@@ -52,7 +52,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
             "button",
             ".link",
           ]}
-          innerStyle={{
+          outerStyle={{
             mixBlendMode: "difference",
           }}
         />
