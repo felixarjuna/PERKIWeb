@@ -414,7 +414,11 @@ export default function EditScheduleForm() {
           <Button type="submit" variant={"default"}>
             Save changes
           </Button>
-          <Button className="flex gap-x-2" onClick={() => router.back()}>
+          <Button
+            type="button"
+            className="flex gap-x-2"
+            onClick={() => router.back()}
+          >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
