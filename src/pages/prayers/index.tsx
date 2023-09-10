@@ -1,5 +1,7 @@
 "use client";
 
+import { type GetServerSidePropsContext } from "next";
+import { getSession } from "next-auth/react";
 import { DeleteButton } from "~/components/action-button";
 import Navigation from "~/components/navigation";
 import { Badge } from "~/components/ui/badge";
@@ -134,4 +136,19 @@ export default function Prayers() {
       </div>
     </section>
   );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getSession(context);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/auth/sign-in",
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: { session } };
 }
