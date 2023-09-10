@@ -1,8 +1,11 @@
+import { type Session } from "next-auth";
+import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
-import dynamic from "next/dynamic";
 
+import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import Head from "next/head";
+
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -22,7 +25,10 @@ const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
   ssr: false,
 });
 
-const MyApp: AppType = ({ Component, pageProps }) => {
+const MyApp: AppType<{ session: Session | null }> = ({
+  Component,
+  pageProps: { session, ...pageProps },
+}) => {
   return (
     <main className={cn(reimbrandt.variable, satoshi.variable)}>
       <Head>
@@ -56,7 +62,9 @@ const MyApp: AppType = ({ Component, pageProps }) => {
             mixBlendMode: "difference",
           }}
         />
-        <Component {...pageProps} />
+        <SessionProvider session={session}>
+          <Component {...pageProps} />
+        </SessionProvider>
         <Toaster />
       </div>
     </main>
