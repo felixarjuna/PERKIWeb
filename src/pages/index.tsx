@@ -6,8 +6,6 @@ import WhatWeDo from "~/components/what-we-do";
 import WhereAreWe from "~/components/where-are-we";
 
 export default function Home() {
-  // const hello = api.example.hello.useQuery({ text: "from tRPC" });
-
   return (
     <>
       <Welcome />
