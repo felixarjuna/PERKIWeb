@@ -29,6 +29,13 @@
       "when": 1694099313545,
       "tag": "0003_shocking_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1695910628204,
+      "tag": "0004_free_scarecrow",
+      "breakpoints": true
     }
   ]
 }

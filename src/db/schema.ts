@@ -23,7 +23,7 @@ export const takeaways = mysqlTable("takeaways", {
   speaker: text("speaker").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
   summary: text("summary").notNull(),
-  contributors: text("contributors").notNull().$type<string[]>(),
+  contributors: json("contributors").notNull().$type<string[]>(),
 });
 
 export const prayers = mysqlTable("prayers", {
