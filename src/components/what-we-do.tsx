@@ -12,7 +12,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="bg-cream-default text-dark-green-default">
+    <div className="bg-cream-default text-dark-green-default xs:pb-20">
       <div className="flex items-center justify-center pb-20">
         <Image
           src={"/images/perkiAachen.jpg"}
