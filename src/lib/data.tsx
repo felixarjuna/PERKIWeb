@@ -2,12 +2,14 @@ export const events = [
   {
     name: "Church Service / Big Group Bible Study",
     time: "Saturday, 15.30 - 17.00",
-    description: "Spending moments to listening to God words from another God's children.",
+    description:
+      "Spending moments to listening to God words from another God's children.",
   },
   {
     name: "Small Group Bible Study",
     time: "Saturday, 15.30 - 17.00",
-    description: "Focusing our attention deeply on the truth that the Word of God has for us.",
+    description:
+      "Focusing our attention deeply on the truth that the Word of God has for us.",
   },
   {
     name: "Prayer Fellowship (Aachen)",
@@ -66,18 +68,20 @@ export const services: Service[] = [
     description: (
       <>
         <p>
-          Perki services are held twice a month - on Saturday of the second week by Pastor Titus
-          Christianto and on the fourth week by Pastor John Kusuma. The service begins with a
-          private quiet time, followed by singing hymns together accompanied by a piano. In the main
-          part of the service, the serving pastor will expound on the Word of God. After the sermon,
-          the congregation is given the opportunity to pray privately and respond to the Word. The
-          service ends with the giving of offerings, intercessory prayer, sending out, quiet time
-          and announcements.
+          Perki services are held twice a month - on Saturday of the second week
+          by Pastor Titus Christianto and on the fourth week by Pastor John
+          Kusuma. The service begins with a private quiet time, followed by
+          singing hymns together accompanied by a piano. In the main part of the
+          service, the serving pastor will expound on the Word of God. After the
+          sermon, the congregation is given the opportunity to pray privately
+          and respond to the Word. The service ends with the giving of
+          offerings, intercessory prayer, sending out, quiet time and
+          announcements.
         </p>
         <p>
-          Every three months we hold Holy Communion at the end of the service. Everyone who has
-          received the Lord Jesus as Savior and awaits His second coming by faith is welcome to
-          partake. (1 Corinthians 11:28).
+          Every three months we hold Holy Communion at the end of the service.
+          Everyone who has received the Lord Jesus as Savior and awaits His
+          second coming by faith is welcome to partake. (1 Corinthians 11:28).
         </p>
       </>
     ),
@@ -86,15 +90,17 @@ export const services: Service[] = [
     title: "Big Group Bible Study",
     description: (
       <p>
-        Big Group Bible Study is a joint Bible Study activity held on the first, third and fifth
-        week (if applicable) of each month. The service is led by the Fellowship Committee and the
-        seating position is made around a large table. At the beginning of the service, the
-        congregation is given the opportunity to choose a hymn to sing together or share their life
-        experiences with God. Through this activity, fellowship members are expected to learn to
-        witness, get to know each other more deeply and also love. After the word prayer, the
-        caretaker on duty will lead the exposition of God&apos;s Word and the congregation is
-        allowed to discuss or ask questions at the end of the reflection. The service then ends with
-        prayer, offerings and announcements.
+        Big Group Bible Study is a joint Bible Study activity held on the first,
+        third and fifth week (if applicable) of each month. The service is led
+        by the Fellowship Committee and the seating position is made around a
+        large table. At the beginning of the service, the congregation is given
+        the opportunity to choose a hymn to sing together or share their life
+        experiences with God. Through this activity, fellowship members are
+        expected to learn to witness, get to know each other more deeply and
+        also love. After the word prayer, the caretaker on duty will lead the
+        exposition of God&apos;s Word and the congregation is allowed to discuss
+        or ask questions at the end of the reflection. The service then ends
+        with prayer, offerings and announcements.
       </p>
     ),
   },
@@ -102,12 +108,13 @@ export const services: Service[] = [
     title: "Small Group Bible Study",
     description: (
       <p>
-        Small Group Bible Study is a Bible Study group where members invite and are also invited and
-        called and have a desire to know God and grow in God through discussion of certain themes.
-        In this small PA group, we are also given the opportunity to be open to each other in
-        sharing experiences gained with God or sharing struggles or difficulties that are being
-        experienced. Because we also long to be closer and get to know each other better as a
-        fellowship in God. (1 John 1:7).
+        Small Group Bible Study is a Bible Study group where members invite and
+        are also invited and called and have a desire to know God and grow in
+        God through discussion of certain themes. In this small PA group, we are
+        also given the opportunity to be open to each other in sharing
+        experiences gained with God or sharing struggles or difficulties that
+        are being experienced. Because we also long to be closer and get to know
+        each other better as a fellowship in God. (1 John 1:7).
       </p>
     ),
   },
@@ -115,15 +122,20 @@ export const services: Service[] = [
     title: "Eating & Chatting",
     description: (
       <p>
-        Every month Perki organizes a meal together twice, after the worship service is over. The
-        food is served by the group in charge of serving in cooking. And besides enjoying the meal,
-        we also spend time together chatting.
+        Every month Perki organizes a meal together twice, after the worship
+        service is over. The food is served by the group in charge of serving in
+        cooking. And besides enjoying the meal, we also spend time together
+        chatting.
       </p>
     ),
   },
 ];
 
-export const takeawayIds = ["church-service", "bg-bible-study", "sg-bible-study"];
+export const takeawayIds = [
+  "church-service",
+  "bg-bible-study",
+  "sg-bible-study",
+];
 
 export const speakers = [
   "Oliver Renaldi",
@@ -143,6 +155,7 @@ export const liturgos = [
   "Sofian Oeij",
   "Jordie Yonathan",
   "Albertus Pandya",
+  "Reggy Irawan",
 ];
 
 export const musicians = [
@@ -152,6 +165,7 @@ export const musicians = [
   "Danny Kurniawan",
   "Albertus Pandya",
   "Jordie Yonathan",
+  "Oliver Renaldi",
 ];
 
 export const multimedia = [
@@ -167,6 +181,14 @@ export const accommodation = [
   "Danny Kurniawan",
   "Jordie Yonathan",
   "Reggy Irawan",
+  "Jansen Nathanel",
 ];
 
-export const groups = ["Group 1", "Group 2", "Group 3", "Group 4", "Group 5", "Group 6"];
+export const groups = [
+  "Group 1",
+  "Group 2",
+  "Group 3",
+  "Group 4",
+  "Group 5",
+  "Group 6",
+];
