@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -33,11 +34,17 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import { speakers, takeawayIds } from "~/lib/data";
-import { cn } from "~/lib/utils";
+import { cn, getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 export default function EditTakeawayForm() {
+  const { data: session } = useSession();
+  const username = React.useMemo(
+    () => getUsernameFromName(session?.user.name ?? ""),
+    [session?.user.name],
+  );
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -57,13 +64,22 @@ export default function EditTakeawayForm() {
     },
   });
 
+  const contributors = React.useMemo(() => {
+    if (takeaway) {
+      const contributors = takeaway?.contributors.includes(username)
+        ? [...takeaway.contributors]
+        : [...takeaway?.contributors, username];
+      return contributors;
+    }
+  }, [takeaway, username]);
+
   // 1. Define form.
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
     defaultValues: {
       ...takeaway,
       // TODO: Automatically take contributors name from the username
-      contributors: ["felixarjuna"],
+      contributors: contributors,
     },
   });
 

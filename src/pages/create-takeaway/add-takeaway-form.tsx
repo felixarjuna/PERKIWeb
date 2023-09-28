@@ -3,7 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -32,11 +34,17 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import { speakers, takeawayIds } from "~/lib/data";
-import { cn } from "~/lib/utils";
+import { cn, getUsernameFromName } from "~/lib/utils";
 import { addTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 export default function AddTakeawayForm() {
+  const { data: session } = useSession();
+  const username = React.useMemo(
+    () => getUsernameFromName(session?.user.name ?? ""),
+    [session?.user.name],
+  );
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -55,7 +63,7 @@ export default function AddTakeawayForm() {
     resolver: zodResolver(addTakeawaySchema),
     defaultValues: {
       // TODO: Automatically take contributors name from the username
-      contributors: ["felixarjuna"],
+      contributors: [username],
     },
   });
 

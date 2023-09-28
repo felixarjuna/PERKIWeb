@@ -116,7 +116,9 @@ function TakeawayItem(props: TakeawayItemProps) {
         <p>{props.date}</p>
       </div>
       <p className="mt-4 xs:text-sm">{props.summary}</p>
-      <p className="mt-4 text-green-400/80 xs:text-xs">{props.contributors}</p>
+      <p className="mt-4 text-green-400/80 xs:text-xs">
+        {props.contributors.join(" ")}
+      </p>
 
       <ActionButton
         className=" flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden xs:visible"
