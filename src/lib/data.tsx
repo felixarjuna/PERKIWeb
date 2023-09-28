@@ -1,27 +1,92 @@
-export const events = [
+type Event = {
+  name: string;
+  time: string;
+  notes: string;
+  description: string | React.ReactNode;
+};
+
+export const events: Event[] = [
   {
     name: "Church Service / Big Group Bible Study",
     time: "Saturday, 15.30 - 17.00",
-    description:
+    notes:
       "Spending moments to listening to God words from another God's children.",
+    description: (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h2 className="text-lg">Church service</h2>
+          <div className="space-y-2">
+            <p>
+              Perki church services are held twice a month - on Saturday of the
+              second week by Pastor Titus Christianto and on the fourth week by
+              Pastor John Kusuma. The service begins with a private quiet time,
+              followed by singing hymns together accompanied by a piano. In the
+              main part of the service, the serving pastor will expound on the
+              Word of God. After the sermon, the congregation is given the
+              opportunity to pray privately and respond to the Word. The service
+              ends with the giving of offerings, intercessory prayer, sending
+              out, quiet time and announcements.{" "}
+            </p>
+
+            <p>
+              Every three months we hold Holy Communion at the end of the
+              service. Everyone who has received the Lord Jesus as Savior and
+              awaits His second coming by faith is welcome to partake. (1
+              Corinthians 11:28).
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-lg">Big group bible study</h2>
+          <p>
+            Our Big Group Bible Study is a joint Bible Study activity held on
+            the first, third and fifth week (if applicable) of each month. The
+            service is led by the Fellowship Committee and the seating position
+            is made around a large table. At the beginning of the service, the
+            congregation is given the opportunity to choose a hymn to sing
+            together or share their life experiences with God. Through this
+            activity, fellowship members are expected to learn to witness, get
+            to know each other more deeply and also love. After the word prayer,
+            the caretaker on duty will lead the exposition of God&apos;s Word
+            and the congregation is allowed to discuss or ask questions at the
+            end of the reflection. The service then ends with prayer, offerings
+            and announcements.
+          </p>
+        </div>
+        <div>
+          <p>
+            After the worship service is over Perki organizes a meal together.
+            The food is served by the group in charge of serving in cooking. And
+            besides enjoying the meal, we also spend time together chatting.
+          </p>
+        </div>
+      </div>
+    ),
   },
   {
     name: "Small Group Bible Study",
     time: "Saturday, 15.30 - 17.00",
-    description:
+    notes:
       "Focusing our attention deeply on the truth that the Word of God has for us.",
+    description:
+      "Small Group Bible Study is a Bible Study group where members invite and are also invited and called and have a desire to know God and grow in God through discussion of certain themes. In this small PA group, we are also given the opportunity to be open to each other in sharing experiences gained with God or sharing struggles or difficulties that are being experienced. Because we also long to be closer and get to know each other better as a fellowship in God. (1 John 1:7).",
   },
   {
     name: "Prayer Fellowship (Aachen)",
     time: "Thursday, 18:30 - 21.00",
-    description:
+    notes:
       "Having the moments in the middle of our busy live to meditate about the Word of God together.",
+    description:
+      "In the midst of our busy schedules, we take time together to share what happened during the week and pray together, exchange advice, and provide support for those in need.",
   },
   {
     name: "Prayer Fellowship (Jülich)",
     time: "Friday, 18.30 - 21.00",
-    description:
+    notes:
       "Having the moments in the middle of our busy live to meditate about the Word of God together.",
+    description:
+      "In the midst of our busy schedules, we take time together to share what happened during the week and pray together, exchange advice, and provide support for those in need.",
   },
 ];
 
