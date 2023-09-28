@@ -103,7 +103,7 @@ export const pastors: Pastor[] = [
     favoriteVerse: "All honor and glory be to the Lord Jesus Christ!",
     img: "/images/john.jpg",
     story:
-      "John Kusuma wurde in Banda Aceh geboren und lebte bis zu seinem 13. Lebensjahr in der Methodist Junior High School Banda Aceh, wo er die 1. Danach besuchte er die Methodist 2 Junior High School und die Sutomo High School in Medan. 1989-1999 setzte er sein Studium der Chemietechnik an der TU Berlin fort. Von 1999-2003 setzte er sein Studium an der SAAT Malang fort und leistete ein Jahr praktischen Dienst (2003-2004) in der Abdiel Christian Church (GKA) Gracia, Surabaya. Danach diente er von 2004-2011 als Pastor der Gemeinde am selben Ort. Seit Januar 2012 dient er in der Jemaat Kristen Immanuel Berlin (seit Sept. 2015 FeG Immanuel Berlin) als Pastor und wurde am 25. März 2012 von der FeG-Synode zum Pastor der FeG Immanuel Berlin ordiniert.",
+      "John Kusuma was born in Banda Aceh and lived in Methodist Junior High School Banda Aceh until the age of 13, where he completed 1st grade. He then attended Methodist 2 Junior High School and Sutomo High School in Medan. In 1989-1999, he continued his studies in chemical engineering at the Technical University of Berlin. From 1999-2003, he continued his studies at SAAT Malang and did one year of practical service (2003-2004) at Abdiel Christian Church (GKA) Gracia, Surabaya. After that, he served as pastor of the church in the same place from 2004-2011. Since January 2012, he has been serving in Jemaat Kristen Immanuel Berlin (FeG Immanuel Berlin since Sept. 2015) as a pastor and was ordained as a pastor of FeG Immanuel Berlin by the FeG Synod on March 25, 2012.",
   },
   {
     name: "Pdt. Titus Christanto",
