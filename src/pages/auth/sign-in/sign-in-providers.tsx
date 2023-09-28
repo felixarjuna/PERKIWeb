@@ -6,6 +6,8 @@ import { type getServerSideProps } from ".";
 export default function SignInProviders({
   providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  if (typeof providers === "undefined") return;
+
   return (
     <div className="mt-8 w-full text-cream-default xs:mt-4">
       {Object.values(providers).map((provider) => {
