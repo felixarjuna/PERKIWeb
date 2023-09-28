@@ -2,6 +2,7 @@
 
 import { type GetServerSidePropsContext } from "next";
 import { getSession, signIn, signOut, useSession } from "next-auth/react";
+import Navigation from "~/components/navigation";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 
@@ -14,18 +15,19 @@ export default function TodoList() {
   });
 
   return (
-    <div className="p-20 text-cream-default">
-      <div className="flex flex-col items-center justify-center gap-4">
-        <p className="text-center text-2xl text-white">
-          {session && <span>Logged in as {session.user?.name}</span>}
+    <div className="flex flex-col p-20 text-cream-default">
+      <Navigation showNav />
+      <div className="flex items-center justify-center gap-4 place-self-end ">
+        <p className="text-center text-xl">
+          {session && <span>Welcome, {session.user?.name}</span>}
           {/* {secretMessage && <span> - {secretMessage}</span>} */}
         </p>
-        <button
-          className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        <Button
+          className="px-10 py-3 font-semibold"
           onClick={session ? () => void signOut() : () => void signIn()}
         >
           {session ? "Sign out" : "Sign in"}
-        </button>
+        </Button>
       </div>
 
       <h2>Todo Test endpoint</h2>
@@ -33,6 +35,7 @@ export default function TodoList() {
         return <div key={index}>{JSON.stringify(todo)}</div>;
       })}
       <Button
+        className="mt-4 w-fit"
         onClick={() => {
           addTodo.mutate("hello world");
         }}
