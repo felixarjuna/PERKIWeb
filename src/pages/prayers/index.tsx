@@ -1,19 +1,25 @@
 "use client";
 
 import { type GetServerSidePropsContext } from "next";
-import { getSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
+import React from "react";
 import { DeleteButton } from "~/components/action-button";
 import Navigation from "~/components/navigation";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { useToast } from "~/components/ui/use-toast";
+import { getUsernameFromName } from "~/lib/utils";
 import { api } from "~/utils/api";
 import AddPrayerForm from "./add-prayer-form";
 import EditPrayerDialog from "./edit-prayer-dialog";
 
-const username = "felixarjuna";
-
 export default function Prayers() {
+  const { data: session } = useSession();
+  const username = React.useMemo(
+    () => getUsernameFromName(session?.user.name ?? ""),
+    [session?.user.name],
+  );
+
   const { toast } = useToast();
   const utils = api.useContext();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
