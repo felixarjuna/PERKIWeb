@@ -10,6 +10,7 @@ import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
 import { api } from "~/utils/api";
+import { useAsPathInitializer } from "~/utils/hooks/usePathStore";
 
 const satoshi = localFont({
   src: "./../fonts/Satoshi-Medium.woff2",
@@ -29,6 +30,8 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
+  useAsPathInitializer();
+
   return (
     <main className={cn(reimbrandt.variable, satoshi.variable)}>
       <Head>
