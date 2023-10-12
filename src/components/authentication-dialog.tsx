@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { getProviders } from "next-auth/react";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
+import { type Url } from "url";
 import { authOptions } from "~/server/auth";
 import { Dialog, DialogContent } from "./ui/dialog";
 
@@ -32,7 +33,10 @@ export default function AuthenticationDialog({
 
         <div className="text-center">
           Already have an account?{" "}
-          <Link href="auth/sign-in" className="underline underline-offset-2">
+          <Link
+            href={authOptions.pages?.signIn as unknown as Url}
+            className="underline underline-offset-2"
+          >
             Log in
           </Link>{" "}
         </div>

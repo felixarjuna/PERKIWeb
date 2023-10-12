@@ -9,6 +9,7 @@ import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
+import { authOptions } from "~/server/auth";
 import { api } from "~/utils/api";
 import AddPrayerForm from "./add-prayer-form";
 import EditPrayerDialog from "./edit-prayer-dialog";
@@ -150,7 +151,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (!session) {
     return {
       redirect: {
-        destination: "/auth/sign-in",
+        destination: authOptions.pages?.signIn,
         permanent: false,
       },
     };

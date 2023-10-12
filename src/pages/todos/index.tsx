@@ -4,6 +4,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getSession, signIn, signOut, useSession } from "next-auth/react";
 import Navigation from "~/components/navigation";
 import { Button } from "~/components/ui/button";
+import { authOptions } from "~/server/auth";
 import { api } from "~/utils/api";
 
 export default function TodoList() {
@@ -52,7 +53,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (!session) {
     return {
       redirect: {
-        destination: "/auth/sign-in",
+        destination: authOptions.pages?.signIn,
         permanent: false,
       },
     };
