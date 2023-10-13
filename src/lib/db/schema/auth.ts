@@ -18,6 +18,7 @@ export const users = mysqlTable("user", {
     fsp: 3,
   }).defaultNow(),
   image: varchar("image", { length: 255 }),
+  hashedPassword: varchar("hashedPassword", { length: 255 }),
 });
 
 export const accounts = mysqlTable(

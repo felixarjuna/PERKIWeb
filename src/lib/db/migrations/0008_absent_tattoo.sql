@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `hashedPassword` varchar(255);
