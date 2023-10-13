@@ -2,6 +2,7 @@ import {
   int,
   mysqlTable,
   primaryKey,
+  text,
   timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -12,7 +13,6 @@ import { z } from "zod";
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  username: varchar("username", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   emailVerified: timestamp("emailVerified", {
     mode: "date",
@@ -36,7 +36,7 @@ export const accounts = mysqlTable(
     expires_at: int("expires_at"),
     token_type: varchar("token_type", { length: 255 }),
     scope: varchar("scope", { length: 255 }),
-    id_token: varchar("id_token", { length: 255 }),
+    id_token: text("id_token"),
     session_state: varchar("session_state", { length: 255 }),
   },
   (account) => ({
@@ -68,9 +68,11 @@ export const insertUserSchema = createInsertSchema(users, {});
 export const insertUserParams = createSelectSchema(users, {})
   .omit({
     id: true,
+    email: true,
     hashedPassword: true,
   })
   .extend({
+    username: z.string(),
     password: z.string(),
   });
 
