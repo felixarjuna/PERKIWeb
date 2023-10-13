@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { prayers } from "~/db/schema";
+import { prayers } from "~/lib/db/schema";
 import { db } from "~/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {

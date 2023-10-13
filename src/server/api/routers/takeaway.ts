@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { takeaways } from "~/db/schema";
+import { takeaways } from "~/lib/db/schema/takeaways";
 import { db } from "~/server";
 import {
   addTakeawaySchema,

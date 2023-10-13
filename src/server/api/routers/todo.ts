@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { todos } from "~/db/schema";
+import { todos } from "~/lib/db/schema/todos";
 import { db } from "~/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 

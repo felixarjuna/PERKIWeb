@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { schedules } from "~/db/schema";
+import { schedules } from "~/lib/db/schema/schedules";
 import { db } from "~/server";
 import {
   addScheduleSchema,
