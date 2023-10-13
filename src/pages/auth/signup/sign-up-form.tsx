@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -15,6 +17,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { useToast } from "~/components/ui/use-toast";
 import { insertUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
 
@@ -24,7 +27,24 @@ export default function SignUpForm() {
   const router = useRouter();
   if (session) router.back();
 
-  const signUpUser = api.users.createUser.useMutation();
+  const { toast } = useToast();
+  const signUpUser = api.users.createUser.useMutation({
+    onSuccess: async () => {
+      toast({
+        title: "User account created successfully! 🚀",
+        description: "Please login!",
+      });
+
+      // Redirect to login page after registration
+      await router.push("/auth/signin");
+    },
+    onError: ({ message }) => {
+      toast({
+        title: "Create user account failed! 👿",
+        description: message,
+      });
+    },
+  });
 
   // Define sign in form
   const form = useForm<z.infer<typeof insertUserParams>>({
@@ -37,7 +57,6 @@ export default function SignUpForm() {
 
   // Define on submit callback function
   function onSubmit(value: z.infer<typeof insertUserParams>) {
-    console.log(value);
     signUpUser.mutate(value);
   }
 

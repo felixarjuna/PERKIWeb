@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { useToast } from "~/components/ui/use-toast";
 import { useAsPath } from "~/utils/hooks/usePathStore";
 
 const SignInFormSchema = z.object({
@@ -35,16 +36,16 @@ export default function SignInForm() {
     resolver: zodResolver(SignInFormSchema),
   });
 
+  const prevRoute = useAsPath();
+
+  const { toast } = useToast();
+
   // Define on submit callback function
   function onSubmit(value: z.infer<typeof SignInFormSchema>) {
-    console.log(value);
-    // TODO: use sign in hook
-    signIn("credentials", value)
-      .then(() => console.log("user logged in successfully!"))
+    signIn("credentials", { ...value, callbackUrl: prevRoute.prevAsPath })
+      .then(() => toast({ title: "You are now logged in! ❤️" }))
       .catch((e) => console.log(e));
   }
-
-  const prevRoute = useAsPath();
 
   return (
     <div>
@@ -79,7 +80,7 @@ export default function SignInForm() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} type="password" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

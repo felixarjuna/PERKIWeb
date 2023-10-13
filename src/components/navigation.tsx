@@ -70,7 +70,7 @@ export default function Navigation({ showNav }: NavigationProps) {
             className="flex w-fit cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
             onClick={session ? () => void signOut() : () => void signIn()}
           >
-            <span className="flex items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
+            <span className="flex items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
               <LogOut className="h-4 w-4" />
             </span>
             {session ? "Sign out" : "Sign in"}
