@@ -1,0 +1,1 @@
+ALTER TABLE `takeaways` MODIFY COLUMN `contributors` json NOT NULL;
