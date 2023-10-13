@@ -7,11 +7,12 @@ import {
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { type AdapterAccount } from "next-auth/adapters";
-import { type z } from "zod";
+import { z } from "zod";
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
-  name: varchar("name", { length: 255 }),
+  name: varchar("name", { length: 255 }).notNull(),
+  username: varchar("username", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   emailVerified: timestamp("emailVerified", {
     mode: "date",
@@ -64,7 +65,14 @@ export const verificationTokens = mysqlTable(
 // Schema for users - used to validate API requests
 export const insertUserSchema = createInsertSchema(users, {});
 
-export const insertUserParams = createSelectSchema(users, {});
+export const insertUserParams = createSelectSchema(users, {})
+  .omit({
+    id: true,
+    hashedPassword: true,
+  })
+  .extend({
+    password: z.string(),
+  });
 
 export const updateUserSchema = createSelectSchema(users);
 
