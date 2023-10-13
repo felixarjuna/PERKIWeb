@@ -41,10 +41,23 @@ export default function SignInForm() {
   const { toast } = useToast();
 
   // Define on submit callback function
-  function onSubmit(value: z.infer<typeof SignInFormSchema>) {
-    signIn("credentials", { ...value, callbackUrl: prevRoute.prevAsPath })
-      .then(() => toast({ title: "You are now logged in! ❤️" }))
-      .catch((e) => console.log(e));
+  async function onSubmit(value: z.infer<typeof SignInFormSchema>) {
+    const response = await signIn("credentials", {
+      ...value,
+      callbackUrl: prevRoute.prevAsPath,
+      redirect: false,
+    });
+    console.log(response);
+    if (response?.ok)
+      toast({
+        title: "Authentication successful! 🚀",
+        description: "You are now logged in! ❤️",
+      });
+    if (response?.error)
+      toast({
+        title: "Authentication failed! 👿",
+        description: response.error,
+      });
   }
 
   return (
