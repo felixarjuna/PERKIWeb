@@ -40,9 +40,8 @@ export default function SignInForm() {
     console.log(data);
     // TODO: use sign in hook
   }
+
   const prevRoute = useAsPath();
-  console.log("prevRoute", prevRoute);
-  console.log(window.history);
 
   return (
     <div>
