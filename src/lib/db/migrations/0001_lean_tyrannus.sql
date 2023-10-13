@@ -1,1 +1,0 @@
-ALTER TABLE `prayers` ADD `isAnonymous` boolean;

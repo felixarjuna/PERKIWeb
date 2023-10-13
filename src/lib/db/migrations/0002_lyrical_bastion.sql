@@ -1,1 +1,0 @@
-ALTER TABLE `prayers` MODIFY COLUMN `isAnonymous` boolean DEFAULT false;
