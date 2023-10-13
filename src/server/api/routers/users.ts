@@ -32,7 +32,7 @@ export const userRouter = createTRPCRouter({
         eq(users.email, input.username),
       );
       if (isUsernameExists.length > 0)
-        return new TRPCError({
+        throw new TRPCError({
           code: "CONFLICT",
           message: "Username or email already exists",
         });
@@ -51,7 +51,7 @@ export const userRouter = createTRPCRouter({
         return { success: true };
       } catch (err) {
         const message = (err as Error).message ?? "Error, please try again";
-        return new TRPCError({
+        throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: message,
         });
