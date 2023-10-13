@@ -12,6 +12,9 @@ import {
 import { db } from "~/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
+import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
+
 export const userRouter = createTRPCRouter({
   getUsers: publicProcedure.query(async () => {
     return await db.select().from(users);
@@ -22,7 +25,27 @@ export const userRouter = createTRPCRouter({
   createUser: publicProcedure
     .input(insertUserParams)
     .mutation(async ({ input }) => {
-      const newUser = insertUserSchema.parse({ ...input });
+      // Return error if username or email already exists
+      const _users = db.select().from(users);
+
+      const isUsernameExists = await _users.where(
+        eq(users.email, input.username),
+      );
+      if (isUsernameExists.length > 0)
+        return new TRPCError({
+          code: "CONFLICT",
+          message: "Username or email already exists",
+        });
+
+      // Password should be hashed
+      const hashedPassword = await bcrypt.hash(input.password, 10);
+      const newUser = insertUserSchema.parse({
+        ...input,
+        id: randomUUID(),
+        email: input.username,
+        hashedPassword,
+      });
+
       try {
         await db.insert(users).values(newUser);
         return { success: true };
