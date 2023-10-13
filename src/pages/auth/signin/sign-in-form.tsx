@@ -103,7 +103,7 @@ export default function SignInForm() {
           onClick={() =>
             void signIn("google", {
               // TODO: go back to one page from history
-              callbackUrl: `${prevRoute.prevAsPath}`,
+              callbackUrl: prevRoute.prevAsPath,
             })
           }
           className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
