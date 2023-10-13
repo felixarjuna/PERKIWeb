@@ -36,9 +36,12 @@ export default function SignInForm() {
   });
 
   // Define on submit callback function
-  function onSubmit(data: z.infer<typeof SignInFormSchema>) {
-    console.log(data);
+  function onSubmit(value: z.infer<typeof SignInFormSchema>) {
+    console.log(value);
     // TODO: use sign in hook
+    signIn("credentials", value)
+      .then(() => console.log("user logged in successfully!"))
+      .catch((e) => console.log(e));
   }
 
   const prevRoute = useAsPath();
@@ -102,7 +105,6 @@ export default function SignInForm() {
         <button
           onClick={() =>
             void signIn("google", {
-              // TODO: go back to one page from history
               callbackUrl: prevRoute.prevAsPath,
             })
           }

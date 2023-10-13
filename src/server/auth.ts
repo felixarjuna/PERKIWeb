@@ -8,8 +8,13 @@ import {
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import { env } from "~/env.mjs";
+import { users } from "~/lib/db/schema/auth";
 import { db } from ".";
+
+import bcrypt from "bcrypt";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -59,12 +64,39 @@ export const authOptions: NextAuthOptions = {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      authorize(credentials, req) {
-        console.log(credentials);
-        console.log(req);
-        const user = { id: "1", name: "J smith", email: "jsmith@gmail.com" };
-        if (user) return user;
-        else return null;
+      async authorize(credentials) {
+        // Direct return if credentials does not exist
+        if (!credentials)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Please provide both username and password",
+          });
+
+        // Authenticate if user exists in the database
+        const _users = db.select().from(users);
+        const user = (
+          await _users.where(eq(users.email, credentials.username))
+        ).at(0);
+
+        if (!user?.hashedPassword)
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Username or password is wrong",
+          });
+
+        // Authenticate match password
+        const isPasswordMatch = await bcrypt.compare(
+          credentials?.password,
+          user.hashedPassword,
+        );
+
+        if (!isPasswordMatch)
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Username or password is wrong",
+          });
+
+        return user;
       },
     }),
     /**
