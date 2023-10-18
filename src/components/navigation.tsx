@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { User } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface NavigationProps {
   showNav: boolean;
@@ -29,6 +30,7 @@ const navigations = [
 
 export default function Navigation({ showNav }: NavigationProps) {
   const { data: session } = useSession();
+  const router = useRouter();
 
   return (
     <AnimatePresence>
@@ -68,12 +70,14 @@ export default function Navigation({ showNav }: NavigationProps) {
           })}
           <div
             className="flex w-fit cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
-            onClick={session ? () => void signOut() : () => void signIn()}
+            onClick={
+              session ? () => router.push("account") : () => void signIn()
+            }
           >
             <span className="flex items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
-              <LogOut className="h-4 w-4" />
+              <User className="h-4 w-4" />
             </span>
-            {session ? "Sign out" : "Sign in"}
+            {session ? "Account" : "Sign in"}
           </div>
         </motion.div>
       ) : null}
