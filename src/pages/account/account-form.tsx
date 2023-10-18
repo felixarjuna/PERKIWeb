@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
@@ -18,6 +19,8 @@ import { useToast } from "~/components/ui/use-toast";
 import { updateUserParams, type UpdateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
 
+const PASSWORD_MAX_LENGTH = 17;
+
 export default function AccountForm() {
   const { data: session } = useSession();
   const { data: user } = api.users.getUserById.useQuery({
@@ -28,8 +31,8 @@ export default function AccountForm() {
   const updateAccount = api.users.updateUser.useMutation({
     onSuccess: () => {
       toast({
-        title: "Your account has been updated successfully!. ✨",
-        description: "Have fun! ❤️",
+        title: "Update account info successful!",
+        description: "Your account has been updated! ✨",
       });
     },
     onError: ({ message }) => {
@@ -45,12 +48,14 @@ export default function AccountForm() {
     resolver: zodResolver(updateUserParams),
     defaultValues: {
       ...user,
+      hashedPassword: user?.hashedPassword ?? "",
     },
   });
 
   React.useEffect(() => {
     form.reset({
       ...user,
+      hashedPassword: user?.hashedPassword,
       username: user?.email,
     });
   }, [form, user]);
@@ -115,6 +120,35 @@ export default function AccountForm() {
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="space-y-2">
+            <FormField
+              control={form.control}
+              name="hashedPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value?.substring(0, PASSWORD_MAX_LENGTH)}
+                      type="password"
+                      disabled={true}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div>
+              <Link
+                href="account/change-password"
+                className="text-sm text-cream-default/60 transition-all duration-500 hover:text-cream-default hover:underline hover:underline-offset-2 xs:text-xs"
+              >
+                Change password
+              </Link>
+            </div>
           </div>
         </div>
 
