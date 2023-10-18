@@ -78,7 +78,13 @@ export const insertUserParams = createSelectSchema(users, {})
 
 export const updateUserSchema = createSelectSchema(users);
 
-export const updateUserParams = createSelectSchema(users, {});
+export const updateUserParams = createSelectSchema(users, {})
+  .omit({
+    email: true,
+  })
+  .extend({
+    username: z.string(),
+  });
 
 export const userIdSchema = updateUserSchema.pick({ id: true });
 
