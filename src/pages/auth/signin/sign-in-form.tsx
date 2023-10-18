@@ -47,7 +47,7 @@ export default function SignInForm() {
       callbackUrl: prevRoute.prevAsPath,
       redirect: false,
     });
-    console.log(response);
+
     if (response?.ok)
       toast({
         title: "Authentication successful! 🚀",
