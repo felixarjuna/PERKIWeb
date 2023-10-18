@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import {
   insertUserParams,
   insertUserSchema,
+  updatePasswordParams,
   updateUserParams,
   updateUserSchema,
   userIdSchema,
@@ -110,6 +111,58 @@ export const userRouter = createTRPCRouter({
         await db
           .delete(users)
           .where(and(eq(users.id, input.id), eq(users.id, session.user.id)));
+        return { success: true };
+      } catch (err) {
+        const message = (err as Error).message ?? "Error, please try again";
+        return new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: message,
+        });
+      }
+    }),
+  updatePassword: publicProcedure
+    .input(updatePasswordParams)
+    .mutation(async ({ input }) => {
+      const _users = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, input.id));
+      const user = _users.at(0);
+
+      if (user?.hashedPassword === null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User cannot be found. Please try to re login.",
+        });
+      }
+
+      // Validate old password
+      const isOldPasswordValid = await bcrypt.compare(
+        input.currentPassword,
+        user!.hashedPassword,
+      );
+      if (!isOldPasswordValid) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You have entered an invalid old password.",
+        });
+      }
+
+      // Validate new password
+      const isNewPasswordValid = input.newPassword === input.retypeNewPassword;
+      if (!isNewPasswordValid)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Your retyped password does not match the new password.",
+        });
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(input.newPassword, 10);
+      try {
+        await db
+          .update(users)
+          .set({ hashedPassword })
+          .where(eq(users.id, input.id));
         return { success: true };
       } catch (err) {
         const message = (err as Error).message ?? "Error, please try again";
