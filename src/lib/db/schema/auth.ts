@@ -78,7 +78,7 @@ export const insertUserParams = createSelectSchema(users, {})
 
 export const updateUserSchema = createSelectSchema(users);
 
-export const updateUserParams = createSelectSchema(users, {})
+export const updateUserParams = createSelectSchema(users)
   .omit({
     email: true,
   })
@@ -88,9 +88,23 @@ export const updateUserParams = createSelectSchema(users, {})
 
 export const userIdSchema = updateUserSchema.pick({ id: true });
 
+export const updatePasswordParams = z.object({
+  id: z.string(),
+  currentPassword: z
+    .string()
+    .nonempty({ message: "Password must contain at least 1 character(s)" }),
+  newPassword: z
+    .string()
+    .nonempty({ message: "Password must contain at least 1 character(s)" }),
+  retypeNewPassword: z
+    .string()
+    .nonempty({ message: "Password must contain at least 1 character(s)" }),
+});
+
 // Types for users - used to type API request params and within Components
 export type User = z.infer<typeof updateUserSchema>;
 export type NewUser = z.infer<typeof insertUserSchema>;
 export type NewUserParams = z.infer<typeof insertUserParams>;
 export type UpdateUserParams = z.infer<typeof updateUserParams>;
 export type UserId = z.infer<typeof userIdSchema>["id"];
+export type UpdatePasswordParams = z.infer<typeof updatePasswordParams>;
