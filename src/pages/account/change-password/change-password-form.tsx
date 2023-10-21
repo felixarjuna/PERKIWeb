@@ -69,7 +69,7 @@ export default function ChangePasswordForm() {
     <Form {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="w-full min-w-[32rem] space-y-8"
+        className="w-full min-w-[32rem] space-y-8 xs:min-w-[10rem]"
       >
         <div className="space-y-4">
           <div>
