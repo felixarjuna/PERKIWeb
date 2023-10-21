@@ -75,10 +75,10 @@ export default function AccountForm() {
   return (
     <Form {...form}>
       {isGoogleAccount ? (
-        <div className="max-w-lg text-sm xs:px-4 xs:py-2 xs:text-xs">
+        <div className="max-w-lg text-sm xs:max-w-sm xs:text-xs">
           <Button
             variant={"outline"}
-            className="px-6 py-6 text-center xl:py-8 2xl:py-8"
+            className="h-fit min-w-fit px-6 py-6 text-center xl:py-8 2xl:py-8 xs:px-4 xs:py-4"
           >
             You can not change your email and password if you are logged in with
             Google Account. Please login with another account instead.
@@ -88,7 +88,7 @@ export default function AccountForm() {
 
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="w-full min-w-[32rem] space-y-8"
+        className="w-full min-w-[32rem] space-y-8 xs:min-w-[10rem]"
       >
         <div className="space-y-4">
           <div>
