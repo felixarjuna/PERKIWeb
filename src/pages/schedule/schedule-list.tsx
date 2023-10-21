@@ -7,9 +7,8 @@ import ActionButton from "~/components/action-button";
 import { Separator } from "~/components/ui/separator";
 import { useToast } from "~/components/ui/use-toast";
 
-import { dateTimeFormatter } from "~/lib/utils";
+import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
-import { getNextDayOfWeek } from "./utils";
 
 type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
 const SUMMARY_MAX_LENGTH = 250;
