@@ -76,12 +76,14 @@ export default function EditTakeawayForm() {
   // 1. Define form.
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
-    defaultValues: {
-      ...takeaway,
-      // TODO: Automatically take contributors name from the username
-      contributors: contributors,
-    },
   });
+
+  React.useEffect(() => {
+    form.reset({
+      ...takeaway,
+      contributors: contributors,
+    });
+  }, [contributors, form, takeaway]);
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
@@ -109,7 +111,7 @@ export default function EditTakeawayForm() {
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
