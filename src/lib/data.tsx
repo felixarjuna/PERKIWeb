@@ -202,6 +202,12 @@ export const takeawayIds = [
   "sg-bible-study",
 ];
 
+export enum FellowshipType {
+  ChurchService = "Church service",
+  BigGroupBibleStudy = "Big group bible study",
+  SmallGroupBibleStudy = "Small group bible study",
+}
+
 export const speakers = [
   "Oliver Renaldi",
   "Danny Kurniawan",
@@ -241,6 +247,7 @@ export const multimedia = [
   "Felix Arjuna",
   "Victor Jordan",
 ];
+
 export const accommodation = [
   "Oliver Renaldi",
   "Danny Kurniawan",
