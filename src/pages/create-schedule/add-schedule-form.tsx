@@ -96,9 +96,9 @@ export default function AddScheduleForm() {
                         </FormControl>
                         <SelectContent>
                           {Object.entries(FellowshipType).map(
-                            (speaker, index) => (
-                              <SelectItem value={speaker[0]} key={index}>
-                                {speaker[1]}
+                            ([key, value]) => (
+                              <SelectItem value={key} key={key}>
+                                {value}
                               </SelectItem>
                             ),
                           )}

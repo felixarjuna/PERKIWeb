@@ -3,13 +3,6 @@ import Link from "next/link";
 import Navigation from "~/components/navigation";
 import TakeawayList from "~/components/takeaway/takeaway-list";
 
-const tabs = [
-  { id: "church-service", label: "Church service" },
-  { id: "bg-bible-study", label: "Big group bible study" },
-  { id: "sg-bible-study", label: "Small group bible study" },
-  { id: "all", label: "All services" },
-];
-
 export default function Takeaway() {
   return (
     <section className="min-h-screen bg-dark-green-default pb-40 text-cream-default">
@@ -42,7 +35,7 @@ export default function Takeaway() {
             </h3>
           </div>
 
-          <TakeawayList tabs={tabs} />
+          <TakeawayList />
         </div>
       </div>
     </section>
