@@ -1,4 +1,6 @@
+import { relations } from "drizzle-orm";
 import { datetime, mysqlTable, serial, text } from "drizzle-orm/mysql-core";
+import { takeaways } from "./takeaways";
 
 export const schedules = mysqlTable("schedules", {
   id: serial("id").primaryKey(),
@@ -13,4 +15,9 @@ export const schedules = mysqlTable("schedules", {
   accommodation: text("accommodation"),
   cookingGroup: text("cookingGroup"),
   cleaningGroup: text("cleaningGroup").notNull(),
+  fellowshipType: text("fellowshipType").notNull(),
 });
+
+export const scheduleRelation = relations(schedules, ({ many }) => ({
+  takeaways: many(takeaways),
+}));

@@ -1,18 +1,17 @@
-import {
-  datetime,
-  json,
-  mysqlTable,
-  serial,
-  text,
-} from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { int, json, mysqlTable, serial, text } from "drizzle-orm/mysql-core";
+import { schedules } from "./schedules";
 
 export const takeaways = mysqlTable("takeaways", {
   id: serial("id").primaryKey(),
-  takeawayId: text("takeawayId").notNull(),
-  title: text("title").notNull(),
-  date: datetime("date").notNull(),
-  speaker: text("speaker").notNull(),
-  bibleVerse: text("bibleVerse").notNull(),
-  summary: text("summary").notNull(),
+  scheduleId: int("scheduleId").notNull(),
+  keypoints: text("keypoints").notNull(),
   contributors: json("contributors").notNull().$type<string[]>(),
 });
+
+export const takeawayRelation = relations(takeaways, ({ one }) => ({
+  schedule: one(schedules, {
+    fields: [takeaways.scheduleId],
+    references: [schedules.id],
+  }),
+}));
