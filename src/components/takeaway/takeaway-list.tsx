@@ -18,11 +18,7 @@ import {
   SelectValue,
 } from "../ui/select";
 
-interface TakeawayListProps extends React.HTMLAttributes<HTMLDivElement> {
-  tabs: { id: string; label: string }[];
-}
-
-export default function TakeawayList({ tabs }: TakeawayListProps) {
+export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
   const [fellowshipType, setFellowshipType] = React.useState<string>("");
 
@@ -34,8 +30,6 @@ export default function TakeawayList({ tabs }: TakeawayListProps) {
         );
   }, [data, fellowshipType]);
 
-  console.log(data);
-
   return (
     <div className="space-y-4">
       <Select onValueChange={(value) => setFellowshipType(value)}>
@@ -43,11 +37,12 @@ export default function TakeawayList({ tabs }: TakeawayListProps) {
           <SelectValue placeholder="Fellowship type" />
         </SelectTrigger>
         <SelectContent>
-          {tabs.map((tab) => (
-            <SelectItem value={tab.id} key={tab.id}>
-              {tab.label}
+          {Object.entries(FellowshipType).map(([key, value]) => (
+            <SelectItem value={key} key={key}>
+              {value}
             </SelectItem>
           ))}
+          <SelectItem value={"all"}>All services</SelectItem>
         </SelectContent>
       </Select>
 
