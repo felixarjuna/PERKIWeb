@@ -30,6 +30,7 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import {
+  FellowshipType,
   accommodation,
   groups,
   liturgos,
@@ -76,6 +77,40 @@ export default function AddScheduleForm() {
             Fellowship Information
           </h3>
           <section className="grid grid-cols-2 gap-4 xs:text-sm">
+            <div className="xs:col-span-2">
+              <FormField
+                control={form.control}
+                name="fellowshipType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-md">Fellowship Type</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select the fellowship type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(FellowshipType).map(
+                            (speaker, index) => (
+                              <SelectItem value={speaker[0]} key={index}>
+                                {speaker[1]}
+                              </SelectItem>
+                            ),
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="xs:col-span-2">
               <FormField
                 control={form.control}
