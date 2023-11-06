@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { schedules } from "~/lib/db/schema/schedules";
 import { takeaways } from "~/lib/db/schema/takeaways";
 import { db } from "~/server";
 import {
@@ -10,18 +11,17 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
   getTakeaways: publicProcedure.query(async () => {
-    return await db.select().from(takeaways);
+    return await db
+      .select()
+      .from(takeaways)
+      .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId));
   }),
   addTakeaway: publicProcedure
     .input(addTakeawaySchema)
     .mutation(async ({ input }) => {
       return await db.insert(takeaways).values({
-        title: input.title,
-        takeawayId: input.takeawayId,
-        date: input.date,
-        speaker: input.speaker,
-        bibleVerse: input.bibleVerse,
-        summary: input.summary,
+        scheduleId: input.scheduleId,
+        keypoints: input.keypoints,
         contributors: input.contributors,
       });
     }),
@@ -36,7 +36,8 @@ export const takeawayRouter = createTRPCRouter({
       return await db
         .select()
         .from(takeaways)
-        .where(eq(takeaways.id, input.id));
+        .where(eq(takeaways.id, input.id))
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId));
     }),
   updateTakeaway: publicProcedure
     .input(updateTakeawaySchema)
