@@ -1,0 +1,34 @@
+{
+  "version": "5",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1699292311044,
+      "tag": "0000_pink_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1699292385273,
+      "tag": "0001_living_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1699293267549,
+      "tag": "0002_secret_genesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1699294847025,
+      "tag": "0003_talented_marvel_apes",
+      "breakpoints": true
+    }
+  ]
+}
