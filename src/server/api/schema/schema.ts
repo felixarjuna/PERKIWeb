@@ -1,12 +1,8 @@
 import { z } from "zod";
 
 export const addTakeawaySchema = z.object({
-  takeawayId: z.string(),
-  title: z.string(),
-  date: z.date(),
-  speaker: z.string(),
-  bibleVerse: z.string(),
-  summary: z.string(),
+  scheduleId: z.number(),
+  keypoints: z.string(),
   contributors: z.array(z.string()),
 });
 
@@ -33,6 +29,7 @@ export const addScheduleSchema = z.object({
   accommodation: z.string().min(2).max(50).optional(),
   cookingGroup: z.string().min(2).max(50).optional(),
   cleaningGroup: z.string().min(2).max(50),
+  fellowshipType: z.string().min(2).max(50),
 });
 
 export const updateScheduleSchema = addScheduleSchema.extend({
