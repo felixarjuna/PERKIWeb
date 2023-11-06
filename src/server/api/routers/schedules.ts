@@ -27,6 +27,7 @@ export const scheduleRouter = createTRPCRouter({
         accommodation: input.accommodation,
         cookingGroup: input.cookingGroup,
         cleaningGroup: input.cleaningGroup,
+        fellowshipType: input.fellowshipType,
       });
     }),
   deleteSchedule: publicProcedure
