@@ -6,6 +6,7 @@ import { isEmpty } from "lodash";
 import { useRouter } from "next/router";
 import React from "react";
 import { useToast } from "~/components/ui/use-toast";
+import { FellowshipType } from "~/lib/data";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
 import ActionButton from "../action-button";
@@ -23,17 +24,21 @@ interface TakeawayListProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export default function TakeawayList({ tabs }: TakeawayListProps) {
   const { data } = api.takeaways.getTakeaways.useQuery();
-  const [takeawayId, setTakeawayId] = React.useState<string>("");
+  const [fellowshipType, setFellowshipType] = React.useState<string>("");
 
   const takeaways = React.useMemo(() => {
-    return isEmpty(takeawayId) || takeawayId === "all"
+    return isEmpty(fellowshipType) || fellowshipType === "all"
       ? data
-      : data?.filter((takeaway) => takeaway.takeawayId === takeawayId);
-  }, [data, takeawayId]);
+      : data?.filter(
+          (takeaway) => takeaway.schedules.fellowshipType === fellowshipType,
+        );
+  }, [data, fellowshipType]);
+
+  console.log(data);
 
   return (
     <div className="space-y-4">
-      <Select onValueChange={(value) => setTakeawayId(value)}>
+      <Select onValueChange={(value) => setFellowshipType(value)}>
         <SelectTrigger>
           <SelectValue placeholder="Fellowship type" />
         </SelectTrigger>
@@ -51,14 +56,14 @@ export default function TakeawayList({ tabs }: TakeawayListProps) {
           return (
             <TakeawayItem
               key={index}
-              tabId={takeaway.takeawayId}
-              id={takeaway.id}
-              title={takeaway.title}
-              date={dateTimeFormatter(takeaway.date.toString())}
-              speaker={takeaway.speaker}
-              bibleVerse={takeaway.bibleVerse}
-              summary={takeaway.summary}
-              contributors={takeaway.contributors}
+              tabId={takeaway.schedules.fellowshipType}
+              id={takeaway.takeaways.id}
+              title={takeaway.schedules.title}
+              date={dateTimeFormatter(takeaway.schedules.date.toString())}
+              speaker={takeaway.schedules.speaker}
+              bibleVerse={takeaway.schedules.bibleVerse}
+              summary={takeaway.takeaways.keypoints}
+              contributors={takeaway.takeaways.contributors}
             />
           );
         })}
@@ -104,7 +109,9 @@ function TakeawayItem(props: TakeawayItemProps) {
             onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
           />
           <span className="my-auto flex h-6 items-center rounded-lg bg-light-green-default px-2 text-sm text-green-default xs:p-1 xs:text-xs">
-            {props.tabId}
+            {FellowshipType[
+              props.tabId as keyof typeof FellowshipType
+            ].toLowerCase()}
           </span>
         </div>
       </h1>
