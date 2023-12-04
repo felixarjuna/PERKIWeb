@@ -227,6 +227,8 @@ export const liturgos = [
   "Jordie Yonathan",
   "Albertus Pandya",
   "Reggy Irawan",
+  "Steffen Josua",
+  "Winston Alexander",
 ];
 
 export const musicians = [
@@ -237,6 +239,7 @@ export const musicians = [
   "Albertus Pandya",
   "Jordie Yonathan",
   "Oliver Renaldi",
+  "Wynnona Angelica",
 ];
 
 export const multimedia = [
