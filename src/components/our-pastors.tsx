@@ -44,9 +44,12 @@ export default function OurPastors() {
                 <div className="mt-4 self-start underline underline-offset-2 xs:text-sm">
                   <Dialog>
                     <DialogTrigger
-                      className={buttonVariants({ variant: "default" })}
+                      className={buttonVariants({
+                        variant: "default",
+                        size: "sm",
+                      })}
                     >
-                      Learn more
+                      see more ...
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>

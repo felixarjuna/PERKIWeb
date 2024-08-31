@@ -57,7 +57,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <div className="absolute inset-0 z-10">
+      <div className="relative inset-0 z-10">
         <CircleBackground
           r={isMobile ? 60 : 100}
           blur
