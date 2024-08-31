@@ -2,7 +2,6 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 
-import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import Head from "next/head";
 
@@ -22,11 +21,11 @@ const reimbrandt = localFont({
   variable: "--font-reimbrandt",
 });
 
-const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
-  ssr: false,
-});
+// const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
+//   ssr: false,
+// });
 
-const MyApp: AppType<{ session: Session | null }> = ({
+const App: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
@@ -41,7 +40,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
       </Head>
 
       <div className="relative overflow-hidden">
-        <AnimatedCursor
+        {/* <AnimatedCursor
           color={"255, 255, 255"}
           innerSize={0}
           outerSize={30}
@@ -64,7 +63,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
           outerStyle={{
             mixBlendMode: "difference",
           }}
-        />
+        /> */}
         <SessionProvider session={session}>
           <Component {...pageProps} />
         </SessionProvider>
@@ -74,4 +73,4 @@ const MyApp: AppType<{ session: Session | null }> = ({
   );
 };
 
-export default api.withTRPC(MyApp);
+export default api.withTRPC(App);

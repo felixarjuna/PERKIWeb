@@ -74,7 +74,7 @@ export default function Navigation({ showNav }: NavigationProps) {
               session ? () => router.push("/account") : () => void signIn()
             }
           >
-            <span className="flex items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
               <User className="h-4 w-4" />
             </span>
             {session ? "Account" : "Sign in"}
