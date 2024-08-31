@@ -1,10 +1,12 @@
 # TODO
 
-- [] Add note writer to schedules
 - [x] Add cleaning and cooking group
-
-## Nice to have
-
-- [] Add payment integration system
-- [] Add birthday to perkiweb
-- [] Enable feature to show schedules as calender
+- [x] Error handling for google authentication
+- [x] Remove animated cursor
+- [x] Redesign navigation
+- [ ] Add organizational chart
+- [ ] Show our financial situation in the website
+- [ ] Add note writer to schedules
+- [ ] Add payment integration system
+- [ ] Add birthday to perkiweb
+- [ ] Enable feature to show schedules as calender

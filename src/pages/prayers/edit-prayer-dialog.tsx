@@ -18,7 +18,7 @@ export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
       <DialogTrigger>
         <EditButton
           onEditClick={() => {
-            console.log();
+            console.log("Prayer edited.");
           }}
         />
       </DialogTrigger>
