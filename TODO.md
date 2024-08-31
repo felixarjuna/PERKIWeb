@@ -5,6 +5,7 @@
 - [x] Remove animated cursor
 - [x] Redesign navigation
 - [x] Redesign homepage
+- [x] Update navigation information
 - [ ] Add organizational chart
 - [ ] Show our financial situation in the website
 - [ ] Add note writer to schedules
