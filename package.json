@@ -59,6 +59,7 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.45.4",
     "react-icons": "^4.11.0",
+    "react-organizational-chart": "^2.2.1",
     "react-use": "^17.4.0",
     "superjson": "^1.13.1",
     "tailwind-merge": "^1.14.0",

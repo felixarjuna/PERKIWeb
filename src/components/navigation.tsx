@@ -1,10 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
+import {
+  Calendar,
+  HandHeart,
+  House,
+  LayoutPanelTop,
+  NotebookPen,
+  User,
+} from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React from "react";
 
 const navigations = [
   {
@@ -27,6 +35,11 @@ const navigations = [
     name: "Prayer",
     href: "/prayers",
   },
+  {
+    icon: <LayoutPanelTop className="h-4 w-4" />,
+    name: "Org. Structure",
+    href: "/organization",
+  },
 ];
 
 interface INavigationProps {
@@ -36,6 +49,19 @@ interface INavigationProps {
 export default function Navigation({ showNav }: INavigationProps) {
   const { data: session } = useSession();
   const router = useRouter();
+
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 768);
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <AnimatePresence>
@@ -52,22 +78,24 @@ export default function Navigation({ showNav }: INavigationProps) {
               },
             }}
             exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-            className="fixed left-0 right-0 top-10 isolate z-50 mx-auto flex w-fit items-center justify-center space-x-2 rounded-lg bg-green-default/80 px-8 py-4 text-cream-default xs:max-w-xs xs:gap-1 xs:gap-x-3 xs:px-4 xs:py-3"
+            className="fixed left-0 right-0 top-10 isolate z-50 mx-auto  flex w-fit flex-row flex-wrap items-center justify-center gap-y-2 space-x-3 rounded-lg bg-green-default/80 px-8 py-4 text-center text-cream-default xs:max-w-xs xs:gap-1 xs:gap-x-3 xs:px-4 xs:py-3 "
           >
             {navigations.map((nav, index) => {
               return (
-                <Link
-                  key={index}
-                  href={nav.href}
-                  className="flex cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xs:h-6 xs:w-6 xs:p-[1px]">
-                    {nav.icon}
-                  </div>
-                  <p className="lowercase">{nav.name}</p>
-                </Link>
+                <div key={index}>
+                  <Link
+                    href={nav.href}
+                    className="flex cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xs:h-6 xs:w-6 xs:p-[1px]">
+                      {nav.icon}
+                    </div>
+                    {isMobile ? null : <p className="lowercase">{nav.name}</p>}
+                  </Link>
+                </div>
               );
             })}
+
             <div
               className="flex w-fit cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
               onClick={
@@ -77,7 +105,9 @@ export default function Navigation({ showNav }: INavigationProps) {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
                 <User className="h-4 w-4" />
               </span>
-              <p className="lowercase">{session ? "Account" : "Sign in"}</p>
+              {isMobile ? null : (
+                <p className="lowercase">{session ? "Account" : "Sign in"}</p>
+              )}
             </div>
           </motion.div>
         ) : null}

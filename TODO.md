@@ -4,6 +4,7 @@
 - [x] Error handling for google authentication
 - [x] Remove animated cursor
 - [x] Redesign navigation
+- [x] Redesign homepage
 - [ ] Add organizational chart
 - [ ] Show our financial situation in the website
 - [ ] Add note writer to schedules

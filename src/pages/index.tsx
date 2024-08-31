@@ -1,5 +1,7 @@
 import Link from "next/link";
+import React from "react";
 import AboutUs from "~/components/about-us";
+import CircleBackground from "~/components/circle-background";
 import Footer from "~/components/footer";
 import OurPastors from "~/components/our-pastors";
 import { buttonVariants } from "~/components/ui/button";
@@ -17,8 +19,21 @@ import WhereAreWe from "~/components/where-are-we";
 import { cn } from "~/lib/utils";
 
 export default function Home() {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 768);
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <>
+    <div>
       <Dialog defaultOpen={true}>
         <DialogContent className="border-0">
           <DialogHeader>
@@ -42,12 +57,31 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
+      <div className="absolute inset-0 z-10">
+        <CircleBackground
+          r={isMobile ? 60 : 100}
+          blur
+          className={
+            "bg-gradient-to-r from-green-100 via-green-100 to-green-100 mix-blend-lighten"
+          }
+        />
+        <CircleBackground
+          r={isMobile ? 60 : 100}
+          blur
+          className={
+            "bg-gradient-to-r from-green-100 via-green-100 to-green-100 mix-blend-multiply"
+          }
+          duration={25}
+          reverse
+        />
+      </div>
+
       <Welcome />
       <AboutUs />
       <WhatWeDo />
       <OurPastors />
       <WhereAreWe />
       <Footer />
-    </>
+    </div>
   );
 }
