@@ -31,17 +31,17 @@ export default function SignInForm() {
   const router = useRouter();
   if (session) router.back();
 
-  // Define sign in form
+  /** signin form. */
   const form = useForm<z.infer<typeof SignInFormSchema>>({
     resolver: zodResolver(SignInFormSchema),
   });
 
+  /** redirect to the previous visited path. */
   const prevRoute = useAsPath();
-
   const { toast } = useToast();
 
-  // Define on submit callback function
-  async function onSubmit(value: z.infer<typeof SignInFormSchema>) {
+  /** login action. */
+  async function onLogin(value: z.infer<typeof SignInFormSchema>) {
     const response = await signIn("credentials", {
       ...value,
       callbackUrl: prevRoute.prevAsPath,
@@ -60,12 +60,29 @@ export default function SignInForm() {
       });
   }
 
+  /** google oauth login action. */
+  async function onGoogleLogin() {
+    try {
+      await signIn("google", {
+        callbackUrl: prevRoute.prevAsPath,
+      });
+      toast({
+        title: "Authentication succesfull!",
+        description: "You are now logged in! ❤️",
+      });
+    } catch (error) {
+      toast({
+        title: "Authentication failed!",
+      });
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 mt-8">
         <Form {...form}>
           <form
-            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+            onSubmit={(event) => void form.handleSubmit(onLogin)(event)}
             className="mt-4 w-full space-y-8"
           >
             <div className="space-y-4">
@@ -117,11 +134,8 @@ export default function SignInForm() {
 
       <div className="mt-6">
         <button
-          onClick={() =>
-            void signIn("google", {
-              callbackUrl: prevRoute.prevAsPath,
-            })
-          }
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          onClick={async () => await onGoogleLogin()}
           className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
         >
           <FcGoogle />

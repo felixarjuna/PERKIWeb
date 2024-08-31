@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import React from "react";
 import { create } from "zustand";
 
 interface AsPathStoreType {
-  prevAsPath: string | undefined;
-  currentAsPath: string | undefined;
+  readonly prevAsPath: string | undefined;
+  readonly currentAsPath: string | undefined;
 }
 
 const asPathStore = create<AsPathStoreType>(() => ({
@@ -12,7 +12,7 @@ const asPathStore = create<AsPathStoreType>(() => ({
   currentAsPath: undefined,
 }));
 
-/** use as a hook to get prevAsPath and currentAsPath*/
+/** use as a hook to get prevAsPath and currentAsPath- */
 export const useAsPath = () => {
   return asPathStore((state) => state);
 };
@@ -22,12 +22,12 @@ export const getAsPath = () => {
   return asPathStore.getState();
 };
 
-/** Only use this in _app.tsx or root it's like a Provider */
+/** only use this in _app.tsx or root. it's like an provider. */
 export const useAsPathInitializer = () => {
   const { asPath } = useRouter();
   const { currentAsPath } = useAsPath();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (currentAsPath !== asPath) {
       asPathStore.setState((state) => ({
         ...state,
