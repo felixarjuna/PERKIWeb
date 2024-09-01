@@ -91,7 +91,7 @@ export default function ScheduleList() {
       .at(0)?.members;
 
     return (
-      <div className="flex flex-col justify-center space-y-2 p-8 text-sm xl:w-1/4 2xl:w-1/4">
+      <div className="flex flex-col justify-center space-y-2 p-8 text-sm sm:w-1/4">
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
@@ -110,6 +110,7 @@ export default function ScheduleList() {
           </div>
           <p>{schedule.accommodation ?? "-"}</p>
         </div>
+
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
@@ -152,6 +153,7 @@ export default function ScheduleList() {
             </DrawerFooter>
           </DrawerContent>
         </Drawer>
+
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
@@ -201,7 +203,7 @@ export default function ScheduleList() {
   function renderMobileActionButton(schedule: Schedule) {
     return (
       <ActionButton
-        className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 xl:hidden 2xl:hidden"
+        className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 sm:hidden xl:hidden"
         onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
         onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
       />
@@ -222,9 +224,9 @@ export default function ScheduleList() {
     return (
       <div
         className="flex h-full flex-col gap-y-0 rounded-lg
-      bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:gap-y-2"
+      bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:flex-row sm:gap-y-2"
       >
-        <div className="cursor-pointer space-y-2 p-8 xl:w-3/4 2xl:w-3/4">
+        <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
           <div className="flex items-center justify-between">
             <h1 className="font-reimbrandt text-2xl tracking-wide">
               {schedule.title}
@@ -237,7 +239,7 @@ export default function ScheduleList() {
 
         <Separator
           orientation="vertical"
-          className="mx-auto h-px w-5/6 rounded-lg bg-cream-default xl:my-auto xl:h-48 xl:w-px 2xl:my-auto 2xl:h-48 2xl:w-px"
+          className="mx-auto h-px w-5/6 rounded-lg bg-cream-default sm:my-auto sm:h-48 sm:w-px xl:my-auto xl:h-48 xl:w-px"
         />
 
         {renderScheduleServants(schedule)}

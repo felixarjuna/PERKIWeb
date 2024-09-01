@@ -9,7 +9,7 @@ export default function Schedule() {
     <Template
       title="Schedule"
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base xs:text-2xl">
+        <div className="flex flex-col gap-y-2 text-base sm:text-2xl">
           <p>
             “There is a time for everything, and a season for every activity
             under the heavens.”
