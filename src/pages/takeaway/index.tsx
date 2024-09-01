@@ -20,7 +20,7 @@ export default function Takeaway() {
           grow together 🔥
         </h3>
 
-        <div className="flex w-full max-w-5xl flex-col px-0 sm:px-14">
+        <div className="flex w-full max-w-5xl flex-col px-0">
           <Link
             href={"/create-takeaway"}
             className="flex w-fit items-center gap-1 self-end rounded-lg bg-green-default/60 p-3 px-4 text-sm"
