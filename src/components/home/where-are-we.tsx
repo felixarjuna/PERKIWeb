@@ -23,7 +23,7 @@ export default function WhereAreWe() {
           <MapPin className="h-5 w-5" />
         </div>
 
-        <div className="absolute bottom-0 left-0 z-20 flex h-fit w-full flex-col justify-center gap-y-4 bg-cream-default/60 px-8 py-8 text-base text-green-default sm:text-2xl 2xl:flex-row 2xl:items-start 2xl:justify-center 2xl:gap-8 2xl:gap-y-8 2xl:px-20">
+        <div className="absolute bottom-0 left-0 z-20 flex h-fit w-full flex-col justify-center gap-y-4 bg-cream-default/60 px-8 py-8 text-base text-green-default sm:flex-row sm:items-start sm:justify-center sm:gap-8 sm:gap-y-8 sm:px-20 sm:text-2xl">
           <Link
             target="_blank"
             href={
@@ -31,9 +31,8 @@ export default function WhereAreWe() {
             }
             className="flex items-center gap-2"
           >
-            <div>
-              <NavigationIcon className="h-5 w-5" />
-            </div>
+            <NavigationIcon className="h-5 w-5" />
+
             <p className="flex underline underline-offset-2">
               Open in Google Maps
               <span className="relative flex h-2 w-2">
@@ -43,16 +42,16 @@ export default function WhereAreWe() {
             </p>
           </Link>
 
-          <div className="flex gap-2">
-            <MapPin className="h-5 w-5" />
+          <div className="flex items-start gap-2">
+            <MapPin className="h-5 w-5 sm:mt-1" />
             <div>
               <p>Roermonderstr. 110</p>
               <p>52072, Aachen</p>
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <BusFront className="h-5 w-5" />
+          <div className="flex items-start gap-2">
+            <BusFront className="h-5 w-5 sm:mt-1" />
             <div className="grid gap-2">
               <p>Bendplatz / Jupp-Müller-Straße</p>
               <div className="flex items-center gap-2 text-sm">
@@ -75,11 +74,9 @@ export default function WhereAreWe() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Clock3 className="h-5 w-5" />
-            <div>
-              <h1>Saturday, 15:30 till drop. </h1>
-            </div>
+            <h1>Saturday, 15:30 till drop.</h1>
           </div>
         </div>
       </div>

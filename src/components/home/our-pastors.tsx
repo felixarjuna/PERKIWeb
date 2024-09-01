@@ -13,9 +13,9 @@ import {
 export default function OurPastors() {
   return (
     <div className="bg-cream-default py-20 text-green-default sm:py-40">
-      <div className="grid grid-cols-4">
-        <div className="col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1 sm:-rotate-90">
-          <h1 className="text-center font-reimbrandt text-4xl sm:text-8xl">
+      <div className="grid grid-cols-4 gap-y-4">
+        <div className="col-span-4 my-auto flex h-full items-center justify-center whitespace-nowrap sm:col-span-1 sm:translate-y-[50%] sm:items-start sm:justify-start">
+          <h1 className="text-center font-reimbrandt text-4xl sm:-rotate-90 sm:text-8xl">
             Our Pastors
           </h1>
         </div>
