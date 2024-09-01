@@ -43,7 +43,7 @@ export default function Prayers() {
     <Template
       title="Prayers"
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base sm:text-2xl">
+        <div className="flex flex-col gap-y-2 text-base sm:max-w-4xl sm:text-2xl">
           <p>
             “Therefore, I tell you, whatever you ask in prayer, believe that you
             have received it, and it will be yours.”
