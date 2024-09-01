@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "~/lib/utils";
 import { events } from "../../lib/data";
 import { buttonVariants } from "../ui/button";
@@ -13,17 +12,7 @@ import {
 
 export default function WhatWeDo() {
   return (
-    <div className="grid gap-y-8 bg-cream-default pb-20 text-dark-green-default">
-      <div className="flex h-full items-center justify-center">
-        <Image
-          src={"/images/perkiAachen.jpg"}
-          alt="perki"
-          className="object-contain"
-          width={500}
-          height={300}
-        />
-      </div>
-
+    <div className="grid gap-y-8 bg-cream-default py-16 text-dark-green-default">
       <div className="grid grid-cols-4">
         <div className="col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1 sm:-rotate-90">
           <h1 className="text-center font-reimbrandt text-4xl text-green-default sm:text-8xl">

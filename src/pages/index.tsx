@@ -62,14 +62,14 @@ export default function Home() {
           r={isMobile ? 60 : 100}
           blur
           className={
-            "bg-gradient-to-r from-green-100 via-green-100 to-green-100 mix-blend-lighten"
+            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default mix-blend-lighten"
           }
         />
         <CircleBackground
           r={isMobile ? 60 : 100}
           blur
           className={
-            "bg-gradient-to-r from-green-100 via-green-100 to-green-100 mix-blend-multiply"
+            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default  mix-blend-multiply"
           }
           duration={25}
           reverse

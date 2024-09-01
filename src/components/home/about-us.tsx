@@ -1,10 +1,10 @@
 import React from "react";
 import { useIntersection } from "react-use";
 
+import Image from "next/image";
 import Navigation from "./navigation";
 
 import ParallaxImage from "./parallax-image";
-import VisionAndMission from "./vision-and-mission";
 
 export default function AboutUs() {
   const [showNav, setShowNav] = React.useState<boolean>(false);
@@ -27,7 +27,7 @@ export default function AboutUs() {
   }, [intersection, intersection?.boundingClientRect]);
 
   return (
-    <div className="relative bg-dark-green-default py-20 text-light-green-default">
+    <div className="relative bg-dark-green-default pt-20 text-light-green-default">
       <Navigation showNav={showNav} />
 
       <div className="px-24">
@@ -105,7 +105,45 @@ export default function AboutUs() {
         </div>
       </div>
 
-      <VisionAndMission />
+      <div className="mx-auto flex w-full flex-col gap-16 bg-gradient-to-b from-dark-green-default to-light-green-default py-4 sm:py-20">
+        <div className="flex flex-row items-center justify-center gap-2">
+          <h1 className="px-8 text-center font-reimbrandt text-3xl sm:text-7xl">
+            Make Disciples of All Nations
+          </h1>
+        </div>
+
+        <div className="mx-auto flex flex-col items-center justify-center gap-4 text-center sm:w-8/12 sm:flex-row sm:gap-10">
+          <div className="w-10/12 rounded-lg bg-dark-green-default/30 sm:h-60 sm:w-1/2">
+            <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
+              <h1 className="font-reimbrandt text-2xl sm:text-5xl">Vision</h1>
+              <p className="text-base sm:text-2xl">
+                Become a church based on the Full Gospel to take root, grow and
+                bear fruit for Christ.
+              </p>
+            </div>
+          </div>
+
+          <div className="w-10/12 rounded-lg bg-dark-green-default/30 sm:h-60 sm:w-1/2">
+            <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
+              <h1 className="font-reimbrandt text-2xl sm:text-5xl">Mission</h1>
+              <p className="text-base sm:text-2xl">
+                Building a Christian family that loves and serves God and
+                people.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto flex h-full w-10/12 items-center justify-center sm:w-8/12">
+          <Image
+            src={"/images/perkiAachen.jpg"}
+            alt="perki"
+            className="rounded-lg object-contain"
+            width={3000}
+            height={0}
+          />
+        </div>
+      </div>
     </div>
   );
 }
