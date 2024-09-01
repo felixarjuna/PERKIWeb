@@ -9,12 +9,12 @@ export default function Loader(props: ILoaderProps) {
   return (
     <div
       className={cn(
-        "flex animate-pulse items-center justify-center gap-2 text-base",
+        "flex animate-pulse items-center justify-center gap-2 text-base sm:text-xl",
         props.className,
       )}
     >
-      <Loader2 className="h-4 w-4 animate-spin" />
-      <p>{props.message}</p>
+      <Loader2 className="aspect-square h-4 animate-spin sm:h-6" />
+      <p className="font-reimbrandt">{props.message}</p>
     </div>
   );
 }
