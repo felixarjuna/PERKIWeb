@@ -18,6 +18,7 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { useToast } from "~/components/ui/use-toast";
 
+import Loader from "~/components/loader";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
 import { groups } from "../group";
@@ -228,7 +229,7 @@ export default function ScheduleList() {
       >
         <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
           <div className="flex items-center justify-between">
-            <h1 className="font-reimbrandt text-2xl tracking-wide">
+            <h1 className="font-reimbrandt text-xl tracking-wide">
               {schedule.title}
             </h1>
             {renderDesktopActionButton(schedule)}
@@ -264,14 +265,16 @@ export default function ScheduleList() {
   }, [schedules]);
 
   function renderThisWeekSchedule() {
-    if (!thisWeekSchedule) {
-      return <p>Loading...</p>;
-    }
-
     return (
       <div className="space-y-4">
         <h1 className="font-reimbrandt text-2xl tracking-wide">This Week</h1>
-        {thisWeekSchedule.map((schedule) => renderSchedule(schedule))}
+        {!thisWeekSchedule ? (
+          <Loader message="Loading this week schedules ..." />
+        ) : thisWeekSchedule.length === 0 ? (
+          <div>No schedule found.</div>
+        ) : (
+          thisWeekSchedule.map((schedule) => renderSchedule(schedule))
+        )}
       </div>
     );
   }
@@ -284,13 +287,18 @@ export default function ScheduleList() {
   }, [schedules]);
 
   function renderUpcomingSchedule() {
-    if (!upcomingSchedules) return <p>Loading upcoming schedule...</p>;
     return (
       <div className="space-y-4">
         <h1 className="font-reimbrandt text-2xl tracking-wide">
           Upcoming Schedules
         </h1>
-        {upcomingSchedules.map((schedule) => renderSchedule(schedule))}
+        {!upcomingSchedules ? (
+          <Loader message="Loading upcoming schedules ..." />
+        ) : upcomingSchedules.length === 0 ? (
+          <div>No schedule found.</div>
+        ) : (
+          upcomingSchedules.map((schedule) => renderSchedule(schedule))
+        )}
       </div>
     );
   }
@@ -302,13 +310,18 @@ export default function ScheduleList() {
   }, [schedules]);
 
   function renderPreviousSchedule() {
-    if (!previousSchedules) return <p>Loading previous schedule...</p>;
     return (
       <div className="space-y-4">
         <h1 className="font-reimbrandt text-2xl tracking-wide">
           Previous Schedules
         </h1>
-        {previousSchedules.map((schedule) => renderSchedule(schedule))}
+        {!previousSchedules ? (
+          <Loader message="Loading previous schedules ..." />
+        ) : previousSchedules.length === 0 ? (
+          <div>No schedule found.</div>
+        ) : (
+          previousSchedules.map((schedule) => renderSchedule(schedule))
+        )}
       </div>
     );
   }

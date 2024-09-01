@@ -5,9 +5,11 @@ export default function Finance() {
 
   return (
     <Template title="Finance" subtitle="Our family wealth tracker.">
-      <h1 className="absolute top-[50%] animate-pulse font-reimbrandt text-4xl">
-        Coming Soon ...
-      </h1>
+      <div className="flex justify-center">
+        <h1 className="absolute top-1/2 animate-pulse font-reimbrandt text-3xl sm:text-4xl">
+          Coming Soon ...
+        </h1>
+      </div>
     </Template>
   );
 }

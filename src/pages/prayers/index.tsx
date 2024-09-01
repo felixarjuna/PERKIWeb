@@ -4,6 +4,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getSession, useSession } from "next-auth/react";
 import React from "react";
 import { DeleteButton } from "~/components/action-button";
+import Loader from "~/components/loader";
 import Template from "~/components/template";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
@@ -66,74 +67,83 @@ export default function Prayers() {
 
           <div>
             <ul className="my-4 flex flex-col justify-center gap-2 gap-y-3">
-              {prayers?.map((prayer, index) => {
-                return (
-                  <li
-                    className="items relative flex flex-col gap-y-1 rounded-lg bg-green-default/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
-                    key={index}
-                  >
-                    <Badge
-                      variant={"secondary"}
-                      className="w-fit text-xs font-thin"
+              {prayers === undefined ? (
+                <Loader message="Loading prayers ..." className="mt-4" />
+              ) : prayers.length === 0 ? (
+                <div className="mt-4 text-center">No prayer found.</div>
+              ) : (
+                prayers?.map((prayer, index) => {
+                  return (
+                    <li
+                      className="items relative flex flex-col gap-y-1 rounded-lg bg-green-default/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
+                      key={index}
                     >
-                      {prayer.isAnonymous ? "unknown" : prayer.name}
-                    </Badge>
+                      <Badge
+                        variant={"secondary"}
+                        className="w-fit text-xs font-thin"
+                      >
+                        {prayer.isAnonymous ? "unknown" : prayer.name}
+                      </Badge>
 
-                    <div className="flex items-center justify-between gap-x-2">
-                      <p className="text-xs">{prayer.content}</p>
+                      <div className="flex items-center justify-between gap-x-2">
+                        <p className="text-xs">{prayer.content}</p>
 
-                      <div className="flex gap-x-2">
-                        <Toggle
-                          className="h-6 w-6 p-1"
-                          pressed={prayer.prayerNames.includes(username)}
-                          onPressedChange={(pressed) => {
-                            if (pressed) {
-                              updatePrayerCount.mutate({
-                                id: prayer.id,
-                                count: pressed
-                                  ? prayer.count + 1
-                                  : prayer.count - 1,
-                                prayerNames: [...prayer.prayerNames, username],
-                              });
-                            } else {
-                              updatePrayerCount.mutate({
-                                id: prayer.id,
-                                count: pressed
-                                  ? prayer.count + 1
-                                  : prayer.count - 1,
-                                prayerNames: prayer.prayerNames.filter(
-                                  (name) => !name.includes(username),
-                                ),
-                              });
-                            }
-                          }}
-                        >
-                          🙏
-                        </Toggle>
-
-                        {username === prayer.name ? (
-                          <div className="flex gap-x-2">
-                            <EditPrayerDialog prayer={prayer} />
-
-                            <DeleteButton
-                              onDeleteClick={() =>
-                                deletePrayer.mutate({ id: prayer.id })
+                        <div className="flex gap-x-2">
+                          <Toggle
+                            className="h-6 w-6 p-1"
+                            pressed={prayer.prayerNames.includes(username)}
+                            onPressedChange={(pressed) => {
+                              if (pressed) {
+                                updatePrayerCount.mutate({
+                                  id: prayer.id,
+                                  count: pressed
+                                    ? prayer.count + 1
+                                    : prayer.count - 1,
+                                  prayerNames: [
+                                    ...prayer.prayerNames,
+                                    username,
+                                  ],
+                                });
+                              } else {
+                                updatePrayerCount.mutate({
+                                  id: prayer.id,
+                                  count: pressed
+                                    ? prayer.count + 1
+                                    : prayer.count - 1,
+                                  prayerNames: prayer.prayerNames.filter(
+                                    (name) => !name.includes(username),
+                                  ),
+                                });
                               }
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
+                            }}
+                          >
+                            🙏
+                          </Toggle>
 
-                    <Badge
-                      variant={"secondary"}
-                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 text-[0.6rem] font-thin"
-                    >
-                      {prayer.count}
-                    </Badge>
-                  </li>
-                );
-              })}
+                          {username === prayer.name ? (
+                            <div className="flex gap-x-2">
+                              <EditPrayerDialog prayer={prayer} />
+
+                              <DeleteButton
+                                onDeleteClick={() =>
+                                  deletePrayer.mutate({ id: prayer.id })
+                                }
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <Badge
+                        variant={"secondary"}
+                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 text-[0.6rem] font-thin"
+                      >
+                        {prayer.count}
+                      </Badge>
+                    </li>
+                  );
+                })
+              )}
             </ul>
           </div>
         </div>

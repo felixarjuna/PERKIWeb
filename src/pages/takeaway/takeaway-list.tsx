@@ -3,18 +3,19 @@
 import { isEmpty } from "lodash";
 import { useRouter } from "next/router";
 import React from "react";
-import { useToast } from "~/components/ui/use-toast";
-import { FellowshipType } from "~/lib/data";
-import { dateTimeFormatter } from "~/lib/utils";
-import { api } from "~/utils/api";
-import ActionButton from "../../components/action-button";
+import Loader from "~/components/loader";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "~/components/ui/select";
+import { useToast } from "~/components/ui/use-toast";
+import { FellowshipType } from "~/lib/data";
+import { dateTimeFormatter } from "~/lib/utils";
+import { api } from "~/utils/api";
+import ActionButton from "../../components/action-button";
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
@@ -27,6 +28,14 @@ export default function TakeawayList() {
           (takeaway) => takeaway.schedules.fellowshipType === fellowshipType,
         );
   }, [data, fellowshipType]);
+
+  if (takeaways === undefined) {
+    return <Loader message="Loading takeaways ..." className="mt-8" />;
+  }
+
+  if (takeaways.length === 0) {
+    return <div className="mt-8 text-center">No takeaway found.</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -44,23 +53,21 @@ export default function TakeawayList() {
         </SelectContent>
       </Select>
 
-      <div className="space-y-4">
-        {takeaways?.map((takeaway, index) => {
-          return (
-            <TakeawayItem
-              key={index}
-              tabId={takeaway.schedules.fellowshipType}
-              id={takeaway.takeaways.id}
-              title={takeaway.schedules.title}
-              date={dateTimeFormatter(takeaway.schedules.date.toString())}
-              speaker={takeaway.schedules.speaker}
-              bibleVerse={takeaway.schedules.bibleVerse}
-              summary={takeaway.takeaways.keypoints}
-              contributors={takeaway.takeaways.contributors}
-            />
-          );
-        })}
-      </div>
+      {takeaways.map((takeaway, index) => {
+        return (
+          <TakeawayItem
+            key={index}
+            tabId={takeaway.schedules.fellowshipType}
+            id={takeaway.takeaways.id}
+            title={takeaway.schedules.title}
+            date={dateTimeFormatter(takeaway.schedules.date.toString())}
+            speaker={takeaway.schedules.speaker}
+            bibleVerse={takeaway.schedules.bibleVerse}
+            summary={takeaway.takeaways.keypoints}
+            contributors={takeaway.takeaways.contributors}
+          />
+        );
+      })}
     </div>
   );
 }

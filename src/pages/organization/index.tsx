@@ -3,9 +3,11 @@ import Template from "~/components/template";
 export default function Organization() {
   return (
     <Template title="Org. Chart" subtitle="Our family structure">
-      <h1 className="absolute top-[50%] animate-pulse font-reimbrandt text-4xl">
-        Coming Soon ...
-      </h1>
+      <div className="flex justify-center">
+        <h1 className="absolute top-1/2 animate-pulse font-reimbrandt text-3xl sm:text-4xl">
+          Coming Soon ...
+        </h1>
+      </div>
       {/* <div className="overflow-x-scroll">
         <Tree
           lineWidth={"2px"}
