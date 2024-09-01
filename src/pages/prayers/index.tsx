@@ -11,8 +11,8 @@ import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 import { authOptions } from "~/server/auth";
 import { api } from "~/utils/api";
+import EditPrayerDialog from "../../components/prayer/edit-prayer-dialog";
 import AddPrayerForm from "./add-prayer-form";
-import EditPrayerDialog from "./edit-prayer-dialog";
 
 export default function Prayers() {
   const { data: session } = useSession();
