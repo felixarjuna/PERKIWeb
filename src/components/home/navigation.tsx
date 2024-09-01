@@ -71,7 +71,7 @@ export default function Navigation({ showNav }: INavigationProps) {
 
   return (
     <AnimatePresence>
-      <div className=" text-xs sm:text-lg">
+      <div className="text-xs sm:text-lg">
         {showNav ? (
           <motion.div
             key="navigation"
@@ -84,7 +84,7 @@ export default function Navigation({ showNav }: INavigationProps) {
               },
             }}
             exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-            className="fixed left-0 right-0 top-10 isolate z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-1 gap-x-3 gap-y-2 space-x-2 rounded-lg bg-green-default/80 px-4 py-3 text-center text-cream-default sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4 "
+            className="fixed left-0 right-0 top-10 z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-lg bg-green-default/80 px-4 py-3 text-center text-cream-default sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4 "
           >
             {navigations.map((nav, index) => {
               return (
