@@ -6,8 +6,10 @@
 - [x] Redesign navigation
 - [x] Redesign homepage
 - [x] Update navigation information
-- [ ] Update tailwind css screen breakpoint
-- [ ] Create default page component
+- [x] Update tailwind css screen breakpoint
+- [x] Create page component template
+- [x] Handle loader components
+- [x] Fix style for desktop
 - [ ] Add note writer to schedules
 - [ ] Add payment integration system
 - [ ] Add birthday to perkiweb
