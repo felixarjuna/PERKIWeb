@@ -1,5 +1,6 @@
 import { prayerRouter } from "~/server/api/routers/prayers";
 import { createTRPCRouter } from "~/server/api/trpc";
+import { financeRouter } from "./routers/finance";
 import { scheduleRouter } from "./routers/schedules";
 import { takeawayRouter } from "./routers/takeaway";
 import { userRouter } from "./routers/users";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   prayers: prayerRouter,
   schedules: scheduleRouter,
   takeaways: takeawayRouter,
+  finances: financeRouter,
 });
 
 // export type definition of API
