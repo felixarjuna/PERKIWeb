@@ -56,7 +56,7 @@ export default function ScheduleList() {
 
   function renderScheduleDetails(schedule: Schedule) {
     return (
-      <div className="flex items-center gap-x-2 whitespace-break-spaces font-reimbrandt text-green-400/80 xs:flex-wrap xs:gap-x-1 xs:text-xs">
+      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-xs text-green-400/80 sm:gap-x-2">
         <p>{schedule.speaker}</p>
         <span>&middot;</span>
         <p>{schedule.bibleVerse}</p>
@@ -72,7 +72,7 @@ export default function ScheduleList() {
       summary = `${summary.substring(0, SUMMARY_MAX_LENGTH)}...`;
     }
 
-    return <p className="mt-4 xs:text-sm">{summary}</p>;
+    return <p className="mt-4 text-sm">{summary}</p>;
   }
 
   function renderScheduleServants(schedule: Schedule) {
@@ -91,30 +91,30 @@ export default function ScheduleList() {
       .at(0)?.members;
 
     return (
-      <div className="flex flex-col justify-center space-y-2 p-8 xl:w-1/4 2xl:w-1/4 xs:text-sm">
+      <div className="flex flex-col justify-center space-y-2 p-8 text-sm xl:w-1/4 2xl:w-1/4">
         <div className="flex items-center gap-x-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-default/60 p-1 xs:h-6 xs:w-6">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
           </div>
           <p>{schedule.liturgos ?? "-"}</p>
         </div>
         <div className="flex items-center gap-x-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-default/60 p-1 xs:h-6 xs:w-6">
-            <Music className="h-4 w-4 xs:h-3 xs:w-3" />
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+            <Music className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
           <p>{schedule.musician ?? "-"}</p>
         </div>
         <div className="flex items-center gap-x-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-default/60 p-1 xs:h-6 xs:w-6">
-            <Bed className="h-4 w-4 xs:h-3 xs:w-3" />
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+            <Bed className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
           <p>{schedule.accommodation ?? "-"}</p>
         </div>
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-default/60 p-1 xs:h-6 xs:w-6">
-                <Utensils className="h-4 w-4 xs:h-3 xs:w-3" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+                <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
               <p>{schedule.cookingGroup ?? "-"}</p>
             </div>
@@ -155,8 +155,8 @@ export default function ScheduleList() {
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-default/60 p-1 xs:h-6 xs:w-6">
-                <Sparkles className="h-4 w-4 xs:h-3 xs:w-3" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
               <p>{schedule.cleaningGroup}</p>
             </div>
@@ -201,7 +201,7 @@ export default function ScheduleList() {
   function renderMobileActionButton(schedule: Schedule) {
     return (
       <ActionButton
-        className="flex w-full place-content-end gap-x-2 px-8 pb-8 xl:hidden 2xl:hidden xs:visible"
+        className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 xl:hidden 2xl:hidden"
         onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
         onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
       />
@@ -211,7 +211,7 @@ export default function ScheduleList() {
   function renderDesktopActionButton(schedule: Schedule) {
     return (
       <ActionButton
-        className="flex gap-x-2 xs:hidden"
+        className="hidden gap-x-2 sm:flex"
         onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
         onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
       />
@@ -221,10 +221,10 @@ export default function ScheduleList() {
   function renderSchedule(schedule: Schedule) {
     return (
       <div
-        className="flex h-full gap-y-2 rounded-lg bg-green-default/60
-      shadow-lg transition duration-300 hover:bg-green-default/80 xs:flex-col xs:gap-y-0"
+        className="flex h-full flex-col gap-y-0 rounded-lg
+      bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:gap-y-2"
       >
-        <div className="cursor-pointer p-8 xl:w-3/4 2xl:w-3/4 xs:space-y-2">
+        <div className="cursor-pointer space-y-2 p-8 xl:w-3/4 2xl:w-3/4">
           <div className="flex items-center justify-between">
             <h1 className="font-reimbrandt text-2xl tracking-wide">
               {schedule.title}
@@ -237,7 +237,7 @@ export default function ScheduleList() {
 
         <Separator
           orientation="vertical"
-          className="rounded-lg bg-cream-default xl:my-auto xl:h-48 xl:w-px 2xl:my-auto 2xl:h-48 2xl:w-px xs:mx-auto xs:h-px xs:w-5/6"
+          className="mx-auto h-px w-5/6 rounded-lg bg-cream-default xl:my-auto xl:h-48 xl:w-px 2xl:my-auto 2xl:h-48 2xl:w-px"
         />
 
         {renderScheduleServants(schedule)}

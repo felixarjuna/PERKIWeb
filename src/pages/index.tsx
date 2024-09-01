@@ -1,9 +1,12 @@
 import Link from "next/link";
 import React from "react";
-import AboutUs from "~/components/about-us";
 import CircleBackground from "~/components/circle-background";
-import Footer from "~/components/footer";
-import OurPastors from "~/components/our-pastors";
+import AboutUs from "~/components/home/about-us";
+import Footer from "~/components/home/footer";
+import OurPastors from "~/components/home/our-pastors";
+import Welcome from "~/components/home/welcome";
+import WhatWeDo from "~/components/home/what-we-do";
+import WhereAreWe from "~/components/home/where-are-we";
 import { buttonVariants } from "~/components/ui/button";
 import {
   Dialog,
@@ -13,9 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import Welcome from "~/components/welcome";
-import WhatWeDo from "~/components/what-we-do";
-import WhereAreWe from "~/components/where-are-we";
 import { cn } from "~/lib/utils";
 
 export default function Home() {
@@ -35,7 +35,7 @@ export default function Home() {
   return (
     <div>
       <Dialog defaultOpen={true}>
-        <DialogContent className="border-0">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
             <DialogDescription className="pt-4">

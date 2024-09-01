@@ -1,7 +1,5 @@
 "use client";
 
-// import { trpc } from "@/app/_trpc/client";
-
 import { isEmpty } from "lodash";
 import { useRouter } from "next/router";
 import React from "react";
@@ -9,14 +7,14 @@ import { useToast } from "~/components/ui/use-toast";
 import { FellowshipType } from "~/lib/data";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
-import ActionButton from "../action-button";
+import ActionButton from "../../components/action-button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../../components/ui/select";
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
@@ -68,14 +66,14 @@ export default function TakeawayList() {
 }
 
 interface TakeawayItemProps {
-  id: number;
-  tabId: string;
-  title: string;
-  date: string;
-  speaker: string;
-  bibleVerse: string;
-  summary: string;
-  contributors: Array<string>;
+  readonly id: number;
+  readonly tabId: string;
+  readonly title: string;
+  readonly date: string;
+  readonly speaker: string;
+  readonly bibleVerse: string;
+  readonly summary: string;
+  readonly contributors: Array<string>;
 }
 
 function TakeawayItem(props: TakeawayItemProps) {
@@ -94,36 +92,36 @@ function TakeawayItem(props: TakeawayItemProps) {
   });
 
   return (
-    <div className="w-full cursor-pointer rounded-lg bg-green-default/60 p-6 shadow-lg transition duration-300 hover:bg-green-default/80 xs:p-4">
-      <h1 className="flex items-center justify-between font-reimbrandt text-2xl tracking-wide xs:text-lg">
+    <div className="w-full cursor-pointer rounded-lg bg-green-default/60 p-4 shadow-lg transition duration-300 hover:bg-green-default/80 sm:p-6">
+      <h1 className="flex items-center justify-between font-reimbrandt text-lg tracking-wide sm:text-2xl">
         {props.title}
         <div className="flex gap-x-2">
           <ActionButton
-            className="flex items-center gap-x-2 xs:hidden"
+            className="hidden items-center gap-x-2 sm:flex"
             onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
             onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
           />
-          <span className="my-auto flex h-6 items-center rounded-lg bg-light-green-default px-2 text-sm text-green-default xs:p-1 xs:text-xs">
+          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-xs text-green-default sm:text-sm">
             {FellowshipType[
               props.tabId as keyof typeof FellowshipType
             ].toLowerCase()}
           </span>
         </div>
       </h1>
-      <div className="flex items-center gap-x-2 font-reimbrandt text-green-400/80 xs:mt-2 xs:flex-wrap xs:gap-1 xs:text-xs">
+      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-xs text-green-400/80">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
         <span>&middot;</span>
         <p>{props.date}</p>
       </div>
-      <p className="mt-4 whitespace-break-spaces xs:text-sm">{props.summary}</p>
-      <p className="mt-4 text-green-400/80 xs:text-xs">
+      <p className="mt-4 whitespace-break-spaces text-sm">{props.summary}</p>
+      <p className="mt-4 text-xs text-green-400/80">
         {props.contributors.join(" ")}
       </p>
 
       <ActionButton
-        className=" flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden xs:visible"
+        className=" visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
         onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
         onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
       />

@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
@@ -75,10 +74,10 @@ export default function AccountForm() {
   return (
     <Form {...form}>
       {isGoogleAccount ? (
-        <div className="max-w-lg text-sm xs:max-w-sm xs:text-xs">
+        <div className="max-w-sm text-xs sm:max-w-lg sm:text-sm">
           <Button
             variant={"outline"}
-            className="h-fit min-w-fit px-6 py-6 text-center xl:py-8 2xl:py-8 xs:px-4 xs:py-4"
+            className="h-fit min-w-fit px-4 py-4 text-center sm:px-6 sm:py-6 xl:py-8 2xl:py-8"
           >
             You can not change your email and password if you are logged in with
             Google Account. Please login with another account instead.
@@ -88,7 +87,7 @@ export default function AccountForm() {
 
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="w-full min-w-[32rem] space-y-8 xs:min-w-[10rem]"
+        className="w-full min-w-[10rem] space-y-8 sm:min-w-[32rem]"
       >
         <div className="space-y-4">
           <div>
@@ -141,14 +140,6 @@ export default function AccountForm() {
                 </FormItem>
               )}
             />
-            <div>
-              <Link
-                href="account/change-password"
-                className="text-sm text-cream-default/60 transition-all duration-500 hover:text-cream-default hover:underline hover:underline-offset-2 xs:text-xs"
-              >
-                Change password
-              </Link>
-            </div>
           </div>
         </div>
 

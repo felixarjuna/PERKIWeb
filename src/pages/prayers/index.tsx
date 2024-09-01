@@ -4,7 +4,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getSession, useSession } from "next-auth/react";
 import React from "react";
 import { DeleteButton } from "~/components/action-button";
-import Navigation from "~/components/navigation";
+import Template from "~/components/template";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { useToast } from "~/components/ui/use-toast";
@@ -40,108 +40,105 @@ export default function Prayers() {
   });
 
   return (
-    <section className="min-h-screen bg-dark-green-default pb-40 text-cream-default">
-      <Navigation showNav={true} />
-      <div className="flex flex-col items-center px-10 pt-20 xs:px-12 xs:pt-20">
-        <div className="flex max-w-5xl flex-col items-center justify-center gap-8 px-14 py-16 xs:w-full xs:px-0 xs:py-8">
-          <h1 className="font-reimbrandt text-9xl xs:text-4xl">
-            Pray together
-          </h1>
-          <div className="flex flex-col gap-y-2 text-2xl xs:text-base">
-            <p>
-              “Therefore, I tell you, whatever you ask in prayer, believe that
-              you have received it, and it will be yours.”
-            </p>
-            <p>– Mark 11:24</p>
-          </div>
+    <Template
+      title="Prayers"
+      subtitle={
+        <div className="flex flex-col gap-y-2 text-base sm:text-2xl">
+          <p>
+            “Therefore, I tell you, whatever you ask in prayer, believe that you
+            have received it, and it will be yours.”
+          </p>
+          <p>– Mark 11:24</p>
         </div>
+      }
+    >
+      <div className="mt-4 flex w-full max-w-5xl flex-col gap-y-4 px-0 sm:w-full sm:px-14">
+        <h3 className="mb-4 font-reimbrandt text-base sm:mb-8 sm:text-2xl">
+          Let&apos;s pray together every Wednesday at 18.30 a.m 😍
+        </h3>
 
-        <div className="mt-4 flex w-full max-w-5xl flex-col gap-y-4 px-14 xs:w-full xs:px-0">
-          <h3 className="mb-8 font-reimbrandt text-2xl xs:mb-4 xs:text-base">
-            Let&apos;s pray together every Wednesday at 18.30 a.m 😍
-          </h3>
+        <AddPrayerForm />
 
-          <AddPrayerForm />
-          <div className="space-y-4">
-            <h2 className="font-reimbrandt text-3xl xs:text-xl">
-              Prayer&apos;s list
-            </h2>
+        <div className="space-y-4">
+          <h2 className="font-reimbrandt text-xl sm:text-3xl">
+            Prayer&apos;s list
+          </h2>
 
-            <div>
-              <ul className="my-4 flex flex-col justify-center gap-2 xs:my-4 xs:gap-y-3">
-                {prayers?.map((prayer, index) => {
-                  return (
-                    <li
-                      className="relative flex justify-between gap-y-1 rounded-lg bg-green-default/80 p-6 text-sm xs:flex-col xs:p-4 xs:text-base"
-                      key={index}
+          <div>
+            <ul className="my-4 flex flex-col justify-center gap-2 gap-y-3">
+              {prayers?.map((prayer, index) => {
+                return (
+                  <li
+                    className="items relative flex flex-col gap-y-1 rounded-lg bg-green-default/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
+                    key={index}
+                  >
+                    <Badge
+                      variant={"secondary"}
+                      className="w-fit text-xs font-thin"
                     >
-                      <p className="xs:px-2 xs:text-xs">{prayer.content}</p>
+                      {prayer.isAnonymous ? "unknown" : prayer.name}
+                    </Badge>
 
-                      <div className="flex items-center gap-x-2 xs:justify-between">
-                        <Badge variant={"secondary"} className="font-thin">
-                          {prayer.isAnonymous ? "unknown" : prayer.name}
-                        </Badge>
+                    <div className="flex items-center justify-between gap-x-2">
+                      <p className="text-xs">{prayer.content}</p>
 
-                        <div className="flex gap-x-2">
-                          <Toggle
-                            className="h-6 w-6 p-1"
-                            pressed={prayer.prayerNames.includes(username)}
-                            onPressedChange={(pressed) => {
-                              if (pressed) {
-                                updatePrayerCount.mutate({
-                                  id: prayer.id,
-                                  count: pressed
-                                    ? prayer.count + 1
-                                    : prayer.count - 1,
-                                  prayerNames: [
-                                    ...prayer.prayerNames,
-                                    username,
-                                  ],
-                                });
-                              } else {
-                                updatePrayerCount.mutate({
-                                  id: prayer.id,
-                                  count: pressed
-                                    ? prayer.count + 1
-                                    : prayer.count - 1,
-                                  prayerNames: prayer.prayerNames.filter(
-                                    (name) => !name.includes(username),
-                                  ),
-                                });
+                      <div className="flex gap-x-2">
+                        <Toggle
+                          className="h-6 w-6 p-1"
+                          pressed={prayer.prayerNames.includes(username)}
+                          onPressedChange={(pressed) => {
+                            if (pressed) {
+                              updatePrayerCount.mutate({
+                                id: prayer.id,
+                                count: pressed
+                                  ? prayer.count + 1
+                                  : prayer.count - 1,
+                                prayerNames: [...prayer.prayerNames, username],
+                              });
+                            } else {
+                              updatePrayerCount.mutate({
+                                id: prayer.id,
+                                count: pressed
+                                  ? prayer.count + 1
+                                  : prayer.count - 1,
+                                prayerNames: prayer.prayerNames.filter(
+                                  (name) => !name.includes(username),
+                                ),
+                              });
+                            }
+                          }}
+                        >
+                          🙏
+                        </Toggle>
+
+                        {username === prayer.name ? (
+                          <div className="flex gap-x-2">
+                            <EditPrayerDialog prayer={prayer} />
+
+                            <DeleteButton
+                              onDeleteClick={() =>
+                                deletePrayer.mutate({ id: prayer.id })
                               }
-                            }}
-                          >
-                            🙏
-                          </Toggle>
-
-                          {username === prayer.name ? (
-                            <div className="flex gap-x-2">
-                              <EditPrayerDialog prayer={prayer} />
-
-                              <DeleteButton
-                                onDeleteClick={() =>
-                                  deletePrayer.mutate({ id: prayer.id })
-                                }
-                              />
-                            </div>
-                          ) : null}
-                        </div>
+                            />
+                          </div>
+                        ) : null}
                       </div>
-                      <Badge
-                        variant={"secondary"}
-                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 text-[0.6rem] font-thin"
-                      >
-                        {prayer.count}
-                      </Badge>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+                    </div>
+
+                    <Badge
+                      variant={"secondary"}
+                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 text-[0.6rem] font-thin"
+                    >
+                      {prayer.count}
+                    </Badge>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </div>
-    </section>
+    </Template>
   );
 }
 

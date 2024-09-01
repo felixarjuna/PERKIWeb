@@ -1,4 +1,4 @@
-import Navigation from "~/components/navigation";
+import Navigation from "~/components/home/navigation";
 import ChangePasswordForm from "./change-password-form";
 
 export default function ChangePassword() {

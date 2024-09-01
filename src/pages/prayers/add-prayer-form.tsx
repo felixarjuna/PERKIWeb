@@ -64,49 +64,47 @@ export default function AddPrayerForm() {
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="w-full space-y-6"
       >
-        <div>
-          <div className="space-y-4">
+        <div className="grid gap-y-4">
+          <div className="flex gap-x-4 xs:gap-2">
+            <div className="flex-1">
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Insert prayer ..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <Button
+              type="submit"
+              className="gap-x-1 bg-green-default/70 hover:bg-green-default xs:px-2 xs:py-1 xs:text-xs"
+            >
+              <Plus className="h-5 w-5 xs:h-4 xs:w-4" />
+              Add
+            </Button>
+          </div>
+
+          <div className="flex flex-col space-y-4">
             <FormField
               control={form.control}
               name="isAnonymous"
               render={({ field }) => (
-                <FormItem className="flex items-center space-x-2 space-y-0">
+                <FormItem className="self flex items-center space-x-2 space-y-0">
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="text-base">Anonymous</FormLabel>
+                  <FormLabel className="text-sm">Anonymous</FormLabel>
                 </FormItem>
               )}
             />
-            <div className="flex gap-x-4 xs:gap-2">
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          placeholder="Insert your prayer here..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <Button
-                type="submit"
-                className="gap-x-1 bg-green-default/70 hover:bg-green-default xs:px-2 xs:py-1 xs:text-xs"
-              >
-                <Plus className="h-5 w-5 xs:h-4 xs:w-4" />
-                Add
-              </Button>
-            </div>
           </div>
         </div>
       </form>

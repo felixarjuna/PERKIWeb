@@ -11,20 +11,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      screens: {
-        xs: { min: "320px", max: "480px" },
-        // mobile devices
-        sm: { min: "481px", max: "767px" },
-        // tablets
-        md: { min: "768px", max: "1023px" },
-        // ipad, ipad mini
-        lg: { min: "1024px", max: "1279px" },
-        // ipad air, ipad pro
-        xl: { min: "1280px", max: "1535px" },
-        // laptops
-        "2xl": { min: "1536px" },
-        // desktops
-      },
       fontFamily: {
         satoshi: ["var(--font-satoshi)", "sans-serif", ...fontFamily.sans],
         reimbrandt: ["var(--font-reimbrandt)", "serif", ...fontFamily.serif],

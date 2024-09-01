@@ -89,11 +89,11 @@ export default function EditScheduleForm() {
   function renderFellowshipForm() {
     return (
       <div className="space-y-4">
-        <h3 className="font-reimbrandt text-3xl xs:text-2xl">
+        <h3 className="font-reimbrandt text-2xl sm:text-3xl">
           Fellowship Information
         </h3>
-        <section className="grid grid-cols-2 gap-4 xs:text-sm">
-          <div className="xs:col-span-2">
+        <section className="grid grid-cols-2 gap-4 text-sm">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="title"
@@ -108,7 +108,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="date"
@@ -151,7 +151,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="speaker"
@@ -179,7 +179,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="bibleVerse"
@@ -217,11 +217,11 @@ export default function EditScheduleForm() {
   function renderServantsForm() {
     return (
       <div className="space-y-4">
-        <h3 className="font-reimbrandt text-3xl xs:text-2xl">
+        <h3 className="font-reimbrandt text-2xl sm:text-3xl">
           Servant Information
         </h3>
-        <section className="grid grid-cols-2 gap-4 xs:text-sm">
-          <div className="xs:col-span-2">
+        <section className="grid grid-cols-2 gap-4 text-sm">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="liturgos"
@@ -249,7 +249,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="musician"
@@ -277,7 +277,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="multimedia"
@@ -305,7 +305,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="accommodation"
@@ -398,7 +398,7 @@ export default function EditScheduleForm() {
     <Form {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="mt-8 space-y-8 xs:mt-4"
+        className="mt-4 space-y-8 sm:mt-8"
       >
         {renderFellowshipForm()}
         {renderServantsForm()}

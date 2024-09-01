@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Calendar,
+  CandlestickChart,
   HandHeart,
   House,
   LayoutPanelTop,
@@ -36,6 +37,11 @@ const navigations = [
     href: "/prayers",
   },
   {
+    icon: <CandlestickChart className="h-4 w-4" />,
+    name: "Finance",
+    href: "/finance",
+  },
+  {
     icon: <LayoutPanelTop className="h-4 w-4" />,
     name: "Org. Structure",
     href: "/organization",
@@ -65,7 +71,7 @@ export default function Navigation({ showNav }: INavigationProps) {
 
   return (
     <AnimatePresence>
-      <div className="text-lg xs:text-xs">
+      <div className=" text-xs sm:text-lg">
         {showNav ? (
           <motion.div
             key="navigation"
@@ -78,36 +84,34 @@ export default function Navigation({ showNav }: INavigationProps) {
               },
             }}
             exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
-            className="fixed left-0 right-0 top-10 isolate z-50 mx-auto  flex w-fit flex-row flex-wrap items-center justify-center gap-y-2 space-x-3 rounded-lg bg-green-default/80 px-8 py-4 text-center text-cream-default xs:max-w-xs xs:gap-1 xs:gap-x-3 xs:px-4 xs:py-3 "
+            className="fixed left-0 right-0 top-10 isolate z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-1 gap-x-3 gap-y-2 space-x-2 rounded-lg bg-green-default/80 px-4 py-3 text-center text-cream-default sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4 "
           >
             {navigations.map((nav, index) => {
               return (
                 <div key={index}>
                   <Link
                     href={nav.href}
-                    className="flex cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
+                    className="flex cursor-pointer flex-col items-center gap-1 sm:gap-2"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xs:h-6 xs:w-6 xs:p-[1px]">
+                    <div className="flex aspect-square items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-1 sm:h-8 sm:w-8 sm:p-[2px]">
                       {nav.icon}
                     </div>
-                    {isMobile ? null : <p className="lowercase">{nav.name}</p>}
+                    {isMobile ? null : <p>{nav.name}</p>}
                   </Link>
                 </div>
               );
             })}
 
             <div
-              className="flex w-fit cursor-pointer items-center gap-2 xs:flex-col xs:gap-1"
+              className="flex w-fit cursor-pointer flex-col items-center gap-1 sm:gap-2"
               onClick={
                 session ? () => router.push("/account") : () => void signIn()
               }
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8 xs:h-6 xs:w-6 xs:p-[1px]">
+              <span className="flex aspect-square items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-1 sm:h-8 sm:w-8 sm:p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8">
                 <User className="h-4 w-4" />
               </span>
-              {isMobile ? null : (
-                <p className="lowercase">{session ? "Account" : "Sign in"}</p>
-              )}
+              {isMobile ? null : <p>{session ? "Account" : "Sign in"}</p>}
             </div>
           </motion.div>
         ) : null}

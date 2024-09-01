@@ -79,13 +79,13 @@ export default function EditTakeawayForm() {
     <Form {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="mt-8 space-y-8 xs:mt-4"
+        className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">
-          <h3 className="font-reimbrandt text-3xl xs:text-2xl">
+          <h3 className="font-reimbrandt text-2xl sm:text-3xl">
             Fellowship Information
           </h3>
-          <section className="grid grid-cols-2 gap-4 xs:text-sm">
+          <section className="grid grid-cols-2 gap-4 text-sm">
             <div className="col-span-2">
               <FormItem>
                 <FormLabel className="text-md">Schedule</FormLabel>

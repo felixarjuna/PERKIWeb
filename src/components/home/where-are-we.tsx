@@ -2,11 +2,11 @@ import { BusFront, Clock3, MapPin, NavigationIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
+export default function WhereAreWe() {
   return (
     <div className="relative bg-cream-default text-dark-green-default">
       <div className="relative">
-        <h1 className="absolute inset-0 top-16 z-20 mx-auto h-fit w-fit rounded-xl bg-light-green-100/70 px-6 py-2 text-center font-reimbrandt text-9xl text-green-default  xs:text-4xl">
+        <h1 className="absolute inset-0 top-16 z-20 mx-auto h-fit w-fit rounded-xl bg-green-default/90 px-6 py-2 text-center font-reimbrandt text-4xl text-light-green-default  sm:text-9xl">
           Navigation
         </h1>
 
@@ -23,7 +23,7 @@ export default function Home() {
           <MapPin className="h-5 w-5" />
         </div>
 
-        <div className="absolute bottom-0 left-0 z-20 flex h-fit w-full flex-col justify-center gap-y-4 bg-cream-default/60 px-8 py-8 text-2xl text-green-default 2xl:flex-row 2xl:items-start 2xl:justify-center 2xl:gap-8 2xl:gap-y-8 2xl:px-20 xs:text-base">
+        <div className="absolute bottom-0 left-0 z-20 flex h-fit w-full flex-col justify-center gap-y-4 bg-cream-default/60 px-8 py-8 text-base text-green-default sm:text-2xl 2xl:flex-row 2xl:items-start 2xl:justify-center 2xl:gap-8 2xl:gap-y-8 2xl:px-20">
           <Link
             target="_blank"
             href={

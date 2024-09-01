@@ -4,10 +4,10 @@ import React from "react";
 import { cn } from "~/lib/utils";
 
 interface ParallaxImageProps extends React.HTMLAttributes<HTMLDivElement> {
-  img: string;
-  alt: string;
-  width: number;
-  height: number;
+  readonly img: string;
+  readonly alt: string;
+  readonly width: number;
+  readonly height: number;
 }
 
 export default function ParallaxImage({
@@ -35,7 +35,7 @@ export default function ParallaxImage({
     >
       <Image
         src={img}
-        className="xs:scale-75 scale-125 rounded-lg brightness-50 filter sm:scale-75 md:scale-95 lg:scale-110"
+        className="scale-75 rounded-lg brightness-50 filter sm:scale-75 md:scale-95 lg:scale-110 2xl:scale-125"
         alt={alt}
         width={width}
         height={height}

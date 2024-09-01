@@ -1,7 +1,6 @@
 import Image from "next/image";
-import React from "react";
-import { pastors } from "../lib/data";
-import { buttonVariants } from "./ui/button";
+import { pastors } from "../../lib/data";
+import { buttonVariants } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,39 +8,33 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from "../ui/dialog";
 
 export default function OurPastors() {
-  const ref = React.useRef(null);
-
   return (
-    <div className="bg-cream-default py-40 text-dark-green-default xs:py-20">
+    <div className="bg-cream-default py-20 text-green-default sm:py-40">
       <div className="grid grid-cols-4">
-        <div className="col-span-1 my-auto h-fit -rotate-90 whitespace-nowrap xs:col-span-4 xs:mb-4 xs:rotate-0">
-          <h1 className="font-reimbrandt text-8xl text-green-default xs:text-center xs:text-4xl">
+        <div className="col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1 sm:-rotate-90">
+          <h1 className="text-center font-reimbrandt text-4xl sm:text-8xl">
             Our Pastors
           </h1>
-          {/* <div className="h-[2px] bg-green-default"></div> */}
         </div>
 
-        <div
-          ref={ref}
-          className="col-span-3 flex flex-col gap-y-8 pr-40 text-green-default xs:col-span-4 xs:gap-y-4 xs:pr-0"
-        >
+        <div className="col-span-4 flex flex-col gap-y-4 pr-0  sm:col-span-3 sm:gap-y-8 sm:pr-40">
           {pastors.map((pastor, index) => (
             <div
-              className="my-5 grid grid-cols-3 items-center gap-x-20 sm:gap-x-0 xs:mx-8"
+              className="grid grid-cols-3 items-center gap-x-20 px-8 sm:gap-x-0"
               key={index}
             >
-              <div className="col-span-2 flex flex-col xs:col-span-3">
-                <p className="mb-2 font-reimbrandt text-5xl text-dark-green-default xs:text-2xl">
+              <div className="col-span-3 flex flex-col sm:col-span-2">
+                <p className="mb-2 font-reimbrandt text-2xl sm:text-5xl">
                   {pastor.name}
                 </p>
-                <p className="text-2xl 2xl:mr-20 xs:mr-0 xs:text-base">
+                <p className="mr-0 text-base sm:text-2xl 2xl:mr-20">
                   {pastor.favoriteVerse}
                 </p>
 
-                <div className="mt-4 self-start underline underline-offset-2 xs:text-sm">
+                <div className="mt-4 self-start text-sm underline underline-offset-2">
                   <Dialog>
                     <DialogTrigger
                       className={buttonVariants({
@@ -63,7 +56,7 @@ export default function OurPastors() {
                 </div>
               </div>
 
-              <div className="h-64 w-64 overflow-hidden rounded-full border-4 border-green-default bg-green-default xs:col-span-3 xs:mx-auto xs:mt-8 xs:h-44 xs:w-44">
+              <div className="col-span-3 mx-auto mt-8 aspect-square h-44 overflow-hidden rounded-full border-4 border-green-default bg-green-default sm:h-64">
                 <Image
                   src={pastor.img}
                   alt="Chen"

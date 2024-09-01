@@ -195,9 +195,9 @@ export const takeawayIds = [
 ];
 
 export enum FellowshipType {
-  ChurchService = "Church service",
-  BigGroupBibleStudy = "Big group bible study",
-  SmallGroupBibleStudy = "Small group bible study",
+  ChurchService = "Ibadah",
+  BigGroupBibleStudy = "PA",
+  SmallGroupBibleStudy = "PA Kecil",
 }
 
 export const speakers = [

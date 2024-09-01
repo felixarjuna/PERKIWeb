@@ -32,17 +32,17 @@ export default function AboutUs() {
 
       <div className="px-24">
         <div className="flex items-center justify-center gap-8">
-          <h1 className="font-reimbrandt text-9xl tracking-wide sm:text-5xl md:text-6xl lg:text-7xl xs:text-4xl">
+          <h1 className="font-reimbrandt text-4xl tracking-wide sm:text-5xl md:text-6xl lg:text-7xl xl:text-9xl">
             About Us
           </h1>
           {/* <Separator className="h-1 rounded-sm" /> */}
         </div>
       </div>
 
-      <div className="mt-20 flex flex-col gap-y-72 overflow-hidden px-28 sm:gap-y-48 sm:px-12 md:gap-y-52 md:px-16 lg:gap-y-56 lg:px-20 xl:gap-y-64 xl:px-24 xs:gap-y-44 xs:px-8">
+      <div className="mt-20 flex flex-col gap-y-44 overflow-hidden px-8 sm:gap-y-48 sm:px-12 md:gap-y-52 md:px-16 lg:gap-y-56 lg:px-20 xl:gap-y-64 xl:px-24 2xl:gap-y-72 2xl:px-28">
         <div ref={intersectionRef} className="relative flex flex-row">
-          <p className="z-10 max-w-[90%] text-6xl leading-[4.5rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] xs:text-xl xs:leading-[2rem]">
-            <span className="font-reimbrandt text-8xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl xs:text-3xl">
+          <p className="z-10 max-w-[90%] text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
+            <span className="font-reimbrandt text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl">
               Perki
             </span>{" "}
             stands for Persekutuan Kristen Indonesia and is a Christian
@@ -59,7 +59,7 @@ export default function AboutUs() {
         </div>
 
         <div className="relative flex flex-row justify-end">
-          <p className="z-10 max-w-[90%] text-right text-6xl leading-[4.5rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] xs:text-xl xs:leading-[2rem]">
+          <p className="z-10 max-w-[90%] text-right text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
             Our fellowship is not affiliated with any particular church group.
             All activities are aimed at supporting the Realization of the Great
             Commission of the Lord Jesus Christ.
@@ -74,7 +74,7 @@ export default function AboutUs() {
         </div>
 
         <div className="relative flex flex-row">
-          <p className="z-10 max-w-[90%] text-6xl leading-[4.5rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] xs:text-xl xs:leading-[2rem]">
+          <p className="z-10 max-w-[90%] text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
             We seek to foster a strong sense of community and spiritual growth
             among our members, encouraging ourselves to live out their faith
             authentically and share the message of God&apos;s love and salvation
@@ -88,8 +88,8 @@ export default function AboutUs() {
           />
         </div>
 
-        <div className="relative flex flex-row justify-end pb-60 xs:pb-24">
-          <p className="z-10 max-w-[90%] text-right text-6xl leading-[4.5rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] xs:text-xl xs:leading-[2rem]">
+        <div className="relative flex flex-row justify-end pb-24 2xl:pb-60">
+          <p className="z-10 max-w-[90%] text-right text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
             Through regular gatherings, prayer meetings, and outreach programs,
             our members are equipped to serve as ambassadors of Christ in their
             local communities and beyond. But still, we are just sinners who
@@ -97,7 +97,7 @@ export default function AboutUs() {
           </p>
           <ParallaxImage
             img={"/images/learn.jpg"}
-            className="left-16 w-[900px] xs:bottom-20 xs:left-0"
+            className="bottom-20 left-0 w-[900px] 2xl:left-16"
             alt="Photo of people learning together"
             width={600}
             height={600}

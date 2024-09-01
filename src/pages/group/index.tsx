@@ -1,4 +1,4 @@
-import Navigation from "~/components/navigation";
+import Navigation from "~/components/home/navigation";
 import {
   Accordion,
   AccordionContent,
