@@ -38,7 +38,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "max-w-screen fixed left-[50%] top-[50%] z-50 grid w-11/12 translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border-0 bg-background p-6 text-cream-default shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-h-[calc(100vh-48px)] sm:max-w-xs sm:overflow-auto sm:py-8 md:max-h-[calc(100vh-48px)] md:w-full md:max-w-md md:overflow-auto md:py-8 lg:max-h-[calc(100vh-48px)] lg:max-w-lg lg:overflow-auto lg:py-8 xl:max-h-[calc(100vh-48px)] xl:max-w-lg xl:overflow-auto xl:py-8 xs:max-h-[calc(100vh-48px)] xs:max-w-xs xs:overflow-auto xs:py-8",
+        "max-w-screen fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100vh-48px)] w-11/12 max-w-xs translate-x-[-50%] translate-y-[-50%] gap-4 overflow-auto rounded-lg border-0 bg-background p-6 py-8 text-cream-default shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-h-[calc(100vh-48px)] sm:max-w-xs sm:overflow-auto sm:py-8 md:max-h-[calc(100vh-48px)] md:w-full md:max-w-md md:overflow-auto md:py-8",
         className,
       )}
       {...props}
@@ -59,7 +59,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center text-cream-default xl:text-left 2xl:text-left",
+      "flex flex-col space-y-1.5 text-center text-cream-default",
       className,
     )}
     {...props}
@@ -71,13 +71,7 @@ const DialogFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse xl:flex-row xl:justify-end xl:space-x-2 2xl:flex-row 2xl:justify-end 2xl:space-x-2",
-      className,
-    )}
-    {...props}
-  />
+  <div className={cn("flex flex-col-reverse ", className)} {...props} />
 );
 DialogFooter.displayName = "DialogFooter";
 
