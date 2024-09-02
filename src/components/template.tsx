@@ -18,7 +18,7 @@ export default function Template(props: ITemplateProps) {
           {props.subtitle}
         </div>
 
-        <div className="w-10/12">{props.children}</div>
+        <div className="w-10/12 sm:w-8/12">{props.children}</div>
       </div>
     </section>
   );
