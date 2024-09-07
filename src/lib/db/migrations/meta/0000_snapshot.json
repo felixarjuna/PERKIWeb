@@ -1,10 +1,8 @@
 {
-  "version": "5",
-  "dialect": "pg",
-  "id": "2d8dd32f-82bc-4de8-b89e-5dce9329c755",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "account": {
+    "public.account": {
       "name": "account",
       "schema": "",
       "columns": {
@@ -88,7 +86,7 @@
       },
       "uniqueConstraints": {}
     },
-    "session": {
+    "public.session": {
       "name": "session",
       "schema": "",
       "columns": {
@@ -116,7 +114,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "user": {
+    "public.user": {
       "name": "user",
       "schema": "",
       "columns": {
@@ -163,7 +161,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "verificationToken": {
+    "public.verificationToken": {
       "name": "verificationToken",
       "schema": "",
       "columns": {
@@ -199,7 +197,7 @@
       },
       "uniqueConstraints": {}
     },
-    "prayers": {
+    "public.prayers": {
       "name": "prayers",
       "schema": "",
       "columns": {
@@ -254,7 +252,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "schedules": {
+    "public.schedules": {
       "name": "schedules",
       "schema": "",
       "columns": {
@@ -342,7 +340,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "takeaways": {
+    "public.takeaways": {
       "name": "takeaways",
       "schema": "",
       "columns": {
@@ -376,7 +374,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "todos": {
+    "public.todos": {
       "name": "todos",
       "schema": "",
       "columns": {
@@ -411,5 +409,8 @@
     "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "2d8dd32f-82bc-4de8-b89e-5dce9329c755",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "sequences": {}
 }
