@@ -128,7 +128,7 @@ export default function ScheduleList() {
                 <div className="flex flex-col gap-4">
                   <RandomVerse items={verses} />
 
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
                     {cookingGroupMembers?.map((member, i) => (
                       <div
                         className="w-fit rounded-full bg-primary-foreground px-3 py-1  text-secondary-foreground"
@@ -167,14 +167,14 @@ export default function ScheduleList() {
           <DrawerContent className="border-0 text-primary-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cleaningGroup}</DrawerTitle>
-              <DrawerDescription className="flex items-center justify-center gap-2 py-6">
+              <DrawerDescription className="flex items-center justify-center gap-2  py-6">
                 <div className="flex flex-col gap-4">
                   <RandomVerse items={verses} />
 
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
                     {cleaningGroupMembers?.map((member, i) => (
                       <div
-                        className="w-fit rounded-full bg-primary-foreground px-3 py-1  text-secondary-foreground"
+                        className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground"
                         key={i}
                       >
                         {member}
