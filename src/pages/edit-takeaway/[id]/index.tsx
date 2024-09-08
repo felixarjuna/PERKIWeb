@@ -15,7 +15,7 @@ export default function EditTakeawayPage() {
         </div>
       }
     >
-      <div className="w-full sm:w-1/2">
+      <div className="w-full">
         <EditTakeawayForm />
       </div>
     </Template>

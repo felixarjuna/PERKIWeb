@@ -44,7 +44,7 @@ export default function Prayers() {
     <Template
       title="Prayers"
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base sm:max-w-4xl sm:text-2xl">
+        <div className="flex flex-col gap-y-2 text-base sm:px-14 sm:text-2xl">
           <p>
             “Therefore, I tell you, whatever you ask in prayer, believe that you
             have received it, and it will be yours.”
@@ -53,7 +53,7 @@ export default function Prayers() {
         </div>
       }
     >
-      <div className="mt-4 flex w-full max-w-5xl flex-col gap-y-4 px-0 sm:w-full sm:px-14">
+      <div className="mt-8 flex w-full flex-col gap-y-4 px-0 sm:w-full sm:px-14">
         <h3 className="mb-4 font-reimbrandt text-base sm:mb-8 sm:text-2xl">
           Let&apos;s pray together every Wednesday at 18.30 a.m 😍
         </h3>

@@ -11,7 +11,7 @@ export default function AddSchedulePage() {
     <Template
       title="Add schedule"
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base xs:text-2xl">
+        <div className="xs:text-2xl flex flex-col gap-y-2 text-base">
           <p>
             “There is a time for everything, and a season for every activity
             under the heavens.”
@@ -20,7 +20,7 @@ export default function AddSchedulePage() {
         </div>
       }
     >
-      <div className="w-full sm:w-1/2">
+      <div className="w-full">
         <AddScheduleForm />
       </div>
     </Template>

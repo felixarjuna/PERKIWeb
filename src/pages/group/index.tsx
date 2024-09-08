@@ -30,7 +30,7 @@ export const groups = [
 export default function Group() {
   return (
     <Template title="Groups" subtitle="Cleaning and cooking groups">
-      <div className="mt-8 w-full sm:w-1/2">
+      <div className="mt-8 w-full">
         <Accordion type="single" collapsible className="grid gap-2">
           {groups.map((group, i) => (
             <AccordionItem
