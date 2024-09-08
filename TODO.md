@@ -12,7 +12,7 @@
 - [x] Fix style for desktop
 - [x] Add note writer to schedules
 - [x] Refactor and clean coding database schema.
-- [ ] Ease schedule integration from spreadsheet.
+- [x] Ease schedule integration from spreadsheet.
 - [ ] Add financial dashboard.
 - [ ] Add organizational chart.
 - [ ] Add payment integration system
