@@ -49,7 +49,7 @@ export const scheduleRouter = createTRPCRouter({
       if (schedule === undefined)
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Error occrs when loading schedule from database.",
+          message: "Error occurs when loading schedule from database.",
         });
 
       return { ...schedule, id: +schedule.id };

@@ -57,7 +57,7 @@ export default function TakeawayList() {
         return (
           <TakeawayItem
             key={index}
-            eventId={data.takeaways.id}
+            takeawayId={data.takeaways.id}
             eventType={data.schedules.type}
             title={data.schedules.title}
             date={dateTimeFormatter(data.schedules.date.toString())}
@@ -73,14 +73,14 @@ export default function TakeawayList() {
 }
 
 interface TakeawayItemProps {
-  readonly eventId: number;
-  readonly eventType: EventTypeEnum;
+  readonly takeawayId: number;
   readonly title: string;
   readonly date: string;
   readonly speaker: string;
   readonly bibleVerse: string;
   readonly summary: string;
   readonly contributors: Array<string>;
+  readonly eventType: EventTypeEnum;
 }
 
 function TakeawayItem(props: TakeawayItemProps) {
@@ -109,9 +109,11 @@ function TakeawayItem(props: TakeawayItemProps) {
           <ActionButton
             className="hidden items-center gap-x-2 sm:flex"
             onEditClick={() =>
-              void router.push(`/edit-takeaway/${props.eventId}`)
+              void router.push(`/edit-takeaway/${props.takeawayId}`)
             }
-            onDeleteClick={() => deleteTakeaway.mutate({ id: props.eventId })}
+            onDeleteClick={() =>
+              deleteTakeaway.mutate({ id: +props.takeawayId })
+            }
           />
           <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-xs text-green-default sm:text-sm">
             {props.eventType}
@@ -132,8 +134,10 @@ function TakeawayItem(props: TakeawayItemProps) {
 
       <ActionButton
         className=" visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
-        onEditClick={() => void router.push(`/edit-takeaway/${props.eventId}`)}
-        onDeleteClick={() => deleteTakeaway.mutate({ id: props.eventId })}
+        onEditClick={() =>
+          void router.push(`/edit-takeaway/${props.takeawayId}`)
+        }
+        onDeleteClick={() => deleteTakeaway.mutate({ id: +props.takeawayId })}
       />
     </div>
   );

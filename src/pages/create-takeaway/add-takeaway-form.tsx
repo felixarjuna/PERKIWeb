@@ -43,11 +43,23 @@ export default function AddTakeawayForm() {
     [session?.user.name],
   );
 
+  /** loading schedule selection. */
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
+  /** toast and router. */
   const { toast } = useToast();
   const router = useRouter();
 
+  /** form definition. */
+  const form = useForm<z.infer<typeof addTakeawayFormSchema>>({
+    resolver: zodResolver(addTakeawayFormSchema),
+    defaultValues: {
+      // TODO: Automatically take contributors name from the username
+      contributors: [username],
+    },
+  });
+
+  /** add takeaway action. */
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onSuccess: async () => {
       toast({
@@ -58,28 +70,23 @@ export default function AddTakeawayForm() {
     },
   });
 
-  // 1. Define form.
-  const form = useForm<z.infer<typeof addTakeawayFormSchema>>({
-    resolver: zodResolver(addTakeawayFormSchema),
-    defaultValues: {
-      // TODO: Automatically take contributors name from the username
-      contributors: [username],
-    },
-  });
-
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof addTakeawayFormSchema>) {
-    const scheduleId = schedules?.find(
-      (schedule) => schedule.id === +values.scheduleId,
-    )?.id;
-    if (scheduleId === undefined) return;
-    addTakeaway.mutate({ ...values, scheduleId });
+    addTakeaway.mutate({ ...values, scheduleId: +values.scheduleId });
   }
 
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={(event) =>
+          void form.handleSubmit(onSubmit, (error) => {
+            console.log(error);
+            toast({
+              variant: "destructive",
+              title: "Uh oh! Something went wrong.",
+              description: JSON.stringify(error),
+            });
+          })(event)
+        }
         className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">

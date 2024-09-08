@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { db } from "~/server";
@@ -33,11 +34,20 @@ export const takeawayRouter = createTRPCRouter({
   getTakeawayById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
-      return await db
+      const takeaway = await db
         .select()
         .from(takeaways)
         .where(eq(takeaways.id, input.id))
-        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId));
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+        .then((data) => data.at(0));
+
+      if (takeaway === undefined)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Error occurs when loading takeaway from database.",
+        });
+
+      return takeaway;
     }),
   updateTakeaway: publicProcedure
     .input(updateTakeawaySchema)

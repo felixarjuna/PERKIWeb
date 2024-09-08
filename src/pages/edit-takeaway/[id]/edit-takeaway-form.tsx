@@ -34,19 +34,8 @@ export default function EditTakeawayForm() {
   const router = useRouter();
 
   const id = router.query.id as string;
-  const { data } = api.takeaways.getTakeawayById.useQuery({ id: parseInt(id) });
-  const takeaway = React.useMemo(() => {
-    return data?.at(0);
-  }, [data]);
-
-  const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
-    onSuccess: async () => {
-      toast({
-        title: "Your changes has been saved successfully! ✨",
-        description: "Thanks for your contribution!",
-      });
-      await router.push("/takeaway");
-    },
+  const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
+    id: parseInt(id),
   });
 
   const contributors = React.useMemo(() => {
@@ -59,11 +48,12 @@ export default function EditTakeawayForm() {
     }
   }, [takeaway, username]);
 
-  // 1. Define form.
+  /** form definition. */
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
   });
 
+  /** load form data. */
   React.useEffect(() => {
     form.reset({
       ...takeaway?.takeaways,
@@ -71,7 +61,17 @@ export default function EditTakeawayForm() {
     });
   }, [contributors, form, takeaway]);
 
-  // 2. Define a submit handler.
+  /** edit takeaway action. */
+  const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
+    onSuccess: async () => {
+      toast({
+        title: "Your changes has been saved successfully! ✨",
+        description: "Thanks for your contribution!",
+      });
+      await router.push("/takeaway");
+    },
+  });
+
   function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
     updateTakeaway.mutate(values);
   }
@@ -79,7 +79,15 @@ export default function EditTakeawayForm() {
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={(event) =>
+          void form.handleSubmit(onSubmit, (error) => {
+            toast({
+              variant: "destructive",
+              title: "Uh oh! Something went wrong.",
+              description: JSON.stringify(error),
+            });
+          })(event)
+        }
         className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">
