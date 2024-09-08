@@ -19,6 +19,8 @@ export const eventTypeEnum = pgEnum("event_type", [
 const eventEnum = z.enum(eventTypeEnum.enumValues);
 export type EventTypeEnum = z.infer<typeof eventEnum>;
 
+export type NewSchedule = typeof schedules.$inferInsert;
+export type Schedule = typeof schedules.$inferSelect;
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey().notNull(),
   title: text("title").notNull(),
@@ -26,7 +28,6 @@ export const schedules = pgTable("schedules", {
   bibleVerse: text("bibleVerse").notNull(),
   date: timestamp("date", { withTimezone: true, mode: "date" }).notNull(),
   type: eventTypeEnum("type").notNull(),
-
   preacher: text("preacher"),
   leader: text("leader").notNull(),
   musician: text("musician").notNull(),

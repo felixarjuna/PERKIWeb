@@ -194,12 +194,6 @@ export const takeawayIds = [
   "sg-bible-study",
 ];
 
-export enum FellowshipType {
-  ChurchService = "Ibadah",
-  BigGroupBibleStudy = "PA",
-  SmallGroupBibleStudy = "PA Kecil",
-}
-
 export const speakers = [
   "Oliver Renaldi",
   "Danny Kurniawan",
@@ -212,6 +206,16 @@ export const speakers = [
   "Pdt. Titus Christanto",
   "Ev. Nehemiah Riggruben",
   "Kevin Achwan",
+].sort();
+
+export const noteWriter = [
+  "Lionel Erico",
+  "Karyn Gaspersz",
+  "Kezia Singgih",
+  "Ruth Siahaan",
+  "Tius Theodore",
+  "Ido Manuel",
+  "Victor Jordan",
 ].sort();
 
 export const liturgos = [

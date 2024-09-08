@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { schedules } from "~/lib/db/schema/schema";
 import { db } from "~/server";
@@ -17,17 +18,18 @@ export const scheduleRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       return await db.insert(schedules).values({
         title: input.title,
+        description: input.description,
         date: input.date,
-        speaker: input.speaker,
+        type: input.type,
         bibleVerse: input.bibleVerse,
-        summary: input.summary,
-        liturgos: input.liturgos,
+        preacher: input.preacher,
+        noteWriter: input.noteWriter,
+        leader: input.leader,
         musician: input.musician,
         multimedia: input.multimedia,
         accommodation: input.accommodation,
         cookingGroup: input.cookingGroup,
         cleaningGroup: input.cleaningGroup,
-        fellowshipType: input.fellowshipType,
       });
     }),
   deleteSchedule: publicProcedure
@@ -38,10 +40,19 @@ export const scheduleRouter = createTRPCRouter({
   getScheduleById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
-      return await db
+      const schedule = await db
         .select()
         .from(schedules)
-        .where(eq(schedules.id, input.id));
+        .where(eq(schedules.id, input.id))
+        .then((res) => res.at(0));
+
+      if (schedule === undefined)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Error occrs when loading schedule from database.",
+        });
+
+      return { ...schedule, id: +schedule.id };
     }),
   updateSchedule: publicProcedure
     .input(updateScheduleSchema)

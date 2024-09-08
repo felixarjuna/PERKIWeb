@@ -15,21 +15,24 @@ export const addScheduleSchema = z.object({
     .string()
     .min(2, { message: "Title must be at least 2 characters." })
     .max(50),
+  description: z.string().min(10),
   date: z.date({
     required_error: "A date of service is required.",
   }),
-  speaker: z.string({
-    required_error: "Please select a speaker for the service.",
-  }),
   bibleVerse: z.string().min(2).max(50),
-  summary: z.string().min(10),
-  liturgos: z.string().min(2).max(50).optional(),
-  musician: z.string().min(2).max(50).optional(),
+  type: z.enum(["church_service", "bible_study"]),
+  preacher: z
+    .string({
+      required_error: "Please select the speaker for the service.",
+    })
+    .optional(),
+  leader: z.string().min(2).max(50),
+  musician: z.string().min(2).max(50),
   multimedia: z.string().min(2).max(50).optional(),
   accommodation: z.string().min(2).max(50).optional(),
+  noteWriter: z.string().min(2).max(50),
   cookingGroup: z.string().min(2).max(50).optional(),
   cleaningGroup: z.string().min(2).max(50),
-  fellowshipType: z.string().min(2).max(50),
 });
 
 export const updateScheduleSchema = addScheduleSchema.extend({

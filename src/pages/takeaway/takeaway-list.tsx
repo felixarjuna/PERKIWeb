@@ -1,6 +1,5 @@
 "use client";
 
-import { isEmpty } from "lodash";
 import { useRouter } from "next/router";
 import React from "react";
 import Loader from "~/components/loader";
@@ -12,22 +11,22 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useToast } from "~/components/ui/use-toast";
-import { FellowshipType } from "~/lib/data";
+import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
 import ActionButton from "../../components/action-button";
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
-  const [fellowshipType, setFellowshipType] = React.useState<string>("");
+  const [type, setType] = React.useState<
+    "church_service" | "bible_study" | "all"
+  >("all");
 
   const takeaways = React.useMemo(() => {
-    return isEmpty(fellowshipType) || fellowshipType === "all"
+    return type === "all"
       ? data
-      : data?.filter(
-          (takeaway) => takeaway.schedules.fellowshipType === fellowshipType,
-        );
-  }, [data, fellowshipType]);
+      : data?.filter((takeaway) => takeaway.schedules.type === type);
+  }, [data, type]);
 
   if (takeaways === undefined) {
     return <Loader message="Loading takeaways ..." className="mt-8" />;
@@ -39,12 +38,12 @@ export default function TakeawayList() {
 
   return (
     <div className="space-y-4">
-      <Select onValueChange={(value) => setFellowshipType(value)}>
+      <Select onValueChange={(value: EventTypeEnum) => setType(value)}>
         <SelectTrigger>
           <SelectValue placeholder="Fellowship type" />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(FellowshipType).map(([key, value]) => (
+          {Object.entries(eventTypeEnum).map(([key, value]) => (
             <SelectItem value={key} key={key}>
               {value}
             </SelectItem>
@@ -53,18 +52,19 @@ export default function TakeawayList() {
         </SelectContent>
       </Select>
 
-      {takeaways.map((takeaway, index) => {
+      {takeaways.map((data, index) => {
+        const contributors = data.takeaways.contributors as string[];
         return (
           <TakeawayItem
             key={index}
-            tabId={takeaway.schedules.fellowshipType}
-            id={takeaway.takeaways.id}
-            title={takeaway.schedules.title}
-            date={dateTimeFormatter(takeaway.schedules.date.toString())}
-            speaker={takeaway.schedules.speaker}
-            bibleVerse={takeaway.schedules.bibleVerse}
-            summary={takeaway.takeaways.keypoints}
-            contributors={takeaway.takeaways.contributors}
+            eventId={data.takeaways.id}
+            eventType={data.schedules.type}
+            title={data.schedules.title}
+            date={dateTimeFormatter(data.schedules.date.toString())}
+            speaker={data.schedules.leader}
+            bibleVerse={data.schedules.bibleVerse}
+            summary={data.takeaways.keypoints}
+            contributors={contributors}
           />
         );
       })}
@@ -73,8 +73,8 @@ export default function TakeawayList() {
 }
 
 interface TakeawayItemProps {
-  readonly id: number;
-  readonly tabId: string;
+  readonly eventId: number;
+  readonly eventType: EventTypeEnum;
   readonly title: string;
   readonly date: string;
   readonly speaker: string;
@@ -84,9 +84,12 @@ interface TakeawayItemProps {
 }
 
 function TakeawayItem(props: TakeawayItemProps) {
+  /** hook for toast */
   const { toast } = useToast();
+  /** utils to invalidate trpc query. */
   const utils = api.useContext();
 
+  /** router hook to for edit action. */
   const router = useRouter();
 
   const deleteTakeaway = api.takeaways.deleteTakeaway.useMutation({
@@ -105,13 +108,13 @@ function TakeawayItem(props: TakeawayItemProps) {
         <div className="flex gap-x-2">
           <ActionButton
             className="hidden items-center gap-x-2 sm:flex"
-            onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
-            onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
+            onEditClick={() =>
+              void router.push(`/edit-takeaway/${props.eventId}`)
+            }
+            onDeleteClick={() => deleteTakeaway.mutate({ id: props.eventId })}
           />
           <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-xs text-green-default sm:text-sm">
-            {FellowshipType[
-              props.tabId as keyof typeof FellowshipType
-            ].toLowerCase()}
+            {props.eventType}
           </span>
         </div>
       </h1>
@@ -129,8 +132,8 @@ function TakeawayItem(props: TakeawayItemProps) {
 
       <ActionButton
         className=" visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
-        onEditClick={() => void router.push(`/edit-takeaway/${props.id}`)}
-        onDeleteClick={() => deleteTakeaway.mutate({ id: props.id })}
+        onEditClick={() => void router.push(`/edit-takeaway/${props.eventId}`)}
+        onDeleteClick={() => deleteTakeaway.mutate({ id: props.eventId })}
       />
     </div>
   );

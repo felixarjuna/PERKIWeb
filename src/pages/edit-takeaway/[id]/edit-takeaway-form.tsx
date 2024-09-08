@@ -51,9 +51,10 @@ export default function EditTakeawayForm() {
 
   const contributors = React.useMemo(() => {
     if (takeaway) {
-      const contributors = takeaway?.takeaways.contributors.includes(username)
-        ? [...takeaway.takeaways.contributors]
-        : [...takeaway?.takeaways.contributors, username];
+      const _contributors = takeaway.takeaways.contributors as string[];
+      const contributors = _contributors.includes(username)
+        ? [..._contributors]
+        : [..._contributors, username];
       return contributors;
     }
   }, [takeaway, username]);

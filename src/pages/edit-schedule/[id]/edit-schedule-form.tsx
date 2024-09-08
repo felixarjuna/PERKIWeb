@@ -39,6 +39,7 @@ import {
   liturgos,
   multimedia,
   musicians,
+  noteWriter,
   speakers,
 } from "~/lib/data";
 import { cn } from "~/lib/utils";
@@ -50,11 +51,26 @@ export default function EditScheduleForm() {
   const router = useRouter();
 
   const id = router.query.id as string;
-  const { data } = api.schedules.getScheduleById.useQuery({ id: parseInt(id) });
-  const schedule = React.useMemo(() => {
-    return data?.at(0);
-  }, [data]);
+  const { data: schedule } = api.schedules.getScheduleById.useQuery({
+    id: parseInt(id),
+  });
 
+  /** form defintion. */
+  const form = useForm<z.infer<typeof updateScheduleSchema>>({
+    resolver: zodResolver(updateScheduleSchema),
+  });
+
+  React.useEffect(() => {
+    form.reset({
+      ...schedule,
+      preacher: schedule?.preacher ?? undefined,
+      multimedia: schedule?.multimedia ?? undefined,
+      accommodation: schedule?.accommodation ?? undefined,
+      cookingGroup: schedule?.cookingGroup ?? undefined,
+    });
+  }, [form, schedule]);
+
+  /** update schedule action. */
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onSuccess: async () => {
       toast({
@@ -65,24 +81,8 @@ export default function EditScheduleForm() {
     },
   });
 
-  // 1. Define form.
-  const form = useForm<z.infer<typeof updateScheduleSchema>>({
-    resolver: zodResolver(updateScheduleSchema),
-  });
-
-  React.useEffect(() => {
-    form.reset({
-      ...schedule,
-      liturgos: schedule?.liturgos ?? undefined,
-      musician: schedule?.musician ?? undefined,
-      multimedia: schedule?.multimedia ?? undefined,
-      accommodation: schedule?.accommodation ?? undefined,
-      cookingGroup: schedule?.cookingGroup ?? undefined,
-    });
-  }, [form, schedule]);
-
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof updateScheduleSchema>) {
+    console.log(values);
     updateSchedule.mutate(values);
   }
 
@@ -154,10 +154,10 @@ export default function EditScheduleForm() {
           <div className="col-span-2">
             <FormField
               control={form.control}
-              name="speaker"
+              name="preacher"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Speaker</FormLabel>
+                  <FormLabel className="text-md">Preacher</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -197,10 +197,10 @@ export default function EditScheduleForm() {
           <div className="col-span-2">
             <FormField
               control={form.control}
-              name="summary"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Summary</FormLabel>
+                  <FormLabel className="text-md">Description</FormLabel>
                   <FormControl>
                     <Textarea className="h-48 resize-none" {...field} />
                   </FormControl>
@@ -224,10 +224,10 @@ export default function EditScheduleForm() {
           <div className="col-span-2">
             <FormField
               control={form.control}
-              name="liturgos"
+              name="leader"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Liturgos</FormLabel>
+                  <FormLabel className="text-md">Liturgos/PA Leader</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -239,6 +239,34 @@ export default function EditScheduleForm() {
                         {liturgos.map((liturgos, index) => (
                           <SelectItem value={liturgos} key={index}>
                             {liturgos}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="col-span-2">
+            <FormField
+              control={form.control}
+              name="noteWriter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-md">Note writer</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {noteWriter.map((writer, index) => (
+                          <SelectItem value={writer} key={index}>
+                            {writer}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -397,7 +425,14 @@ export default function EditScheduleForm() {
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={(event) =>
+          void form.handleSubmit(onSubmit, (error) => {
+            toast({
+              title: "Something went wrong.",
+              description: JSON.stringify(error),
+            });
+          })(event)
+        }
         className="mt-4 space-y-8 sm:mt-8"
       >
         {renderFellowshipForm()}

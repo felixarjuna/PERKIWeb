@@ -1,6 +1,13 @@
 "use client";
 
-import { Bed, Music, PersonStanding, Sparkles, Utensils } from "lucide-react";
+import {
+  Bed,
+  Music,
+  NotebookPen,
+  PersonStanding,
+  Sparkles,
+  Utensils,
+} from "lucide-react";
 import { useRouter } from "next/router";
 import React from "react";
 import ActionButton from "~/components/action-button";
@@ -18,6 +25,7 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { useToast } from "~/components/ui/use-toast";
 
+import { isEmpty } from "lodash";
 import Loader from "~/components/loader";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
@@ -58,7 +66,7 @@ export default function ScheduleList() {
   function renderScheduleDetails(schedule: Schedule) {
     return (
       <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-xs text-green-400/80 sm:gap-x-2">
-        <p>{schedule.speaker}</p>
+        <p>{schedule.preacher}</p>
         <span>&middot;</span>
         <p>{schedule.bibleVerse}</p>
         <span>&middot;</span>
@@ -68,12 +76,12 @@ export default function ScheduleList() {
   }
 
   function renderScheduleSummary(schedule: Schedule) {
-    let summary = schedule.summary;
-    if (summary.length > SUMMARY_MAX_LENGTH) {
-      summary = `${summary.substring(0, SUMMARY_MAX_LENGTH)}...`;
+    let description = schedule.description;
+    if (description.length > SUMMARY_MAX_LENGTH) {
+      description = `${description.substring(0, SUMMARY_MAX_LENGTH)}...`;
     }
 
-    return <p className="mt-4 text-sm">{summary}</p>;
+    return <p className="mt-4 text-sm">{description}</p>;
   }
 
   function renderScheduleServants(schedule: Schedule) {
@@ -97,13 +105,20 @@ export default function ScheduleList() {
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
           </div>
-          <p>{schedule.liturgos ?? "-"}</p>
+          <p>{isEmpty(schedule.leader) ? "-" : schedule.leader}</p>
         </div>
+
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <Music className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
-          <p>{schedule.musician ?? "-"}</p>
+          <p>{schedule.musician}</p>
+        </div>
+        <div className="flex items-center gap-x-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+            <NotebookPen className="h-3 w-3 sm:h-4 sm:w-4" />
+          </div>
+          <p>{isEmpty(schedule.noteWriter) ? "-" : schedule.noteWriter}</p>
         </div>
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
@@ -206,7 +221,9 @@ export default function ScheduleList() {
       <ActionButton
         className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 sm:hidden xl:hidden"
         onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
-        onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
+        onDeleteClick={() => {
+          deleteSchedule.mutate({ id: +schedule.id });
+        }}
       />
     );
   }

@@ -1,7 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { GoogleSpreadsheet } from "google-spreadsheet";
+
 import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -30,14 +33,15 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import {
-  FellowshipType,
   accommodation,
   groups,
   liturgos,
   multimedia,
   musicians,
+  noteWriter,
   speakers,
 } from "~/lib/data";
+import { eventTypeEnum } from "~/lib/db/schema/schema";
 import { cn } from "~/lib/utils";
 import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
@@ -63,13 +67,43 @@ export default function AddScheduleForm() {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof addScheduleSchema>) {
+    console.log(values);
     addSchedule.mutate(values);
   }
+
+  React.useEffect(() => {
+    const doc = new GoogleSpreadsheet(
+      "1x7GkA_-LR31Cw2Wfat2S38N79k26DcyhhEEW2ZmKuic",
+      { apiKey: "***REMOVED***" },
+    );
+
+    const load = async () => {
+      try {
+        await doc.loadInfo();
+
+        const schedule = doc.sheetsByTitle.Schedule;
+        const rows = await schedule?.getRows({ offset: 37, limit: 4 });
+        console.log(rows?.map((x) => x.toObject()));
+      } catch (exception) {
+        console.log(exception);
+      }
+    };
+
+    void load();
+  }, []);
 
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={(event) => {
+          try {
+            void form.handleSubmit(onSubmit, (error) => console.log(error))(
+              event,
+            );
+          } catch (exception) {
+            console.log(exception);
+          }
+        }}
         className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">
@@ -80,7 +114,7 @@ export default function AddScheduleForm() {
             <div className="col-span-2">
               <FormField
                 control={form.control}
-                name="fellowshipType"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-md">Fellowship Type</FormLabel>
@@ -95,10 +129,12 @@ export default function AddScheduleForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(FellowshipType).map(
+                          {Object.entries(eventTypeEnum.enumValues).map(
                             ([key, value]) => (
-                              <SelectItem value={key} key={key}>
-                                {value}
+                              <SelectItem value={value} key={key}>
+                                {value === "church_service"
+                                  ? "Church service"
+                                  : "Bible study"}
                               </SelectItem>
                             ),
                           )}
@@ -110,7 +146,6 @@ export default function AddScheduleForm() {
                 )}
               />
             </div>
-
             <div className="col-span-2">
               <FormField
                 control={form.control}
@@ -172,10 +207,10 @@ export default function AddScheduleForm() {
             <div className="col-span-2">
               <FormField
                 control={form.control}
-                name="speaker"
+                name="preacher"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-md">Speaker</FormLabel>
+                    <FormLabel className="text-md">Preacher</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -218,10 +253,10 @@ export default function AddScheduleForm() {
             <div className="col-span-2">
               <FormField
                 control={form.control}
-                name="summary"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-md">Summary</FormLabel>
+                    <FormLabel className="text-md">Description</FormLabel>
                     <FormControl>
                       <Textarea className="h-48 resize-none" {...field} />
                     </FormControl>
@@ -241,7 +276,7 @@ export default function AddScheduleForm() {
             <div className="col-span-2">
               <FormField
                 control={form.control}
-                name="liturgos"
+                name="leader"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-md">Liturgos</FormLabel>
@@ -290,6 +325,37 @@ export default function AddScheduleForm() {
                           {musicians.map((musician, index) => (
                             <SelectItem value={musician} key={index}>
                               {musician}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-2">
+              <FormField
+                control={form.control}
+                name="noteWriter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-md">Note writer</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {noteWriter.map((writer, index) => (
+                            <SelectItem value={writer} key={index}>
+                              {writer}
                             </SelectItem>
                           ))}
                         </SelectContent>

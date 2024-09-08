@@ -35,7 +35,7 @@ export function EditButton({ onEditClick }: { onEditClick: () => void }) {
       className="flex h-6 w-6 items-center justify-center rounded-md bg-green-default/80 hover:bg-dark-green-default"
       onClick={() => onEditClick()}
     >
-      <PenBoxIcon className="h-4 w-4 xs:h-3 xs:w-3" />
+      <PenBoxIcon className="xs:h-3 xs:w-3 h-4 w-4" />
     </div>
   );
 }
@@ -45,10 +45,10 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
     <AlertDialog>
       <AlertDialogTrigger>
         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-300/30 hover:bg-red-300/50">
-          <TrashIcon className="h-4 w-4 xs:h-3 xs:w-3" />
+          <TrashIcon className="xs:h-3 xs:w-3 h-4 w-4" />
         </div>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="w-10/12">
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
