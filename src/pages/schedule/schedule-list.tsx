@@ -233,7 +233,7 @@ export default function ScheduleList() {
       <ActionButton
         className="hidden gap-x-2 sm:flex"
         onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
-        onDeleteClick={() => deleteSchedule.mutate({ id: schedule.id })}
+        onDeleteClick={() => deleteSchedule.mutate({ id: +schedule.id })}
       />
     );
   }
