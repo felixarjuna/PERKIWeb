@@ -10,7 +10,11 @@
 - [x] Create page component template
 - [x] Handle loader components
 - [x] Fix style for desktop
-- [ ] Add note writer to schedules
+- [x] Add note writer to schedules
+- [x] Refactor and clean coding database schema.
+- [ ] Ease schedule integration from spreadsheet.
+- [ ] Add financial dashboard.
+- [ ] Add organizational chart.
 - [ ] Add payment integration system
 - [ ] Add birthday to perkiweb
 - [ ] Enable feature to show schedules as calender
