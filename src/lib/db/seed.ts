@@ -1,40 +1,42 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { schedules } from "./schema/schema";
+import { type Schedule, schedules } from "./schema/schema";
 
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const scheduleList = [
+const scheduleList: Schedule[] = [
   {
     id: 40,
     title: "Exposition Book of Romans",
     date: new Date("2024-04-26T22:00:00.000Z"),
-    speaker: "Ev. Nehemiah Riggruben",
+    preacher: "Ev. Nehemiah Riggruben",
     bibleVerse: "Roma 4:1-12",
-    summary: "Exposition the book of romans.",
-    liturgos: "Toni Setiawan",
+    description: "Exposition the book of romans.",
+    leader: "Toni Setiawan",
     musician: "Clarissa Adelyne",
+    noteWriter: "Lionel Erico",
     multimedia: "Felix Arjuna",
     accommodation: "Danny Kurniawan",
     cookingGroup: "Group 3",
     cleaningGroup: "Group 4",
-    fellowshipType: "ChurchService",
+    type: "church_service",
   },
   {
     id: 41,
     title: "Exposition Book of Romans",
     date: new Date("2024-05-03T22:00:00.000Z"),
-    speaker: "Danny Kurniawan",
+    preacher: "Danny Kurniawan",
     bibleVerse: "Roma 4:13-25",
-    summary: "Exposition the book of romans.",
-    liturgos: null,
+    description: "Exposition the book of romans.",
+    leader: "Felix Arjuna",
     musician: "Clarissa Adelyne",
+    noteWriter: "Lionel Erico",
     multimedia: null,
     accommodation: null,
     cookingGroup: null,
     cleaningGroup: "Group 5",
-    fellowshipType: "BigGroupBibleStudy",
+    type: "bible_study",
   },
 ];
 

@@ -59,6 +59,7 @@ export default function EditPrayerForm({
       name: prayer.name ?? username,
       content: data.content,
       isAnonymous: data.isAnonymous,
+      prayerNames: prayer.prayerNames as string[],
     };
     updatePrayer.mutate(request);
     onCloseDialog();
@@ -87,7 +88,7 @@ export default function EditPrayerForm({
                 </FormItem>
               )}
             />
-            <div className="flex gap-x-4 xs:flex-col xs:gap-2">
+            <div className="xs:flex-col xs:gap-2 flex gap-x-4">
               <div className="flex-1">
                 <FormField
                   control={form.control}
@@ -106,7 +107,7 @@ export default function EditPrayerForm({
                 />
               </div>
 
-              <div className="flex xs:justify-end">
+              <div className="xs:justify-end flex">
                 <Button type="submit" className="w-fit">
                   Save changes
                 </Button>

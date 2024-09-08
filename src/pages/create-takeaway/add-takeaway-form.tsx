@@ -79,7 +79,6 @@ export default function AddTakeawayForm() {
       <form
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            console.log(error);
             toast({
               variant: "destructive",
               title: "Uh oh! Something went wrong.",

@@ -73,6 +73,7 @@ export default function Prayers() {
                 <div className="mt-4 text-center">No prayer found.</div>
               ) : (
                 prayers?.map((prayer, index) => {
+                  const names = prayer.prayerNames as string[];
                   return (
                     <li
                       className="items relative flex flex-col gap-y-1 rounded-lg bg-green-default/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
@@ -91,7 +92,7 @@ export default function Prayers() {
                         <div className="flex gap-x-2">
                           <Toggle
                             className="h-6 w-6 p-1"
-                            pressed={prayer.prayerNames.includes(username)}
+                            pressed={names.includes(username)}
                             onPressedChange={(pressed) => {
                               if (pressed) {
                                 updatePrayerCount.mutate({
@@ -99,10 +100,7 @@ export default function Prayers() {
                                   count: pressed
                                     ? prayer.count + 1
                                     : prayer.count - 1,
-                                  prayerNames: [
-                                    ...prayer.prayerNames,
-                                    username,
-                                  ],
+                                  prayerNames: [...names, username],
                                 });
                               } else {
                                 updatePrayerCount.mutate({
@@ -110,7 +108,7 @@ export default function Prayers() {
                                   count: pressed
                                     ? prayer.count + 1
                                     : prayer.count - 1,
-                                  prayerNames: prayer.prayerNames.filter(
+                                  prayerNames: names.filter(
                                     (name) => !name.includes(username),
                                   ),
                                 });

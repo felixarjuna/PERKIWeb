@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { DateTime } from "luxon";
 import { twMerge } from "tailwind-merge";
-import { FellowshipType } from "./data";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -50,10 +49,4 @@ export function getNextDayOfWeek(date: Date, dayOfWeek: number) {
   resultDate.setDate(date.getDate() + ((dayOfWeek - date.getDay()) % 7));
 
   return resultDate;
-}
-
-export function getKeyFromValueInFellowshipEnum(value: FellowshipType) {
-  return Object.keys(FellowshipType)[
-    Object.values(FellowshipType).indexOf(value)
-  ];
 }

@@ -82,7 +82,6 @@ export default function EditScheduleForm() {
   });
 
   function onSubmit(values: z.infer<typeof updateScheduleSchema>) {
-    console.log(values);
     updateSchedule.mutate(values);
   }
 

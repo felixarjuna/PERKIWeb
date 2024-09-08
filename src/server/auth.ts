@@ -1,20 +1,19 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { TRPCError } from "@trpc/server";
+import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
+import { type Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-
-import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
 import { env } from "~/env.mjs";
 import { users } from "~/lib/db/schema/auth";
 import { db } from ".";
-
-import bcrypt from "bcrypt";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -43,7 +42,7 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db) as Adapter,
   callbacks: {
     session: ({ session, token }) => {
       return {
