@@ -28,12 +28,14 @@ export const addScheduleSchema = z.object({
     .optional(),
   leader: z.string().min(2).max(50),
   musician: z.string().min(2).max(50),
-  multimedia: z.string().min(2).max(50).optional(),
-  accommodation: z.string().min(2).max(50).optional(),
+  multimedia: z.string().optional(),
+  accommodation: z.string().optional(),
   noteWriter: z.string().min(2).max(50),
-  cookingGroup: z.string().min(2).max(50).optional(),
+  cookingGroup: z.string().optional(),
   cleaningGroup: z.string().min(2).max(50),
 });
+
+export const addScheduleBatchSchema = z.array(addScheduleSchema);
 
 export const updateScheduleSchema = addScheduleSchema.extend({
   id: z.number(),

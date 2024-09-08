@@ -64,9 +64,10 @@ export default function ScheduleList() {
   const router = useRouter();
 
   function renderScheduleDetails(schedule: Schedule) {
+    console.log(schedule);
     return (
       <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-xs text-green-400/80 sm:gap-x-2">
-        <p>{schedule.preacher}</p>
+        <p>{isEmpty(schedule.preacher) ? "-" : schedule.preacher}</p>
         <span>&middot;</span>
         <p>{schedule.bibleVerse}</p>
         <span>&middot;</span>
@@ -243,6 +244,7 @@ export default function ScheduleList() {
       <div
         className="flex h-full flex-col gap-y-0 rounded-lg
       bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:flex-row sm:gap-y-2"
+        key={schedule.id}
       >
         <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
           <div className="flex items-center justify-between">

@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { schedules } from "~/lib/db/schema/schema";
 import { db } from "~/server";
 import {
+  addScheduleBatchSchema,
   addScheduleSchema,
   queryByIdSchema,
   updateScheduleSchema,
@@ -31,6 +32,11 @@ export const scheduleRouter = createTRPCRouter({
         cookingGroup: input.cookingGroup,
         cleaningGroup: input.cleaningGroup,
       });
+    }),
+  addScheduleBatch: publicProcedure
+    .input(addScheduleBatchSchema)
+    .mutation(async ({ input }) => {
+      return await db.insert(schedules).values([...input]);
     }),
   deleteSchedule: publicProcedure
     .input(queryByIdSchema)
