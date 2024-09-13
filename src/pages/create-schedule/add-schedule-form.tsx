@@ -38,6 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
+import { env } from "~/env.mjs";
 import {
   accommodation,
   groups,
@@ -529,7 +530,7 @@ type SpreadsheetSchedule = {
 
 const doc = new GoogleSpreadsheet(
   "1x7GkA_-LR31Cw2Wfat2S38N79k26DcyhhEEW2ZmKuic",
-  { apiKey: "***REMOVED***" },
+  { apiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY },
 );
 
 function AddScheduleGoogleSpreadsheet() {
