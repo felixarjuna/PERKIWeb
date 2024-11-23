@@ -1,0 +1,81 @@
+{
+  "ignore": [
+    {
+      "name": "report",
+      "id": "d94c8d25-6afa-4781-bc3d-096715232199"
+    },
+    {
+      "name": "Bank Account",
+      "id": "1f021d3e-ccd6-4020-bd2d-452ad3586956"
+    }
+  ],
+  "databases": {
+    "1301c1f9-8b49-400e-89aa-46cc5ec0bee7": {
+      "_name": "Finance Database",
+      "varName": "financeDatabase",
+      "pathName": "finance-database",
+      "properties": {
+        "A%5B%5EX": {
+          "_name": "Account",
+          "_type": "select",
+          "varName": "account",
+          "readOnly": false
+        },
+        "LHFX": {
+          "_name": "Check Box",
+          "_type": "checkbox",
+          "varName": "checkBox",
+          "readOnly": false
+        },
+        "UMnH": {
+          "_name": "Amount",
+          "_type": "number",
+          "varName": "amount",
+          "readOnly": false
+        },
+        "VTP%3B": {
+          "_name": "Receipt",
+          "_type": "url",
+          "varName": "receipt",
+          "readOnly": false
+        },
+        "%60%3Ev%5E": {
+          "_name": "Category",
+          "_type": "multi_select",
+          "varName": "category",
+          "readOnly": false
+        },
+        "fE%5Dg": {
+          "_name": "Date",
+          "_type": "date",
+          "varName": "date",
+          "readOnly": false
+        },
+        "k%3CsD": {
+          "_name": "income/expense",
+          "_type": "select",
+          "varName": "incomeexpense",
+          "readOnly": false
+        },
+        "pSzF": {
+          "_name": "Notes",
+          "_type": "rich_text",
+          "varName": "notes",
+          "readOnly": false
+        },
+        "title": {
+          "_name": "Description",
+          "_type": "title",
+          "varName": "description",
+          "readOnly": false
+        },
+        "6dd9bbe4-5367-4799-a158-a81f04340de5": {
+          "_name": "uses",
+          "_type": "select",
+          "varName": "uses",
+          "readOnly": false
+        }
+      }
+    }
+  }
+}
