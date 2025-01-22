@@ -1,5 +1,28 @@
 # TODO
 
+## [22.01.2025] 👨‍💻 Form for sensus
+
+- [x] extend database schema
+- [x] create page for form
+- [x] update backend logic to add user profile
+- [x] simplify login process
+- [ ] edit date picker
+
+## [23.11.2024] 👨‍💻 Takeaway page
+
+- [ ] show only part of the text
+- [ ] enable user to edit page content
+- [ ] integrate a better text editor
+
+## [01.09.2024] 👨‍💻 Finance dashboard
+
+- [ ] Notion API integration
+- [ ] Sparkasse and paypal api integration
+
+## [01.09.2024] 👨‍💻 Organizational chart
+
+- [ ] Add organizational chart
+
 ## [01.07.2024] 👨‍💻 Initial task
 
 - [x] Add cleaning and cooking group
@@ -21,18 +44,3 @@
 - [ ] Add payment integration system
 - [ ] Add birthday to perkiweb
 - [ ] Enable feature to show schedules as calender
-
-## [01.09.2024] 👨‍💻 Organizational chart
-
-- [ ] Add organizational chart
-
-## [01.09.2024] 👨‍💻 Finance dashboard
-
-- [ ] Notion API integration
-- [ ] Sparkasse and paypal api integration
-
-## [23.11.2024] 👨‍💻 Takeaway page
-
-- [ ] show only part of the text
-- [ ] enable user to edit page content
-- [ ] integrate a better text editor

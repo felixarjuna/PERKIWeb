@@ -39,21 +39,24 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
             <DialogDescription className="pt-4">
-              Guess what? We now have a new list of cooking and cleaning group!
-              🍳🧹
+              Please register yourself as fellowship member.*
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex items-center justify-center">
             <Link
-              href={"/group"}
+              href={"/member/join"}
               className={cn(
                 buttonVariants({ variant: "default" }),
                 "flex w-fit items-center justify-center",
               )}
             >
-              See your teammates here! 👯‍♀️
+              Fill out form! 📄
             </Link>
           </DialogFooter>
+
+          <span className="flex text-center text-xs text-light-green-default">
+            * you have to register yourself beforehand.
+          </span>
         </DialogContent>
       </Dialog>
 
