@@ -59,3 +59,13 @@ export const addPrayerCountSchema = z.object({
 export const queryByIdSchema = z.object({
   id: z.number(),
 });
+
+export const addProfileSchema = z.object({
+  birthday: z.coerce.date(),
+  userId: z.string(),
+  address: z.string(),
+  waNumber: z.string(),
+  location: z.string(),
+  major: z.string(),
+  bio: z.string().optional(),
+});
