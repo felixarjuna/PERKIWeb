@@ -1,18 +1,11 @@
-# Create T3 App
+# PERKIWeb
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Welcome to PERKIWeb. The PERKI Aachen platform to inform the members, so we could pray together, know what is happening in our fellowship,
+sneak peak to our schedule, and share what we learn from the service.
 
-## What's next? How do I make an app with this?
+## Tech stack
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
-
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
-
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+The current tech stack for this project is [T3 Stack](https://create.t3.gg/) created with the `create-t3-app` command. We are using [Next.js](https://nextjs.org) as React Framework, [NextAuth.js](https://next-auth.js.org) from Authentication, [Drizzle](https://orm.drizzle.team/) as ORM (Object Relational Mapping), [Tailwind CSS](https://tailwindcss.com) for styling, and [tRPC](https://trpc.io) for end-to-end type safe APIs framework.
 
 ## Learn More
 
@@ -23,6 +16,15 @@ To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the fo
 
 You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
 
-## How do I deploy this?
+## Deployment
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+The project is currently deployed on [Vercel](https://create.t3.gg/en/deployment/vercel).
+
+## Contributors
+
+`@felixarjuna`: full stack dev.
+`@rickyjonathan`: ui/ux dev.
+
+If anything happen, please contact one of us for further information.
+
+> ⚠️ the project is currently using the old version of next.js or using the `page-router` paradigm.
