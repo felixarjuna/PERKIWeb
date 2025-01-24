@@ -74,7 +74,7 @@ export default function AccountForm() {
   return (
     <Form {...form}>
       {isGoogleAccount ? (
-        <div className="max-w-sm text-xs sm:max-w-lg sm:text-sm">
+        <div className="mb-8 text-xs sm:text-sm">
           <Button
             variant={"outline"}
             className="h-fit min-w-fit px-4 py-4 text-center sm:px-6 sm:py-6 xl:py-8 2xl:py-8"

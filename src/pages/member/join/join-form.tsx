@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
+import Loader from "~/components/loader";
 import { PhoneInput } from "~/components/ui/phone-input";
 import { useToast } from "~/components/ui/use-toast";
 import { addProfileSchema } from "~/server/api/schema/schema";
@@ -27,16 +28,12 @@ import { api } from "~/utils/api";
 export default function JoinForm() {
   const router = useRouter();
   const { data: session } = useSession();
-  if (session === null) {
-    router.push("/auth/signin");
-  }
+  if (session === null) router.push("/auth/signin");
 
   /** define form. */
   const form = useForm<z.infer<typeof addProfileSchema>>({
     resolver: zodResolver(addProfileSchema),
-    defaultValues: {
-      birthday: new Date("2000-01-01"),
-    },
+    defaultValues: {},
   });
 
   /** load form data. */
@@ -58,18 +55,21 @@ export default function JoinForm() {
         title: "Form submitted successfully! 🎉",
         description: "Thank you for filling out the form! ❤️",
       });
+
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
     },
     onError: (error) => {
-      console.error("Form submission error", error);
       toast({
         title: "Failed to submit the form 😢",
-        description:
-          "An error occured while submitting the form. Please contact the adminstrator.",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
+
   function onSubmit(values: z.infer<typeof addProfileSchema>) {
-    console.log(values);
     const userId = session?.user.id;
     if (!userId) {
       toast({
@@ -103,7 +103,7 @@ export default function JoinForm() {
                   <Input
                     id="dob"
                     type="date"
-                    value={field.value.toString()}
+                    value={field.value?.toString()}
                     onChange={(e) => field.onChange(e.target.value)}
                     className="w-[190px] pl-8"
                   />
@@ -125,7 +125,11 @@ export default function JoinForm() {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input placeholder="Dunantstr. 6" type="text" {...field} />
+                <Input
+                  placeholder="Roermonderstr. 110"
+                  type="text"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 The address where you currently live
@@ -137,7 +141,7 @@ export default function JoinForm() {
 
         <FormField
           control={form.control}
-          name="waNumber"
+          name="phoneNumber"
           render={({ field }) => (
             <FormItem className="flex flex-col items-start">
               <FormLabel>Whatsapp Number</FormLabel>
@@ -206,7 +210,13 @@ export default function JoinForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={addProfile.isLoading}>
+          {addProfile.isLoading ? (
+            <Loader message="Adding profile ..." className="text-xs" />
+          ) : (
+            "Submit"
+          )}
+        </Button>
       </form>
     </Form>
   );
