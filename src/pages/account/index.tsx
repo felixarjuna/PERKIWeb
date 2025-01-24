@@ -11,7 +11,7 @@ import AccountForm from "./account-form";
 export default function Account() {
   return (
     <Template title="Account">
-      <div className="mt-8 grid w-full gap-y-4">
+      <div className="mt-8 grid w-full max-w-screen-sm gap-y-4 place-self-center">
         <AccountForm />
 
         <Link

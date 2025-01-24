@@ -18,7 +18,7 @@ export const profileRouter = createTRPCRouter({
         ).length > 0;
 
       if (isExists)
-        return new TRPCError({
+        throw new TRPCError({
           code: "CONFLICT",
           message:
             "Sorry, it seems like you already submitted your profile. Please contact the administrator if it is not the case.",
