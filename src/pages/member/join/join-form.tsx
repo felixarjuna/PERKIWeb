@@ -105,7 +105,7 @@ export default function JoinForm() {
                     type="date"
                     value={field.value.toString()}
                     onChange={(e) => field.onChange(e.target.value)}
-                    className="w-[190px] pl-12"
+                    className="w-[190px] pl-8"
                   />
                 </div>
               </FormControl>
