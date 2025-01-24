@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "~/components/ui/button";
-import { Calendar } from "~/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -14,21 +13,14 @@ import {
 import { Input } from "~/components/ui/input";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 import { PhoneInput } from "~/components/ui/phone-input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
 import { useToast } from "~/components/ui/use-toast";
-import { cn } from "~/lib/utils";
 import { addProfileSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
@@ -53,8 +45,6 @@ export default function JoinForm() {
       userId: session?.user.id,
     });
   }, [form, session?.user.id]);
-
-  console.log("errors", form.formState.errors);
 
   /** toast. */
   const { toast } = useToast();
@@ -104,36 +94,22 @@ export default function JoinForm() {
           control={form.control}
           name="birthday"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem className="flex flex-col space-y-1.5">
               <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[300px] pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
+
+              <FormControl className="w-full">
+                <div className="relative w-full">
+                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-green-500" />
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={field.value.toString()}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="w-[190px] pl-12"
                   />
-                </PopoverContent>
-              </Popover>
+                </div>
+              </FormControl>
+
               <FormDescription>
                 Your date of birth so we could celebrate it 🎉
               </FormDescription>
@@ -149,7 +125,7 @@ export default function JoinForm() {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input placeholder="Dunantstr. 6" type="" {...field} />
+                <Input placeholder="Dunantstr. 6" type="text" {...field} />
               </FormControl>
               <FormDescription>
                 The address where you currently live
