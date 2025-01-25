@@ -48,16 +48,18 @@ export const addPrayerSchema = z.object({
   prayerNames: z.array(z.string()),
 });
 
-export const editPrayerSchema = addPrayerSchema.extend({ id: z.number() });
+export const editPrayerSchema = addPrayerSchema.extend({
+  id: z.coerce.number(),
+});
 
 export const addPrayerCountSchema = z.object({
-  id: z.number(),
+  id: z.coerce.number(),
   count: z.number(),
   prayerNames: z.array(z.string()),
 });
 
 export const queryByIdSchema = z.object({
-  id: z.number(),
+  id: z.coerce.number(),
 });
 
 export const addProfileSchema = z.object({
