@@ -1,4 +1,3 @@
-import Loader from "~/components/loader";
 import Template from "~/components/template";
 import { api } from "~/utils/api";
 
@@ -18,9 +17,10 @@ export default function Finance() {
 
   return (
     <Template title="Finance" subtitle="Our family wealth tracker.">
-      <div className="">
+      {/* <div className="">
         <div>unfiltered: {data?.length}</div>
         <div>filtered: {filtered?.length}</div>
+        <h1>Comming soon ...</h1>
 
         {isLoading && <Loader message="Loading finances ..." />}
 
@@ -45,6 +45,12 @@ export default function Finance() {
             </div>
           ))}
         </div>
+      </div> */}
+
+      <div className="flex justify-center">
+        <h1 className="absolute top-1/2 animate-pulse font-reimbrandt text-3xl sm:text-4xl">
+          Coming Soon ...
+        </h1>
       </div>
     </Template>
   );
