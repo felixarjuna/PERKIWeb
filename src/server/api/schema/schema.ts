@@ -7,7 +7,7 @@ export const addTakeawaySchema = z.object({
 });
 
 export const updateTakeawaySchema = addTakeawaySchema.extend({
-  id: z.number(),
+  id: z.coerce.number(),
 });
 
 export const addScheduleSchema = z.object({
