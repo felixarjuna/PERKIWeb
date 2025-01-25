@@ -43,12 +43,13 @@ export default function TakeawayList() {
           <SelectValue placeholder="Fellowship type" />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(eventTypeEnum).map(([key, value]) => (
-            <SelectItem value={key} key={key}>
-              {value}
+          {eventTypeEnum.enumValues.map((value) => (
+            <SelectItem value={value} key={value}>
+              {value === "bible_study" ? "Bible study" : "Church service"}
             </SelectItem>
           ))}
-          <SelectItem value={"all"}>All services</SelectItem>
+
+          <SelectItem value={"all"}>All</SelectItem>
         </SelectContent>
       </Select>
 
@@ -115,8 +116,10 @@ function TakeawayItem(props: TakeawayItemProps) {
               deleteTakeaway.mutate({ id: +props.takeawayId })
             }
           />
-          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-xs text-green-default sm:text-sm">
-            {props.eventType}
+          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1  text-xs  text-green-default sm:text-sm">
+            {props.eventType === "bible_study"
+              ? "bible study"
+              : "church service"}
           </span>
         </div>
       </h1>
