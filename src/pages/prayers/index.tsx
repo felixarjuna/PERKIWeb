@@ -53,7 +53,7 @@ export default function Prayers() {
         </div>
       }
     >
-      <div className="mt-8 flex w-full flex-col gap-y-4 px-0 sm:w-full sm:px-14">
+      <div className="mt-8 flex w-full max-w-5xl flex-col gap-y-4 px-0 sm:w-full sm:px-14">
         <h3 className="mb-4 font-reimbrandt text-base sm:mb-8 sm:text-2xl">
           Let&apos;s pray together every Wednesday at 18.30 a.m 😍
         </h3>
