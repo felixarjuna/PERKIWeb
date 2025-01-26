@@ -529,7 +529,7 @@ type SpreadsheetSchedule = {
 };
 
 const doc = new GoogleSpreadsheet(
-  "1x7GkA_-LR31Cw2Wfat2S38N79k26DcyhhEEW2ZmKuic",
+  "1McH8SoN1ut6CfERNi6BSh45O8vhshfZElDA42FbTZMs",
   { apiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY },
 );
 
