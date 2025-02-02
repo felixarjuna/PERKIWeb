@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { cn } from "~/lib/utils";
+import useAuth from "~/pages/admin/dashboard/hooks/useAuth";
 import { useToast } from "./ui/use-toast";
 
 const username = "mita";
@@ -14,16 +15,21 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const { setAuthorized } = useAuth();
+
   const router = useRouter();
   const { toast } = useToast();
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log(form);
-
     e.preventDefault();
     if (form.username === username && form.password === password) {
-      toast({ title: "Login success!", description: "Welcome back, Mita!" });
+      setAuthorized(true);
+      toast({
+        title: "Login successful! ❤️",
+        description: "Welcome back, MitA!",
+      });
       router.push("/admin/dashboard");
     } else {
+      setAuthorized(false);
       toast({
         title: "Login failed!",
         description: "Invalid username or password.",
