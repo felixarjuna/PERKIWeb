@@ -1,46 +1,50 @@
-/* @import url("https://fonts.googleapis.com/css2?family=Lora:wght@500&display=swap"); */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* @font-face {
-  font-family: "FoundersGrotesk-Regular";
-  src: url("./../assets/fonts/FoundersGrotesk-Regular.otf") format("opentype");
-  font-weight: 400;
-} */
+@layer base {
+  .dark {
+    --background: 171 72% 7%; /* #031f1c */
+    --foreground: 72 24% 84%; /* #d7dfcb */
+    --card: 24 9.8% 10%;
+    --card-foreground: 72 24% 84%; /* #d7dfcb */
+    --popover: 0 0% 9%;
+    --popover-foreground: 72 24% 84%; /* #d7dfcb */
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 72 24% 84%; /* #d7dfcb */
+    --muted: 0 0% 15%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 169 18% 27%; /* #37524f */
+    --accent-foreground: 72 24% 84%; /* #d7dfcb */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142.4 71.8% 29.2%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 173.57 90% 9%;
+    --sidebar-foreground: 83 26% 84%;
+    --sidebar-primary: 170 83.35% 15%;
+    --sidebar-primary-foreground: 83 26% 84%;
+    --sidebar-accent: 173.57 3.7% 15.9%;
+    --sidebar-accent-foreground: 83 26% 84%;
+    --sidebar-border: 83 26% 84%;
+    --sidebar-ring: 83 26% 84%;
+  }
+}
 
 @layer base {
   * {
-    @apply font-satoshi;
+    @apply border-border;
   }
-
-  :root {
-    --foreground: 84 24% 84%;
-    --muted-foreground: 84 24% 70%;
+  body {
+    @apply bg-background text-foreground;
   }
 }
-
-/* Chrome, Edge, and Safari */
-*::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-*::-webkit-scrollbar-track {
-  background: theme(colors.dark-green.default);
-  border-radius: 10px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background-color: theme(colors.green.default);
-  border-radius: 10px;
-  border: 5px solid theme(colors.green.default);
-}
-
-/* Firefox */
-/* * {
-  scrollbar-width: thin;
-  scrollbar-color: theme(colors.dark-green.default) theme(colors.green.default);
-  border-radius: 5px;
-} */
