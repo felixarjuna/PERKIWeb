@@ -10,8 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import useAuth from "~/hooks/useAuth";
 import { api } from "~/utils/api";
-import useAuth from "./hooks/useAuth";
 
 export default function DataTable() {
   const router = useRouter();
