@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
-import { profiles } from "~/lib/db/schema/schema";
+import { profiles, users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { addProfileSchema } from "../schema/schema";
@@ -26,4 +26,10 @@ export const profileRouter = createTRPCRouter({
 
       return await db.insert(profiles).values({ ...input });
     }),
+  getUserProfiles: publicProcedure.query(async () => {
+    return await db
+      .select()
+      .from(profiles)
+      .leftJoin(users, eq(profiles.userId, users.id));
+  }),
 });
