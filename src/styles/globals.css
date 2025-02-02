@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 171 72% 7%; /* #031f1c */
+    --foreground: 72 24% 84%; /* #d7dfcb */
+  }
+
   .dark {
     --background: 171 72% 7%; /* #031f1c */
     --foreground: 72 24% 84%; /* #d7dfcb */
@@ -15,7 +20,7 @@
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 72 24% 84%; /* #d7dfcb */
     --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted-foreground: 72 20% 75%; /* #d7dfcb */
     --accent: 169 18% 27%; /* #37524f */
     --accent-foreground: 72 24% 84%; /* #d7dfcb */
     --destructive: 0 62.8% 30.6%;
@@ -46,5 +51,21 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /** edit scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  /* Track */
+  ::-webkit-scrollbar-track {
+    border-radius: 10px;
+  }
+
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: #d7dfcb;
+    border-radius: 8px;
   }
 }
