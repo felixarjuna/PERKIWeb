@@ -5,6 +5,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -22,7 +23,7 @@ export type EventTypeEnum = z.infer<typeof eventEnum>;
 export type NewSchedule = typeof schedules.$inferInsert;
 export type Schedule = typeof schedules.$inferSelect;
 export const schedules = pgTable("schedules", {
-  id: integer("id").primaryKey().notNull(),
+  id: serial("id").primaryKey().notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
@@ -49,7 +50,7 @@ export const schedules = pgTable("schedules", {
 });
 
 export const takeaways = pgTable("takeaways", {
-  id: integer("id").primaryKey().notNull(),
+  id: serial("id").primaryKey().notNull(),
   scheduleId: integer("scheduleId").notNull(),
   keypoints: text("keypoints").notNull(),
   contributors: json("contributors").notNull(),
@@ -66,7 +67,7 @@ export const takeaways = pgTable("takeaways", {
 });
 
 export const prayers = pgTable("prayers", {
-  id: integer("id").primaryKey().notNull(),
+  id: serial("id").primaryKey().notNull(),
   name: text("name"),
   content: text("content").notNull(),
   count: integer("count").default(0).notNull(),
