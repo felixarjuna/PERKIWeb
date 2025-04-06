@@ -3,6 +3,7 @@ import React from "react";
 import { AppSidebar } from "~/components/app-sidebar";
 import { columns } from "~/components/dashboard/columns";
 import DataTable from "~/components/dashboard/data-table";
+import Loader from "~/components/loader";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,7 +28,7 @@ export default function Page() {
     if (!authorized) return router.push("/admin");
   }, [authorized, router]);
 
-  const { data } = api.profiles.getUserProfiles.useQuery();
+  const { data, isLoading } = api.profiles.getUserProfiles.useQuery();
 
   return (
     <div className="dark overflow-x-scroll">
@@ -48,7 +49,13 @@ export default function Page() {
             </div>
           </header>
 
-          <DataTable data={data ?? []} columns={columns} />
+          {isLoading ? (
+            <div className="absolute inset-0 flex h-full items-center justify-center">
+              <Loader message="Loading user profiles ..." />
+            </div>
+          ) : (
+            <DataTable data={data ?? []} columns={columns} />
+          )}
         </SidebarInset>
       </SidebarProvider>
     </div>
