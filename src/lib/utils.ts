@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { DateTime } from "luxon";
 import { twMerge } from "tailwind-merge";
+import { type RouterOutputs } from "~/utils/api";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -50,3 +51,20 @@ export function getNextDayOfWeek(date: Date, dayOfWeek: number) {
 
   return resultDate;
 }
+
+export const countBirthdaysThisMonth = (
+  profiles: RouterOutputs["profiles"]["getUserProfiles"],
+) => {
+  const now = DateTime.now(); // Current date (e.g., April 6, 2025)
+  const currentMonth = now.month; // e.g., 4 for April
+
+  return profiles.reduce((count, row) => {
+    const birthday = row.profiles?.birthday;
+    if (!birthday) return count; // Skip if no birthday
+
+    const birthdayDt = DateTime.fromJSDate(birthday);
+    if (!birthdayDt.isValid) return count; // Skip invalid dates
+
+    return birthdayDt.month === currentMonth ? count + 1 : count;
+  }, 0);
+};
