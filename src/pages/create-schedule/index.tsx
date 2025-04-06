@@ -20,7 +20,7 @@ export default function AddSchedulePage() {
         </div>
       }
     >
-      <div className="w-full">
+      <div className="mx-auto w-full max-w-4xl">
         <AddScheduleForm />
       </div>
     </Template>

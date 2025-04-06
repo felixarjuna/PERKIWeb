@@ -20,7 +20,7 @@ export default function EditSchedulePage() {
         </div>
       }
     >
-      <div className="w-full">
+      <div className="mx-auto w-full max-w-4xl">
         <EditScheduleForm />
       </div>
     </Template>
