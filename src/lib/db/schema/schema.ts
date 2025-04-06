@@ -43,7 +43,9 @@ export const schedules = pgTable("schedules", {
   updatedAt: timestamp("updatedAt", {
     withTimezone: true,
     mode: "date",
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const takeaways = pgTable("takeaways", {
@@ -58,7 +60,9 @@ export const takeaways = pgTable("takeaways", {
   updatedAt: timestamp("updatedAt", {
     withTimezone: true,
     mode: "date",
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const prayers = pgTable("prayers", {
@@ -75,7 +79,9 @@ export const prayers = pgTable("prayers", {
   updatedAt: timestamp("updatedAt", {
     withTimezone: true,
     mode: "date",
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const users = pgTable("user", {
@@ -96,7 +102,9 @@ export const users = pgTable("user", {
   updatedAt: timestamp("updatedAt", {
     withTimezone: true,
     mode: "date",
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const profiles = pgTable("profiles", {
@@ -119,7 +127,9 @@ export const profiles = pgTable("profiles", {
   updatedAt: timestamp("updatedAt", {
     withTimezone: true,
     mode: "date",
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 /** define one-to-one relationship. */
