@@ -1,3 +1,5 @@
+import { useRouter } from "next/navigation";
+import React from "react";
 import { AppSidebar } from "~/components/app-sidebar";
 import {
   Breadcrumb,
@@ -11,9 +13,22 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
+import useAuth from "~/hooks/useAuth";
+import { api } from "~/utils/api";
+import { columns } from "./columns";
 import DataTable from "./data-table";
 
 export default function Page() {
+  const router = useRouter();
+  const { authorized } = useAuth();
+
+  /** route back to admin page, if not authenticated. */
+  React.useEffect(() => {
+    if (!authorized) return router.push("/admin");
+  }, [authorized, router]);
+
+  const { data } = api.profiles.getUserProfiles.useQuery();
+
   return (
     <div className="dark">
       <SidebarProvider>
@@ -33,7 +48,7 @@ export default function Page() {
             </div>
           </header>
 
-          <DataTable />
+          <DataTable data={data ?? []} columns={columns} />
         </SidebarInset>
       </SidebarProvider>
     </div>
