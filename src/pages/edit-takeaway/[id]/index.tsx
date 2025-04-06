@@ -15,7 +15,7 @@ export default function EditTakeawayPage() {
         </div>
       }
     >
-      <div className="w-full">
+      <div className="mx-auto w-full max-w-4xl">
         <EditTakeawayForm />
       </div>
     </Template>

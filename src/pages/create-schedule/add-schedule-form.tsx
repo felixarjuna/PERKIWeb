@@ -77,7 +77,7 @@ export default function AddScheduleForm() {
   }
 
   return (
-    <Tabs defaultValue="manual" className="mx-auto mt-8 sm:max-w-xl">
+    <Tabs defaultValue="manual" className="mt-8">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="manual">Manual</TabsTrigger>
         <TabsTrigger value="spreadsheet">Google Spreadsheet</TabsTrigger>
