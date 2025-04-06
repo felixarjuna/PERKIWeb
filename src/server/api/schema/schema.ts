@@ -13,9 +13,15 @@ export const updateTakeawaySchema = addTakeawaySchema.extend({
 export const addScheduleSchema = z.object({
   title: z
     .string()
-    .min(2, { message: "Title must be at least 2 characters." })
+    .min(2, {
+      message: "An event must have a title with at least 2 characters.",
+    })
     .max(50),
-  description: z.string().min(10),
+  description: z
+    .string()
+    .min(2, {
+      message: "An event must have a description with at least 2 characters.",
+    }),
   date: z.date({
     required_error: "A date of service is required.",
   }),
