@@ -19,7 +19,7 @@ import {
 } from "~/components/ui/table";
 import { countBirthdaysThisMonth } from "~/lib/utils";
 import { type RouterOutputs } from "~/utils/api";
-import { DataTablePagination } from "./data-table-pagination";
+import DataTablePagination from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
