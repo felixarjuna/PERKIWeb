@@ -1,6 +1,8 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 import { AppSidebar } from "~/components/app-sidebar";
+import { columns } from "~/components/dashboard/columns";
+import DataTable from "~/components/dashboard/data-table";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,8 +17,6 @@ import {
 } from "~/components/ui/sidebar";
 import useAuth from "~/hooks/useAuth";
 import { api } from "~/utils/api";
-import { columns } from "./columns";
-import DataTable from "./data-table";
 
 export default function Page() {
   const router = useRouter();
