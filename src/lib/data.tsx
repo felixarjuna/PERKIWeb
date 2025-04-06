@@ -216,6 +216,8 @@ export const noteWriter = [
   "Tius Theodore",
   "Ido Manuel",
   "Victor Jordan",
+  "Serviano",
+  "Winston Alexander",
 ].sort();
 
 export const liturgos = [
@@ -225,9 +227,15 @@ export const liturgos = [
   "Jordie Yonathan",
   "Albertus Pandya",
   "Reggy Irawan",
-  "Steffen Josua",
-  "Winston A.",
+  "Steffen Tjandra",
+  "Winston Alexander",
   "Oliver Renaldi",
+  "Billy Christian",
+  "Wynnona Angelica",
+  "Shane Pangestu",
+  "Ido Manuel",
+  "Victor Jordan",
+  "Jericho Oland Marsahala",
 ].sort();
 
 export const musicians = [
@@ -238,8 +246,11 @@ export const musicians = [
   "Albertus Pandya",
   "Jordie Yonathan",
   "Oliver Renaldi",
-  "Wynnona A.",
-  "Shane Arno",
+  "Wynnona Angelica",
+  "Shane Pangestu",
+  "Ido Manuel",
+  "Steffen Tjandra",
+  "Tius Theodore",
 ].sort();
 
 export const multimedia = [
