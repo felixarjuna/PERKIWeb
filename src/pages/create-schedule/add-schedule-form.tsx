@@ -606,11 +606,11 @@ function AddScheduleGoogleSpreadsheet() {
       });
       router.push("/schedule");
     },
-    onError: () => {
+    onError: (err) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error occurs when adding schedules.",
+        description: `An error occured while adding schedules. Error: ${err.message}.`,
       });
     },
   });
