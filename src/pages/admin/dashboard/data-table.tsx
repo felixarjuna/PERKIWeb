@@ -8,6 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import React from "react";
+
 import {
   Table,
   TableBody,
@@ -16,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { countBirthdaysThisMonth } from "~/lib/utils";
+import { type RouterOutputs } from "~/utils/api";
 import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
@@ -28,7 +31,9 @@ export default function DataTable<TData, TValue>({
   data,
 }: DataTableProps<TData, TValue>) {
   /** local state to handle sorting. */
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "name", desc: false },
+  ]);
 
   const table = useReactTable({
     data,
@@ -42,13 +47,28 @@ export default function DataTable<TData, TValue>({
     },
   });
 
-  console.log(table.getState().sorting);
+  const count = React.useMemo(
+    () =>
+      countBirthdaysThisMonth(
+        data as RouterOutputs["profiles"]["getUserProfiles"],
+      ),
+    [data],
+  );
 
   return (
     <div className="space-y-4 p-4 text-cream-default">
-      <div className="item-center flex w-52 flex-col rounded-md border p-4">
-        <p className="font-semibold">Members</p>
-        <p className="font-mono">{data?.length}</p>
+      <div className="relative w-fit rounded-md border bg-green-default/50 px-4 py-4 font-normal">
+        <h1 className="font-reimbrandt text-xl tracking-wide">
+          Birthday this month 🎈🎉
+        </h1>
+        <p className="font-satoshi text-2xl">{count}</p>
+
+        <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2">
+          <span className="relative flex size-3">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex size-3 rounded-full bg-green-300"></span>
+          </span>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -58,7 +78,11 @@ export default function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{ width: `${header.getSize()}px` }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(

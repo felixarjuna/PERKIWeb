@@ -33,7 +33,7 @@ export const columns: ColumnDef<UserProfile>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant={"ghost"}
+          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
           onClick={() => {
             console.log("sort by name");
             column.toggleSorting(column.getIsSorted() === "asc");
@@ -45,6 +45,7 @@ export const columns: ColumnDef<UserProfile>[] = [
       );
     },
     cell: ({ row }) => row.original.user?.name,
+    size: 200,
   },
   {
     accessorKey: "birthday",
@@ -52,7 +53,7 @@ export const columns: ColumnDef<UserProfile>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant={"ghost"}
+          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Birthday
@@ -68,11 +69,13 @@ export const columns: ColumnDef<UserProfile>[] = [
           )
         : "N/A",
     sortingFn: sortByMonth,
+    size: 200, // Fixed width in pixels
   },
   {
     accessorKey: "major",
     header: "Major",
     cell: ({ row }) => row.original.profiles.major,
+    size: 400,
   },
   {
     accessorKey: "phoneNumber",
@@ -88,10 +91,12 @@ export const columns: ColumnDef<UserProfile>[] = [
     accessorKey: "address",
     header: "Address",
     cell: ({ row }) => row.original.profiles.address,
+    size: 400,
   },
   {
     accessorKey: "bio",
     header: "Bio",
     cell: ({ row }) => row.original.profiles.bio,
+    size: 300,
   },
 ];
