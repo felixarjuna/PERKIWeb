@@ -13,7 +13,7 @@
     --foreground: 72 24% 84%; /* #d7dfcb */
     --card: 24 9.8% 10%;
     --card-foreground: 72 24% 84%; /* #d7dfcb */
-    --popover: 0 0% 9%;
+    --popover: 169 18% 27%;
     --popover-foreground: 72 24% 84%; /* #d7dfcb */
     --primary: 169 12% 27%;
     --primary-foreground: 72 24% 84%;
@@ -38,8 +38,8 @@
     --sidebar-foreground: 83 26% 84%;
     --sidebar-primary: 170 83.35% 15%;
     --sidebar-primary-foreground: 83 26% 84%;
-    --sidebar-accent: 173.57 3.7% 15.9%;
-    --sidebar-accent-foreground: 83 26% 84%;
+    --sidebar-accent: 169 18% 27%;
+    --sidebar-accent-foreground: 72 24% 84%;
     --sidebar-border: 83 26% 84%;
     --sidebar-ring: 83 26% 84%;
   }
@@ -55,7 +55,8 @@
 
   /** edit scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 4px;
+    height: 4px;
   }
 
   /* Track */
