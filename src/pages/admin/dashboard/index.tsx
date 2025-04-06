@@ -30,7 +30,7 @@ export default function Page() {
   const { data } = api.profiles.getUserProfiles.useQuery();
 
   return (
-    <div className="dark">
+    <div className="dark overflow-x-scroll">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
