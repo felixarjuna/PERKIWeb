@@ -1,9 +1,30 @@
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { DateTime } from "luxon";
 import { Button } from "~/components/ui/button";
 import { type RouterOutputs } from "~/utils/api";
 
 type UserProfile = RouterOutputs["profiles"]["getUserProfiles"][number];
+const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
+  const dateA = DateTime.fromJSDate(profileA.getValue(columnId));
+  const dateB = DateTime.fromJSDate(profileB.getValue(columnId));
+
+  /** handle null/undefine cases.  */
+  if (!dateA.isValid && !dateB.isValid) return 0;
+  if (!dateA.isValid) return 1;
+  if (!dateB.isValid) return -1;
+
+  /** compare months. */
+  const monthA = dateA.month;
+  const monthB = dateB.month;
+
+  /** compare days. */
+  const dayA = dateA.day;
+  const dayB = dateB.day;
+
+  /** return in ascending order. */
+  return monthA === monthB ? dayA - dayB : monthA - monthB;
+};
 
 export const columns: ColumnDef<UserProfile>[] = [
   {
@@ -41,8 +62,12 @@ export const columns: ColumnDef<UserProfile>[] = [
     },
     cell: ({ row }) =>
       row.original.profiles.birthday
-        ? new Date(row.original.profiles.birthday).toLocaleDateString()
+        ? DateTime.fromJSDate(row.original.profiles.birthday).toLocaleString(
+            DateTime.DATE_FULL,
+            { locale: "id" },
+          )
         : "N/A",
+    sortingFn: sortByMonth,
   },
   {
     accessorKey: "major",
