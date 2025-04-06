@@ -58,10 +58,10 @@ export default function DataTable<TData, TValue>({
   return (
     <div className="space-y-4 p-4 text-cream-default">
       <div className="relative w-fit rounded-md border bg-green-default/50 px-4 py-4 font-normal">
-        <h1 className="font-reimbrandt text-xl tracking-wide">
+        <h1 className="font-reimbrandt tracking-wide sm:text-xl">
           Birthday this month 🎈🎉
         </h1>
-        <p className="font-satoshi text-2xl">{count}</p>
+        <p className="font-satoshi text-lg sm:text-2xl">{count}</p>
 
         <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2">
           <span className="relative flex size-3">
