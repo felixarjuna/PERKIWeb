@@ -5,7 +5,6 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
-  serial,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -23,7 +22,7 @@ export type EventTypeEnum = z.infer<typeof eventEnum>;
 export type NewSchedule = typeof schedules.$inferInsert;
 export type Schedule = typeof schedules.$inferSelect;
 export const schedules = pgTable("schedules", {
-  id: serial("id").primaryKey().notNull(),
+  id: integer("id").primaryKey().notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   bibleVerse: text("bibleVerse").notNull(),
@@ -37,23 +36,46 @@ export const schedules = pgTable("schedules", {
   accommodation: text("accommodation"),
   cookingGroup: text("cookingGroup"),
   cleaningGroup: text("cleaningGroup").notNull(),
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
 });
 
 export const takeaways = pgTable("takeaways", {
-  id: serial("id").primaryKey().notNull(),
+  id: integer("id").primaryKey().notNull(),
   scheduleId: integer("scheduleId").notNull(),
   keypoints: text("keypoints").notNull(),
   contributors: json("contributors").notNull(),
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
 });
 
 export const prayers = pgTable("prayers", {
-  id: serial("id").primaryKey().notNull(),
+  id: integer("id").primaryKey().notNull(),
   name: text("name"),
   content: text("content").notNull(),
   count: integer("count").default(0).notNull(),
   prayerNames: json("prayerNames").notNull(),
   isAnonymous: boolean("isAnonymous").default(false),
-  createdAt: timestamp("createdAt", { withTimezone: true, mode: "string" }),
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
 });
 
 export const users = pgTable("user", {
@@ -62,9 +84,19 @@ export const users = pgTable("user", {
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
   email: text("email").unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  emailVerified: timestamp("emailVerified", {
+    mode: "date",
+  }),
   image: text("image"),
   hashedPassword: text("hashedPassword"),
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
 });
 
 export const profiles = pgTable("profiles", {
@@ -80,6 +112,14 @@ export const profiles = pgTable("profiles", {
   location: text("location"),
   major: text("major"),
   bio: text("bio"),
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
 });
 
 /** define one-to-one relationship. */
