@@ -5,7 +5,7 @@ import { type AppType } from "next/app";
 import localFont from "next/font/local";
 import Head from "next/head";
 
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
