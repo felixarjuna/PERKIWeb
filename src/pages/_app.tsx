@@ -5,6 +5,7 @@ import { type AppType } from "next/app";
 import localFont from "next/font/local";
 import Head from "next/head";
 
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -69,6 +70,8 @@ const App: AppType<{ session: Session | null }> = ({
         </SessionProvider>
         <Toaster />
       </div>
+
+      <Analytics />
     </main>
   );
 };
