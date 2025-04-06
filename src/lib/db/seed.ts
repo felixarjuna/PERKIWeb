@@ -21,6 +21,8 @@ const scheduleList: Schedule[] = [
     cookingGroup: "Group 3",
     cleaningGroup: "Group 4",
     type: "church_service",
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: 41,
@@ -37,6 +39,8 @@ const scheduleList: Schedule[] = [
     cookingGroup: null,
     cleaningGroup: "Group 5",
     type: "bible_study",
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
 ];
 
