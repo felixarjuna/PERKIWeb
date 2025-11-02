@@ -136,7 +136,7 @@ export default function AboutUs() {
 
         <div className="mx-auto flex h-full w-10/12 items-center justify-center sm:w-8/12">
           <Image
-            src={"/images/perkiAachen.jpg"}
+            src={"/images/perki-aachen.jpg"}
             alt="perki"
             className="rounded-lg object-contain"
             width={3000}
