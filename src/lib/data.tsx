@@ -74,7 +74,7 @@ export const events: Event[] = [
   },
   {
     name: "Prayer Fellowship (Aachen)",
-    time: "Thursday, 18:30 - 21.00",
+    time: "Thursday, 18:00 - 21.00",
     notes:
       "Having the moments in the middle of our busy live to meditate about the Word of God together.",
     description:
