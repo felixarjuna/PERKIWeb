@@ -15,8 +15,8 @@ const useAuth = create<AuthenticationState>()(
     {
       name: "authentication-storage",
       storage: createJSONStorage(() => sessionStorage),
-    },
-  ),
+    }
+  )
 );
 
 export default useAuth;

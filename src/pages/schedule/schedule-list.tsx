@@ -1,5 +1,6 @@
 "use client";
 
+import { isEmpty } from "lodash";
 import {
   Bed,
   Music,
@@ -11,6 +12,7 @@ import {
 import { useRouter } from "next/router";
 import React from "react";
 import ActionButton from "~/components/action-button";
+import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
 import {
   Drawer,
@@ -24,9 +26,6 @@ import {
 } from "~/components/ui/drawer";
 import { Separator } from "~/components/ui/separator";
 import { useToast } from "~/components/ui/use-toast";
-
-import { isEmpty } from "lodash";
-import Loader from "~/components/loader";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
 import { groups } from "../group";
@@ -66,7 +65,7 @@ export default function ScheduleList() {
   function renderScheduleDetails(schedule: Schedule) {
     console.log(schedule);
     return (
-      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-xs text-green-400/80 sm:gap-x-2">
+      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-green-400/80 text-xs sm:gap-x-2">
         <p>{isEmpty(schedule.preacher) ? "-" : schedule.preacher}</p>
         <span>&middot;</span>
         <p>{schedule.bibleVerse}</p>
@@ -89,14 +88,14 @@ export default function ScheduleList() {
     const cookingGroupMembers = groups
       .filter(
         (group) =>
-          group.name.toLowerCase() === schedule.cookingGroup?.toLowerCase(),
+          group.name.toLowerCase() === schedule.cookingGroup?.toLowerCase()
       )
       .at(0)?.members;
 
     const cleaningGroupMembers = groups
       .filter(
         (group) =>
-          group.name.toLowerCase() === schedule.cleaningGroup?.toLowerCase(),
+          group.name.toLowerCase() === schedule.cleaningGroup?.toLowerCase()
       )
       .at(0)?.members;
 
@@ -147,7 +146,7 @@ export default function ScheduleList() {
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {cookingGroupMembers?.map((member, i) => (
                       <div
-                        className="w-fit rounded-full bg-primary-foreground px-3 py-1  text-secondary-foreground"
+                        className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground"
                         key={i}
                       >
                         {member}
@@ -183,7 +182,7 @@ export default function ScheduleList() {
           <DrawerContent className="border-0 text-primary-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cleaningGroup}</DrawerTitle>
-              <DrawerDescription className="flex items-center justify-center gap-2  py-6">
+              <DrawerDescription className="flex items-center justify-center gap-2 py-6">
                 <div className="flex flex-col gap-4">
                   <RandomVerse items={verses} />
 
@@ -221,10 +220,10 @@ export default function ScheduleList() {
     return (
       <ActionButton
         className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 sm:hidden xl:hidden"
-        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
         onDeleteClick={() => {
           deleteSchedule.mutate({ id: +schedule.id });
         }}
+        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
       />
     );
   }
@@ -233,8 +232,8 @@ export default function ScheduleList() {
     return (
       <ActionButton
         className="hidden gap-x-2 sm:flex"
-        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
         onDeleteClick={() => deleteSchedule.mutate({ id: +schedule.id })}
+        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
       />
     );
   }
@@ -242,8 +241,7 @@ export default function ScheduleList() {
   function renderSchedule(schedule: Schedule) {
     return (
       <div
-        className="flex h-full flex-col gap-y-0 rounded-lg
-      bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:flex-row sm:gap-y-2"
+        className="flex h-full flex-col gap-y-0 rounded-lg bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:flex-row sm:gap-y-2"
         key={schedule.id}
       >
         <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
@@ -258,8 +256,8 @@ export default function ScheduleList() {
         </div>
 
         <Separator
-          orientation="vertical"
           className="mx-auto h-px w-5/6 rounded-lg bg-cream-default sm:my-auto sm:h-48 sm:w-px xl:my-auto xl:h-48 xl:w-px"
+          orientation="vertical"
         />
 
         {renderScheduleServants(schedule)}
@@ -274,8 +272,7 @@ export default function ScheduleList() {
 
     return schedules
       ?.filter(
-        (schedule) =>
-          schedule.date > mondayDate && schedule.date < saturdayDate,
+        (schedule) => schedule.date > mondayDate && schedule.date < saturdayDate
       )
       .sort((a, b) => {
         if (a.date > b.date) return 1;
@@ -287,12 +284,14 @@ export default function ScheduleList() {
     return (
       <div className="space-y-4">
         <h1 className="font-reimbrandt text-2xl tracking-wide">This Week</h1>
-        {!thisWeekSchedule ? (
-          <Loader message="Loading this week schedules ..." />
-        ) : thisWeekSchedule.length === 0 ? (
-          <div>No schedule found.</div>
+        {thisWeekSchedule ? (
+          thisWeekSchedule.length === 0 ? (
+            <div>No schedule found.</div>
+          ) : (
+            thisWeekSchedule.map((schedule) => renderSchedule(schedule))
+          )
         ) : (
-          thisWeekSchedule.map((schedule) => renderSchedule(schedule))
+          <Loader message="Loading this week schedules ..." />
         )}
       </div>
     );
@@ -311,12 +310,14 @@ export default function ScheduleList() {
         <h1 className="font-reimbrandt text-2xl tracking-wide">
           Upcoming Schedules
         </h1>
-        {!upcomingSchedules ? (
-          <Loader message="Loading upcoming schedules ..." />
-        ) : upcomingSchedules.length === 0 ? (
-          <div>No schedule found.</div>
+        {upcomingSchedules ? (
+          upcomingSchedules.length === 0 ? (
+            <div>No schedule found.</div>
+          ) : (
+            upcomingSchedules.map((schedule) => renderSchedule(schedule))
+          )
         ) : (
-          upcomingSchedules.map((schedule) => renderSchedule(schedule))
+          <Loader message="Loading upcoming schedules ..." />
         )}
       </div>
     );
@@ -334,12 +335,14 @@ export default function ScheduleList() {
         <h1 className="font-reimbrandt text-2xl tracking-wide">
           Previous Schedules
         </h1>
-        {!previousSchedules ? (
-          <Loader message="Loading previous schedules ..." />
-        ) : previousSchedules.length === 0 ? (
-          <div>No schedule found.</div>
+        {previousSchedules ? (
+          previousSchedules.length === 0 ? (
+            <div>No schedule found.</div>
+          ) : (
+            previousSchedules.map((schedule) => renderSchedule(schedule))
+          )
         ) : (
-          previousSchedules.map((schedule) => renderSchedule(schedule))
+          <Loader message="Loading previous schedules ..." />
         )}
       </div>
     );

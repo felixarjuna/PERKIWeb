@@ -11,13 +11,12 @@ import {
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
-  getSchedules: publicProcedure.query(async () => {
-    return await db.select().from(schedules).orderBy(desc(schedules.date));
-  }),
-  addSchedule: publicProcedure
-    .input(addScheduleSchema)
-    .mutation(async ({ input }) => {
-      return await db.insert(schedules).values({
+  getSchedules: publicProcedure.query(
+    async () => await db.select().from(schedules).orderBy(desc(schedules.date))
+  ),
+  addSchedule: publicProcedure.input(addScheduleSchema).mutation(
+    async ({ input }) =>
+      await db.insert(schedules).values({
         title: input.title,
         description: input.description,
         date: input.date,
@@ -31,18 +30,19 @@ export const scheduleRouter = createTRPCRouter({
         accommodation: input.accommodation,
         cookingGroup: input.cookingGroup,
         cleaningGroup: input.cleaningGroup,
-      });
-    }),
+      })
+  ),
   addScheduleBatch: publicProcedure
     .input(addScheduleBatchSchema)
-    .mutation(async ({ input }) => {
-      return await db.insert(schedules).values([...input]);
-    }),
+    .mutation(
+      async ({ input }) => await db.insert(schedules).values([...input])
+    ),
   deleteSchedule: publicProcedure
     .input(queryByIdSchema)
-    .mutation(async ({ input }) => {
-      return await db.delete(schedules).where(eq(schedules.id, input.id));
-    }),
+    .mutation(
+      async ({ input }) =>
+        await db.delete(schedules).where(eq(schedules.id, input.id))
+    ),
   getScheduleById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
@@ -60,12 +60,11 @@ export const scheduleRouter = createTRPCRouter({
 
       return { ...schedule, id: +schedule.id };
     }),
-  updateSchedule: publicProcedure
-    .input(updateScheduleSchema)
-    .mutation(async ({ input }) => {
-      return await db
+  updateSchedule: publicProcedure.input(updateScheduleSchema).mutation(
+    async ({ input }) =>
+      await db
         .update(schedules)
         .set({ ...input })
-        .where(eq(schedules.id, input.id));
-    }),
+        .where(eq(schedules.id, input.id))
+  ),
 });
