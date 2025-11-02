@@ -37,6 +37,8 @@ export const useChristmasAddGuest = () => {
         description: "Thank you for your registration!",
       });
       router.push("/christmas/thankyou");
+
+      /** send initial message */
     },
     onError: (err) => {
       if (axios.isAxiosError(err) && err.response) {
