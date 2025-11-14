@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/table";
 import { countBirthdaysThisMonth } from "~/lib/utils";
 import { type RouterOutputs } from "~/utils/api";
+import { Badge } from "../ui/badge";
 import DataTablePagination from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
@@ -55,20 +56,38 @@ export default function DataTable<TData, TValue>({
     [data],
   );
 
+  // const { data: status } = useQuery({
+  //   queryKey: ["perki-bot"],
+  //   queryFn: () => fetch("https://perki-bot.fly.dev").then((res) => res.json()),
+
+  // });
+
+  // console.log(status);
+
   return (
     <div className="space-y-4 p-4 text-cream-default">
-      <div className="relative w-fit rounded-md border bg-green-default/50 px-4 py-4 font-normal">
-        <h1 className="font-reimbrandt tracking-wide sm:text-lg">
-          Birthday this month 🎈🎉
-        </h1>
-        <p className="font-satoshi text-lg sm:text-xl">{count}</p>
+      <div className="flex justify-between gap-x-4">
+        <div className="relative w-fit rounded-md border bg-green-default/50 px-4 py-4 font-normal">
+          <h1 className="font-reimbrandt tracking-wide sm:text-lg">
+            Birthday this month 🎈🎉
+          </h1>
+          <p className="font-satoshi text-lg sm:text-xl">{count}</p>
 
-        <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2">
-          <span className="relative flex size-3">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex size-3 rounded-full bg-green-300"></span>
-          </span>
+          <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2">
+            <span className="relative flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex size-3 rounded-full bg-green-300"></span>
+            </span>
+          </div>
         </div>
+
+        <Badge className="flex h-fit items-center gap-x-2 self-end font-satoshi font-normal">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex size-2 rounded-full bg-green-300"></span>
+          </span>
+          <p>perki.bot operational</p>
+        </Badge>
       </div>
 
       <div className="rounded-md border">
