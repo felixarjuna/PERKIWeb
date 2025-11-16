@@ -53,6 +53,7 @@ export default function Page() {
                   WhatsApp. Please contact support if you do not receive a
                   message soon.
                 </p>
+                <p>WA: +49 152 3736 3126 - Felix Arjuna</p>
               </div>
             </div>
             <p className="text-sm">
