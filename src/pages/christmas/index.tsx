@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Calendar, Info, Loader2, UsersRound } from "lucide-react";
+import { ArrowLeft, Calendar, Info, Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import Snowfall from "react-snowfall";
@@ -50,26 +50,24 @@ export default function ChristmasPage() {
     defaultValues: { eventId: 31 },
   });
 
-  const { addGuest: execute } = useChristmasAddGuest();
+  const { addGuest: execute, isLoading } = useChristmasAddGuest();
 
-  async function onSubmit(values: z.infer<typeof addGuestSchema>) {
-    await execute(values);
+  function onSubmit(values: z.infer<typeof addGuestSchema>) {
+    execute(values);
   }
 
   /** local state for agreement. */
   const [agree, setAgree] = React.useState<boolean>(false);
 
   /** state to track available seats. */
-  const { totalGuests, isLoading } = useChristmasGuestCount();
-  const isPending = false;
-  const spotLeft = Math.max(MAX_GUESTS - (totalGuests ?? 0), 0);
+  const { totalGuests } = useChristmasGuestCount();
 
   return (
     <Template title="Christmas Event">
       <div className="relative flex items-center justify-center bg-dark-grey-default/40 backdrop-blur-sm">
         {agree ? null : (
           <div className="fixed inset-0 top-10 mx-auto grid h-12 w-10/12 grid-cols-2 items-center justify-center gap-x-1 rounded-mdtext-white-primary-default lg:w-1/2">
-            <div className="col-span-1 flex h-9 justify-center gap-x-1 rounded-sm bg-white/20 px-2 py-2">
+            <div className="col-span-2 flex h-9 justify-center gap-x-1 rounded-sm bg-white/20 px-2 py-2">
               {delta(eventDate) === 0 ? (
                 <div className="flex items-center gap-x-1">
                   <Calendar className="h-4 w-4" />
@@ -81,24 +79,6 @@ export default function ChristmasPage() {
                     <Calendar className="h-4 w-4" />
                     <p className="text-sm">{delta(eventDate)} days left</p>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="col-span-1 flex h-9 justify-center gap-x-1 rounded-sm bg-white/20 px-2 py-2 text-center">
-              {isLoading ? (
-                <div className="flex items-center gap-x-1">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <p className="animate-pulse text-sm">
-                    Loading available seats ...
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center gap-x-1">
-                  <UsersRound className="h-4 w-4" />
-                  <p className="text-sm">
-                    {spotLeft === 0 ? "No" : spotLeft} spots left
-                  </p>
                 </div>
               )}
             </div>
@@ -165,7 +145,7 @@ export default function ChristmasPage() {
                   )}
                 />
 
-                {isPending ? (
+                {isLoading ? (
                   <Button className="flex w-full items-center gap-2 bg-white/20">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <p className="text-sm">Registering ...</p>
@@ -201,7 +181,7 @@ export default function ChristmasPage() {
                 teman-teman pengurus konsumsi, maka pendaftaran akan ditutup 1
                 minggu sebelum ibadah{" "}
                 <span className="font-bold">(20.12.2025)</span> atau ketika
-                pendaftar sudah mencapai 70 orang. Oleh karena itu, kami mohon
+                pendaftar sudah mencapai 80 orang. Oleh karena itu, kami mohon
                 Saudara/i dapat mendaftarkan diri secepat mungkin dan tidak
                 mendaftar dekat dengan deadline yang ada.
               </p>
