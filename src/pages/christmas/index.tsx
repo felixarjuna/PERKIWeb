@@ -98,7 +98,7 @@ export default function ChristmasPage() {
 
             <Form {...form}>
               <form
-                className="flex w-10/12 flex-col space-y-4 sm:w-[500px]"
+                className="flex w-full flex-col space-y-4 sm:w-[500px]"
                 onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FormField
