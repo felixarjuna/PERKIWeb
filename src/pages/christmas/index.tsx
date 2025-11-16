@@ -50,10 +50,10 @@ export default function ChristmasPage() {
     defaultValues: { eventId: 31 },
   });
 
-  const { addGuest: execute, isLoading } = useChristmasAddGuest();
+  const { addGuest } = useChristmasAddGuest();
 
   function onSubmit(values: z.infer<typeof addGuestSchema>) {
-    execute(values);
+    addGuest.mutate(values);
   }
 
   /** local state for agreement. */
@@ -145,7 +145,7 @@ export default function ChristmasPage() {
                   )}
                 />
 
-                {isLoading ? (
+                {addGuest.isLoading ? (
                   <Button className="flex w-full items-center gap-2 bg-white/20">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <p className="text-sm">Registering ...</p>
