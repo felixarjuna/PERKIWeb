@@ -25,12 +25,14 @@ export const useChristmasAddGuest = () => {
   const sendInitialMessage = useMutation({
     mutationKey: ["send-initial-message"],
     mutationFn: async (phoneNumber: string) => {
-      await axios.post("http://localhost:8000/api/send-template", {
+      sessionStorage.setItem("sendInitialMessageStatus", "pending");
+      await axios.post(`${APP_URL}/api/send-template`, {
         type: "initial",
         phoneNumber,
       });
     },
     onError: () => {
+      sessionStorage.setItem("sendInitialMessageStatus", "error");
       toast({
         title: "⚠️ Failed to send initial message.",
         description:
@@ -38,6 +40,7 @@ export const useChristmasAddGuest = () => {
       });
     },
     onSuccess: () => {
+      sessionStorage.setItem("sendInitialMessageStatus", "success");
       toast({
         title: "📱 Initial message sent.",
         description:
@@ -46,7 +49,7 @@ export const useChristmasAddGuest = () => {
     },
   });
 
-  const { mutate, isLoading } = useMutation({
+  const addGuest = useMutation({
     mutationKey: ["add-christmas-guest"],
     mutationFn: async (request: z.infer<typeof addGuestSchema>) => {
       await axios.post(`${APP_URL}/api/guest`, {
@@ -76,5 +79,5 @@ export const useChristmasAddGuest = () => {
     },
   });
 
-  return { addGuest: mutate, isLoading };
+  return { addGuest, sendInitialMessage };
 };
