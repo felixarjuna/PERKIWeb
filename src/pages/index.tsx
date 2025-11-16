@@ -37,44 +37,43 @@ export default function Home() {
       <Dialog defaultOpen={true}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
+            <DialogTitle className="font-bold font-mono text-xl">
+              🎄 CHRISTMAS IS COMING ...
+            </DialogTitle>
             <DialogDescription className="pt-4">
-              Please register yourself as fellowship member.*
+              Our christmas celebration is around the corner. Register yourself
+              before anyone else to secure your spot to not miss anything! ❄️
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex items-center justify-center">
             <Link
-              href={"/member/join"}
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "flex w-fit items-center justify-center",
+                "flex w-fit items-center justify-center"
               )}
+              href={"/christmas"}
             >
-              Fill out form! 📄
+              Register Now
             </Link>
           </DialogFooter>
-
-          <span className="flex text-center text-xs text-light-green-default">
-            * you have to register yourself beforehand.
-          </span>
         </DialogContent>
       </Dialog>
 
       <div className="relative inset-0 z-10">
         <CircleBackground
-          r={isMobile ? 60 : 100}
           blur
           className={
             "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default mix-blend-lighten"
           }
+          r={isMobile ? 60 : 100}
         />
         <CircleBackground
-          r={isMobile ? 60 : 100}
           blur
           className={
-            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default  mix-blend-multiply"
+            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default mix-blend-multiply"
           }
           duration={25}
+          r={isMobile ? 60 : 100}
           reverse
         />
       </div>

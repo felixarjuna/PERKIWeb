@@ -1,11 +1,9 @@
-import { type Session } from "next-auth";
+import { Analytics } from "@vercel/analytics/react";
+import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { type AppType } from "next/app";
-
+import type { AppType } from "next/app";
 import localFont from "next/font/local";
 import Head from "next/head";
-
-import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -36,8 +34,8 @@ const App: AppType<{ session: Session | null }> = ({
     <main className={cn(reimbrandt.variable, satoshi.variable)}>
       <Head>
         <title>PerkiWEB</title>
-        <meta name="description" content="Website from Perki Aachen" />
-        <link rel="icon" href="/favicon.ico" />
+        <meta content="Website from Perki Aachen" name="description" />
+        <link href="/favicon.ico" rel="icon" />
       </Head>
 
       <div className="relative overflow-hidden">
