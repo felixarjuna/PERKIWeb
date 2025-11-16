@@ -1,5 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Calendar } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import React from "react";
+import { useForm } from "react-hook-form";
+import type * as z from "zod";
+import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -11,15 +19,6 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import React from "react";
-import { useForm } from "react-hook-form";
-import type * as z from "zod";
-import Loader from "~/components/loader";
 import { PhoneInput } from "~/components/ui/phone-input";
 import { useToast } from "~/components/ui/use-toast";
 import { addProfileSchema } from "~/server/api/schema/schema";
@@ -87,8 +86,8 @@ export default function JoinForm() {
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="space-y-4 py-10"
+        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         <FormField
           control={form.control}
@@ -99,13 +98,13 @@ export default function JoinForm() {
 
               <FormControl className="w-full">
                 <div className="relative w-full">
-                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-green-500" />
+                  <Calendar className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-green-500" />
                   <Input
+                    className="w-[190px] pl-8"
                     id="dob"
+                    onChange={(e) => field.onChange(e.target.value)}
                     type="date"
                     value={field.value?.toString()}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="w-[190px] pl-8"
                   />
                 </div>
               </FormControl>
@@ -210,9 +209,9 @@ export default function JoinForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={addProfile.isLoading}>
+        <Button disabled={addProfile.isLoading} type="submit">
           {addProfile.isLoading ? (
-            <Loader message="Adding profile ..." className="text-xs" />
+            <Loader className="text-xs" message="Adding profile ..." />
           ) : (
             "Submit"
           )}

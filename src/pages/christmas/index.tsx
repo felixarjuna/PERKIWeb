@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { PhoneInput } from "~/components/ui/phone-input";
 import {
   useChristmasAddGuest,
   useChristmasGuestCount,
@@ -97,7 +98,7 @@ export default function ChristmasPage() {
 
             <Form {...form}>
               <form
-                className="flex max-w-[500x] flex-col space-y-4"
+                className="flex w-10/12 flex-col space-y-4 sm:w-[500px]"
                 onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FormField
@@ -117,14 +118,17 @@ export default function ChristmasPage() {
                   control={form.control}
                   name="phoneNumber"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nomer Whatsapp</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="491234567899" />
+                    <FormItem className="flex flex-col items-start">
+                      <FormLabel>Whatsapp Number</FormLabel>
+                      <FormControl className="w-full">
+                        <PhoneInput
+                          placeholder="Placeholder"
+                          {...field}
+                          defaultCountry="DE"
+                        />
                       </FormControl>
-                      <FormDescription className="text-white-primary-default/80">
-                        Please input a valid whatsapp number. The number will be
-                        used for automated RSVP via WhatsApp.
+                      <FormDescription>
+                        Enter your valid whatsapp number.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
