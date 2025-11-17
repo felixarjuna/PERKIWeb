@@ -43,7 +43,7 @@ export const addGuestSchema = z.object({
   nRsvp: z.number().min(1).default(1),
 });
 
-const MAX_GUESTS = 70;
+const MAX_GUESTS = 80;
 const eventDate = new Date("2025-12-20T15:00:00Z");
 export default function ChristmasPage() {
   const form = useForm<z.infer<typeof addGuestSchema>>({
@@ -185,9 +185,9 @@ export default function ChristmasPage() {
                 teman-teman pengurus konsumsi, maka pendaftaran akan ditutup 1
                 minggu sebelum ibadah{" "}
                 <span className="font-bold">(20.12.2025)</span> atau ketika
-                pendaftar sudah mencapai 80 orang. Oleh karena itu, kami mohon
-                Saudara/i dapat mendaftarkan diri secepat mungkin dan tidak
-                mendaftar dekat dengan deadline yang ada.
+                pendaftar sudah mencapai {MAX_GUESTS} orang. Oleh karena itu,
+                kami mohon Saudara/i dapat mendaftarkan diri secepat mungkin dan
+                tidak mendaftar dekat dengan deadline yang ada.
               </p>
               <p>
                 3. Bagi Saudara/i yang ingin hadir bersama keluarga, diharapkan
