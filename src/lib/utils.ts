@@ -76,3 +76,13 @@ export function delta(date: Date): number {
   const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
   return Math.max(daysDifference, 0);
 }
+
+export function toIdDate(date: Date): string {
+  const datetime = DateTime.fromJSDate(date).setZone("Europe/Berlin");
+  return datetime.toFormat("dd.MM.yyyy");
+}
+
+export function toIdTime(date: Date): string {
+  const datetime = DateTime.fromJSDate(date).setZone("Europe/Berlin");
+  return datetime.toFormat("HH:mm");
+}
