@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Calendar, Info, Loader2 } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
 import Snowfall from "react-snowfall";
@@ -184,10 +185,9 @@ export default function ChristmasPage() {
                 2. Karena keterbatasan kapasitas gedung dan untuk membantu
                 teman-teman pengurus konsumsi, maka pendaftaran akan ditutup 1
                 minggu sebelum ibadah{" "}
-                <span className="font-bold">(20.12.2025)</span> atau ketika
-                pendaftar sudah mencapai {MAX_GUESTS} orang. Oleh karena itu,
-                kami mohon Saudara/i dapat mendaftarkan diri secepat mungkin dan
-                tidak mendaftar dekat dengan deadline yang ada.
+                <span className="font-bold">(20.12.2025)</span>. Oleh karena
+                itu, kami mohon Saudara/i dapat mendaftarkan diri secepat
+                mungkin dan tidak mendaftar dekat dengan deadline yang ada.
               </p>
               <p>
                 3. Bagi Saudara/i yang ingin hadir bersama keluarga, diharapkan
@@ -213,10 +213,16 @@ export default function ChristmasPage() {
               <div className="flex w-full items-center gap-x-4 rounded-md bg-neutral-200/20 p-4">
                 <Info className="w-12" />
                 <p className="text-sm">
-                  Untuk bantuan dan informasi lebih lanjut, silahkan hubungi
-                  +491745277265{" "}
-                  <span className="font-bold">(Reggy Irawan)</span> via
-                  WhatsApp.{" "}
+                  Untuk bantuan dan informasi lebih lanjut, silahkan hubungi{" "}
+                  <Link
+                    className="font-bold underline"
+                    href="https://wa.me/491788710951"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    Victor Jordan
+                  </Link>
+                  .
                 </p>
               </div>
 
