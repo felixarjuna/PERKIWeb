@@ -185,7 +185,7 @@ export default function ChristmasPage() {
                 2. Karena keterbatasan kapasitas gedung dan untuk membantu
                 teman-teman pengurus konsumsi, maka pendaftaran akan ditutup 1
                 minggu sebelum ibadah{" "}
-                <span className="font-bold">(20.12.2025)</span>. Oleh karena
+                <span className="font-bold">(13.12.2025)</span>. Oleh karena
                 itu, kami mohon Saudara/i dapat mendaftarkan diri secepat
                 mungkin dan tidak mendaftar dekat dengan deadline yang ada.
               </p>
