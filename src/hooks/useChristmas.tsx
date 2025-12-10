@@ -5,7 +5,14 @@ import type { z } from "zod";
 import { toast } from "~/components/ui/use-toast";
 import type { addGuestSchema } from "~/pages/christmas";
 
+export type Guest = {
+  id: number;
+  names: string;
+  phoneNumber: string;
+};
+
 const APP_URL = "https://rsvp-perkiaachen.fly.dev";
+
 export const useChristmasGuestCount = () => {
   const { data: totalGuests, isLoading } = useQuery({
     queryKey: ["total-guests"],
@@ -80,4 +87,43 @@ export const useChristmasAddGuest = () => {
   });
 
   return { addGuest, sendInitialMessage };
+};
+
+export type ChristmasGiftRequest = {
+  phoneNumber: string;
+  luckyNumber: number;
+};
+
+export const sendChristmasGiftMessage = async ({
+  phoneNumber,
+  luckyNumber,
+}: ChristmasGiftRequest) => {
+  const request = {
+    phoneNumber,
+    luckyNumber: luckyNumber.toString(),
+  };
+
+  return await axios.post(`${APP_URL}/api/lucky-draw`, request);
+};
+
+export const useAttendingGuests = () => {
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery<Guest[]>({
+    queryKey: ["attending-guests"],
+    queryFn: async () => {
+      const response = await fetch(
+        `${APP_URL}/api/guest/attending?eventId=31`,
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch guests: ${response.statusText}`);
+      }
+      const json = await response.json();
+      return json.data?.guests as Guest[] || [];
+    },
+  });
+
+  return { guests: data, isLoading, error };
 };
