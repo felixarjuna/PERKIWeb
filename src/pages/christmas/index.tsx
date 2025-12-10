@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Calendar, Info, Loader2 } from "lucide-react";
+import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -25,6 +26,8 @@ import {
 import {
   delta,
   isMoreThanTwoWeekApart as isMoreThanTwoWeeksApart,
+  toIdDate,
+  toIdTime,
 } from "~/lib/utils";
 
 const phoneNumberRegEx = /^\+?[1-9]\d{1,14}$/;
@@ -45,7 +48,7 @@ export const addGuestSchema = z.object({
 });
 
 const MAX_GUESTS = 80;
-const eventDate = new Date("2025-12-20T15:00:00Z");
+const eventDate = new Date("2025-12-20T15:00:00+01:00");
 export default function ChristmasPage() {
   const form = useForm<z.infer<typeof addGuestSchema>>({
     resolver: zodResolver(addGuestSchema),
@@ -169,9 +172,9 @@ export default function ChristmasPage() {
               <p>Shalom Saudara/i,</p>
               <p>
                 Acara natal PERKI Aachen akan diadakan pada tanggal{" "}
-                <span className="font-bold">20.12.2025</span> pukul{" "}
-                <span className="font-bold">15:00</span>. Ada beberapa informasi
-                yang wajib Saudara/i ketahui:
+                <span className="font-bold">{toIdDate(eventDate)}</span> pukul{" "}
+                <span className="font-bold">{toIdTime(eventDate)}</span>. Ada
+                beberapa informasi yang wajib Saudara/i ketahui:
               </p>
               <p>
                 1. Alamat gereja adalah{" "}
@@ -185,9 +188,18 @@ export default function ChristmasPage() {
                 2. Karena keterbatasan kapasitas gedung dan untuk membantu
                 teman-teman pengurus konsumsi, maka pendaftaran akan ditutup 1
                 minggu sebelum ibadah{" "}
-                <span className="font-bold">(13.12.2025)</span>. Oleh karena
-                itu, kami mohon Saudara/i dapat mendaftarkan diri secepat
-                mungkin dan tidak mendaftar dekat dengan deadline yang ada.
+                <span className="font-bold">
+                  (
+                  {toIdDate(
+                    DateTime.fromJSDate(eventDate)
+                      .minus({ weeks: 1 })
+                      .toJSDate()
+                  )}
+                  )
+                </span>
+                . Oleh karena itu, kami mohon Saudara/i dapat mendaftarkan diri
+                secepat mungkin dan tidak mendaftar dekat dengan deadline yang
+                ada.
               </p>
               <p>
                 3. Bagi Saudara/i yang ingin hadir bersama keluarga, diharapkan
@@ -197,14 +209,14 @@ export default function ChristmasPage() {
               <p>
                 4. Akan diadakan acara tukar kado natal. Saudara/i yang datang
                 ke gereja diharapkan dapat mempersiapkan kado natal dengan
-                budget +- 5 Euro.{" "}
+                budget ± 5 Euro.{" "}
                 <span className="font-bold">
                   Mohon jangan memberikan makanan/minuman
                 </span>
-                . Diharapkan untuk membungkus kado dan memberikan tulisan (dalam
-                bentuk surat kecil) tentang ayat alkitab yang paling berkesan
-                bagi Saudara/i di tahun ini dan alasan mengapa ayat tersebut
-                berkesan.
+                . Diharapkan untuk membungkus kado dan memberikan tulisan
+                (dalam± bentuk surat kecil) tentang ayat alkitab yang paling
+                berkesan bagi Saudara/i di tahun ini dan alasan mengapa ayat
+                tersebut berkesan.
               </p>
               <p>
                 Diharapkan Jemaat tidak terlambat untuk datang ke dalam ibadah.
