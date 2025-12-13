@@ -89,6 +89,7 @@
     "react-snowfall": "^2.3.0",
     "react-use": "^17.4.0",
     "recharts": "^2.15.2",
+    "secret-santa-generator": "^0.1.22",
     "sonner": "^2.0.3",
     "superjson": "^1.13.1",
     "tailwind-merge": "^3.0.1",
