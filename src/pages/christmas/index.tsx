@@ -233,7 +233,7 @@ export default function ChristmasPage() {
                     .
                   </p>
 
-                  {totalGuests >= 70 && (
+                  {totalGuests >= MAX_GUESTS && (
                     <p className="text-sm text-yellow-300">
                       Karena kapasitas orang yang sudah mendaftar lebih dari
                       kapasitas maksimal konsumsi, Anda tetap bisa mendaftar dan
