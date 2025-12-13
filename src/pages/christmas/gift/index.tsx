@@ -5,11 +5,11 @@ import secretSanta from "secret-santa-generator";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/use-toast";
-import useGiftExchange from "~/hooks/useGiftExchange";
 import {
   sendChristmasGiftMessage,
   useAttendingGuests,
 } from "~/hooks/useChristmas";
+import useGiftExchange from "~/hooks/useGiftExchange";
 
 type Guest = {
   id: number;
@@ -55,7 +55,7 @@ export default function Page() {
     }
 
     const table = secretSanta.buildSecretSantaTable(
-      guests.map((guest: Guest) => guest.id),
+      guests.map((guest: Guest) => guest.id)
     ) as Record<number, number>;
 
     setResult(table);
@@ -81,7 +81,7 @@ export default function Page() {
       return;
     }
 
-      const list = Object.entries(result).map(([key, value]) => {
+    const list = Object.entries(result).map(([key, value]) => {
       const guest = guests.find((guest: Guest) => guest.id === Number(key));
 
       return {
@@ -92,7 +92,7 @@ export default function Page() {
     });
 
     const filteredList = list.filter(
-      (item) => item.name !== "" && item.phoneNumber !== "",
+      (item) => item.name !== "" && item.phoneNumber !== ""
     );
 
     try {
@@ -101,8 +101,8 @@ export default function Page() {
           sendChristmasGiftMessage({
             phoneNumber: data.phoneNumber,
             luckyNumber: data.giftId,
-          }),
-        ),
+          })
+        )
       );
 
       toast({
@@ -119,22 +119,22 @@ export default function Page() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-stary-night-plain bg-cover">
+    <div className="flex h-screen flex-col bg-cover bg-stary-night-plain">
       <div className="h-full bg-dark-grey-default/40 backdrop-blur-sm">
-        <Snowfall radius={[0, 2.5]} speed={[1.0, 2.0]} snowflakeCount={100} />
+        <Snowfall radius={[0, 2.5]} snowflakeCount={100} speed={[1.0, 2.0]} />
         <h1 className="mt-20 text-center text-3xl">
           TUKER KADO PERKI AACHEN 2025
         </h1>
 
         <div className="mx-auto mt-16 md:w-10/12">
           <div className="flex items-center space-x-2">
-            <Button onClick={randomize} className="bg-white/20">
+            <Button className="bg-white/20" onClick={randomize}>
               RANDOMIZE! 🎲
             </Button>
 
             <Button
-              onClick={handleSendChristmasGiftMessages}
               className="bg-white/20"
+              onClick={handleSendChristmasGiftMessages}
             >
               SEND MESSAGE! 🎅
             </Button>
@@ -149,7 +149,7 @@ export default function Page() {
             ) : (
               <div className="grid flex-wrap gap-x-4 gap-y-2 md:grid-cols-3 lg:grid-cols-4">
                 {guests?.map((guest: Guest) => (
-                  <Badge key={guest.id} className="flex w-fit gap-x-2">
+                  <Badge className="flex w-fit gap-x-2" key={guest.id}>
                     <p>{guest.names}</p>|<p>{result[guest.id]}</p>
                   </Badge>
                 ))}
