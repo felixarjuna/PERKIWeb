@@ -23,12 +23,7 @@ import {
   useChristmasAddGuest,
   useChristmasGuestCount,
 } from "~/hooks/useChristmas";
-import {
-  delta,
-  isMoreThanTwoWeekApart as isMoreThanTwoWeeksApart,
-  toIdDate,
-  toIdTime,
-} from "~/lib/utils";
+import { delta, isMoreThanOneWeekApart, toIdDate, toIdTime } from "~/lib/utils";
 
 const phoneNumberRegEx = /^\+?[1-9]\d{1,14}$/;
 export const addGuestSchema = z.object({
@@ -244,7 +239,7 @@ export default function ChristmasPage() {
             </div>
 
             <div className="mt-12 flex justify-center">
-              {isMoreThanTwoWeeksApart(new Date("2025-12-20")) ||
+              {isMoreThanOneWeekApart(new Date("2025-12-20T23:59:00+01:00")) ||
               totalGuests === MAX_GUESTS ? (
                 <Button className="bg-white/20 font-bold">
                   Registration closed!
