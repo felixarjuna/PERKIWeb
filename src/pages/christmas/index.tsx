@@ -218,19 +218,30 @@ export default function ChristmasPage() {
               </p>
 
               <div className="flex w-full items-center gap-x-4 rounded-md bg-neutral-200/20 p-4">
-                <Info className="w-12" />
-                <p className="text-sm">
-                  Untuk bantuan dan informasi lebih lanjut, silahkan hubungi{" "}
-                  <Link
-                    className="font-bold underline"
-                    href="https://wa.me/491788710951"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    Victor Jordan
-                  </Link>
-                  .
-                </p>
+                <Info className="w-8" />
+                <div className="">
+                  <p className="text-sm">
+                    Untuk bantuan dan informasi lebih lanjut, silahkan hubungi{" "}
+                    <Link
+                      className="font-bold underline"
+                      href="https://wa.me/491788710951"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      Victor Jordan
+                    </Link>
+                    .
+                  </p>
+
+                  {totalGuests >= 70 && (
+                    <p className="text-sm text-yellow-300">
+                      Karena kapasitas orang yang sudah mendaftar lebih dari
+                      kapasitas maksimal konsumsi, Anda tetap bisa mendaftar dan
+                      mengikuti ibadah, namun kita tidak menjamin ketersediaan
+                      konsumsi.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <p className="mt-4 text-right font-bold">
