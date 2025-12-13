@@ -250,12 +250,9 @@ export default function ChristmasPage() {
             </div>
 
             <div className="mt-12 flex justify-center">
-              {isMoreThanOneWeekApart(new Date("2025-12-20T23:59:00+01:00")) ||
-              totalGuests === MAX_GUESTS ? (
-                <Button className="bg-white/20 font-bold">
-                  Registration closed!
-                </Button>
-              ) : (
+              {isMoreThanOneWeekApart(
+                new Date("2025-12-20T23:59:00+01:00")
+              ) && (
                 <Button
                   className="bg-white/20 font-bold"
                   onClick={() => setAgree(true)}
