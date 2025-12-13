@@ -61,8 +61,8 @@ export const countBirthdaysThisMonth = (
   }, 0);
 };
 
-/** method to calculate if the delta is more than two weeks. */
-export function isMoreThanTwoWeekApart(date: Date): boolean {
+/** method to calculate if the delta is more than one week. */
+export function isMoreThanOneWeekApart(date: Date): boolean {
   const currentDate = new Date();
   const milliseconds = 7 * 24 * 60 * 60 * 1000;
 
