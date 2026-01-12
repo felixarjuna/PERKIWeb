@@ -37,12 +37,9 @@ export default function Home() {
       <Dialog defaultOpen={true}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-bold font-mono text-xl">
-              🎄 CHRISTMAS IS COMING ...
-            </DialogTitle>
+            <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
             <DialogDescription className="pt-4">
-              Our christmas celebration is around the corner. Register yourself
-              before anyone else to secure your spot to not miss anything! ❄️
+              Please register yourself as fellowship member.*
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex items-center justify-center">
@@ -51,11 +48,15 @@ export default function Home() {
                 buttonVariants({ variant: "default" }),
                 "flex w-fit items-center justify-center"
               )}
-              href={"/christmas"}
+              href={"/member/join"}
             >
-              Register Now
+              Fill out form! 📄
             </Link>
           </DialogFooter>
+
+          <span className="flex text-center text-light-green-default text-xs">
+            * you have to register yourself beforehand.
+          </span>
         </DialogContent>
       </Dialog>
 
