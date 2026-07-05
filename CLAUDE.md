@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-PERKIWeb is the platform for PERKI Aachen (a church fellowship): prayer requests, schedules, service takeaways, finance, and member management. Next.js 16 **App Router** (`src/app/`), React 19, tRPC 11, NextAuth v5 (beta), Drizzle ORM, Tailwind CSS 4, shadcn/ui. Deployed on Vercel.
+PERKIWeb is the platform for PERKI Aachen (a church fellowship): prayer requests, schedules, service takeaways, and member management. Next.js 16 **App Router** (`src/app/`), React 19, tRPC 11, NextAuth v5 (beta), Drizzle ORM, Tailwind CSS 4, shadcn/ui. Deployed on Vercel.
 
 ## Commands
 
@@ -31,15 +31,13 @@ Path alias: `~/*` → `src/*`.
 
 **Auth (NextAuth v5 beta / Auth.js):** `src/server/auth.ts` exports `{ handlers, auth, signIn, signOut }` from `NextAuth()` — Google OAuth + credentials (bcryptjs), JWT sessions, Drizzle adapter with explicit table map. Route handler: `src/app/api/auth/[...nextauth]/route.ts`. Use `await auth()` for session access in server components/route handlers. `next-auth` is in `transpilePackages` (next.config.mjs) to work around a beta ESM issue — don't remove it.
 
-**Env vars:** validated in `src/env.mjs` (`@t3-oss/env-nextjs`) — add new vars to both the schema and `runtimeEnv`. Required: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `NOTION_SECRET`, `NEXT_PUBLIC_GOOGLE_API_KEY`. Never hardcode secrets in scripts or source — this repo has had committed secrets before; both were removed and must stay out.
+**Env vars:** validated in `src/env.mjs` (`@t3-oss/env-nextjs`) — add new vars to both the schema and `runtimeEnv`. Required: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `NEXT_PUBLIC_GOOGLE_API_KEY`. Never hardcode secrets in scripts or source — this repo has had committed secrets before; both were removed and must stay out.
 
 **Styling (Tailwind 4, CSS-first):** all theme tokens live in `src/styles/globals.css` — `@theme` blocks define the brand palette (`cream`, `light-green`, `green`, `dark-green`) and semantic tokens. There is no `tailwind.config.*`. The site ships a single dark-green theme; `.dark` mirrors `:root`. Fonts (`--font-satoshi`, `--font-reimbrandt`) are loaded via `next/font/local` in `src/app/layout.tsx`.
 
 **Color rule:** components use **semantic tokens only** — `bg-background`, `text-foreground`, `bg-accent` (interactive green surfaces), `text-muted-foreground` (secondary/metadata text), `border-accent`, and `bg-paper`/`text-paper-foreground` (the landing page's inverted cream sections and chips). Raw brand-scale classes (`green-400`, `light-green-100`, `*-default`, hex values) are reserved for decorative gradients and the live-status ping dots only. New UI must be **mobile-first**: design for ~390px, then enhance with `sm:`/`md:` — most members use the site from their phones.
 
 **UI:** shadcn/ui components in `src/components/ui/` (`components.json`, style "default", RSC). Toasts use **sonner** (`toast.success/error` from `"sonner"`; `<Toaster/>` mounted in the root layout) — the legacy Radix toast was removed. `cn()` helper in `src/lib/utils.ts`. Static content data (groups, pastors, events, name lists) lives in `src/lib/data.tsx`.
-
-**Notion integration:** the finance router reads a Notion database via `src/lib/notion/notion.ts`; `src/lib/notion/finance-database/` and `src/lib/notion/types/` are **generated** (notion-ts-client) — don't hand-edit or lint them.
 
 ## Gotchas
 

@@ -1,8 +1,27 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+
+const signInSchema = z.object({
+  username: z.string().min(1, { message: "Please enter your username." }),
+  password: z.string().min(1, { message: "Please enter your password." }),
+});
 
 const GoogleIcon = () => (
   <svg
@@ -32,23 +51,94 @@ const GoogleIcon = () => (
 );
 
 export default function SignInForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get("callbackUrl") ?? "/";
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
-  /** google oauth login action. */
+  const form = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: { username: "", password: "" },
+  });
+
+  const onSubmit = async (values: z.infer<typeof signInSchema>) => {
+    setIsSigningIn(true);
+    const result = await signIn("credentials", {
+      username: values.username,
+      password: values.password,
+      redirect: false,
+    });
+    setIsSigningIn(false);
+
+    if (result?.error) {
+      toast.error("Sign in failed", {
+        description: "Username or password is wrong.",
+      });
+      return;
+    }
+    router.push(callbackUrl);
+    router.refresh();
+  };
+
   const onGoogleLogin = async () => {
     try {
-      await signIn("google", {
-        callbackUrl: searchParams?.get("callbackUrl") ?? "/",
-      });
+      await signIn("google", { callbackUrl });
     } catch {
-      toast.error("Authentication failed!");
+      toast.error("Sign in with Google failed.");
     }
   };
 
   return (
-    <div className="mt-6">
+    <div className="mt-8 flex flex-col gap-6">
+      <Form {...form}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        >
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input autoComplete="username" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    autoComplete="current-password"
+                    type="password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button className="mt-2 w-full" disabled={isSigningIn} type="submit">
+            {isSigningIn ? "Signing in ..." : "Sign in"}
+          </Button>
+        </form>
+      </Form>
+
+      <div className="flex items-center gap-3 text-muted-foreground text-xs">
+        <span className="h-px flex-1 bg-muted" />
+        or
+        <span className="h-px flex-1 bg-muted" />
+      </div>
+
       <button
-        className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-accent/60 p-2"
+        className="flex w-full items-center justify-center gap-x-2 rounded-md bg-paper p-2 font-medium text-paper-foreground text-sm transition-opacity hover:opacity-90"
         onClick={() => void onGoogleLogin()}
         type="button"
       >

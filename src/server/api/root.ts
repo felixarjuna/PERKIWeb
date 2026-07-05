@@ -1,6 +1,5 @@
 import { prayerRouter } from "~/server/api/routers/prayers";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
-import { financeRouter } from "./routers/finance";
 import { profileRouter } from "./routers/profile";
 import { scheduleRouter } from "./routers/schedules";
 import { takeawayRouter } from "./routers/takeaway";
@@ -16,7 +15,6 @@ export const appRouter = createTRPCRouter({
   prayers: prayerRouter,
   schedules: scheduleRouter,
   takeaways: takeawayRouter,
-  finances: financeRouter,
   profiles: profileRouter,
 });
 

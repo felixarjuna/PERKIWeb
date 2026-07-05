@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,73 +51,65 @@ export default function SignUpForm() {
   }
 
   return (
-    <div>
-      <div className="mt-8 mb-4">
-        <Form {...form}>
-          <form
-            className="mt-4 w-full space-y-8"
-            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+    <div className="mt-8">
+      <Form {...form}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input autoComplete="name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input autoComplete="username" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    autoComplete="new-password"
+                    type="password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button
+            className="mt-2 w-full"
+            disabled={signUpUser.isPending}
+            type="submit"
           >
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="password" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <Button
-              className="w-full"
-              disabled={signUpUser.isPending}
-              type="submit"
-              variant={"secondary"}
-            >
-              Create Account
-            </Button>
-          </form>
-        </Form>
-      </div>
-
-      <div className="mt-6 text-center text-sm">
-        Already have an account?{" "}
-        <Link className="underline underline-offset-1" href={"/auth/signin"}>
-          Sign in
-        </Link>
-      </div>
+            {signUpUser.isPending ? "Creating account ..." : "Create account"}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

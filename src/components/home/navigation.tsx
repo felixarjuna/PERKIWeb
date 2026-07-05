@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Calendar,
-  CandlestickChart,
-  HandHeart,
-  House,
-  LayoutPanelTop,
-  NotebookPen,
-  User,
-} from "lucide-react";
+import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,16 +27,6 @@ const navigations = [
     icon: <HandHeart className="h-4 w-4" />,
     name: "Prayer",
     href: "/prayers",
-  },
-  {
-    icon: <CandlestickChart className="h-4 w-4" />,
-    name: "Finance",
-    href: "/finance",
-  },
-  {
-    icon: <LayoutPanelTop className="h-4 w-4" />,
-    name: "Org. Structure",
-    href: "/organization",
   },
 ];
 

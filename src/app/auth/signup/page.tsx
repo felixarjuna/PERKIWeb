@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import SignUpForm from "./sign-up-form";
@@ -10,13 +11,30 @@ export default async function SignUpPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-10/12 flex-col items-center justify-center text-foreground">
-      <div className="w-full max-w-lg rounded-lg bg-accent/60 p-8">
-        <h1 className="font-reimbrandt text-3xl">Sign up to PerkiWEB</h1>
-        <div className="w-full text-foreground">
-          <SignUpForm />
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-center px-4 text-foreground">
+      <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg sm:p-10">
+        <p className="text-muted-foreground text-xs uppercase tracking-[0.2em]">
+          Perki Aachen
+        </p>
+        <h1 className="mt-2 font-reimbrandt text-3xl sm:text-4xl">
+          Create your account
+        </h1>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Join the PerkiWEB fellowship platform.
+        </p>
+
+        <SignUpForm />
+
+        <p className="mt-8 text-center text-muted-foreground text-sm">
+          Already have an account?{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/auth/signin"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
