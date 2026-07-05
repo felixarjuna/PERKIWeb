@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import CircleBackground from "~/components/circle-background";
 import AboutUs from "~/components/home/about-us";
