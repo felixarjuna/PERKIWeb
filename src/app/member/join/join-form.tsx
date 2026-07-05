@@ -21,7 +21,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { PhoneInput } from "~/components/ui/phone-input";
 import { addProfileSchema } from "~/server/api/schema/schema";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 export default function JoinForm() {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useRouter } from "next/navigation";
 import React from "react";
 import { AppSidebar } from "~/components/app-sidebar";
@@ -17,15 +19,17 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import useAuth from "~/hooks/useAuth";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 
-export default function Page() {
+export default function DashboardView() {
   const router = useRouter();
   const { authorized } = useAuth();
 
   /** route back to admin page, if not authenticated. */
   React.useEffect(() => {
-    if (!authorized) return router.push("/admin");
+    if (!authorized) {
+      router.push("/admin");
+    }
   }, [authorized, router]);
 
   const { data, isLoading } = api.profiles.getUserProfiles.useQuery();

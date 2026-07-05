@@ -15,7 +15,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { type UpdateUserParams, updateUserParams } from "~/lib/db/schema/auth";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 const PASSWORD_PLACEHOLDER_LENGTH = 8;
