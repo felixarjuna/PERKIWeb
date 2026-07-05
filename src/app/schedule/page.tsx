@@ -1,13 +1,15 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import Template from "~/components/template";
+import { buttonVariants } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 import ScheduleList from "./schedule-list";
 
 export default function SchedulePage() {
   return (
     <Template
       subtitle={
-        <div className="flex flex-col justify-center gap-y-2 text-base sm:px-14 sm:text-2xl">
+        <div className="flex flex-col gap-y-1">
           <p>
             “There is a time for everything, and a season for every activity
             under the heavens.”
@@ -17,17 +19,18 @@ export default function SchedulePage() {
       }
       title="Schedule"
     >
-      <div className="mt-8 flex w-full max-w-5xl flex-col px-0 sm:px-14">
-        <Link
-          className="flex w-fit items-center gap-1 self-end rounded-lg bg-accent/60 p-3 px-4 text-sm"
-          href={"/create-schedule"}
-        >
-          <Plus className="aspect-square w-4" />
-          <p>Add schedule</p>
-        </Link>
+      <Link
+        className={cn(
+          buttonVariants({ variant: "secondary", size: "sm" }),
+          "gap-1 self-end"
+        )}
+        href={"/create-schedule"}
+      >
+        <Plus className="size-4" />
+        Add schedule
+      </Link>
 
-        <ScheduleList />
-      </div>
+      <ScheduleList />
     </Template>
   );
 }

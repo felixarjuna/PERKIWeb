@@ -12,14 +12,14 @@ export default async function AddTakeawayPage() {
   return (
     <Template
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base sm:text-2xl">
+        <div className="flex flex-col gap-y-1">
           <p>“Your word is a lamp to my feet and a light to my path”</p>
           <p>– Psalm 119:105</p>
         </div>
       }
       title="Add takeaway"
     >
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="w-full">
         <AddTakeawayForm />
       </div>
     </Template>

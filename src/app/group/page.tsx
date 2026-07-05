@@ -10,11 +10,11 @@ import { groups } from "~/lib/data";
 export default function Group() {
   return (
     <Template subtitle="Cleaning and cooking groups" title="Groups">
-      <div className="mt-8 w-full">
+      <div className="w-full">
         <Accordion className="grid gap-2" collapsible type="single">
           {groups.map((group, i) => (
             <AccordionItem
-              className="rounded-lg bg-primary px-4 text-primary-foreground hover:bg-accent"
+              className="rounded-xl bg-card px-4 transition duration-300 hover:bg-accent/40"
               key={i}
               value={group.name}
             >
@@ -22,7 +22,7 @@ export default function Group() {
               <AccordionContent className="flex flex-wrap gap-2">
                 {group.members.map((member, i) => (
                   <div
-                    className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground text-xs"
+                    className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-xs"
                     key={i}
                   >
                     {member}

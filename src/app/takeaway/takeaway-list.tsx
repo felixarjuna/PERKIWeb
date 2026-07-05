@@ -102,10 +102,12 @@ function TakeawayItem(props: TakeawayItemProps) {
   });
 
   return (
-    <div className="w-full cursor-pointer rounded-lg bg-accent/60 p-4 shadow-lg transition duration-300 hover:bg-accent/80 sm:p-6">
-      <h1 className="flex items-center justify-between font-reimbrandt text-lg tracking-wide sm:text-2xl">
-        {props.title}
-        <div className="flex gap-x-2">
+    <article className="w-full rounded-xl bg-card p-4 transition duration-300 hover:bg-accent/40 sm:p-6">
+      <div className="flex items-start justify-between gap-x-3">
+        <h2 className="font-reimbrandt text-lg tracking-wide sm:text-xl">
+          {props.title}
+        </h2>
+        <div className="flex shrink-0 items-center gap-x-2">
           <ActionButton
             className="hidden items-center gap-x-2 sm:flex"
             onDeleteClick={() =>
@@ -115,32 +117,34 @@ function TakeawayItem(props: TakeawayItemProps) {
               void router.push(`/edit-takeaway/${props.takeawayId}`)
             }
           />
-          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-paper px-2 py-1 text-paper-foreground text-xs sm:text-sm">
+          <span className="whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs">
             {props.eventType === "bible_study"
               ? "bible study"
               : "church service"}
           </span>
         </div>
-      </h1>
-      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-muted-foreground text-xs">
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
         <span>&middot;</span>
         <p>{props.date}</p>
       </div>
-      <p className="mt-4 whitespace-break-spaces text-sm">{props.summary}</p>
+      <p className="mt-4 whitespace-break-spaces text-sm sm:text-base">
+        {props.summary}
+      </p>
       <p className="mt-4 text-muted-foreground text-xs">
         {props.contributors.join(" ")}
       </p>
 
       <ActionButton
-        className="visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
+        className="mt-3 flex w-full place-content-end gap-x-2 sm:hidden"
         onDeleteClick={() => deleteTakeaway.mutate({ id: +props.takeawayId })}
         onEditClick={() =>
           void router.push(`/edit-takeaway/${props.takeawayId}`)
         }
       />
-    </div>
+    </article>
   );
 }

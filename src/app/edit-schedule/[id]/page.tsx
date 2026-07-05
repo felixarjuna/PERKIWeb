@@ -12,7 +12,7 @@ export default async function EditSchedulePage() {
   return (
     <Template
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base sm:text-2xl">
+        <div className="flex flex-col gap-y-1">
           <p>
             “There is a time for everything, and a season for every activity
             under the heavens.”
@@ -22,7 +22,7 @@ export default async function EditSchedulePage() {
       }
       title="Edit schedule"
     >
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="w-full">
         <EditScheduleForm />
       </div>
     </Template>

@@ -35,6 +35,21 @@ Path alias: `~/*` → `src/*`.
 
 **Styling (Tailwind 4, CSS-first):** all theme tokens live in `src/styles/globals.css` — `@theme` blocks define the brand palette (`cream`, `light-green`, `green`, `dark-green`) and semantic tokens. There is no `tailwind.config.*`. The site ships a single dark-green theme; `.dark` mirrors `:root`. Fonts (`--font-satoshi`, `--font-reimbrandt`) are loaded via `next/font/local` in `src/app/layout.tsx`.
 
+## Design system
+
+All app pages (everything except the landing page and admin dashboard) render inside `src/components/template.tsx`, which owns the page rhythm: one `max-w-2xl` centered column, `px-4`, `pt-28 sm:pt-36 pb-24`, centered serif title + muted subtitle, `mt-8 sm:mt-10` gap to content. Pages must not re-introduce their own max-widths, horizontal padding, or top margins.
+
+**Type scale (mobile-first, at most one `sm:` step):**
+- Page title (Template only): `font-reimbrandt text-4xl sm:text-6xl`
+- Section heading: `font-reimbrandt text-2xl tracking-wide sm:text-3xl`
+- Card title: `font-reimbrandt text-lg tracking-wide sm:text-xl`
+- Body: `text-sm sm:text-base` — never `text-xs` for content
+- Meta/captions: sans (default font) `text-xs text-muted-foreground` — Reimbrandt is display-only, never below `text-lg`
+
+**Surfaces:** content card = `rounded-xl bg-card p-4 sm:p-6` with optional `hover:bg-accent/40`; chips/badges = `rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs`; dialogs = `bg-card` (borderless — no `border` on overlay surfaces or cards).
+
+**Actions:** always the `Button` component or `buttonVariants()` on a `Link` — never hand-rolled pill divs/links. Hierarchy: `default` = primary action, `secondary` = supporting, `ghost` = quiet (e.g. sign out). Icons inside buttons: `size-4`.
+
 **Color rule:** components use **semantic tokens only** — `bg-background`, `text-foreground`, `bg-accent` (interactive green surfaces), `text-muted-foreground` (secondary/metadata text), `border-accent`, and `bg-paper`/`text-paper-foreground` (the landing page's inverted cream sections and chips). Raw brand-scale classes (`green-400`, `light-green-100`, `*-default`, hex values) are reserved for decorative gradients and the live-status ping dots only. New UI must be **mobile-first**: design for ~390px, then enhance with `sm:`/`md:` — most members use the site from their phones.
 
 **UI:** shadcn/ui components in `src/components/ui/` (`components.json`, style "default", RSC). Toasts use **sonner** (`toast.success/error` from `"sonner"`; `<Toaster/>` mounted in the root layout) — the legacy Radix toast was removed. `cn()` helper in `src/lib/utils.ts`. Static content data (groups, pastors, events, name lists) lives in `src/lib/data.tsx`.

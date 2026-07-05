@@ -36,15 +36,15 @@ export default function PrayerWall() {
   });
 
   return (
-    <div className="mt-8 flex w-full max-w-5xl flex-col gap-y-4 px-0 sm:w-full sm:px-14">
-      <h3 className="mb-4 font-reimbrandt text-base sm:mb-8 sm:text-2xl">
+    <div className="flex w-full flex-col gap-y-4">
+      <p className="mb-2 text-sm sm:text-base">
         Let&apos;s pray together every Wednesday at 18.30 a.m 😍
-      </h3>
+      </p>
 
       <AddPrayerForm />
 
       <div className="space-y-4">
-        <h2 className="font-reimbrandt text-xl sm:text-3xl">
+        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           Prayer&apos;s list
         </h2>
 
@@ -60,7 +60,7 @@ export default function PrayerWall() {
                 const hasPrayed = names.includes(username);
                 return (
                   <li
-                    className="items relative flex flex-col gap-y-1 rounded-lg bg-accent/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
+                    className="relative flex flex-col gap-y-2 rounded-xl bg-card p-4 sm:p-6"
                     key={prayer.id}
                   >
                     <Badge
@@ -71,7 +71,7 @@ export default function PrayerWall() {
                     </Badge>
 
                     <div className="flex items-center justify-between gap-x-2">
-                      <p className="text-xs">{prayer.content}</p>
+                      <p className="text-sm">{prayer.content}</p>
 
                       <div className="flex gap-x-2">
                         <Toggle

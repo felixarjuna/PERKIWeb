@@ -12,7 +12,7 @@ export default async function ChangePasswordPage() {
 
   return (
     <Template title="Change Password">
-      <div className="mt-8 flex flex-col gap-y-8">
+      <div className="flex w-full flex-col gap-y-6">
         <BackButton />
         <ChangePasswordForm />
       </div>
