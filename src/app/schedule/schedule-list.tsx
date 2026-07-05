@@ -137,7 +137,7 @@ export default function ScheduleList() {
               <p>{schedule.cookingGroup ?? "-"}</p>
             </div>
           </DrawerTrigger>
-          <DrawerContent className="border-0 text-primary-foreground">
+          <DrawerContent className="border-0 text-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cookingGroup}</DrawerTitle>
               <DrawerDescription className="flex items-center justify-center gap-2 py-6">
@@ -180,7 +180,7 @@ export default function ScheduleList() {
               <p>{schedule.cleaningGroup}</p>
             </div>
           </DrawerTrigger>
-          <DrawerContent className="border-0 text-primary-foreground">
+          <DrawerContent className="border-0 text-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cleaningGroup}</DrawerTitle>
               <DrawerDescription className="flex items-center justify-center gap-2 py-6">
