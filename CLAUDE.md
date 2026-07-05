@@ -46,7 +46,7 @@ All app pages (everything except the landing page and admin dashboard) render in
 - Body: `text-sm sm:text-base` — never `text-xs` for content
 - Meta/captions: sans (default font) `text-xs text-muted-foreground` — Reimbrandt is display-only, never below `text-lg`
 
-**Surfaces:** content card = `rounded-xl bg-card p-4 sm:p-6` with optional `hover:bg-accent/40`; chips/badges = `rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs`; dialogs = `bg-card` (borderless — no `border` on overlay surfaces or cards).
+**Surfaces:** every surface stays in the green hue family (~169-174), differentiated by *elevation*, never by hue: page `background` (7%) → `card`/wells (12%) → `secondary` buttons (22%) → `accent` interactive (27%). Content card = `rounded-xl bg-card p-4 sm:p-6` with optional `hover:bg-accent/40`; chips/badges = `rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs`; dialogs = `bg-card` (borderless — no `border` on overlay surfaces or cards); form controls keep their soft green outline (`--input`). Destructive actions use the `destructive` token, never raw red utilities.
 
 **Actions:** always the `Button` component or `buttonVariants()` on a `Link` — never hand-rolled pill divs/links. Hierarchy: `default` = primary action, `secondary` = supporting, `ghost` = quiet (e.g. sign out). Icons inside buttons: `size-4`.
 
