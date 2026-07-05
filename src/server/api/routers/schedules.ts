@@ -8,13 +8,13 @@ import {
   queryByIdSchema,
   updateScheduleSchema,
 } from "../schema/schema";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
   getSchedules: publicProcedure.query(
     async () => await db.select().from(schedules).orderBy(desc(schedules.date))
   ),
-  addSchedule: publicProcedure.input(addScheduleSchema).mutation(
+  addSchedule: protectedProcedure.input(addScheduleSchema).mutation(
     async ({ input }) =>
       await db.insert(schedules).values({
         title: input.title,
@@ -32,12 +32,12 @@ export const scheduleRouter = createTRPCRouter({
         cleaningGroup: input.cleaningGroup,
       })
   ),
-  addScheduleBatch: publicProcedure
+  addScheduleBatch: protectedProcedure
     .input(addScheduleBatchSchema)
     .mutation(
       async ({ input }) => await db.insert(schedules).values([...input])
     ),
-  deleteSchedule: publicProcedure
+  deleteSchedule: protectedProcedure
     .input(queryByIdSchema)
     .mutation(
       async ({ input }) =>
@@ -60,7 +60,7 @@ export const scheduleRouter = createTRPCRouter({
 
       return { ...schedule, id: +schedule.id };
     }),
-  updateSchedule: publicProcedure.input(updateScheduleSchema).mutation(
+  updateSchedule: protectedProcedure.input(updateScheduleSchema).mutation(
     async ({ input }) =>
       await db
         .update(schedules)

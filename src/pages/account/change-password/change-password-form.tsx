@@ -26,9 +26,7 @@ import { api } from "~/utils/api";
 export default function ChangePasswordForm() {
   // Load user from database
   const { data: session } = useSession();
-  const { data: user } = api.users.getUserById.useQuery({
-    id: session?.user.id ?? "",
-  });
+  const { data: user } = api.users.getUserById.useQuery();
 
   // 1. Define form
   const form = useForm<UpdatePasswordParams>({

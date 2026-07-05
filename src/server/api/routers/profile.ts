@@ -2,33 +2,50 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { profiles, users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { addProfileSchema } from "../schema/schema";
 
 export const profileRouter = createTRPCRouter({
-  addUserProfile: publicProcedure
+  addUserProfile: protectedProcedure
     .input(addProfileSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (input.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only submit your own profile.",
+        });
+      }
+
       const isExists =
         (
           await db
-            .select()
+            .select({ userId: profiles.userId })
             .from(profiles)
             .where(eq(profiles.userId, input.userId))
+            .limit(1)
         ).length > 0;
 
-      if (isExists)
+      if (isExists) {
         throw new TRPCError({
           code: "CONFLICT",
           message:
             "Sorry, it seems like you already submitted your profile. Please contact the administrator if it is not the case.",
         });
+      }
 
       return await db.insert(profiles).values({ ...input });
     }),
-  getUserProfiles: publicProcedure.query(async () => {
+  getUserProfiles: protectedProcedure.query(async () => {
     return await db
-      .select()
+      .select({
+        profiles: profiles,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        },
+      })
       .from(profiles)
       .leftJoin(users, eq(profiles.userId, users.id));
   }),

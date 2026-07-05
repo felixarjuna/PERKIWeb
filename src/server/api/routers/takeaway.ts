@@ -7,7 +7,7 @@ import {
   queryByIdSchema,
   updateTakeawaySchema,
 } from "../schema/schema";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
   getTakeaways: publicProcedure.query(async () => {
@@ -17,7 +17,7 @@ export const takeawayRouter = createTRPCRouter({
       .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
       .orderBy(desc(schedules.date));
   }),
-  addTakeaway: publicProcedure
+  addTakeaway: protectedProcedure
     .input(addTakeawaySchema)
     .mutation(async ({ input }) => {
       return await db.insert(takeaways).values({
@@ -26,7 +26,7 @@ export const takeawayRouter = createTRPCRouter({
         contributors: input.contributors,
       });
     }),
-  deleteTakeaway: publicProcedure
+  deleteTakeaway: protectedProcedure
     .input(queryByIdSchema)
     .mutation(async ({ input }) => {
       return await db.delete(takeaways).where(eq(takeaways.id, input.id));
@@ -49,7 +49,7 @@ export const takeawayRouter = createTRPCRouter({
 
       return takeaway;
     }),
-  updateTakeaway: publicProcedure
+  updateTakeaway: protectedProcedure
     .input(updateTakeawaySchema)
     .mutation(async ({ input }) => {
       return await db

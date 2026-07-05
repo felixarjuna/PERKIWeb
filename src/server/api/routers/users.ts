@@ -1,48 +1,56 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
+import { and, eq, ne, sql } from "drizzle-orm";
 import {
   insertUserParams,
   insertUserSchema,
   updatePasswordParams,
   updateUserParams,
   updateUserSchema,
-  userIdSchema,
-  users,
 } from "~/lib/db/schema/auth";
+import { users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "../trpc";
 
 import bcrypt from "bcryptjs";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+
+/** Columns that are safe to expose to clients (never the password hash). */
+const safeUserColumns = {
+  id: users.id,
+  name: users.name,
+  email: users.email,
+  image: users.image,
+  hasPassword: sql<boolean>`${users.hashedPassword} is not null`,
+};
 
 export const userRouter = createTRPCRouter({
-  getUsers: publicProcedure.query(async () => {
-    return await db.select().from(users);
-  }),
-  getUserById: publicProcedure.input(userIdSchema).query(async ({ input }) => {
-    const accounts = await db
-      .select()
+  getUserById: protectedProcedure.query(async ({ ctx }) => {
+    const account = await db
+      .select(safeUserColumns)
       .from(users)
-      .where(eq(users.id, input.id));
-    return accounts.at(0) ?? null;
+      .where(eq(users.id, ctx.session.user.id))
+      .limit(1);
+    return account.at(0) ?? null;
   }),
   createUser: publicProcedure
     .input(insertUserParams)
     .mutation(async ({ input }) => {
-      // Return error if username or email already exists
-      const _users = db.select().from(users);
-
-      const isUsernameExists = await _users.where(
-        eq(users.email, input.username),
-      );
-      if (isUsernameExists.length > 0)
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.username))
+        .limit(1);
+      if (existing.length > 0) {
         throw new TRPCError({
           code: "CONFLICT",
           message: "Username or email already exists",
         });
+      }
 
-      // Password should be hashed
       const hashedPassword = await bcrypt.hash(input.password, 10);
       const newUser = insertUserSchema.parse({
         ...input,
@@ -58,7 +66,7 @@ export const userRouter = createTRPCRouter({
         const message = (err as Error).message ?? "Error, please try again";
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: message,
+          message,
         });
       }
     }),
@@ -66,20 +74,27 @@ export const userRouter = createTRPCRouter({
    * User can only change name or username here.
    * For password update, refer to "updatePassword" method
    */
-  updateUser: publicProcedure
+  updateUser: protectedProcedure
     .input(updateUserParams)
-    .mutation(async ({ input }) => {
-      // Return error if username or email already exists
-      const _users = db.select().from(users);
+    .mutation(async ({ ctx, input }) => {
+      if (input.id !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only update your own account.",
+        });
+      }
 
-      const isUsernameExists = await _users.where(
-        eq(users.email, input.username),
-      );
-      if (isUsernameExists.length > 0)
+      const taken = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.email, input.username), ne(users.id, input.id)))
+        .limit(1);
+      if (taken.length > 0) {
         throw new TRPCError({
           code: "CONFLICT",
           message: "Username or email already exists",
         });
+      }
 
       const newUser = updateUserSchema.parse({
         ...input,
@@ -91,55 +106,39 @@ export const userRouter = createTRPCRouter({
         return { success: true };
       } catch (err) {
         const message = (err as Error).message ?? "Error, please try again";
-        return new TRPCError({
+        throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: message,
+          message,
         });
       }
     }),
-  deleteUser: publicProcedure
-    .input(userIdSchema)
-    .mutation(async ({ input }) => {
-      const session = await getServerSession();
-      if (!session)
-        return new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "User session not found",
-        });
-
-      try {
-        await db
-          .delete(users)
-          .where(and(eq(users.id, input.id), eq(users.id, session.user.id)));
-        return { success: true };
-      } catch (err) {
-        const message = (err as Error).message ?? "Error, please try again";
-        return new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: message,
-        });
-      }
-    }),
-  updatePassword: publicProcedure
+  updatePassword: protectedProcedure
     .input(updatePasswordParams)
-    .mutation(async ({ input }) => {
-      const _users = await db
+    .mutation(async ({ ctx, input }) => {
+      if (input.id !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only change your own password.",
+        });
+      }
+
+      const account = await db
         .select()
         .from(users)
-        .where(eq(users.id, input.id));
-      const user = _users.at(0);
+        .where(eq(users.id, input.id))
+        .limit(1);
+      const user = account.at(0);
 
-      if (user?.hashedPassword === null) {
+      if (!user?.hashedPassword) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "User cannot be found. Please try to re login.",
         });
       }
 
-      // Validate old password
       const isOldPasswordValid = await bcrypt.compare(
         input.currentPassword,
-        user!.hashedPassword,
+        user.hashedPassword,
       );
       if (!isOldPasswordValid) {
         throw new TRPCError({
@@ -148,15 +147,13 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      // Validate new password
-      const isNewPasswordValid = input.newPassword === input.retypeNewPassword;
-      if (!isNewPasswordValid)
+      if (input.newPassword !== input.retypeNewPassword) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
+          code: "BAD_REQUEST",
           message: "Your retyped password does not match the new password.",
         });
+      }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(input.newPassword, 10);
       try {
         await db
@@ -166,9 +163,9 @@ export const userRouter = createTRPCRouter({
         return { success: true };
       } catch (err) {
         const message = (err as Error).message ?? "Error, please try again";
-        return new TRPCError({
+        throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: message,
+          message,
         });
       }
     }),

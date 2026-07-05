@@ -1,9 +1,9 @@
 import { type FinanceDatabaseResponse } from "~/lib/notion/finance-database";
 import { notion } from "~/lib/notion/notion";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const financeRouter = createTRPCRouter({
-  getFinances: publicProcedure.query(async () => {
+  getFinances: protectedProcedure.query(async () => {
     let results: FinanceDatabaseResponse[] = [];
     let hasMore = true;
     let cursor: string | undefined = undefined;
