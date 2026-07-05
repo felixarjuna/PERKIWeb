@@ -1,7 +1,7 @@
 import React from "react";
 import { EditButton } from "~/components/action-button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
-import type { RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
 import EditPrayerForm from "./edit-prayer-form";
 
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];

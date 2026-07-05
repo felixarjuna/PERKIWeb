@@ -3,7 +3,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import type { z } from "zod";
 import { toast } from "sonner";
-import type { addGuestSchema } from "~/pages/christmas";
+import type { addGuestSchema } from "~/app/christmas/page";
 
 export type Guest = {
   id: number;

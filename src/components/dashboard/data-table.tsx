@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { countBirthdaysThisMonth } from "~/lib/utils";
-import type { RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "../ui/badge";
 import DataTablePagination from "./data-table-pagination";
 

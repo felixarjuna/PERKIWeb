@@ -2,7 +2,7 @@ import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { DateTime } from "luxon";
 import { Button } from "~/components/ui/button";
-import type { RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
 
 type UserProfile = RouterOutputs["profiles"]["getUserProfiles"][number];
 const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
