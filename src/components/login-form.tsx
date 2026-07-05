@@ -54,7 +54,7 @@ export function LoginForm({
               <div className="grid gap-2">
                 <Label htmlFor="email">Username</Label>
                 <Input
-                  className="text-cream-default"
+                  className="text-foreground"
                   id="email"
                   onChange={(event) =>
                     setForm({ ...form, username: event.target.value })
@@ -68,7 +68,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                 </div>
                 <Input
-                  className="text-cream-default"
+                  className="text-foreground"
                   id="password"
                   onChange={(event) =>
                     setForm({ ...form, password: event.target.value })
@@ -77,7 +77,7 @@ export function LoginForm({
                   type="password"
                 />
               </div>
-              <Button className="w-full bg-green-default" type="submit">
+              <Button className="w-full bg-accent" type="submit">
                 Login
               </Button>
             </div>

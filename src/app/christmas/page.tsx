@@ -66,9 +66,9 @@ export default function ChristmasPage() {
 
   return (
     <Template title="Christmas Event">
-      <div className="relative flex items-center justify-center bg-dark-grey-default/40 backdrop-blur-sm">
+      <div className="relative flex items-center justify-center bg-background/40 backdrop-blur-sm">
         {agree ? null : (
-          <div className="fixed inset-0 top-10 mx-auto grid h-12 w-10/12 grid-cols-2 items-center justify-center gap-x-1 rounded-mdtext-white-primary-default lg:w-1/2">
+          <div className="fixed inset-0 top-10 mx-auto grid h-12 w-10/12 grid-cols-2 items-center justify-center gap-x-1 rounded-mdtext-foreground lg:w-1/2">
             <div className="col-span-2 flex h-9 justify-center gap-x-1 rounded-sm bg-white/20 px-2 py-2">
               {delta(eventDate) === 0 ? (
                 <div className="flex items-center gap-x-1">

@@ -19,7 +19,7 @@ export default function SchedulePage() {
     >
       <div className="mt-8 flex w-full max-w-5xl flex-col px-0 sm:px-14">
         <Link
-          className="flex w-fit items-center gap-1 self-end rounded-lg bg-green-default/60 p-3 px-4 text-sm"
+          className="flex w-fit items-center gap-1 self-end rounded-lg bg-accent/60 p-3 px-4 text-sm"
           href={"/create-schedule"}
         >
           <Plus className="aspect-square w-4" />

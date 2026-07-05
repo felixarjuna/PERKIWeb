@@ -58,13 +58,20 @@ export default function ScheduleList() {
   const router = useRouter();
 
   function renderScheduleDetails(schedule: Schedule) {
+    const details = [
+      schedule.preacher,
+      schedule.bibleVerse,
+      dateTimeFormatter(schedule.date.toString()),
+    ].filter(Boolean);
+
     return (
-      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-green-400/80 text-xs sm:gap-x-2">
-        <p>{schedule.preacher || "-"}</p>
-        <span>&middot;</span>
-        <p>{schedule.bibleVerse}</p>
-        <span>&middot;</span>
-        <p>{dateTimeFormatter(schedule.date.toString())}</p>
+      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-muted-foreground text-xs sm:gap-x-2">
+        {details.map((detail, index) => (
+          <React.Fragment key={detail}>
+            {index > 0 ? <span>&middot;</span> : null}
+            <p>{detail}</p>
+          </React.Fragment>
+        ))}
       </div>
     );
   }
@@ -96,26 +103,26 @@ export default function ScheduleList() {
     return (
       <div className="flex flex-col justify-center space-y-2 p-8 text-sm sm:w-1/4">
         <div className="flex items-center gap-x-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
           </div>
           <p>{schedule.leader || "-"}</p>
         </div>
 
         <div className="flex items-center gap-x-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <Music className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
           <p>{schedule.musician}</p>
         </div>
         <div className="flex items-center gap-x-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <NotebookPen className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
           <p>{schedule.noteWriter || "-"}</p>
         </div>
         <div className="flex items-center gap-x-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <Bed className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
           <p>{schedule.accommodation ?? "-"}</p>
@@ -124,7 +131,7 @@ export default function ScheduleList() {
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
                 <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
               <p>{schedule.cookingGroup ?? "-"}</p>
@@ -167,7 +174,7 @@ export default function ScheduleList() {
         <Drawer>
           <DrawerTrigger>
             <div className="flex items-center gap-x-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               </div>
               <p>{schedule.cleaningGroup}</p>
@@ -235,7 +242,7 @@ export default function ScheduleList() {
   function renderSchedule(schedule: Schedule) {
     return (
       <div
-        className="flex h-full flex-col gap-y-0 rounded-lg bg-green-default/60 shadow-lg transition duration-300 hover:bg-green-default/80 sm:flex-row sm:gap-y-2"
+        className="flex h-full flex-col gap-y-0 rounded-lg bg-accent/60 shadow-lg transition duration-300 hover:bg-accent/80 sm:flex-row sm:gap-y-2"
         key={schedule.id}
       >
         <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
@@ -250,7 +257,7 @@ export default function ScheduleList() {
         </div>
 
         <Separator
-          className="mx-auto h-px w-5/6 rounded-lg bg-cream-default sm:my-auto sm:h-48 sm:w-px xl:my-auto xl:h-48 xl:w-px"
+          className="mx-auto h-px w-5/6 rounded-lg bg-paper sm:my-auto sm:h-48 sm:w-px xl:my-auto xl:h-48 xl:w-px"
           orientation="vertical"
         />
 

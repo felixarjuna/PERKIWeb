@@ -93,7 +93,7 @@ export default function JoinForm() {
 
               <FormControl className="w-full">
                 <div className="relative w-full">
-                  <Calendar className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-green-500" />
+                  <Calendar className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-muted-foreground" />
                   <Input
                     className="w-[190px] pl-8"
                     id="dob"

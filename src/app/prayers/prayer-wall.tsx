@@ -60,7 +60,7 @@ export default function PrayerWall() {
                 const hasPrayed = names.includes(username);
                 return (
                   <li
-                    className="items relative flex flex-col gap-y-1 rounded-lg bg-green-default/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
+                    className="items relative flex flex-col gap-y-1 rounded-lg bg-accent/80 px-4 py-2 text-base sm:p-6 sm:text-sm"
                     key={prayer.id}
                   >
                     <Badge
@@ -109,7 +109,7 @@ export default function PrayerWall() {
                     </div>
 
                     <Badge
-                      className="-right-2 -top-2 absolute flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 font-thin text-[0.6rem]"
+                      className="-right-2 -top-2 absolute flex h-5 w-5 items-center justify-center rounded-full border-accent px-0 py-0 font-thin text-[0.6rem]"
                       variant={"secondary"}
                     >
                       {prayer.count}

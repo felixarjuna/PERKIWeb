@@ -102,7 +102,7 @@ function TakeawayItem(props: TakeawayItemProps) {
   });
 
   return (
-    <div className="w-full cursor-pointer rounded-lg bg-green-default/60 p-4 shadow-lg transition duration-300 hover:bg-green-default/80 sm:p-6">
+    <div className="w-full cursor-pointer rounded-lg bg-accent/60 p-4 shadow-lg transition duration-300 hover:bg-accent/80 sm:p-6">
       <h1 className="flex items-center justify-between font-reimbrandt text-lg tracking-wide sm:text-2xl">
         {props.title}
         <div className="flex gap-x-2">
@@ -115,14 +115,14 @@ function TakeawayItem(props: TakeawayItemProps) {
               void router.push(`/edit-takeaway/${props.takeawayId}`)
             }
           />
-          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-green-default text-xs sm:text-sm">
+          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-paper px-2 py-1 text-paper-foreground text-xs sm:text-sm">
             {props.eventType === "bible_study"
               ? "bible study"
               : "church service"}
           </span>
         </div>
       </h1>
-      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-green-400/80 text-xs">
+      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-muted-foreground text-xs">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
@@ -130,7 +130,7 @@ function TakeawayItem(props: TakeawayItemProps) {
         <p>{props.date}</p>
       </div>
       <p className="mt-4 whitespace-break-spaces text-sm">{props.summary}</p>
-      <p className="mt-4 text-green-400/80 text-xs">
+      <p className="mt-4 text-muted-foreground text-xs">
         {props.contributors.join(" ")}
       </p>
 

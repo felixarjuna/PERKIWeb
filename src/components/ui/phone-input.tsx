@@ -87,7 +87,7 @@ const CountrySelect = ({
   <Popover>
     <PopoverTrigger asChild>
       <Button
-        className="flex gap-1 rounded-s-lg rounded-e-none border-0 border-r-0 bg-green-default/50 px-3 hover:bg-green-default/80 focus:z-10 dark:bg-green-default/60 dark:hover:bg-green-default/80"
+        className="flex gap-1 rounded-s-lg rounded-e-none border-0 border-r-0 bg-accent/50 px-3 hover:bg-accent/80 focus:z-10 dark:bg-accent/60 dark:hover:bg-accent/80"
         disabled={disabled}
         type="button"
         variant="outline"

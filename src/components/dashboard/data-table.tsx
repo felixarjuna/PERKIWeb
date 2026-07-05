@@ -57,9 +57,9 @@ export default function DataTable<TData, TValue>({
   );
 
   return (
-    <div className="space-y-4 p-4 text-cream-default">
+    <div className="space-y-4 p-4 text-foreground">
       <div className="flex justify-between gap-x-4">
-        <div className="relative w-fit rounded-md border bg-green-default/50 px-4 py-4 font-normal">
+        <div className="relative w-fit rounded-md border bg-accent/50 px-4 py-4 font-normal">
           <h1 className="font-reimbrandt tracking-wide sm:text-lg">
             Birthday this month 🎈🎉
           </h1>

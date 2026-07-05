@@ -70,7 +70,7 @@ export default function Navigation({ showNav }: INavigationProps) {
                 y: { ease: [0.6, 0.01, -0.05, 0.95], duration: 0.8 },
               },
             }}
-            className="fixed top-10 right-0 left-0 z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-lg bg-green-default/80 px-4 py-3 text-center text-cream-default sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4"
+            className="fixed top-10 right-0 left-0 z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-lg bg-accent/80 px-4 py-3 text-center text-foreground sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4"
             exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
             initial={{ opacity: 0 }}
             key="navigation"
