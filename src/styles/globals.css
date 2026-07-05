@@ -8,7 +8,7 @@
   --foreground: hsl(72 24% 84%); /* #d7dfcb */
   --card: hsl(174 20% 12%);
   --card-foreground: hsl(72 24% 84%);
-  --popover: hsl(169 18% 27%);
+  --popover: hsl(171 18% 15%);
   --popover-foreground: hsl(72 24% 84%);
   --primary: hsl(169 12% 27%);
   --primary-foreground: hsl(72 24% 84%);
@@ -51,7 +51,7 @@
   --foreground: hsl(72 24% 84%);
   --card: hsl(174 20% 12%);
   --card-foreground: hsl(72 24% 84%);
-  --popover: hsl(169 18% 27%);
+  --popover: hsl(171 18% 15%);
   --popover-foreground: hsl(72 24% 84%);
   --primary: hsl(169 12% 27%);
   --primary-foreground: hsl(72 24% 84%);
@@ -230,7 +230,7 @@
 
   /** edit scrollbar */
   ::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
     height: 4px;
   }
 
