@@ -37,7 +37,6 @@ import {
 } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
-import { useToast } from "~/components/ui/use-toast";
 import { env } from "~/env.mjs";
 import {
   accommodation,
@@ -52,6 +51,7 @@ import { eventTypeEnum, type NewSchedule } from "~/lib/db/schema/schema";
 import { cn } from "~/lib/utils";
 import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function AddScheduleForm() {
   /** form definition. */
@@ -61,14 +61,10 @@ export default function AddScheduleForm() {
   });
 
   /** add schedule action. */
-  const { toast } = useToast();
   const router = useRouter();
   const addSchedule = api.schedules.addSchedule.useMutation({
     onSuccess: () => {
-      toast({
-        title: "New schedule added! 🎉",
-        description: "Thanks for your contributions!",
-      });
+      toast.success("New schedule added! 🎉", { description: "Thanks for your contributions!" });
       router.push("/schedule");
     },
   });
@@ -180,7 +176,7 @@ export default function AddScheduleForm() {
                                 disabled={(date) =>
                                   date < new Date("1900-01-01")
                                 }
-                                initialFocus
+                                autoFocus
                                 mode="single"
                                 onSelect={field.onChange}
                                 selected={field.value}
@@ -526,7 +522,6 @@ const doc = new GoogleSpreadsheet(
 );
 
 function AddScheduleGoogleSpreadsheet() {
-  const { toast } = useToast();
   const router = useRouter();
 
   /** state for loaded schedules. */
@@ -578,12 +573,7 @@ function AddScheduleGoogleSpreadsheet() {
         setLoading(false);
       } catch {
         setLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description:
-            "Error occurs when loading data from spreadsheet. Some data could not be fetched.",
-        });
+        toast.error("Error", { description: "Error occurs when loading data from spreadsheet. Some data could not be fetched." });
       }
     };
 
@@ -593,18 +583,11 @@ function AddScheduleGoogleSpreadsheet() {
   /** add schedules action. */
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
     onSuccess: () => {
-      toast({
-        title: "New schedules added! 🎉",
-        description: "Thanks for your contributions!",
-      });
+      toast.success("New schedules added! 🎉", { description: "Thanks for your contributions!" });
       router.push("/schedule");
     },
     onError: (err) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `An error occured while adding schedules. Error: ${err.message}.`,
-      });
+      toast.error("Error", { description: `An error occured while adding schedules. Error: ${err.message}.` });
     },
   });
 
@@ -668,12 +651,7 @@ function AddScheduleGoogleSpreadsheet() {
                     cookingGroup: x.cookingGroup ?? undefined,
                   }));
                   if (_schedules === undefined) {
-                    toast({
-                      variant: "destructive",
-                      title: "Error",
-                      description:
-                        "Row is empty. Could not add empty schedules.",
-                    });
+                    toast.error("Error", { description: "Row is empty. Could not add empty schedules." });
                     return;
                   }
 

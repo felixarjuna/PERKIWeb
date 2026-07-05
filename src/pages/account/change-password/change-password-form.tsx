@@ -15,12 +15,12 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { useToast } from "~/components/ui/use-toast";
 import {
   type UpdatePasswordParams,
   updatePasswordParams,
 } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function ChangePasswordForm() {
   // Load user from database
@@ -38,21 +38,14 @@ export default function ChangePasswordForm() {
   }, [form, user]);
 
   const router = useRouter();
-  const { toast } = useToast();
   const updatePassword = api.users.updatePassword.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "Update password successful!",
-        description: "Your password has been updated! ✨",
-      });
+      toast.success("Update password successful!", { description: "Your password has been updated! ✨" });
       // Redirect to login page after registration
       await router.push("/account");
     },
     onError: ({ message }) => {
-      toast({
-        title: "Update password failed! 👿",
-        description: message,
-      });
+      toast.success("Update password failed! 👿", { description: message });
     },
   });
 

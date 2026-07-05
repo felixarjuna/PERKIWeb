@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 import Head from "next/head";
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "~/components/ui/toaster";
+import { Toaster } from "~/components/ui/sonner";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
 import { api } from "~/utils/api";

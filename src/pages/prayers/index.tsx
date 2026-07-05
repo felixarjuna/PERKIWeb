@@ -8,7 +8,6 @@ import Loader from "~/components/loader";
 import Template from "~/components/template";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
-import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 import { api } from "~/utils/api";
 import EditPrayerDialog from "../../components/prayer/edit-prayer-dialog";
@@ -21,7 +20,6 @@ export default function Prayers() {
     [session?.user.name]
   );
 
-  const { toast } = useToast();
   const utils = api.useUtils();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
 
@@ -32,10 +30,7 @@ export default function Prayers() {
   const deletePrayer = api.prayers.deletePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast({
-        title: "Prayer successfully deleted! 😥",
-        description: "Don't be shy, it's okay!",
-      });
+      toast.success("Prayer successfully deleted! 😥", { description: "Don't be shy, it's okay!" });
     },
   });
 
@@ -150,6 +145,7 @@ export default function Prayers() {
 }
 
 import { auth } from "~/server/auth";
+import { toast } from "sonner";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await auth(context);

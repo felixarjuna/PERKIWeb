@@ -24,11 +24,11 @@ import {
   DrawerTrigger,
 } from "~/components/ui/drawer";
 import { Separator } from "~/components/ui/separator";
-import { useToast } from "~/components/ui/use-toast";
 import { groups } from "~/lib/data";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
 import RandomVerse from "./_components/random-verse";
+import { toast } from "sonner";
 
 type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
 const SUMMARY_MAX_LENGTH = 250;
@@ -45,16 +45,13 @@ const verses = [
 ];
 
 export default function ScheduleList() {
-  const { toast } = useToast();
   const utils = api.useUtils();
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
   const deleteSchedule = api.schedules.deleteSchedule.useMutation({
     onSuccess: async () => {
       await utils.schedules.invalidate();
-      toast({
-        title: "Schedule successfully deleted! 🥸",
-      });
+      toast.success("Schedule successfully deleted! 🥸");
     },
   });
 

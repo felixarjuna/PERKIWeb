@@ -15,10 +15,10 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
-import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/utils/api";
+import { toast } from "sonner";
 
 const EditPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
@@ -35,15 +35,11 @@ export default function EditPrayerForm({
   onCloseDialog: () => void;
 }) {
   const { data: session } = useSession();
-  const { toast } = useToast();
   const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast({
-        title: "Your prayer is updated successfully! ✨",
-        description: "God bless you! ❤️",
-      });
+      toast.success("Your prayer is updated successfully! ✨", { description: "God bless you! ❤️" });
     },
   });
 

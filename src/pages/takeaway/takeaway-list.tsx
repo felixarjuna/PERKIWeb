@@ -10,11 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { useToast } from "~/components/ui/use-toast";
 import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/utils/api";
 import ActionButton from "../../components/action-button";
+import { toast } from "sonner";
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
@@ -88,7 +88,6 @@ interface TakeawayItemProps {
 
 function TakeawayItem(props: TakeawayItemProps) {
   /** hook for toast */
-  const { toast } = useToast();
   /** utils to invalidate trpc query. */
   const utils = api.useUtils();
 
@@ -97,9 +96,7 @@ function TakeawayItem(props: TakeawayItemProps) {
 
   const deleteTakeaway = api.takeaways.deleteTakeaway.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "Takeaway successfully deleted! 🥸",
-      });
+      toast.success("Takeaway successfully deleted! 🥸");
       await utils.takeaways.invalidate();
     },
   });
