@@ -1,6 +1,5 @@
 "use client";
 
-import { isEmpty } from "lodash";
 import {
   Bed,
   Music,
@@ -66,7 +65,7 @@ export default function ScheduleList() {
     console.log(schedule);
     return (
       <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-green-400/80 text-xs sm:gap-x-2">
-        <p>{isEmpty(schedule.preacher) ? "-" : schedule.preacher}</p>
+        <p>{schedule.preacher || "-"}</p>
         <span>&middot;</span>
         <p>{schedule.bibleVerse}</p>
         <span>&middot;</span>
@@ -105,7 +104,7 @@ export default function ScheduleList() {
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
           </div>
-          <p>{isEmpty(schedule.leader) ? "-" : schedule.leader}</p>
+          <p>{schedule.leader || "-"}</p>
         </div>
 
         <div className="flex items-center gap-x-2">
@@ -118,7 +117,7 @@ export default function ScheduleList() {
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
             <NotebookPen className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
-          <p>{isEmpty(schedule.noteWriter) ? "-" : schedule.noteWriter}</p>
+          <p>{schedule.noteWriter || "-"}</p>
         </div>
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-default/60 p-1 sm:h-7 sm:w-7">
