@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Info } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,12 +26,10 @@ export default function AccountForm() {
 
   const updateAccount = api.users.updateUser.useMutation({
     onSuccess: () => {
-      toast.success("Update account info successful!", {
-        description: "Your account has been updated! ✨",
-      });
+      toast.success("Account updated! ✨");
     },
     onError: ({ message }) => {
-      toast.success("Update user account failed! 👿", { description: message });
+      toast.error("Update account failed", { description: message });
     },
   });
 
@@ -63,66 +62,66 @@ export default function AccountForm() {
   return (
     <Form {...form}>
       {isOAuthAccount ? (
-        <div className="mb-8 text-xs sm:text-sm">
-          <Button
-            className="h-fit min-w-fit px-4 py-4 text-center sm:px-6 sm:py-6 xl:py-8 2xl:py-8"
-            variant={"outline"}
-          >
-            You can not change your email and password if you are logged in with
-            Google Account. Please login with another account instead.
-          </Button>
+        <div className="flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground text-sm">
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <p>
+            You signed in with Google, so your email and password are managed by
+            your Google account.
+          </p>
         </div>
       ) : null}
 
       <form
-        className="w-full min-w-[10rem] space-y-8 sm:min-w-[32rem]"
+        className="flex w-full flex-col gap-6"
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
-        <div className="space-y-4">
-          <div>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username / Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={isOAuthAccount} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        <div className="flex flex-col gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input autoComplete="name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username / Email</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={isOAuthAccount} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <div className="space-y-2">
-            <Label>Password</Label>
-            <Input
-              disabled
-              readOnly
-              type="password"
-              value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
-            />
-          </div>
+          {user?.hasPassword ? (
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Input
+                disabled
+                readOnly
+                type="password"
+                value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
+              />
+            </div>
+          ) : null}
         </div>
 
-        <Button className="w-full" type="submit" variant={"secondary"}>
-          Update account
+        <Button
+          className="w-full"
+          disabled={updateAccount.isPending || !user}
+          type="submit"
+        >
+          {updateAccount.isPending ? "Updating ..." : "Update account"}
         </Button>
       </form>
     </Form>

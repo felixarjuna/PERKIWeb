@@ -12,7 +12,7 @@ export default async function AccountPage() {
 
   return (
     <Template title="Account">
-      <div className="mt-8 grid w-full max-w-screen-sm gap-y-4 place-self-center">
+      <div className="mt-8 flex w-full max-w-screen-sm flex-col gap-4">
         <AccountForm />
         <AccountActions />
       </div>
