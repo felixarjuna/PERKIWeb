@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ArrowLeft, CalendarIcon } from "lucide-react";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import React from "react";
 
 import { useForm } from "react-hook-form";
@@ -43,13 +43,14 @@ import {
 } from "~/lib/data";
 import { cn } from "~/lib/utils";
 import { updateScheduleSchema } from "~/server/api/schema/schema";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 export default function EditScheduleForm() {
   const router = useRouter();
 
-  const id = router.query.id as string;
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? "";
   const { data: schedule } = api.schedules.getScheduleById.useQuery({
     id: Number.parseInt(id),
   });
@@ -73,7 +74,7 @@ export default function EditScheduleForm() {
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onSuccess: async () => {
       toast.success("Schedule updated successfully! ✨", { description: "Thanks for your contributions!" });
-      await router.push("/schedule");
+      router.push("/schedule");
     },
   });
 

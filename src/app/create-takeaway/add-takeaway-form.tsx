@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -27,7 +27,7 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { getUsernameFromName } from "~/lib/utils";
 
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 const addTakeawayFormSchema = z.object({
@@ -62,7 +62,7 @@ export default function AddTakeawayForm() {
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onSuccess: async () => {
       toast.success("Your takeaway has been submitted! ✨", { description: "Thanks for sharing!" });
-      await router.push("/takeaway");
+      router.push("/takeaway");
     },
   });
 

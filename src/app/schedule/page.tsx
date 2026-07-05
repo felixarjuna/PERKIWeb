@@ -1,10 +1,9 @@
 import { Plus } from "lucide-react";
-
 import Link from "next/link";
 import Template from "~/components/template";
 import ScheduleList from "./schedule-list";
 
-export default function Schedule() {
+export default function SchedulePage() {
   return (
     <Template
       subtitle={

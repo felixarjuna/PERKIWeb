@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@radix-ui/react-label";
 import { format } from "date-fns";
@@ -50,7 +52,7 @@ import {
 import { eventTypeEnum, type NewSchedule } from "~/lib/db/schema/schema";
 import { cn } from "~/lib/utils";
 import { addScheduleSchema } from "~/server/api/schema/schema";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 export default function AddScheduleForm() {
