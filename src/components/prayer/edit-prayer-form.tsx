@@ -39,8 +39,8 @@ export default function EditPrayerForm({
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Your prayer is updated successfully! ✨", {
-        description: "God bless you! ❤️",
+      toast.success("Your prayer is updated successfully!", {
+        description: "God bless you!",
       });
     },
   });

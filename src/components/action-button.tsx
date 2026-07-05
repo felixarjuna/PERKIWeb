@@ -59,7 +59,7 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete your entry and cannot be undone. 😥
+            This will permanently delete your entry and cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

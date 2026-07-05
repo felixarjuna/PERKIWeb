@@ -26,7 +26,7 @@ export default function AccountForm() {
 
   const updateAccount = api.users.updateUser.useMutation({
     onSuccess: () => {
-      toast.success("Account updated! ✨");
+      toast.success("Account updated!");
     },
     onError: ({ message }) => {
       toast.error("Update account failed", { description: message });

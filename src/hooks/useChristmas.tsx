@@ -40,14 +40,14 @@ export const useChristmasAddGuest = () => {
     },
     onError: () => {
       sessionStorage.setItem("sendInitialMessageStatus", "error");
-      toast.success("⚠️ Failed to send initial message.", {
+      toast.error("Failed to send initial message.", {
         description:
           "There was an issue sending the initial message. Please contact support if you do not receive a message soon.",
       });
     },
     onSuccess: () => {
       sessionStorage.setItem("sendInitialMessageStatus", "success");
-      toast.success("📱 Initial message sent.", {
+      toast.success("Initial message sent.", {
         description:
           "You should receive a message shortly with further details.",
       });
@@ -66,14 +66,14 @@ export const useChristmasAddGuest = () => {
       /** send initial message */
       sendInitialMessage.mutate(variables.phoneNumber);
 
-      toast.success("✅ Registration successful.", {
+      toast.success("Registration successful.", {
         description: "Thank you for your registration!",
       });
       router.push("/christmas/thankyou");
     },
     onError: (err) => {
       if (axios.isAxiosError(err) && err.response) {
-        toast.success("❌ Registration failed.", {
+        toast.error("Registration failed.", {
           description:
             err.response.data.message ||
             "An error occurred during registration.",

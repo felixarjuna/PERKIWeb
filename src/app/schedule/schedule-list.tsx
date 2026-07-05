@@ -51,7 +51,7 @@ export default function ScheduleList() {
   const deleteSchedule = api.schedules.deleteSchedule.useMutation({
     onSuccess: async () => {
       await utils.schedules.invalidate();
-      toast.success("Schedule successfully deleted! 🥸");
+      toast.success("Schedule successfully deleted!");
     },
   });
 

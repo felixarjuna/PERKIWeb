@@ -49,8 +49,8 @@ export default function JoinForm() {
   const addProfile = api.profiles.addUserProfile.useMutation({
     onSuccess: async () => {
       await utils.profiles.invalidate();
-      toast.success("Form submitted successfully! 🎉", {
-        description: "Thank you for filling out the form! ❤️",
+      toast.success("Form submitted successfully!", {
+        description: "Thank you for filling out the form!",
       });
 
       setTimeout(() => {
@@ -58,7 +58,7 @@ export default function JoinForm() {
       }, 2000);
     },
     onError: (error) => {
-      toast.error("Failed to submit the form 😢", {
+      toast.error("Failed to submit the form", {
         description: error.message,
       });
     },
@@ -105,7 +105,7 @@ export default function JoinForm() {
               </FormControl>
 
               <FormDescription>
-                Your date of birth so we could celebrate it 🎉
+                Your date of birth so we could celebrate it
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Calendar, Info, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Info, Loader2, TreePine } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
@@ -261,7 +261,7 @@ export default function ChristmasPage() {
                   className="bg-white/20 font-bold"
                   onClick={() => setAgree(true)}
                 >
-                  Sign me up! 🎄
+                  <TreePine className="size-4" /> Sign me up!
                 </Button>
               )}
             </div>

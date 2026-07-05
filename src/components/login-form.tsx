@@ -24,7 +24,7 @@ export function LoginForm({
     e.preventDefault();
     if (form.username === username && form.password === password) {
       setAuthorized(true);
-      toast.success("Login successful! ❤️", {
+      toast.success("Login successful!", {
         description: "Welcome back, MitA!",
       });
       router.push("/admin/dashboard");

@@ -96,7 +96,7 @@ function TakeawayItem(props: TakeawayItemProps) {
 
   const deleteTakeaway = api.takeaways.deleteTakeaway.useMutation({
     onSuccess: async () => {
-      toast.success("Takeaway successfully deleted! 🥸");
+      toast.success("Takeaway successfully deleted!");
       await utils.takeaways.invalidate();
     },
   });

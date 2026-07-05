@@ -1,5 +1,6 @@
 "use client";
 
+import { Shuffle } from "lucide-react";
 import React from "react";
 import { Button } from "~/components/ui/button";
 
@@ -22,7 +23,8 @@ export default function RandomVerse({ items }: { items: readonly string[] }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <Button className="w-fit" onClick={pickRandomItem}>
-        Randomize me! 💚
+        <Shuffle className="size-4" />
+        Randomize me!
       </Button>
       {verse && <p className="px-8 font-reimbrandt text-foreground">{verse}</p>}
     </div>

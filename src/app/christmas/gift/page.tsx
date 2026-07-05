@@ -1,5 +1,7 @@
 "use client";
 
+import { Dices, Send } from "lucide-react";
+
 import Snowfall from "react-snowfall";
 import secretSanta from "secret-santa-generator";
 import { toast } from "sonner";
@@ -88,8 +90,8 @@ export default function Page() {
         )
       );
 
-      toast.success("✅ Messages sent", {
-        description: "All gift messages have been sent 🎁",
+      toast.success("Messages sent", {
+        description: "All gift messages have been sent",
       });
     } catch (error) {
       console.error(error);
@@ -108,14 +110,14 @@ export default function Page() {
         <div className="mx-auto mt-16 md:w-10/12">
           <div className="flex items-center space-x-2">
             <Button className="bg-white/20" onClick={randomize}>
-              RANDOMIZE! 🎲
+              <Dices className="size-4" /> RANDOMIZE!
             </Button>
 
             <Button
               className="bg-white/20"
               onClick={handleSendChristmasGiftMessages}
             >
-              SEND MESSAGE! 🎅
+              <Send className="size-4" /> SEND MESSAGE!
             </Button>
           </div>
 

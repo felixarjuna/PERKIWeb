@@ -65,7 +65,7 @@ export default function EditTakeawayForm() {
   /** edit takeaway action. */
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
-      toast.success("Your changes has been saved successfully! ✨", {
+      toast.success("Your changes has been saved successfully!", {
         description: "Thanks for your contribution!",
       });
       router.push("/takeaway");
