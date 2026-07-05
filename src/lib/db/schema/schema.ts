@@ -169,7 +169,7 @@ export const accounts = pgTable(
     compositePK: primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
-  }),
+  })
 );
 
 export const sessions = pgTable("session", {
@@ -191,7 +191,7 @@ export const verificationTokens = pgTable(
     compositePK: primaryKey({
       columns: [token.identifier, token.token],
     }),
-  }),
+  })
 );
 
 export const authenticators = pgTable(
@@ -212,5 +212,5 @@ export const authenticators = pgTable(
     compositePK: primaryKey({
       columns: [authenticator.userId, authenticator.credentialID],
     }),
-  }),
+  })
 );

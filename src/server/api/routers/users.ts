@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
+import bcrypt from "bcryptjs";
 import { and, eq, ne, sql } from "drizzle-orm";
 import {
   insertUserParams,
@@ -9,14 +11,7 @@ import {
 } from "~/lib/db/schema/auth";
 import { users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
-
-import bcrypt from "bcryptjs";
-import { randomUUID } from "node:crypto";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 /** Columns that are safe to expose to clients (never the password hash). */
 const safeUserColumns = {
@@ -138,7 +133,7 @@ export const userRouter = createTRPCRouter({
 
       const isOldPasswordValid = await bcrypt.compare(
         input.currentPassword,
-        user.hashedPassword,
+        user.hashedPassword
       );
       if (!isOldPasswordValid) {
         throw new TRPCError({

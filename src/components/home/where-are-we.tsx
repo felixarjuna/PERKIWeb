@@ -6,30 +6,30 @@ export default function WhereAreWe() {
   return (
     <div className="relative bg-cream-default text-dark-green-default">
       <div className="relative">
-        <h1 className="absolute inset-0 top-16 z-20 mx-auto h-fit w-fit rounded-xl bg-green-default/90 px-6 py-2 text-center font-reimbrandt text-4xl text-light-green-default  sm:text-9xl">
+        <h1 className="absolute inset-0 top-16 z-20 mx-auto h-fit w-fit rounded-xl bg-green-default/90 px-6 py-2 text-center font-reimbrandt text-4xl text-light-green-default sm:text-9xl">
           Navigation
         </h1>
 
         <Image
-          src={"/images/mapsicleMap.png"}
           alt="MapsicleMap"
           className="h-screen w-screen object-cover"
-          width={4000}
           height={4000}
           quality={100}
+          src={"/images/mapsicleMap.png"}
+          width={4000}
         />
 
-        <div className="absolute inset-0 bottom-12 left-16 mx-auto my-auto h-fit w-fit  animate-bounce rounded-lg bg-green-default/80 p-2 text-light-green-default">
+        <div className="absolute inset-0 bottom-12 left-16 mx-auto my-auto h-fit w-fit animate-bounce rounded-lg bg-green-default/80 p-2 text-light-green-default">
           <MapPin className="h-5 w-5" />
         </div>
 
         <div className="absolute bottom-0 left-0 z-20 flex h-fit w-full flex-col justify-center gap-y-4 bg-cream-default/60 px-8 py-8 text-base text-green-default sm:flex-row sm:items-start sm:justify-center sm:gap-8 sm:gap-y-8 sm:px-20 sm:text-2xl">
           <Link
-            target="_blank"
+            className="flex items-center gap-2"
             href={
               "https://maps.app.goo.gl/R7QCeJGbNyHqiCZKA?g_st=com.google.maps.preview.copy"
             }
-            className="flex items-center gap-2"
+            target="_blank"
           >
             <NavigationIcon className="h-5 w-5" />
 
@@ -37,7 +37,7 @@ export default function WhereAreWe() {
               Open in Google Maps
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-default"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-default" />
               </span>
             </p>
           </Link>

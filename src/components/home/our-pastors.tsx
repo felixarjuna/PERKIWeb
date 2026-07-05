@@ -15,12 +15,12 @@ export default function OurPastors() {
     <div className="bg-cream-default py-20 text-green-default sm:py-40">
       <div className="grid grid-cols-4 gap-y-4">
         <div className="col-span-4 my-auto flex h-full items-center justify-center whitespace-nowrap sm:col-span-1 sm:translate-y-[50%] sm:items-start sm:justify-start">
-          <h1 className="text-center font-reimbrandt text-4xl sm:-rotate-90 sm:text-8xl">
+          <h1 className="sm:-rotate-90 text-center font-reimbrandt text-4xl sm:text-8xl">
             Our Pastors
           </h1>
         </div>
 
-        <div className="col-span-4 flex flex-col gap-y-4 pr-0  sm:col-span-3 sm:gap-y-8 sm:pr-40">
+        <div className="col-span-4 flex flex-col gap-y-4 pr-0 sm:col-span-3 sm:gap-y-8 sm:pr-40">
           {pastors.map((pastor, index) => (
             <div
               className="grid grid-cols-3 items-center gap-x-20 px-8 sm:gap-x-0"
@@ -58,11 +58,11 @@ export default function OurPastors() {
 
               <div className="col-span-3 mx-auto mt-8 aspect-square h-44 overflow-hidden rounded-full border-4 border-green-default bg-green-default sm:h-64">
                 <Image
-                  src={pastor.img}
                   alt="Chen"
                   className="mx-auto rounded-lg object-cover"
-                  width={500}
                   height={500}
+                  src={pastor.img}
+                  width={500}
                 />
               </div>
             </div>

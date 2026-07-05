@@ -35,18 +35,19 @@ export const profileRouter = createTRPCRouter({
 
       return await db.insert(profiles).values({ ...input });
     }),
-  getUserProfiles: protectedProcedure.query(async () => {
-    return await db
-      .select({
-        profiles: profiles,
-        user: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          image: users.image,
-        },
-      })
-      .from(profiles)
-      .leftJoin(users, eq(profiles.userId, users.id));
-  }),
+  getUserProfiles: protectedProcedure.query(
+    async () =>
+      await db
+        .select({
+          profiles,
+          user: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            image: users.image,
+          },
+        })
+        .from(profiles)
+        .leftJoin(users, eq(profiles.userId, users.id))
+  ),
 });

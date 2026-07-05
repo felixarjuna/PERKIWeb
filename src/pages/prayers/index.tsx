@@ -1,6 +1,6 @@
 "use client";
 
-import { type GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { getSession, useSession } from "next-auth/react";
 import React from "react";
 import { DeleteButton } from "~/components/action-button";
@@ -19,7 +19,7 @@ export default function Prayers() {
   const { data: session } = useSession();
   const username = React.useMemo(
     () => getUsernameFromName(session?.user.name ?? ""),
-    [session?.user.name],
+    [session?.user.name]
   );
 
   const { toast } = useToast();
@@ -42,7 +42,6 @@ export default function Prayers() {
 
   return (
     <Template
-      title="Prayers"
       subtitle={
         <div className="flex flex-col gap-y-2 text-base sm:px-14 sm:text-2xl">
           <p>
@@ -52,6 +51,7 @@ export default function Prayers() {
           <p>– Mark 11:24</p>
         </div>
       }
+      title="Prayers"
     >
       <div className="mt-8 flex w-full max-w-5xl flex-col gap-y-4 px-0 sm:w-full sm:px-14">
         <h3 className="mb-4 font-reimbrandt text-base sm:mb-8 sm:text-2xl">
@@ -68,7 +68,7 @@ export default function Prayers() {
           <div>
             <ul className="my-4 flex flex-col justify-center gap-2 gap-y-3">
               {prayers === undefined ? (
-                <Loader message="Loading prayers ..." className="mt-4" />
+                <Loader className="mt-4" message="Loading prayers ..." />
               ) : prayers.length === 0 ? (
                 <div className="mt-4 text-center">No prayer found.</div>
               ) : (
@@ -80,8 +80,8 @@ export default function Prayers() {
                       key={index}
                     >
                       <Badge
+                        className="w-fit font-thin text-xs"
                         variant={"secondary"}
-                        className="w-fit text-xs font-thin"
                       >
                         {prayer.isAnonymous ? "unknown" : prayer.name}
                       </Badge>
@@ -92,7 +92,6 @@ export default function Prayers() {
                         <div className="flex gap-x-2">
                           <Toggle
                             className="h-6 w-6 p-1"
-                            pressed={names.includes(username)}
                             onPressedChange={(pressed) => {
                               if (pressed) {
                                 updatePrayerCount.mutate({
@@ -109,11 +108,12 @@ export default function Prayers() {
                                     ? prayer.count + 1
                                     : prayer.count - 1,
                                   prayerNames: names.filter(
-                                    (name) => !name.includes(username),
+                                    (name) => !name.includes(username)
                                   ),
                                 });
                               }
                             }}
+                            pressed={names.includes(username)}
                           >
                             🙏
                           </Toggle>
@@ -133,8 +133,8 @@ export default function Prayers() {
                       </div>
 
                       <Badge
+                        className="-right-2 -top-2 absolute flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 font-thin text-[0.6rem]"
                         variant={"secondary"}
-                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-green-default px-0 py-0 text-[0.6rem] font-thin"
                       >
                         {prayer.count}
                       </Badge>

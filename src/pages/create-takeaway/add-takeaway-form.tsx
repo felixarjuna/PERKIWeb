@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,7 +40,7 @@ export default function AddTakeawayForm() {
   const { data: session } = useSession();
   const username = React.useMemo(
     () => getUsernameFromName(session?.user.name ?? ""),
-    [session?.user.name],
+    [session?.user.name]
   );
 
   /** loading schedule selection. */
@@ -77,6 +77,7 @@ export default function AddTakeawayForm() {
   return (
     <Form {...form}>
       <form
+        className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
             toast({
@@ -86,7 +87,6 @@ export default function AddTakeawayForm() {
             });
           })(event)
         }
-        className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">
           <h3 className="font-reimbrandt text-2xl sm:text-3xl">
@@ -113,8 +113,8 @@ export default function AddTakeawayForm() {
                         <SelectContent>
                           {schedules?.map((schedule, index) => (
                             <SelectItem
-                              value={schedule.id.toString()}
                               key={index}
+                              value={schedule.id.toString()}
                             >
                               {schedule.title
                                 .toLowerCase()
@@ -155,9 +155,9 @@ export default function AddTakeawayForm() {
             Add takeaway
           </Button>
           <Button
-            type="button"
             className="flex gap-x-2"
             onClick={() => router.back()}
+            type="button"
           >
             <ArrowLeft className="h-4 w-4" />
             Back

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -15,7 +16,8 @@ import {
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import { useToast } from "~/components/ui/use-toast";
-import { type editPrayerSchema } from "~/server/api/schema/schema";
+import { getUsernameFromName } from "~/lib/utils";
+import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/utils/api";
 
 const EditPrayerFormSchema = z.object({
@@ -23,7 +25,6 @@ const EditPrayerFormSchema = z.object({
   content: z.string().min(2),
 });
 
-const username = "felixarjuna";
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
 
 export default function EditPrayerForm({
@@ -33,6 +34,7 @@ export default function EditPrayerForm({
   prayer: Prayer;
   onCloseDialog: () => void;
 }) {
+  const { data: session } = useSession();
   const { toast } = useToast();
   const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
@@ -56,7 +58,7 @@ export default function EditPrayerForm({
   function onSubmit(data: z.infer<typeof EditPrayerFormSchema>) {
     const request: z.infer<typeof editPrayerSchema> = {
       ...prayer,
-      name: prayer.name ?? username,
+      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
       content: data.content,
       isAnonymous: data.isAnonymous,
       prayerNames: prayer.prayerNames as string[],
@@ -68,8 +70,8 @@ export default function EditPrayerForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="w-full space-y-6"
+        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         <div>
           <div className="space-y-4">
@@ -88,7 +90,7 @@ export default function EditPrayerForm({
                 </FormItem>
               )}
             />
-            <div className="xs:flex-col xs:gap-2 flex gap-x-4">
+            <div className="flex xs:flex-col xs:gap-2 gap-x-4">
               <div className="flex-1">
                 <FormField
                   control={form.control}
@@ -107,8 +109,8 @@ export default function EditPrayerForm({
                 />
               </div>
 
-              <div className="xs:justify-end flex">
-                <Button type="submit" className="w-fit">
+              <div className="flex xs:justify-end">
+                <Button className="w-fit" type="submit">
                   Save changes
                 </Button>
               </div>

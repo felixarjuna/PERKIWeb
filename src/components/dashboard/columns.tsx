@@ -1,8 +1,8 @@
-import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
+import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { DateTime } from "luxon";
 import { Button } from "~/components/ui/button";
-import { type RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
 
 type UserProfile = RouterOutputs["profiles"]["getUserProfiles"][number];
 const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
@@ -10,7 +10,7 @@ const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
   const dateB = DateTime.fromJSDate(profileB.getValue(columnId));
 
   /** handle null/undefine cases.  */
-  if (!dateA.isValid && !dateB.isValid) return 0;
+  if (!(dateA.isValid || dateB.isValid)) return 0;
   if (!dateA.isValid) return 1;
   if (!dateB.isValid) return -1;
 
@@ -30,42 +30,37 @@ export const columns: ColumnDef<UserProfile>[] = [
   {
     accessorKey: "name",
     accessorFn: (row) => row.user?.name,
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
-          onClick={() => {
-            console.log("sort by name");
-            column.toggleSorting(column.getIsSorted() === "asc");
-          }}
-        >
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        onClick={() => {
+          column.toggleSorting(column.getIsSorted() === "asc");
+        }}
+        variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
+      >
+        Name
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => row.original.user?.name,
     size: 200,
   },
   {
     accessorKey: "birthday",
     accessorFn: (row) => row.profiles.birthday,
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Birthday
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
+      >
+        Birthday
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) =>
       row.original.profiles.birthday
         ? DateTime.fromJSDate(row.original.profiles.birthday).toLocaleString(
             DateTime.DATE_FULL,
-            { locale: "id" },
+            { locale: "id" }
           )
         : "N/A",
     sortingFn: sortByMonth,

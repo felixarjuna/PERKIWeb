@@ -19,7 +19,7 @@ export default function RandomVerse({ items }: { items: readonly string[] }) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Button onClick={pickRandomItem} className="w-fit">
+      <Button className="w-fit" onClick={pickRandomItem}>
         Randomize me! 💚
       </Button>
       {verse && (

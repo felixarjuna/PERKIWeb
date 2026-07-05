@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
 import { useToast } from "~/components/ui/use-toast";
 import { useAsPath } from "~/utils/hooks/usePathStore";
@@ -26,7 +26,7 @@ export default function SignInForm() {
         title: "Authentication succesfull!",
         description: "You are now logged in! ❤️",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Authentication failed!",
       });
@@ -38,8 +38,8 @@ export default function SignInForm() {
       <div className="mt-6">
         <button
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          onClick={async () => await onGoogleLogin()}
           className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
+          onClick={async () => await onGoogleLogin()}
         >
           <FcGoogle />
           Continue with Google

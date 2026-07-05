@@ -1,29 +1,29 @@
-import {
-  type Join,
-  type PathsToStringProps,
-  type WithOptional,
+import type {
+  Join,
+  PathsToStringProps,
+  WithOptional,
 } from "../types/helper.types";
-import {
-  type CheckboxPropertyFilter,
-  type CheckboxPropertyItemObjectResponse,
-  type DatabaseObjectResponse,
-  type DatePropertyFilter,
-  type DatePropertyItemObjectResponse,
-  type ExistencePropertyFilter,
-  type MultiSelectPropertyItemObjectResponse,
-  type NumberPropertyFilter,
-  type NumberPropertyItemObjectResponse,
-  type QueryDatabaseBodyParameters,
-  type RichTextPropertyItemObjectResponse,
-  type SelectPropertyItemObjectResponse,
-  type StringRequest,
-  type TextPropertyFilter,
-  type TimestampCreatedTimeFilter,
-  type TimestampLastEditedTimeFilter,
-  type TitlePropertyItemObjectResponse,
-  type UrlPropertyItemObjectResponse,
+import type {
+  CheckboxPropertyFilter,
+  CheckboxPropertyItemObjectResponse,
+  DatabaseObjectResponse,
+  DatePropertyFilter,
+  DatePropertyItemObjectResponse,
+  ExistencePropertyFilter,
+  MultiSelectPropertyItemObjectResponse,
+  NumberPropertyFilter,
+  NumberPropertyItemObjectResponse,
+  QueryDatabaseBodyParameters,
+  RichTextPropertyItemObjectResponse,
+  SelectPropertyItemObjectResponse,
+  StringRequest,
+  TextPropertyFilter,
+  TimestampCreatedTimeFilter,
+  TimestampLastEditedTimeFilter,
+  TitlePropertyItemObjectResponse,
+  UrlPropertyItemObjectResponse,
 } from "../types/notion-api.types";
-import { type FINANCE_DATABASE_PROPS_TO_IDS } from "./constants";
+import type { FINANCE_DATABASE_PROPS_TO_IDS } from "./constants";
 
 export interface FinanceDatabaseResponse
   extends WithOptional<

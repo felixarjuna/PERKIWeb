@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { useForm } from "react-hook-form";
-import { type z } from "zod";
+import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
@@ -35,7 +35,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "~/components/ui/use-toast";
 import {
   accommodation,
-  groups,
+  groupNames,
   liturgos,
   multimedia,
   musicians,
@@ -52,7 +52,7 @@ export default function EditScheduleForm() {
 
   const id = router.query.id as string;
   const { data: schedule } = api.schedules.getScheduleById.useQuery({
-    id: parseInt(id),
+    id: Number.parseInt(id),
   });
 
   /** form defintion. */
@@ -100,7 +100,7 @@ export default function EditScheduleForm() {
                 <FormItem>
                   <FormLabel className="text-md">Title</FormLabel>
                   <FormControl>
-                    <Input {...field}></Input>
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,11 +119,11 @@ export default function EditScheduleForm() {
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant={"default"}
                             className={cn(
-                              "pl-3 text-left font-normal !text-cream-default",
-                              !field.value && "text-muted-foreground",
+                              "!text-cream-default pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
                             )}
+                            variant={"default"}
                           >
                             {field.value ? (
                               format(field.value, "PPP")
@@ -134,13 +134,13 @@ export default function EditScheduleForm() {
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-1" align="start">
+                      <PopoverContent align="start" className="w-auto p-1">
                         <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
                           disabled={(date) => date < new Date("1900-01-01")}
                           initialFocus
+                          mode="single"
+                          onSelect={field.onChange}
+                          selected={field.value}
                         />
                       </PopoverContent>
                     </Popover>
@@ -166,7 +166,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {speakers.map((speaker, index) => (
-                          <SelectItem value={speaker} key={index}>
+                          <SelectItem key={index} value={speaker}>
                             {speaker}
                           </SelectItem>
                         ))}
@@ -186,7 +186,7 @@ export default function EditScheduleForm() {
                 <FormItem>
                   <FormLabel className="text-md">Bible Verse</FormLabel>
                   <FormControl>
-                    <Input {...field}></Input>
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -236,7 +236,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {liturgos.map((liturgos, index) => (
-                          <SelectItem value={liturgos} key={index}>
+                          <SelectItem key={index} value={liturgos}>
                             {liturgos}
                           </SelectItem>
                         ))}
@@ -264,7 +264,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {noteWriter.map((writer, index) => (
-                          <SelectItem value={writer} key={index}>
+                          <SelectItem key={index} value={writer}>
                             {writer}
                           </SelectItem>
                         ))}
@@ -292,7 +292,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {musicians.map((musician, index) => (
-                          <SelectItem value={musician} key={index}>
+                          <SelectItem key={index} value={musician}>
                             {musician}
                           </SelectItem>
                         ))}
@@ -320,7 +320,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {multimedia.map((mediator, index) => (
-                          <SelectItem value={mediator} key={index}>
+                          <SelectItem key={index} value={mediator}>
                             {mediator}
                           </SelectItem>
                         ))}
@@ -348,7 +348,7 @@ export default function EditScheduleForm() {
                       </FormControl>
                       <SelectContent>
                         {accommodation.map((accomodator, index) => (
-                          <SelectItem value={accomodator} key={index}>
+                          <SelectItem key={index} value={accomodator}>
                             {accomodator}
                           </SelectItem>
                         ))}
@@ -375,8 +375,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groups.map((group, index) => (
-                          <SelectItem value={group} key={index}>
+                        {groupNames.map((group, index) => (
+                          <SelectItem key={index} value={group}>
                             {group}
                           </SelectItem>
                         ))}
@@ -403,8 +403,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groups.map((group, index) => (
-                          <SelectItem value={group} key={index}>
+                        {groupNames.map((group, index) => (
+                          <SelectItem key={index} value={group}>
                             {group}
                           </SelectItem>
                         ))}
@@ -424,6 +424,7 @@ export default function EditScheduleForm() {
   return (
     <Form {...form}>
       <form
+        className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
             toast({
@@ -432,7 +433,6 @@ export default function EditScheduleForm() {
             });
           })(event)
         }
-        className="mt-4 space-y-8 sm:mt-8"
       >
         {renderFellowshipForm()}
         {renderServantsForm()}
@@ -441,9 +441,9 @@ export default function EditScheduleForm() {
             Save changes
           </Button>
           <Button
-            type="button"
             className="flex gap-x-2"
             onClick={() => router.back()}
+            type="button"
           >
             <ArrowLeft className="h-4 w-4" />
             Back

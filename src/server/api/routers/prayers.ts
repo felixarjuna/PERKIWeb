@@ -10,33 +10,32 @@ import {
 } from "../schema/schema";
 
 export const prayerRouter = createTRPCRouter({
-  getPrayers: protectedProcedure.query(() => {
-    return db.select().from(prayers);
-  }),
+  getPrayers: protectedProcedure.query(() => db.select().from(prayers)),
   addPrayer: protectedProcedure
     .input(addPrayerSchema)
-    .mutation(async ({ input }) => {
-      return await db.insert(prayers).values({ ...input });
-    }),
+    .mutation(
+      async ({ input }) => await db.insert(prayers).values({ ...input })
+    ),
   updatePrayerCount: protectedProcedure
     .input(addPrayerCountSchema)
-    .mutation(async ({ input }) => {
-      return await db
-        .update(prayers)
-        .set({ count: input.count, prayerNames: input.prayerNames })
-        .where(eq(prayers.id, input.id));
-    }),
+    .mutation(
+      async ({ input }) =>
+        await db
+          .update(prayers)
+          .set({ count: input.count, prayerNames: input.prayerNames })
+          .where(eq(prayers.id, input.id))
+    ),
   deletePrayer: protectedProcedure
     .input(queryByIdSchema)
-    .mutation(async ({ input }) => {
-      return await db.delete(prayers).where(eq(prayers.id, input.id));
-    }),
-  updatePrayer: protectedProcedure
-    .input(editPrayerSchema)
-    .mutation(async ({ input }) => {
-      return await db
+    .mutation(
+      async ({ input }) =>
+        await db.delete(prayers).where(eq(prayers.id, input.id))
+    ),
+  updatePrayer: protectedProcedure.input(editPrayerSchema).mutation(
+    async ({ input }) =>
+      await db
         .update(prayers)
         .set({ ...input })
-        .where(eq(prayers.id, input.id));
-    }),
+        .where(eq(prayers.id, input.id))
+  ),
 });

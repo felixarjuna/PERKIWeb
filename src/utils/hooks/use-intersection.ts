@@ -5,10 +5,10 @@ import React from "react";
  */
 export const useIntersection = (
   ref: React.RefObject<HTMLElement | null>,
-  options: IntersectionObserverInit,
+  options: IntersectionObserverInit
 ): IntersectionObserverEntry | null => {
   const [entry, setEntry] = React.useState<IntersectionObserverEntry | null>(
-    null,
+    null
   );
   const { root, rootMargin, threshold } = options;
 
@@ -20,7 +20,7 @@ export const useIntersection = (
 
     const observer = new IntersectionObserver(
       (entries) => setEntry(entries.at(-1) ?? null),
-      { root, rootMargin, threshold },
+      { root, rootMargin, threshold }
     );
     observer.observe(element);
     return () => observer.disconnect();

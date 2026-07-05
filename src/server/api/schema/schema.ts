@@ -17,11 +17,9 @@ export const addScheduleSchema = z.object({
       message: "An event must have a title with at least 2 characters.",
     })
     .max(50),
-  description: z
-    .string()
-    .min(2, {
-      message: "An event must have a description with at least 2 characters.",
-    }),
+  description: z.string().min(2, {
+    message: "An event must have a description with at least 2 characters.",
+  }),
   date: z.date({
     error: "A date of service is required.",
   }),

@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 
 import React from "react";
@@ -18,14 +17,13 @@ import {
 import { Input } from "~/components/ui/input";
 import { useToast } from "~/components/ui/use-toast";
 import {
-  updatePasswordParams,
   type UpdatePasswordParams,
+  updatePasswordParams,
 } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
 
 export default function ChangePasswordForm() {
   // Load user from database
-  const { data: session } = useSession();
   const { data: user } = api.users.getUserById.useQuery();
 
   // 1. Define form
@@ -66,8 +64,8 @@ export default function ChangePasswordForm() {
   return (
     <Form {...form}>
       <form
+        className="w-full min-w-[10rem] space-y-8 sm:min-w-[32rem]"
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="w-full sm:min-w-[32rem] space-y-8 min-w-[10rem]"
       >
         <div className="space-y-4">
           <div>
@@ -117,7 +115,7 @@ export default function ChangePasswordForm() {
           </div>
         </div>
 
-        <Button variant={"secondary"} type="submit" className="w-full">
+        <Button className="w-full" type="submit" variant={"secondary"}>
           Save password
         </Button>
       </form>

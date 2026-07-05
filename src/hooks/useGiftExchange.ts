@@ -10,13 +10,13 @@ const useGiftExchange = create<GiftExchangeState>()(
   persist(
     (set) => ({
       result: undefined,
-      setResult: (result: Record<number, number>) => set({ result: result }),
+      setResult: (result: Record<number, number>) => set({ result }),
     }),
     {
       name: "gift-exchange-storage",
       storage: createJSONStorage(() => sessionStorage),
-    },
-  ),
+    }
+  )
 );
 
 export default useGiftExchange;

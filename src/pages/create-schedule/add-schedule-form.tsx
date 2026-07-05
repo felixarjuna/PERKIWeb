@@ -10,7 +10,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { useDebounce } from "use-debounce";
 
-import { type z } from "zod";
+import type { z } from "zod";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
@@ -41,7 +41,7 @@ import { useToast } from "~/components/ui/use-toast";
 import { env } from "~/env.mjs";
 import {
   accommodation,
-  groups,
+  groupNames,
   liturgos,
   multimedia,
   musicians,
@@ -77,7 +77,7 @@ export default function AddScheduleForm() {
   }
 
   return (
-    <Tabs defaultValue="manual" className="mt-8">
+    <Tabs className="mt-8" defaultValue="manual">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="manual">Manual</TabsTrigger>
         <TabsTrigger value="spreadsheet">Google Spreadsheet</TabsTrigger>
@@ -85,16 +85,8 @@ export default function AddScheduleForm() {
       <TabsContent value="manual">
         <Form {...form}>
           <form
-            onSubmit={(event) => {
-              try {
-                void form.handleSubmit(onSubmit, (error) => console.log(error))(
-                  event,
-                );
-              } catch (exception) {
-                console.log(exception);
-              }
-            }}
             className="mt-4 space-y-8 sm:mt-8"
+            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
           >
             <div className="space-y-4">
               <h3 className="font-reimbrandt text-2xl sm:text-3xl">
@@ -112,8 +104,8 @@ export default function AddScheduleForm() {
                         </FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -123,12 +115,12 @@ export default function AddScheduleForm() {
                             <SelectContent>
                               {Object.entries(eventTypeEnum.enumValues).map(
                                 ([key, value]) => (
-                                  <SelectItem value={value} key={key}>
+                                  <SelectItem key={key} value={value}>
                                     {value === "church_service"
                                       ? "Church service"
                                       : "Bible study"}
                                   </SelectItem>
-                                ),
+                                )
                               )}
                             </SelectContent>
                           </Select>
@@ -146,7 +138,7 @@ export default function AddScheduleForm() {
                       <FormItem>
                         <FormLabel className="text-md">Title</FormLabel>
                         <FormControl>
-                          <Input {...field}></Input>
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -165,11 +157,11 @@ export default function AddScheduleForm() {
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"default"}
                                   className={cn(
-                                    "pl-3 text-left font-normal !text-cream-default",
-                                    !field.value && "text-muted-foreground",
+                                    "!text-cream-default pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
                                   )}
+                                  variant={"default"}
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP")
@@ -181,17 +173,17 @@ export default function AddScheduleForm() {
                               </FormControl>
                             </PopoverTrigger>
                             <PopoverContent
-                              className="w-auto p-1"
                               align="start"
+                              className="w-auto p-1"
                             >
                               <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
                                 disabled={(date) =>
                                   date < new Date("1900-01-01")
                                 }
                                 initialFocus
+                                mode="single"
+                                onSelect={field.onChange}
+                                selected={field.value}
                               />
                             </PopoverContent>
                           </Popover>
@@ -210,8 +202,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Preacher</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -220,7 +212,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {speakers.map((speaker, index) => (
-                                <SelectItem value={speaker} key={index}>
+                                <SelectItem key={index} value={speaker}>
                                   {speaker}
                                 </SelectItem>
                               ))}
@@ -240,7 +232,7 @@ export default function AddScheduleForm() {
                       <FormItem>
                         <FormLabel className="text-md">Bible Verse</FormLabel>
                         <FormControl>
-                          <Input {...field}></Input>
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -279,8 +271,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Liturgos</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -289,7 +281,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {liturgos.map((liturgos, index) => (
-                                <SelectItem value={liturgos} key={index}>
+                                <SelectItem key={index} value={liturgos}>
                                   {liturgos}
                                 </SelectItem>
                               ))}
@@ -310,8 +302,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Musician</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -320,7 +312,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {musicians.map((musician, index) => (
-                                <SelectItem value={musician} key={index}>
+                                <SelectItem key={index} value={musician}>
                                   {musician}
                                 </SelectItem>
                               ))}
@@ -341,8 +333,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Note writer</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -351,7 +343,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {noteWriter.map((writer, index) => (
-                                <SelectItem value={writer} key={index}>
+                                <SelectItem key={index} value={writer}>
                                   {writer}
                                 </SelectItem>
                               ))}
@@ -372,8 +364,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Multimedia</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -382,7 +374,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {multimedia.map((mediator, index) => (
-                                <SelectItem value={mediator} key={index}>
+                                <SelectItem key={index} value={mediator}>
                                   {mediator}
                                 </SelectItem>
                               ))}
@@ -403,8 +395,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Accommodation</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -413,7 +405,7 @@ export default function AddScheduleForm() {
                             </FormControl>
                             <SelectContent>
                               {accommodation.map((accomodator, index) => (
-                                <SelectItem value={accomodator} key={index}>
+                                <SelectItem key={index} value={accomodator}>
                                   {accomodator}
                                 </SelectItem>
                               ))}
@@ -434,8 +426,8 @@ export default function AddScheduleForm() {
                         <FormLabel className="text-md">Cooking Group</FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -443,8 +435,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {groups.map((group, index) => (
-                                <SelectItem value={group} key={index}>
+                              {groupNames.map((group, index) => (
+                                <SelectItem key={index} value={group}>
                                   {group}
                                 </SelectItem>
                               ))}
@@ -467,8 +459,8 @@ export default function AddScheduleForm() {
                         </FormLabel>
                         <FormControl>
                           <Select
-                            onValueChange={field.onChange}
                             defaultValue={field.value}
+                            onValueChange={field.onChange}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -476,8 +468,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {groups.map((group, index) => (
-                                <SelectItem value={group} key={index}>
+                              {groupNames.map((group, index) => (
+                                <SelectItem key={index} value={group}>
                                   {group}
                                 </SelectItem>
                               ))}
@@ -530,7 +522,7 @@ type SpreadsheetSchedule = {
 
 const doc = new GoogleSpreadsheet(
   "1McH8SoN1ut6CfERNi6BSh45O8vhshfZElDA42FbTZMs",
-  { apiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY },
+  { apiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY }
 );
 
 function AddScheduleGoogleSpreadsheet() {
@@ -584,12 +576,13 @@ function AddScheduleGoogleSpreadsheet() {
 
         setSchedules(schedules);
         setLoading(false);
-      } catch (exception) {
+      } catch {
         setLoading(false);
         toast({
           variant: "destructive",
           title: "Error",
-          description: `Error occurs when loading data from spreadsheet. Some data could not be fetched.`,
+          description:
+            "Error occurs when loading data from spreadsheet. Some data could not be fetched.",
         });
       }
     };
@@ -620,24 +613,24 @@ function AddScheduleGoogleSpreadsheet() {
       <div className="grid gap-y-2 overflow-hidden">
         <h1 className="font-reimbrandt text-2xl">Settings</h1>
         <div className="grid grid-cols-2 gap-x-2">
-          <div className="col-span-1 grid  gap-2">
+          <div className="col-span-1 grid gap-2">
             <Label className="text-sm">Offset</Label>
             <Input
-              type="number"
               defaultValue={0}
               onChange={(e) =>
                 setOptions((opts) => ({ ...opts, offset: +e.target.value }))
               }
+              type="number"
             />
           </div>
-          <div className="col-span-1 grid  gap-2">
+          <div className="col-span-1 grid gap-2">
             <Label className="text-sm">Limit</Label>
             <Input
-              type="number"
               defaultValue={4}
               onChange={(e) =>
                 setOptions((opts) => ({ ...opts, limit: +e.target.value }))
               }
+              type="number"
             />
           </div>
         </div>
@@ -666,8 +659,6 @@ function AddScheduleGoogleSpreadsheet() {
 
             <div className="mt-8 flex justify-between">
               <Button
-                type="submit"
-                variant={"default"}
                 onClick={() => {
                   const _schedules = schedules?.map((x) => ({
                     ...x,
@@ -688,6 +679,8 @@ function AddScheduleGoogleSpreadsheet() {
 
                   addScheduleBatch.mutate(_schedules);
                 }}
+                type="submit"
+                variant={"default"}
               >
                 Add schedules
               </Button>

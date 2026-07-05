@@ -2,7 +2,7 @@ import Template from "~/components/template";
 
 export default function Organization() {
   return (
-    <Template title="Org. Chart" subtitle="Our family structure">
+    <Template subtitle="Our family structure" title="Org. Chart">
       <div className="flex justify-center">
         <h1 className="absolute top-1/2 animate-pulse font-reimbrandt text-3xl sm:text-4xl">
           Coming Soon ...

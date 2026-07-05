@@ -22,14 +22,16 @@ export default function TakeawayList() {
     "church_service" | "bible_study" | "all"
   >("all");
 
-  const takeaways = React.useMemo(() => {
-    return type === "all"
-      ? data
-      : data?.filter((takeaway) => takeaway.schedules.type === type);
-  }, [data, type]);
+  const takeaways = React.useMemo(
+    () =>
+      type === "all"
+        ? data
+        : data?.filter((takeaway) => takeaway.schedules.type === type),
+    [data, type]
+  );
 
   if (takeaways === undefined) {
-    return <Loader message="Loading takeaways ..." className="mt-8" />;
+    return <Loader className="mt-8" message="Loading takeaways ..." />;
   }
 
   if (takeaways.length === 0) {
@@ -44,7 +46,7 @@ export default function TakeawayList() {
         </SelectTrigger>
         <SelectContent>
           {eventTypeEnum.enumValues.map((value) => (
-            <SelectItem value={value} key={value}>
+            <SelectItem key={value} value={value}>
               {value === "bible_study" ? "Bible study" : "Church service"}
             </SelectItem>
           ))}
@@ -57,15 +59,15 @@ export default function TakeawayList() {
         const contributors = data.takeaways.contributors as string[];
         return (
           <TakeawayItem
-            key={index}
-            takeawayId={data.takeaways.id}
-            eventType={data.schedules.type}
-            title={data.schedules.title}
-            date={dateTimeFormatter(data.schedules.date.toString())}
-            speaker={data.schedules.leader}
             bibleVerse={data.schedules.bibleVerse}
-            summary={data.takeaways.keypoints}
             contributors={contributors}
+            date={dateTimeFormatter(data.schedules.date.toString())}
+            eventType={data.schedules.type}
+            key={index}
+            speaker={data.schedules.leader}
+            summary={data.takeaways.keypoints}
+            takeawayId={data.takeaways.id}
+            title={data.schedules.title}
           />
         );
       })}
@@ -109,21 +111,21 @@ function TakeawayItem(props: TakeawayItemProps) {
         <div className="flex gap-x-2">
           <ActionButton
             className="hidden items-center gap-x-2 sm:flex"
-            onEditClick={() =>
-              void router.push(`/edit-takeaway/${props.takeawayId}`)
-            }
             onDeleteClick={() =>
               deleteTakeaway.mutate({ id: +props.takeawayId })
             }
+            onEditClick={() =>
+              void router.push(`/edit-takeaway/${props.takeawayId}`)
+            }
           />
-          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1  text-xs  text-green-default sm:text-sm">
+          <span className="my-auto flex items-center whitespace-nowrap rounded-lg bg-light-green-default px-2 py-1 text-green-default text-xs sm:text-sm">
             {props.eventType === "bible_study"
               ? "bible study"
               : "church service"}
           </span>
         </div>
       </h1>
-      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-xs text-green-400/80">
+      <div className="mt-2 flex flex-wrap items-center gap-1 gap-x-2 font-reimbrandt text-green-400/80 text-xs">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
@@ -131,16 +133,16 @@ function TakeawayItem(props: TakeawayItemProps) {
         <p>{props.date}</p>
       </div>
       <p className="mt-4 whitespace-break-spaces text-sm">{props.summary}</p>
-      <p className="mt-4 text-xs text-green-400/80">
+      <p className="mt-4 text-green-400/80 text-xs">
         {props.contributors.join(" ")}
       </p>
 
       <ActionButton
-        className=" visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
+        className="visible flex w-full place-content-end gap-x-2 xl:hidden 2xl:hidden"
+        onDeleteClick={() => deleteTakeaway.mutate({ id: +props.takeawayId })}
         onEditClick={() =>
           void router.push(`/edit-takeaway/${props.takeawayId}`)
         }
-        onDeleteClick={() => deleteTakeaway.mutate({ id: +props.takeawayId })}
       />
     </div>
   );

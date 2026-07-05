@@ -1,9 +1,9 @@
 import { Analytics } from "@vercel/analytics/react";
-import type { Session } from "next-auth";
-import { SessionProvider } from "next-auth/react";
 import type { AppType } from "next/app";
 import localFont from "next/font/local";
 import Head from "next/head";
+import type { Session } from "next-auth";
+import { SessionProvider } from "next-auth/react";
 import { Toaster } from "~/components/ui/toaster";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -20,10 +20,6 @@ const reimbrandt = localFont({
   variable: "--font-reimbrandt",
 });
 
-// const AnimatedCursor = dynamic(() => import("react-animated-cursor"), {
-//   ssr: false,
-// });
-
 const App: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
@@ -39,30 +35,6 @@ const App: AppType<{ session: Session | null }> = ({
       </Head>
 
       <div className="relative overflow-hidden">
-        {/* <AnimatedCursor
-          color={"255, 255, 255"}
-          innerSize={0}
-          outerSize={30}
-          outerAlpha={1}
-          innerScale={2}
-          outerScale={1.5}
-          clickables={[
-            "a",
-            'input[type="text"]',
-            'input[type="email"]',
-            'input[type="number"]',
-            'input[type="submit"]',
-            'input[type="image"]',
-            "label[for]",
-            "select",
-            "textarea",
-            "button",
-            ".link",
-          ]}
-          outerStyle={{
-            mixBlendMode: "difference",
-          }}
-        /> */}
         <SessionProvider session={session}>
           <Component {...pageProps} />
         </SessionProvider>

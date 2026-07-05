@@ -1,8 +1,8 @@
+import * as dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { type Schedule, schedules } from "./schema/schema";
 
-import * as dotenv from "dotenv";
 dotenv.config();
 
 const scheduleList: Schedule[] = [

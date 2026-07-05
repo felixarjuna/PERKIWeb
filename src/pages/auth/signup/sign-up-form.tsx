@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 
 import { useForm } from "react-hook-form";
-import { type z } from "zod";
+import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -63,13 +63,13 @@ export default function SignUpForm() {
 
   return (
     <div>
-      <div className="mb-4 mt-8">
+      <div className="mt-8 mb-4">
         <Form {...form}>
           <form
-            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
             className="mt-4 w-full space-y-8"
+            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
           >
-            <div className="space-y-4 ">
+            <div className="space-y-4">
               <div>
                 <FormField
                   control={form.control}
@@ -117,7 +117,7 @@ export default function SignUpForm() {
               </div>
             </div>
 
-            <Button variant={"secondary"} type="submit" className="w-full">
+            <Button className="w-full" type="submit" variant={"secondary"}>
               Create Account
             </Button>
           </form>
@@ -126,7 +126,7 @@ export default function SignUpForm() {
 
       <div className="mt-6 text-center text-sm">
         Already have an account?{" "}
-        <Link href={"signin"} className="underline underline-offset-1">
+        <Link className="underline underline-offset-1" href={"signin"}>
           Sign in
         </Link>
       </div>

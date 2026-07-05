@@ -1,7 +1,7 @@
 import React from "react";
 import { EditButton } from "~/components/action-button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
-import { type RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
 import EditPrayerForm from "./edit-prayer-form";
 
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
@@ -14,16 +14,12 @@ export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
+    <Dialog onOpenChange={(isOpen) => setIsOpen(isOpen)} open={isOpen}>
       <DialogTrigger>
-        <EditButton
-          onEditClick={() => {
-            console.log("Prayer edited.");
-          }}
-        />
+        <EditButton />
       </DialogTrigger>
       <DialogContent>
-        <EditPrayerForm prayer={prayer} onCloseDialog={() => onCloseDialog()} />
+        <EditPrayerForm onCloseDialog={() => onCloseDialog()} prayer={prayer} />
       </DialogContent>
     </Dialog>
   );
