@@ -12,22 +12,22 @@ import {
 
 export default function WhatWeDo() {
   return (
-    <div className="grid gap-y-8 bg-cream-default py-16 text-dark-green-default">
+    <div className="grid gap-y-8 bg-paper py-16 text-paper-foreground">
       <div className="grid grid-cols-4">
         <div className="sm:-rotate-90 col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1">
-          <h1 className="text-center font-reimbrandt text-4xl text-green-default sm:text-8xl">
+          <h1 className="text-center font-reimbrandt text-4xl text-paper-foreground sm:text-8xl">
             What We Do
           </h1>
         </div>
 
-        <div className="col-span-4 flex flex-col gap-y-8 pr-0 text-green-default sm:col-span-3 sm:gap-y-8 sm:pr-40">
+        <div className="col-span-4 flex flex-col gap-y-8 pr-0 text-paper-foreground sm:col-span-3 sm:gap-y-8 sm:pr-40">
           {events.map((event, index) => (
             <div className="col-span-2 mx-8 flex max-w-lg flex-col" key={index}>
               <h1 className="font-reimbrandt text-2xl sm:text-3xl">
                 {event.name}
               </h1>
 
-              <div className="mt-1 flex w-fit items-center rounded-lg bg-green-default px-3 py-2 text-cream-default text-sm sm:mt-2 sm:px-4 sm:text-xl">
+              <div className="mt-1 flex w-fit items-center rounded-lg bg-accent px-3 py-2 text-foreground text-sm sm:mt-2 sm:px-4 sm:text-xl">
                 <p>{event.time} </p>
               </div>
               <p className="mt-2 text-base sm:mt-4 sm:text-xl">{event.notes}</p>

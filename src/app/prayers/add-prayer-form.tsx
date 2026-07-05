@@ -79,7 +79,7 @@ export default function AddPrayerForm() {
               />
             </div>
             <Button
-              className="gap-x-1 bg-green-default/70 hover:bg-green-default"
+              className="gap-x-1 bg-accent/70 hover:bg-accent"
               type="submit"
             >
               <Plus className="h-5 w-5" />

@@ -99,7 +99,7 @@ export default function Page() {
 
   return (
     <div className="flex h-screen flex-col bg-cover bg-stary-night-plain">
-      <div className="h-full bg-dark-grey-default/40 backdrop-blur-sm">
+      <div className="h-full bg-background/40 backdrop-blur-sm">
         <Snowfall radius={[0, 2.5]} snowflakeCount={100} speed={[1.0, 2.0]} />
         <h1 className="mt-20 text-center text-3xl">
           TUKER KADO PERKI AACHEN 2025

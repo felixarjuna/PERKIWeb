@@ -45,7 +45,7 @@ export default function Home() {
             </Link>
           </DialogFooter>
 
-          <span className="flex justify-center text-center text-light-green-default text-xs">
+          <span className="flex justify-center text-center text-foreground text-xs">
             * you have to register yourself beforehand.
           </span>
         </DialogContent>

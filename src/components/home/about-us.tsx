@@ -26,7 +26,7 @@ export default function AboutUs() {
   }, [intersection, intersection?.boundingClientRect]);
 
   return (
-    <div className="relative bg-dark-green-default pt-20 text-light-green-default">
+    <div className="relative bg-background pt-20 text-foreground">
       <Navigation showNav={showNav} />
 
       <div className="px-24">
@@ -111,7 +111,7 @@ export default function AboutUs() {
         </div>
 
         <div className="mx-auto flex flex-col items-center justify-center gap-4 text-center sm:w-8/12 sm:flex-row sm:gap-10">
-          <div className="w-10/12 rounded-lg bg-dark-green-default/30 sm:h-60 sm:w-1/2">
+          <div className="w-10/12 rounded-lg bg-background/30 sm:h-60 sm:w-1/2">
             <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
               <h1 className="font-reimbrandt text-2xl sm:text-5xl">Vision</h1>
               <p className="text-base sm:text-2xl">
@@ -121,7 +121,7 @@ export default function AboutUs() {
             </div>
           </div>
 
-          <div className="w-10/12 rounded-lg bg-dark-green-default/30 sm:h-60 sm:w-1/2">
+          <div className="w-10/12 rounded-lg bg-background/30 sm:h-60 sm:w-1/2">
             <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
               <h1 className="font-reimbrandt text-2xl sm:text-5xl">Mission</h1>
               <p className="text-base sm:text-2xl">

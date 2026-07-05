@@ -48,7 +48,7 @@ export default function SignInForm() {
   return (
     <div className="mt-6">
       <button
-        className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
+        className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-accent/60 p-2"
         onClick={() => void onGoogleLogin()}
         type="button"
       >

@@ -34,7 +34,7 @@ export function EditButton({ onEditClick }: { onEditClick?: () => void }) {
   return (
     <button
       aria-label="Edit"
-      className="flex h-6 w-6 items-center justify-center rounded-md bg-green-default/80 hover:bg-dark-green-default"
+      className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/80 hover:bg-background"
       onClick={onEditClick}
       type="button"
     >

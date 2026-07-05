@@ -119,7 +119,7 @@ export default function EditScheduleForm() {
                         <FormControl>
                           <Button
                             className={cn(
-                              "!text-cream-default pl-3 text-left font-normal",
+                              "!text-foreground pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                             variant={"default"}
