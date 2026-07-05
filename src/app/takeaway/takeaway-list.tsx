@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React from "react";
 import Loader from "~/components/loader";
 import {
@@ -12,7 +12,7 @@ import {
 } from "~/components/ui/select";
 import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { dateTimeFormatter } from "~/lib/utils";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import ActionButton from "../../components/action-button";
 import { toast } from "sonner";
 

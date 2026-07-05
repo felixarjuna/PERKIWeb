@@ -1,8 +1,14 @@
-import type { GetServerSidePropsContext } from "next";
+import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import { auth } from "~/server/auth";
 import AddTakeawayForm from "./add-takeaway-form";
 
-export default function AddTakeawayPage() {
+export default async function AddTakeawayPage() {
+  const session = await auth();
+  if (!session) {
+    redirect("/auth/signin");
+  }
+
   return (
     <Template
       subtitle={
@@ -18,21 +24,4 @@ export default function AddTakeawayPage() {
       </div>
     </Template>
   );
-}
-
-import { auth } from "~/server/auth";
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await auth(context);
-
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/auth/signin",
-        permanent: false,
-      },
-    };
-  }
-
-  return { props: { session } };
 }

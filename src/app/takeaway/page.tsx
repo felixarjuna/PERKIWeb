@@ -3,7 +3,7 @@ import Link from "next/link";
 import Template from "~/components/template";
 import TakeawayList from "./takeaway-list";
 
-export default function Takeaway() {
+export default function TakeawayPage() {
   return (
     <Template
       subtitle={

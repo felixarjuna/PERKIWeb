@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -21,7 +21,7 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 export default function EditTakeawayForm() {
@@ -33,7 +33,8 @@ export default function EditTakeawayForm() {
 
   const router = useRouter();
 
-  const id = router.query.id as string;
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? "";
   const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
     id: Number.parseInt(id),
   });
@@ -65,7 +66,7 @@ export default function EditTakeawayForm() {
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
       toast.success("Your changes has been saved successfully! ✨", { description: "Thanks for your contribution!" });
-      await router.push("/takeaway");
+      router.push("/takeaway");
     },
   });
 

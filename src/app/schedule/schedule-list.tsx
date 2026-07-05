@@ -8,7 +8,7 @@ import {
   Sparkles,
   Utensils,
 } from "lucide-react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React from "react";
 import ActionButton from "~/components/action-button";
 import Loader from "~/components/loader";
@@ -26,8 +26,8 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { groups } from "~/lib/data";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/utils/api";
-import RandomVerse from "./_components/random-verse";
+import { api, type RouterOutputs } from "~/trpc/react";
+import RandomVerse from "./random-verse";
 import { toast } from "sonner";
 
 type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
