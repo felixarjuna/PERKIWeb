@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { DateTime } from "luxon";
 import { twMerge } from "tailwind-merge";
-import type { RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

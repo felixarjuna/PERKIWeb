@@ -17,7 +17,7 @@ import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import { getUsernameFromName } from "~/lib/utils";
 import type { editPrayerSchema } from "~/server/api/schema/schema";
-import { api, type RouterOutputs } from "~/utils/api";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { toast } from "sonner";
 
 const EditPrayerFormSchema = z.object({
