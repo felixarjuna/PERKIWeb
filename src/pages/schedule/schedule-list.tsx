@@ -25,9 +25,9 @@ import {
 } from "~/components/ui/drawer";
 import { Separator } from "~/components/ui/separator";
 import { useToast } from "~/components/ui/use-toast";
+import { groups } from "~/lib/data";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/utils/api";
-import { groups } from "../group";
 import RandomVerse from "./_components/random-verse";
 
 type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
@@ -42,7 +42,6 @@ const verses = [
   'John 15:12 — "My command is this: Love each other as I have loved you."',
   'Acts 4:32 — "All the believers were one in heart and mind. No one claimed that any of their possessions was their own, but they shared everything they had."',
   'Ecclesiastes 4:9 — "Two are better than one, because they have a good return for their labor."',
-  '1 Corinthians 12:12 — "Just as a body, though one, has many parts, but all its many parts form one body, so it is with Christ."',
 ];
 
 export default function ScheduleList() {
@@ -62,7 +61,6 @@ export default function ScheduleList() {
   const router = useRouter();
 
   function renderScheduleDetails(schedule: Schedule) {
-    console.log(schedule);
     return (
       <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-green-400/80 text-xs sm:gap-x-2">
         <p>{schedule.preacher || "-"}</p>

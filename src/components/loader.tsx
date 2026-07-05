@@ -10,7 +10,7 @@ export default function Loader(props: ILoaderProps) {
     <div
       className={cn(
         "flex animate-pulse items-center justify-center gap-1 sm:gap-2",
-        props.className,
+        props.className
       )}
     >
       <Loader2 className="size-4 animate-spin sm:size-5" />

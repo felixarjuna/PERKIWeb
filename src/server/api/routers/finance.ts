@@ -1,4 +1,4 @@
-import { type FinanceDatabaseResponse } from "~/lib/notion/finance-database";
+import type { FinanceDatabaseResponse } from "~/lib/notion/finance-database";
 import { notion } from "~/lib/notion/notion";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -6,7 +6,7 @@ export const financeRouter = createTRPCRouter({
   getFinances: protectedProcedure.query(async () => {
     let results: FinanceDatabaseResponse[] = [];
     let hasMore = true;
-    let cursor: string | undefined = undefined;
+    let cursor: string | undefined;
 
     while (hasMore) {
       const response = await notion.databases.query({
@@ -32,7 +32,7 @@ export const financeRouter = createTRPCRouter({
     return results.sort(
       (x, y) =>
         new Date(x.properties.Date.date?.start ?? new Date()).getTime() -
-        new Date(y.properties.Date.date?.start ?? new Date()).getTime(),
+        new Date(y.properties.Date.date?.start ?? new Date()).getTime()
     );
   }),
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import Navigation from "./home/navigation";
 
 interface ITemplateProps extends React.HTMLAttributes<HTMLDivElement> {

@@ -1,8 +1,8 @@
-import {
-  type RichTextItemRequest,
-  type UpdatePageBodyParameters,
+import type {
+  RichTextItemRequest,
+  UpdatePageBodyParameters,
 } from "../types/notion-api.types";
-import { type FinanceDatabaseResponse } from "./types";
+import type { FinanceDatabaseResponse } from "./types";
 
 type TypeFromRecord<Obj, Type> = Obj extends Record<string, infer T>
   ? Extract<T, Type>
@@ -121,20 +121,20 @@ export class FinanceDatabasePatchDTO {
         rich_text:
           typeof props.notes === "string"
             ? [{ type: "text", text: { content: props.notes } }]
-            : !Array.isArray(props.notes)
-            ? [
-                {
-                  type: "text",
-                  text: {
-                    content: props.notes.text,
-                    link: props.notes.url
-                      ? { url: props.notes.url }
-                      : undefined,
+            : Array.isArray(props.notes)
+              ? props.notes
+              : [
+                  {
+                    type: "text",
+                    text: {
+                      content: props.notes.text,
+                      link: props.notes.url
+                        ? { url: props.notes.url }
+                        : undefined,
+                    },
+                    annotations: props.notes.annotations,
                   },
-                  annotations: props.notes.annotations,
-                },
-              ]
-            : props.notes,
+                ],
       };
     }
 
@@ -144,20 +144,20 @@ export class FinanceDatabasePatchDTO {
         title:
           typeof props.description === "string"
             ? [{ type: "text", text: { content: props.description } }]
-            : !Array.isArray(props.description)
-            ? [
-                {
-                  type: "text",
-                  text: {
-                    content: props.description.text,
-                    link: props.description.url
-                      ? { url: props.description.url }
-                      : undefined,
+            : Array.isArray(props.description)
+              ? props.description
+              : [
+                  {
+                    type: "text",
+                    text: {
+                      content: props.description.text,
+                      link: props.description.url
+                        ? { url: props.description.url }
+                        : undefined,
+                    },
+                    annotations: props.description.annotations,
                   },
-                  annotations: props.description.annotations,
-                },
-              ]
-            : props.description,
+                ],
       };
     }
 

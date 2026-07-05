@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
@@ -15,13 +14,12 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { useToast } from "~/components/ui/use-toast";
-import { updateUserParams, type UpdateUserParams } from "~/lib/db/schema/auth";
+import { type UpdateUserParams, updateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
 
 const PASSWORD_PLACEHOLDER_LENGTH = 8;
 
 export default function AccountForm() {
-  const { data: session } = useSession();
   const { data: user } = api.users.getUserById.useQuery();
 
   const { toast } = useToast();
@@ -63,15 +61,16 @@ export default function AccountForm() {
   }
 
   /** OAuth accounts have no local password and cannot edit credentials here. */
-  const isOAuthAccount = user !== undefined && user !== null && !user.hasPassword;
+  const isOAuthAccount =
+    user !== undefined && user !== null && !user.hasPassword;
 
   return (
     <Form {...form}>
       {isOAuthAccount ? (
         <div className="mb-8 text-xs sm:text-sm">
           <Button
-            variant={"outline"}
             className="h-fit min-w-fit px-4 py-4 text-center sm:px-6 sm:py-6 xl:py-8 2xl:py-8"
+            variant={"outline"}
           >
             You can not change your email and password if you are logged in with
             Google Account. Please login with another account instead.
@@ -80,8 +79,8 @@ export default function AccountForm() {
       ) : null}
 
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="w-full min-w-[10rem] space-y-8 sm:min-w-[32rem]"
+        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         <div className="space-y-4">
           <div>
@@ -120,17 +119,17 @@ export default function AccountForm() {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <Input
-                  type="password"
-                  value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
                   disabled
                   readOnly
+                  type="password"
+                  value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
                 />
               </FormControl>
             </FormItem>
           </div>
         </div>
 
-        <Button variant={"secondary"} type="submit" className="w-full">
+        <Button className="w-full" type="submit" variant={"secondary"}>
           Update account
         </Button>
       </form>

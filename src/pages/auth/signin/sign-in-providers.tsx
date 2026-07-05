@@ -1,7 +1,7 @@
-import { type InferGetServerSidePropsType } from "next";
+import type { InferGetServerSidePropsType } from "next";
 import { signIn } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
-import { type getServerSideProps } from ".";
+import type { getServerSideProps } from ".";
 
 export default function SignInProviders({
   providers,
@@ -9,23 +9,21 @@ export default function SignInProviders({
   if (typeof providers === "undefined") return;
 
   return (
-    <div className="mt-8 w-full text-cream-default xs:mt-4">
-      {Object.values(providers).map((provider) => {
-        return (
-          <button
-            key={provider.id}
-            onClick={() =>
-              void signIn(provider.id, {
-                callbackUrl: `${window.location.origin}`,
-              })
-            }
-            className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
-          >
-            <FcGoogle />
-            Sign In with {provider.name}
-          </button>
-        );
-      })}
+    <div className="mt-8 xs:mt-4 w-full text-cream-default">
+      {Object.values(providers).map((provider) => (
+        <button
+          className="flex w-full items-center justify-center gap-x-2 rounded-lg bg-green-default/60 p-2"
+          key={provider.id}
+          onClick={() =>
+            void signIn(provider.id, {
+              callbackUrl: `${window.location.origin}`,
+            })
+          }
+        >
+          <FcGoogle />
+          Sign In with {provider.name}
+        </button>
+      ))}
     </div>
   );
 }

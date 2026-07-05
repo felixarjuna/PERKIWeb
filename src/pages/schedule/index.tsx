@@ -7,7 +7,6 @@ import ScheduleList from "./schedule-list";
 export default function Schedule() {
   return (
     <Template
-      title="Schedule"
       subtitle={
         <div className="flex flex-col justify-center gap-y-2 text-base sm:px-14 sm:text-2xl">
           <p>
@@ -17,11 +16,12 @@ export default function Schedule() {
           <p>– Ecclesiastes 3:1</p>
         </div>
       }
+      title="Schedule"
     >
       <div className="mt-8 flex w-full max-w-5xl flex-col px-0 sm:px-14">
         <Link
-          href={"/create-schedule"}
           className="flex w-fit items-center gap-1 self-end rounded-lg bg-green-default/60 p-3 px-4 text-sm"
+          href={"/create-schedule"}
         >
           <Plus className="aspect-square w-4" />
           <p>Add schedule</p>

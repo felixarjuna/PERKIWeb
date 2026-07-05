@@ -5,44 +5,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
-
-export const groups = [
-  {
-    name: "Group 1",
-    members: ["Danny", "Shane", "Wisnu", "Ruth", "Dian", "Gerry"],
-  },
-  { name: "Group 2", members: ["Reggy", "Felix", "Jason", "Erico", "Gaby"] },
-  {
-    name: "Group 3",
-    members: ["Toni", "Victor", "Angel", "Ricky", "Deronn", "Trevor"],
-  },
-  {
-    name: "Group 4",
-    members: ["Aldi", "Billy", "Andrew", "Mary", "Winston S.", "Randy"],
-  },
-  {
-    name: "Group 5",
-    members: ["Winston Y.", "Steffen", "Karyn", "Jco", "Grace", "Vincent"],
-  },
-  { name: "Group 6", members: ["Chen", "Ido", "Wynnona", "Tius", "Daven"] },
-];
+import { groups } from "~/lib/data";
 
 export default function Group() {
   return (
-    <Template title="Groups" subtitle="Cleaning and cooking groups">
+    <Template subtitle="Cleaning and cooking groups" title="Groups">
       <div className="mt-8 w-full">
-        <Accordion type="single" collapsible className="grid gap-2">
+        <Accordion className="grid gap-2" collapsible type="single">
           {groups.map((group, i) => (
             <AccordionItem
+              className="rounded-lg bg-primary px-4 text-primary-foreground hover:bg-accent"
               key={i}
               value={group.name}
-              className="rounded-lg bg-primary px-4 text-primary-foreground hover:bg-accent"
             >
               <AccordionTrigger>{group.name}</AccordionTrigger>
               <AccordionContent className="flex flex-wrap gap-2">
                 {group.members.map((member, i) => (
                   <div
-                    className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-xs text-secondary-foreground"
+                    className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground text-xs"
                     key={i}
                   >
                     {member}

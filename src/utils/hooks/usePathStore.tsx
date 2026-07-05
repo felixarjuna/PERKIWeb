@@ -13,14 +13,10 @@ const asPathStore = create<AsPathStoreType>(() => ({
 }));
 
 /** use as a hook to get prevAsPath and currentAsPath- */
-export const useAsPath = () => {
-  return asPathStore((state) => state);
-};
+export const useAsPath = () => asPathStore((state) => state);
 
 /** use everywhere you like */
-export const getAsPath = () => {
-  return asPathStore.getState();
-};
+export const getAsPath = () => asPathStore.getState();
 
 /** only use this in _app.tsx or root. it's like an provider. */
 export const useAsPathInitializer = () => {

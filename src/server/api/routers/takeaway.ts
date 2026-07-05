@@ -10,27 +10,28 @@ import {
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
-  getTakeaways: publicProcedure.query(async () => {
-    return await db
-      .select()
-      .from(takeaways)
-      .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-      .orderBy(desc(schedules.date));
-  }),
-  addTakeaway: protectedProcedure
-    .input(addTakeawaySchema)
-    .mutation(async ({ input }) => {
-      return await db.insert(takeaways).values({
+  getTakeaways: publicProcedure.query(
+    async () =>
+      await db
+        .select()
+        .from(takeaways)
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+        .orderBy(desc(schedules.date))
+  ),
+  addTakeaway: protectedProcedure.input(addTakeawaySchema).mutation(
+    async ({ input }) =>
+      await db.insert(takeaways).values({
         scheduleId: input.scheduleId,
         keypoints: input.keypoints,
         contributors: input.contributors,
-      });
-    }),
+      })
+  ),
   deleteTakeaway: protectedProcedure
     .input(queryByIdSchema)
-    .mutation(async ({ input }) => {
-      return await db.delete(takeaways).where(eq(takeaways.id, input.id));
-    }),
+    .mutation(
+      async ({ input }) =>
+        await db.delete(takeaways).where(eq(takeaways.id, input.id))
+    ),
   getTakeawayById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
@@ -49,12 +50,11 @@ export const takeawayRouter = createTRPCRouter({
 
       return takeaway;
     }),
-  updateTakeaway: protectedProcedure
-    .input(updateTakeawaySchema)
-    .mutation(async ({ input }) => {
-      return await db
+  updateTakeaway: protectedProcedure.input(updateTakeawaySchema).mutation(
+    async ({ input }) =>
+      await db
         .update(takeaways)
         .set({ ...input })
-        .where(eq(takeaways.id, input.id));
-    }),
+        .where(eq(takeaways.id, input.id))
+  ),
 });

@@ -1,7 +1,6 @@
+import Image from "next/image";
 import React from "react";
 import { useIntersection } from "~/utils/hooks/use-intersection";
-
-import Image from "next/image";
 import Navigation from "./navigation";
 
 import ParallaxImage from "./parallax-image";
@@ -35,12 +34,11 @@ export default function AboutUs() {
           <h1 className="font-reimbrandt text-4xl tracking-wide sm:text-5xl md:text-6xl lg:text-7xl xl:text-9xl">
             About Us
           </h1>
-          {/* <Separator className="h-1 rounded-sm" /> */}
         </div>
       </div>
 
       <div className="mt-20 flex flex-col gap-y-44 overflow-hidden px-8 sm:gap-y-48 sm:px-12 md:gap-y-52 md:px-16 lg:gap-y-56 lg:px-20 xl:gap-y-64 xl:px-24 2xl:gap-y-72 2xl:px-28">
-        <div ref={intersectionRef} className="relative flex flex-row">
+        <div className="relative flex flex-row" ref={intersectionRef}>
           <p className="z-10 max-w-[90%] text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
             <span className="font-reimbrandt text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl">
               Perki
@@ -51,10 +49,10 @@ export default function AboutUs() {
             the inspired Words of God.
           </p>
           <ParallaxImage
-            img={"/images/chen.png"}
             alt="Photo of Chen"
-            width={400}
             height={400}
+            img={"/images/chen.png"}
+            width={400}
           />
         </div>
 
@@ -65,11 +63,11 @@ export default function AboutUs() {
             Commission of the Lord Jesus Christ.
           </p>
           <ParallaxImage
-            img={"/images/steffen.png"}
-            className="left-0"
             alt="Photo of Steffen"
-            width={400}
+            className="left-0"
             height={400}
+            img={"/images/steffen.png"}
+            width={400}
           />
         </div>
 
@@ -81,10 +79,10 @@ export default function AboutUs() {
             with others.
           </p>
           <ParallaxImage
-            img={"/images/pandya.png"}
             alt="Photo of Pandya"
-            width={400}
             height={400}
+            img={"/images/pandya.png"}
+            width={400}
           />
         </div>
 
@@ -96,11 +94,11 @@ export default function AboutUs() {
             want to grow together :)
           </p>
           <ParallaxImage
-            img={"/images/learn.jpg"}
-            className="bottom-20 left-0 w-[900px] 2xl:left-16"
             alt="Photo of people learning together"
-            width={600}
+            className="bottom-20 left-0 w-[900px] 2xl:left-16"
             height={600}
+            img={"/images/learn.jpg"}
+            width={600}
           />
         </div>
       </div>
@@ -136,11 +134,11 @@ export default function AboutUs() {
 
         <div className="mx-auto flex h-full w-10/12 items-center justify-center sm:w-8/12">
           <Image
-            src={"/images/perki-aachen.jpg"}
             alt="perki"
             className="rounded-lg object-contain"
-            width={3000}
             height={0}
+            src={"/images/perki-aachen.jpg"}
+            width={3000}
           />
         </div>
       </div>

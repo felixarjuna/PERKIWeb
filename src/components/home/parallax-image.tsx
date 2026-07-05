@@ -19,27 +19,23 @@ export default function ParallaxImage({
 }: ParallaxImageProps) {
   const targetRef = React.useRef(null);
 
-  const { scrollYProgress } = useScroll({
-    // container: containerRef,
-    target: targetRef,
-    // offset: ["start start", "end start"],
-  });
+  const { scrollYProgress } = useScroll({ target: targetRef });
 
   const y = useTransform(scrollYProgress, [0, 1], ["-40%", "40%"]);
 
   return (
     <motion.div
-      style={{ y }}
+      className={cn("absolute top-0 right-5 rounded-lg", className)}
       ref={targetRef}
-      className={cn("absolute right-5 top-0 rounded-lg", className)}
+      style={{ y }}
     >
       <Image
-        src={img}
-        className="scale-75 rounded-lg brightness-50 filter sm:scale-75 md:scale-95 lg:scale-110 2xl:scale-125"
         alt={alt}
-        width={width}
+        className="scale-75 rounded-lg brightness-50 filter sm:scale-75 md:scale-95 lg:scale-110 2xl:scale-125"
         height={height}
         quality={100}
+        src={img}
+        width={width}
       />
     </motion.div>
   );

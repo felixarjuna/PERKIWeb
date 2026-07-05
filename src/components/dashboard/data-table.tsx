@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { countBirthdaysThisMonth } from "~/lib/utils";
-import { type RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
 import { Badge } from "../ui/badge";
 import DataTablePagination from "./data-table-pagination";
 
@@ -51,18 +51,10 @@ export default function DataTable<TData, TValue>({
   const count = React.useMemo(
     () =>
       countBirthdaysThisMonth(
-        data as RouterOutputs["profiles"]["getUserProfiles"],
+        data as RouterOutputs["profiles"]["getUserProfiles"]
       ),
-    [data],
+    [data]
   );
-
-  // const { data: status } = useQuery({
-  //   queryKey: ["perki-bot"],
-  //   queryFn: () => fetch("https://perki-bot.fly.dev").then((res) => res.json()),
-
-  // });
-
-  // console.log(status);
 
   return (
     <div className="space-y-4 p-4 text-cream-default">
@@ -73,18 +65,18 @@ export default function DataTable<TData, TValue>({
           </h1>
           <p className="font-satoshi text-lg sm:text-xl">{count}</p>
 
-          <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2">
+          <div className="-translate-y-1/2 absolute top-0 right-0 translate-x-1/2">
             <span className="relative flex size-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex size-3 rounded-full bg-green-300"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex size-3 rounded-full bg-green-300" />
             </span>
           </div>
         </div>
 
-        <Badge className="flex h-fit items-center gap-x-2 self-end font-satoshi font-normal">
+        <Badge className="flex h-fit items-center gap-x-2 self-end font-normal font-satoshi">
           <span className="relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex size-2 rounded-full bg-green-300"></span>
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-green-300" />
           </span>
           <p>perki.bot operational</p>
         </Badge>
@@ -95,22 +87,20 @@ export default function DataTable<TData, TValue>({
           <TableHeader className="bg-muted">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      style={{ width: `${header.getSize()}px` }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    colSpan={header.colSpan}
+                    key={header.id}
+                    style={{ width: `${header.getSize()}px` }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -118,14 +108,14 @@ export default function DataTable<TData, TValue>({
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -134,8 +124,8 @@ export default function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
                   className="h-24 text-center"
+                  colSpan={columns.length}
                 >
                   No results.
                 </TableCell>

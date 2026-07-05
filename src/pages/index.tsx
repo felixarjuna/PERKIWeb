@@ -1,5 +1,4 @@
 import Link from "next/link";
-import React from "react";
 import CircleBackground from "~/components/circle-background";
 import AboutUs from "~/components/home/about-us";
 import Footer from "~/components/home/footer";
@@ -16,21 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 
 export default function Home() {
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    function handleResize() {
-      setIsMobile(window.innerWidth <= 768);
-    }
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   return (
     <div>

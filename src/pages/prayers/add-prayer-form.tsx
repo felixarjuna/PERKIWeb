@@ -18,7 +18,7 @@ import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
-import { type addPrayerSchema } from "~/server/api/schema/schema";
+import type { addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 const AddPrayerFormSchema = z.object({
@@ -61,11 +61,11 @@ export default function AddPrayerForm() {
   return (
     <Form {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="w-full space-y-6"
+        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         <div className="grid gap-y-4">
-          <div className="flex gap-x-4 xs:gap-2">
+          <div className="flex xs:gap-2 gap-x-4">
             <div className="flex-1">
               <FormField
                 control={form.control}
@@ -81,10 +81,10 @@ export default function AddPrayerForm() {
               />
             </div>
             <Button
+              className="gap-x-1 bg-green-default/70 xs:px-2 xs:py-1 xs:text-xs hover:bg-green-default"
               type="submit"
-              className="gap-x-1 bg-green-default/70 hover:bg-green-default xs:px-2 xs:py-1 xs:text-xs"
             >
-              <Plus className="h-5 w-5 xs:h-4 xs:w-4" />
+              <Plus className="h-5 xs:h-4 w-5 xs:w-4" />
               Add
             </Button>
           </div>

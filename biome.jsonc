@@ -1,8 +1,14 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": [
-    "ultracite/core",
-    "ultracite/react",
-    "ultracite/next"
-  ]
+  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "files": {
+    // Generated code (notion-ts-client SDK + vendored Notion API types) and
+    // DB migration snapshots are not held to lint rules.
+    "includes": [
+      "**",
+      "!src/lib/notion/finance-database/**",
+      "!src/lib/notion/types/**",
+      "!src/lib/db/migrations/**"
+    ]
+  }
 }

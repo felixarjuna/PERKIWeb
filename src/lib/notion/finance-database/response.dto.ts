@@ -1,4 +1,4 @@
-import { type FinanceDatabaseResponse } from "./types";
+import type { FinanceDatabaseResponse } from "./types";
 
 export class FinanceDatabaseResponseDTO {
   __data: FinanceDatabaseResponse;
@@ -50,8 +50,8 @@ export class FinanceDatabaseResponseDTO {
         this.__data.icon?.type === "external"
           ? this.__data.icon?.external?.url
           : this.__data.icon?.type === "file"
-          ? this.__data.icon?.file?.url
-          : undefined,
+            ? this.__data.icon?.file?.url
+            : undefined,
       emoji:
         this.__data.icon?.type === "emoji"
           ? this.__data.icon?.emoji
@@ -117,7 +117,7 @@ export class FinanceDatabasePropertiesResponseDTO {
       text: this.__props.Notes?.rich_text
         ? this.__props.Notes.rich_text.reduce(
             (acc, item) => acc + item.plain_text,
-            "",
+            ""
           )
         : undefined,
       links: this.__props.Notes?.rich_text
@@ -134,7 +134,7 @@ export class FinanceDatabasePropertiesResponseDTO {
       text: this.__props.Description?.title
         ? this.__props.Description.title.reduce(
             (acc, item) => acc + item.plain_text,
-            "",
+            ""
           )
         : undefined,
       links: this.__props.Description?.title

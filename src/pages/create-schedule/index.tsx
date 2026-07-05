@@ -1,6 +1,6 @@
 "use client";
 
-import { type GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { getSession } from "next-auth/react";
 import Template from "~/components/template";
 import { authOptions } from "~/server/auth";
@@ -9,9 +9,8 @@ import AddScheduleForm from "./add-schedule-form";
 export default function AddSchedulePage() {
   return (
     <Template
-      title="Add schedule"
       subtitle={
-        <div className="xs:text-2xl flex flex-col gap-y-2 text-base">
+        <div className="flex flex-col gap-y-2 text-base xs:text-2xl">
           <p>
             “There is a time for everything, and a season for every activity
             under the heavens.”
@@ -19,6 +18,7 @@ export default function AddSchedulePage() {
           <p>– Ecclesiastes 3:1</p>
         </div>
       }
+      title="Add schedule"
     >
       <div className="mx-auto w-full max-w-4xl">
         <AddScheduleForm />

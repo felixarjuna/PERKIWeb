@@ -2,11 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { type z } from "zod";
+import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -27,7 +27,7 @@ export default function EditTakeawayForm() {
   const { data: session } = useSession();
   const username = React.useMemo(
     () => getUsernameFromName(session?.user.name ?? ""),
-    [session?.user.name],
+    [session?.user.name]
   );
 
   const { toast } = useToast();
@@ -35,7 +35,7 @@ export default function EditTakeawayForm() {
 
   const id = router.query.id as string;
   const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
-    id: parseInt(id),
+    id: Number.parseInt(id),
   });
 
   const contributors = React.useMemo(() => {
@@ -57,7 +57,7 @@ export default function EditTakeawayForm() {
   React.useEffect(() => {
     form.reset({
       ...takeaway?.takeaways,
-      contributors: contributors,
+      contributors,
     });
   }, [contributors, form, takeaway]);
 
@@ -79,6 +79,7 @@ export default function EditTakeawayForm() {
   return (
     <Form {...form}>
       <form
+        className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
             toast({
@@ -88,7 +89,6 @@ export default function EditTakeawayForm() {
             });
           })(event)
         }
-        className="mt-4 space-y-8 sm:mt-8"
       >
         <div className="space-y-4">
           <h3 className="font-reimbrandt text-2xl sm:text-3xl">
@@ -99,7 +99,7 @@ export default function EditTakeawayForm() {
               <FormItem>
                 <FormLabel className="text-md">Schedule</FormLabel>
                 <FormControl>
-                  <Input value={takeaway?.schedules?.title} disabled />
+                  <Input disabled value={takeaway?.schedules?.title} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -132,9 +132,9 @@ export default function EditTakeawayForm() {
             Save changes
           </Button>
           <Button
-            type="button"
             className="flex gap-x-2"
             onClick={() => router.back()}
+            type="button"
           >
             <ArrowLeft className="h-4 w-4" />
             Back

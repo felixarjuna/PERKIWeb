@@ -107,21 +107,15 @@ export const sendChristmasGiftMessage = async ({
 };
 
 export const useAttendingGuests = () => {
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery<Guest[]>({
+  const { data, isLoading, error } = useQuery<Guest[]>({
     queryKey: ["attending-guests"],
     queryFn: async () => {
-      const response = await fetch(
-        `${APP_URL}/api/guest/attending?eventId=31`,
-      );
+      const response = await fetch(`${APP_URL}/api/guest/attending?eventId=31`);
       if (!response.ok) {
         throw new Error(`Failed to fetch guests: ${response.statusText}`);
       }
       const json = await response.json();
-      return json.data?.guests as Guest[] || [];
+      return (json.data?.guests as Guest[]) || [];
     },
   });
 
