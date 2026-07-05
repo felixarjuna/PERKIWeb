@@ -44,14 +44,19 @@ const scheduleList: Schedule[] = [
   },
 ];
 
-const DATABASE_URL =
-  "postgres://postgres.ofwbvpmgfffrzynmcsxf:felixarjuna123!@aws-0-eu-central-1.pooler.supabase.com:5432/postgres";
+const main = async () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
-export const main = async () => {
-  const connection = postgres(DATABASE_URL);
+  const connection = postgres(databaseUrl);
   const db = drizzle(connection);
 
   console.log("Seed start");
   await db.insert(schedules).values(scheduleList);
   console.log("Seed done");
+  await connection.end();
 };
+
+await main();

@@ -13,7 +13,7 @@ import {
 import { db } from "~/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 
 export const userRouter = createTRPCRouter({
