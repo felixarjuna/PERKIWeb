@@ -1,7 +1,7 @@
 "use client";
 
 import type { GetServerSidePropsContext } from "next";
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import React from "react";
 import { DeleteButton } from "~/components/action-button";
 import Loader from "~/components/loader";
@@ -10,7 +10,6 @@ import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
 import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
-import { authOptions } from "~/server/auth";
 import { api } from "~/utils/api";
 import EditPrayerDialog from "../../components/prayer/edit-prayer-dialog";
 import AddPrayerForm from "./add-prayer-form";
@@ -150,13 +149,15 @@ export default function Prayers() {
   );
 }
 
+import { auth } from "~/server/auth";
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getSession(context);
+  const session = await auth(context);
 
   if (!session) {
     return {
       redirect: {
-        destination: authOptions.pages?.signIn,
+        destination: "/auth/signin",
         permanent: false,
       },
     };
