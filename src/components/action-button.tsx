@@ -34,7 +34,7 @@ export function EditButton({ onEditClick }: { onEditClick?: () => void }) {
   return (
     <button
       aria-label="Edit"
-      className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/80 hover:bg-background"
+      className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/80 hover:bg-accent"
       onClick={onEditClick}
       type="button"
     >
@@ -49,7 +49,7 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
       <AlertDialogTrigger asChild>
         <button
           aria-label="Delete"
-          className="flex h-6 w-6 items-center justify-center rounded-md bg-red-300/30 hover:bg-red-300/50"
+          className="flex h-6 w-6 items-center justify-center rounded-md bg-destructive/50 hover:bg-destructive/70"
           type="button"
         >
           <TrashIcon className="h-4 w-4" />
@@ -65,7 +65,7 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-red-300/50 hover:bg-red-300/30"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
             onClick={onDeleteClick}
           >
             Continue
