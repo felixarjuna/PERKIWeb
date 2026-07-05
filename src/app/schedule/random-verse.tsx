@@ -24,9 +24,7 @@ export default function RandomVerse({ items }: { items: readonly string[] }) {
       <Button className="w-fit" onClick={pickRandomItem}>
         Randomize me! 💚
       </Button>
-      {verse && (
-        <p className="px-8 font-reimbrandt text-primary-foreground">{verse}</p>
-      )}
+      {verse && <p className="px-8 font-reimbrandt text-foreground">{verse}</p>}
     </div>
   );
 }

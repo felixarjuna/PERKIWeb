@@ -4,81 +4,58 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: hsl(171 72% 7%); /* #031f1c */
-  --foreground: hsl(72 24% 84%); /* #d7dfcb */
-  --card: hsl(174 20% 12%);
-  --card-foreground: hsl(72 24% 84%);
-  --popover: hsl(171 18% 15%);
-  --popover-foreground: hsl(72 24% 84%);
-  --primary: hsl(169 12% 27%);
-  --primary-foreground: hsl(72 24% 84%);
-  --secondary: hsl(169 14% 22%);
-  --secondary-foreground: hsl(72 24% 84%);
-  --muted: hsl(174 20% 12%);
-  --muted-foreground: hsl(72 20% 75%);
-  --accent: hsl(169 18% 27%); /* #37524f */
-  --accent-foreground: hsl(72 24% 84%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 85.7% 97.3%);
-  --border: hsl(169 12% 30%);
-  --input: hsl(169 14% 38%);
-  --ring: hsl(72 20% 75%);
+  /*
+   * PerkiWEB theme: ONE OKLCH ramp. Hue is locked to the brand green
+   * (~183), chroma stays ~0.03, only lightness steps between rungs:
+   * background .22 -> card .27 -> popover .30 -> secondary .35 ->
+   * accent .42 (hover/highlight). Primary is the brand cream so
+   * primary actions pop against the green world.
+   */
+  --background: oklch(0.22 0.035 183); /* brand deep green #031f1c */
+  --foreground: oklch(0.9 0.03 125); /* brand cream #d7dfcb */
+  --card: oklch(0.27 0.033 183);
+  --card-foreground: oklch(0.9 0.03 125);
+  --popover: oklch(0.3 0.033 183);
+  --popover-foreground: oklch(0.9 0.03 125);
+  --primary: oklch(0.9 0.03 125);
+  --primary-foreground: oklch(0.25 0.035 183);
+  --secondary: oklch(0.35 0.032 183);
+  --secondary-foreground: oklch(0.9 0.03 125);
+  --muted: oklch(0.3 0.033 183);
+  --muted-foreground: oklch(0.74 0.025 135);
+  --accent: oklch(0.42 0.035 184);
+  --accent-foreground: oklch(0.92 0.028 125);
+  --destructive: oklch(0.5 0.15 25);
+  --destructive-foreground: oklch(0.96 0.015 90);
+  --border: oklch(0.36 0.03 183);
+  --input: oklch(0.45 0.03 183);
+  --ring: oklch(0.9 0.03 125);
   --radius: 0.5rem;
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
-  --sidebar: hsl(173.57 90% 9%);
-  --sidebar-foreground: hsl(83 26% 84%);
-  --sidebar-primary: hsl(170 83.35% 15%);
-  --sidebar-primary-foreground: hsl(83 26% 84%);
-  --sidebar-accent: hsl(169 18% 27%);
-  --sidebar-accent-foreground: hsl(72 24% 84%);
-  --sidebar-border: hsl(83 26% 84%);
-  --sidebar-ring: hsl(83 26% 84%);
+  --chart-1: oklch(0.62 0.09 183);
+  --chart-2: oklch(0.75 0.1 125);
+  --chart-3: oklch(0.7 0.12 70);
+  --chart-4: oklch(0.55 0.09 250);
+  --chart-5: oklch(0.6 0.12 25);
+  --sidebar: oklch(0.24 0.035 183);
+  --sidebar-foreground: oklch(0.9 0.03 125);
+  --sidebar-primary: oklch(0.9 0.03 125);
+  --sidebar-primary-foreground: oklch(0.25 0.035 183);
+  --sidebar-accent: oklch(0.35 0.032 183);
+  --sidebar-accent-foreground: oklch(0.9 0.03 125);
+  --sidebar-border: oklch(0.36 0.03 183);
+  --sidebar-ring: oklch(0.9 0.03 125);
   /* Inverted "cream paper" sections (landing page) and chips. */
-  --paper: #d7dfcb;
-  --paper-foreground: #37524f;
+  --paper: oklch(0.9 0.03 125);
+  --paper-foreground: oklch(0.4 0.035 185);
 }
 
 /**
- * The site ships a single dark-green brand theme; `.dark` mirrors `:root` so
- * components that toggle the class render identically.
+ * The site ships a single dark-green brand theme; `.dark` inherits
+ * `:root` (no overrides needed - one theme, one ramp).
  */
 .dark {
-  --background: hsl(171 72% 7%);
-  --foreground: hsl(72 24% 84%);
-  --card: hsl(174 20% 12%);
-  --card-foreground: hsl(72 24% 84%);
-  --popover: hsl(171 18% 15%);
-  --popover-foreground: hsl(72 24% 84%);
-  --primary: hsl(169 12% 27%);
-  --primary-foreground: hsl(72 24% 84%);
-  --secondary: hsl(169 14% 22%);
-  --secondary-foreground: hsl(72 24% 84%);
-  --muted: hsl(174 20% 12%);
-  --muted-foreground: hsl(72 20% 75%);
-  --accent: hsl(169 18% 27%);
-  --accent-foreground: hsl(72 24% 84%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 85.7% 97.3%);
-  --border: hsl(169 12% 30%);
-  --input: hsl(169 14% 38%);
-  --ring: hsl(72 20% 75%);
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
-  --sidebar: hsl(173.57 90% 9%);
-  --sidebar-foreground: hsl(83 26% 84%);
-  --sidebar-primary: hsl(170 83.35% 15%);
-  --sidebar-primary-foreground: hsl(83 26% 84%);
-  --sidebar-accent: hsl(169 18% 27%);
-  --sidebar-accent-foreground: hsl(72 24% 84%);
-  --sidebar-border: hsl(83 26% 84%);
-  --sidebar-ring: hsl(83 26% 84%);
+  --background: oklch(0.22 0.035 183);
+  --foreground: oklch(0.9 0.03 125);
 }
 
 @theme inline {
@@ -161,57 +138,17 @@
 }
 
 @theme {
-  /* Brand palette */
-  --color-cream-50: #f7f7f5;
-  --color-cream-100: #eae9e3;
-  --color-cream-200: #dad7ce;
-  --color-cream-300: #c2beaf;
-  --color-cream-400: #a9a28e;
-  --color-cream-500: #988e77;
-  --color-cream-600: #8b7f6b;
-  --color-cream-700: #74695a;
-  --color-cream-800: #60574c;
-  --color-cream-900: #4f483f;
-  --color-cream-950: #292521;
-  --color-cream-default: #d7dfcb;
-
-  --color-light-green-50: #f4f6ef;
-  --color-light-green-100: #e6ebdc;
-  --color-light-green-200: #d9e1cc;
-  --color-light-green-300: #b0c096;
-  --color-light-green-400: #92a774;
-  --color-light-green-500: #758c56;
-  --color-light-green-600: #5b6e42;
-  --color-light-green-700: #475536;
-  --color-light-green-800: #3a462e;
-  --color-light-green-900: #333d2a;
-  --color-light-green-950: #1a2013;
-  --color-light-green-default: #d9e1cc;
-
-  --color-green-50: #f5f8f7;
+  /*
+   * Brand accents used ONLY by decorative gradients (landing page,
+   * nav icon tiles, hero blobs) and the live-status ping dots.
+   * All UI surfaces/text use the semantic tokens above instead.
+   */
   --color-green-100: #dee9e7;
-  --color-green-200: #bcd3ce;
   --color-green-300: #92b6af;
   --color-green-400: #6b968f;
-  --color-green-500: #517b75;
-  --color-green-600: #3f625e;
-  --color-green-700: #37524f;
-  --color-green-800: #2e413f;
-  --color-green-900: #293836;
-  --color-green-950: #141f1f;
   --color-green-default: #37524f;
-
-  --color-dark-green-50: #ecfdf7;
-  --color-dark-green-100: #d2f9ea;
-  --color-dark-green-200: #a8f2da;
-  --color-dark-green-300: #70e5c7;
-  --color-dark-green-400: #37d0ad;
-  --color-dark-green-500: #13b696;
-  --color-dark-green-600: #08937b;
-  --color-dark-green-700: #067665;
-  --color-dark-green-800: #085d50;
-  --color-dark-green-900: #074d43;
-  --color-dark-green-950: #021f1c;
+  --color-light-green-100: #e6ebdc;
+  --color-light-green-default: #d9e1cc;
   --color-dark-green-default: #031f1c;
 }
 
@@ -230,8 +167,7 @@
 
   /** edit scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 4px;
+    width: 8px;
   }
 
   ::-webkit-scrollbar-track {
