@@ -39,7 +39,7 @@ export const addGuestSchema = z.object({
     )
     .transform((val) => (val.startsWith("+") ? val.slice(1) : val)),
   dietary: z.string().max(255).optional(),
-  nRsvp: z.number().min(1).default(1),
+  nRsvp: z.number().min(1),
 });
 
 const MAX_GUESTS = 80;
@@ -47,7 +47,7 @@ const eventDate = new Date("2025-12-20T15:00:00+01:00");
 export default function ChristmasPage() {
   const form = useForm<z.infer<typeof addGuestSchema>>({
     resolver: zodResolver(addGuestSchema),
-    defaultValues: { eventId: 31 },
+    defaultValues: { eventId: 31, nRsvp: 1 },
   });
 
   const { addGuest } = useChristmasAddGuest();
@@ -148,7 +148,7 @@ export default function ChristmasPage() {
                   )}
                 />
 
-                {addGuest.isLoading ? (
+                {addGuest.isPending ? (
                   <Button className="flex w-full items-center gap-2 bg-white/20">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <p className="text-sm">Registering ...</p>

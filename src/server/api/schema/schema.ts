@@ -7,7 +7,7 @@ export const addTakeawaySchema = z.object({
 });
 
 export const updateTakeawaySchema = addTakeawaySchema.extend({
-  id: z.coerce.number(),
+  id: z.number(),
 });
 
 export const addScheduleSchema = z.object({
@@ -23,13 +23,13 @@ export const addScheduleSchema = z.object({
       message: "An event must have a description with at least 2 characters.",
     }),
   date: z.date({
-    required_error: "A date of service is required.",
+    error: "A date of service is required.",
   }),
   bibleVerse: z.string().min(2).max(50),
   type: z.enum(["church_service", "bible_study"]),
   preacher: z
     .string({
-      required_error: "Please select the speaker for the service.",
+      error: "Please select the speaker for the service.",
     })
     .optional(),
   leader: z.string().min(2).max(50),
@@ -55,21 +55,21 @@ export const addPrayerSchema = z.object({
 });
 
 export const editPrayerSchema = addPrayerSchema.extend({
-  id: z.coerce.number(),
+  id: z.number(),
 });
 
 export const addPrayerCountSchema = z.object({
-  id: z.coerce.number(),
+  id: z.number(),
   count: z.number(),
   prayerNames: z.array(z.string()),
 });
 
 export const queryByIdSchema = z.object({
-  id: z.coerce.number(),
+  id: z.number(),
 });
 
 export const addProfileSchema = z.object({
-  birthday: z.coerce.date(),
+  birthday: z.date(),
   userId: z.string(),
   address: z.string(),
   phoneNumber: z.string(),

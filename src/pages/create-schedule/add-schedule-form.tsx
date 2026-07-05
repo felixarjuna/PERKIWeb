@@ -646,7 +646,7 @@ function AddScheduleGoogleSpreadsheet() {
       <div className={loading ? "" : "overflow-auto"}>
         <h1 className="font-reimbrandt text-2xl">Data Preview</h1>
 
-        {loading || addScheduleBatch.isLoading ? (
+        {loading || addScheduleBatch.isPending ? (
           <div className="mt-4 w-full">
             <Loader
               message={

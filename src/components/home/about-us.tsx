@@ -1,5 +1,5 @@
 import React from "react";
-import { useIntersection } from "react-use";
+import { useIntersection } from "~/utils/hooks/use-intersection";
 
 import Image from "next/image";
 import Navigation from "./navigation";
@@ -8,7 +8,7 @@ import ParallaxImage from "./parallax-image";
 
 export default function AboutUs() {
   const [showNav, setShowNav] = React.useState<boolean>(false);
-  const intersectionRef = React.useRef(null);
+  const intersectionRef = React.useRef<HTMLDivElement>(null);
   const intersection = useIntersection(intersectionRef, {
     root: null,
     rootMargin: "0px",

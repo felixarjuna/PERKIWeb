@@ -19,7 +19,7 @@ import { type editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/utils/api";
 
 const EditPrayerFormSchema = z.object({
-  isAnonymous: z.boolean().default(false),
+  isAnonymous: z.boolean(),
   content: z.string().min(2),
 });
 
@@ -34,7 +34,7 @@ export default function EditPrayerForm({
   onCloseDialog: () => void;
 }) {
   const { toast } = useToast();
-  const utils = api.useContext();
+  const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
