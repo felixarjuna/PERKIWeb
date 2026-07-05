@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { prayers } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import {
   addPrayerCountSchema,
   addPrayerSchema,
@@ -10,15 +10,15 @@ import {
 } from "../schema/schema";
 
 export const prayerRouter = createTRPCRouter({
-  getPrayers: publicProcedure.query(() => {
+  getPrayers: protectedProcedure.query(() => {
     return db.select().from(prayers);
   }),
-  addPrayer: publicProcedure
+  addPrayer: protectedProcedure
     .input(addPrayerSchema)
     .mutation(async ({ input }) => {
       return await db.insert(prayers).values({ ...input });
     }),
-  updatePrayerCount: publicProcedure
+  updatePrayerCount: protectedProcedure
     .input(addPrayerCountSchema)
     .mutation(async ({ input }) => {
       return await db
@@ -26,12 +26,12 @@ export const prayerRouter = createTRPCRouter({
         .set({ count: input.count, prayerNames: input.prayerNames })
         .where(eq(prayers.id, input.id));
     }),
-  deletePrayer: publicProcedure
+  deletePrayer: protectedProcedure
     .input(queryByIdSchema)
     .mutation(async ({ input }) => {
       return await db.delete(prayers).where(eq(prayers.id, input.id));
     }),
-  updatePrayer: publicProcedure
+  updatePrayer: protectedProcedure
     .input(editPrayerSchema)
     .mutation(async ({ input }) => {
       return await db

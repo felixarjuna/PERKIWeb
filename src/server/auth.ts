@@ -12,7 +12,7 @@ import { type Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { env } from "~/env.mjs";
-import { users } from "~/lib/db/schema/auth";
+import { users } from "~/lib/db/schema/schema";
 import { db } from ".";
 
 /**

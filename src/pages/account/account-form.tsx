@@ -18,13 +18,11 @@ import { useToast } from "~/components/ui/use-toast";
 import { updateUserParams, type UpdateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
 
-const PASSWORD_MAX_LENGTH = 17;
+const PASSWORD_PLACEHOLDER_LENGTH = 8;
 
 export default function AccountForm() {
   const { data: session } = useSession();
-  const { data: user } = api.users.getUserById.useQuery({
-    id: session?.user.id ?? "",
-  });
+  const { data: user } = api.users.getUserById.useQuery();
 
   const { toast } = useToast();
   const updateAccount = api.users.updateUser.useMutation({
@@ -45,17 +43,17 @@ export default function AccountForm() {
   // 1. Define form
   const form = useForm<UpdateUserParams>({
     resolver: zodResolver(updateUserParams),
-    defaultValues: {
-      ...user,
-      hashedPassword: user?.hashedPassword ?? "",
-    },
   });
 
   React.useEffect(() => {
+    if (!user) {
+      return;
+    }
     form.reset({
-      ...user,
-      hashedPassword: user?.hashedPassword,
-      username: user?.email,
+      id: user.id,
+      name: user.name ?? "",
+      username: user.email ?? "",
+      image: user.image,
     });
   }, [form, user]);
 
@@ -64,16 +62,12 @@ export default function AccountForm() {
     updateAccount.mutate(values);
   }
 
-  const isGoogleAccount = React.useMemo(() => {
-    return (
-      session?.user.email?.endsWith("@gmail.com") &&
-      user?.hashedPassword === null
-    );
-  }, [session?.user.email, user?.hashedPassword]);
+  /** OAuth accounts have no local password and cannot edit credentials here. */
+  const isOAuthAccount = user !== undefined && user !== null && !user.hasPassword;
 
   return (
     <Form {...form}>
-      {isGoogleAccount ? (
+      {isOAuthAccount ? (
         <div className="mb-8 text-xs sm:text-sm">
           <Button
             variant={"outline"}
@@ -113,7 +107,7 @@ export default function AccountForm() {
                 <FormItem>
                   <FormLabel>Username / Email</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isGoogleAccount} />
+                    <Input {...field} disabled={isOAuthAccount} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,24 +116,17 @@ export default function AccountForm() {
           </div>
 
           <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="hashedPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value?.substring(0, PASSWORD_MAX_LENGTH)}
-                      type="password"
-                      disabled={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
+                  disabled
+                  readOnly
+                />
+              </FormControl>
+            </FormItem>
           </div>
         </div>
 

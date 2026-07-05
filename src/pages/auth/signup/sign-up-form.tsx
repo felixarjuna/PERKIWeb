@@ -50,8 +50,9 @@ export default function SignUpForm() {
   const form = useForm<z.infer<typeof insertUserParams>>({
     resolver: zodResolver(insertUserParams),
     defaultValues: {
-      emailVerified: null,
-      image: null,
+      name: "",
+      username: "",
+      password: "",
     },
   });
 
