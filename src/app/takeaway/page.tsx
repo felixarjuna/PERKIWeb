@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Flame, Plus } from "lucide-react";
 import Link from "next/link";
 import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
@@ -18,7 +18,7 @@ export default function TakeawayPage() {
     >
       <p className="text-sm sm:text-base">
         Let&apos;s share what you have learned, keep burning each other and grow
-        together 🔥
+        together <Flame className="inline size-4" />
       </p>
 
       <Link

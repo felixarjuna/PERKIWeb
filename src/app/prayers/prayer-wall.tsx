@@ -1,5 +1,6 @@
 "use client";
 
+import { HandHeart } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { toast } from "sonner";
@@ -29,7 +30,7 @@ export default function PrayerWall() {
   const deletePrayer = api.prayers.deletePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Prayer successfully deleted! 😥", {
+      toast.success("Prayer successfully deleted!", {
         description: "Don't be shy, it's okay!",
       });
     },
@@ -38,7 +39,7 @@ export default function PrayerWall() {
   return (
     <div className="flex w-full flex-col gap-y-4">
       <p className="mb-2 text-sm sm:text-base">
-        Let&apos;s pray together every Wednesday at 18.30 a.m 😍
+        Let&apos;s pray together every Wednesday at 18.30 a.m
       </p>
 
       <AddPrayerForm />
@@ -91,7 +92,7 @@ export default function PrayerWall() {
                           }}
                           pressed={hasPrayed}
                         >
-                          🙏
+                          <HandHeart className="size-4" />
                         </Toggle>
 
                         {username === prayer.name ? (

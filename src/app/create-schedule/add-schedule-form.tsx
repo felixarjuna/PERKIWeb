@@ -65,7 +65,7 @@ export default function AddScheduleForm() {
   const router = useRouter();
   const addSchedule = api.schedules.addSchedule.useMutation({
     onSuccess: () => {
-      toast.success("New schedule added! 🎉", {
+      toast.success("New schedule added!", {
         description: "Thanks for your contributions!",
       });
       router.push("/schedule");
@@ -589,7 +589,7 @@ function AddScheduleGoogleSpreadsheet() {
   /** add schedules action. */
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
     onSuccess: () => {
-      toast.success("New schedules added! 🎉", {
+      toast.success("New schedules added!", {
         description: "Thanks for your contributions!",
       });
       router.push("/schedule");

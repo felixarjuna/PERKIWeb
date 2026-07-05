@@ -73,7 +73,7 @@ export default function EditScheduleForm() {
   /** update schedule action. */
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onSuccess: async () => {
-      toast.success("Schedule updated successfully! ✨", {
+      toast.success("Schedule updated successfully!", {
         description: "Thanks for your contributions!",
       });
       router.push("/schedule");

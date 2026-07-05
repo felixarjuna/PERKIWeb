@@ -23,7 +23,7 @@ export default function SignUpForm() {
 
   const signUpUser = api.users.createUser.useMutation({
     onSuccess: () => {
-      toast.success("User account created successfully! 🚀", {
+      toast.success("User account created successfully!", {
         description: "Please login!",
       });
 
@@ -31,7 +31,7 @@ export default function SignUpForm() {
       router.push("/auth/signin");
     },
     onError: ({ message }) => {
-      toast.error("Create user account failed! 👿", { description: message });
+      toast.error("Create user account failed!", { description: message });
     },
   });
 

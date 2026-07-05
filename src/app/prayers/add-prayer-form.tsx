@@ -33,7 +33,7 @@ export default function AddPrayerForm() {
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Your prayer is submitted! 🙏", {
+      toast.success("Your prayer is submitted!", {
         description: "Feel free to add another prayer!",
       });
     },

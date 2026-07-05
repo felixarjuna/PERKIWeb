@@ -60,7 +60,7 @@ export default function AddTakeawayForm() {
   /** add takeaway action. */
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onSuccess: async () => {
-      toast.success("Your takeaway has been submitted! ✨", {
+      toast.success("Your takeaway has been submitted!", {
         description: "Thanks for sharing!",
       });
       router.push("/takeaway");

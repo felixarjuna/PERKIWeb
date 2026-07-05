@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
 import { auth } from "~/server/auth";
@@ -12,7 +13,12 @@ export default async function JoinPage() {
 
   return (
     <Template
-      subtitle="Register yourself as PERKI Aachen fellowship member! ❤️"
+      subtitle={
+        <span className="inline-flex items-center gap-2">
+          Register yourself as PERKI Aachen fellowship member!
+          <Heart className="size-4" />
+        </span>
+      }
       title="Join us"
     >
       <div className="w-full">

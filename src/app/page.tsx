@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import CircleBackground from "~/components/circle-background";
 import AboutUs from "~/components/home/about-us";
@@ -28,7 +29,10 @@ export default function Home() {
       <Dialog defaultOpen={true}>
         <DialogContent>
           <DialogHeader className="items-center text-center sm:text-center">
-            <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
+            <DialogTitle className="flex items-center justify-center gap-2">
+              New update at PerkiWEB
+              <Sparkles className="size-4" />
+            </DialogTitle>
             <DialogDescription className="pt-4">
               Please register yourself as fellowship member.*
             </DialogDescription>
@@ -41,7 +45,8 @@ export default function Home() {
               )}
               href={"/member/join"}
             >
-              Fill out form! 📄
+              <FileText className="size-4" />
+              Fill out form!
             </Link>
           </DialogFooter>
 

@@ -7,6 +7,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { Cake } from "lucide-react";
 import React from "react";
 
 import {
@@ -61,7 +62,7 @@ export default function DataTable<TData, TValue>({
       <div className="flex justify-between gap-x-4">
         <div className="relative w-fit rounded-md border bg-accent/50 px-4 py-4 font-normal">
           <h1 className="font-reimbrandt tracking-wide sm:text-lg">
-            Birthday this month 🎈🎉
+            Birthday this month <Cake className="inline size-4" />
           </h1>
           <p className="font-satoshi text-lg sm:text-xl">{count}</p>
 

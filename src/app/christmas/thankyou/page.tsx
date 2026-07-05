@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Heart, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 
@@ -65,7 +65,9 @@ export default function Page() {
           </div>
         ) : (
           <>
-            <p className="font-bold">Congratulations! ❤️</p>
+            <p className="flex items-center gap-2 font-bold">
+              Congratulations! <Heart className="size-4" />
+            </p>
             <p className="text-base">
               You are successfully registered for Perki Aachen christmas
               celebration. You will receive an automated message for
