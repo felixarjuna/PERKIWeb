@@ -22,7 +22,7 @@ import { type addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
 
 const AddPrayerFormSchema = z.object({
-  isAnonymous: z.boolean().default(false),
+  isAnonymous: z.boolean(),
   content: z.string().min(2),
 });
 
@@ -30,7 +30,7 @@ export default function AddPrayerForm() {
   const { data: session } = useSession();
 
   const { toast } = useToast();
-  const utils = api.useContext();
+  const utils = api.useUtils();
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();

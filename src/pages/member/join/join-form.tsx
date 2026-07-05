@@ -46,7 +46,7 @@ export default function JoinForm() {
   const { toast } = useToast();
 
   /** handle form submission. */
-  const utils = api.useContext();
+  const utils = api.useUtils();
   const addProfile = api.profiles.addUserProfile.useMutation({
     onSuccess: async () => {
       await utils.profiles.invalidate();
@@ -209,8 +209,8 @@ export default function JoinForm() {
             </FormItem>
           )}
         />
-        <Button disabled={addProfile.isLoading} type="submit">
-          {addProfile.isLoading ? (
+        <Button disabled={addProfile.isPending} type="submit">
+          {addProfile.isPending ? (
             <Loader className="text-xs" message="Adding profile ..." />
           ) : (
             "Submit"

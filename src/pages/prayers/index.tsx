@@ -23,7 +23,7 @@ export default function Prayers() {
   );
 
   const { toast } = useToast();
-  const utils = api.useContext();
+  const utils = api.useUtils();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
 
   const updatePrayerCount = api.prayers.updatePrayerCount.useMutation({

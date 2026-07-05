@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import React from "react";
 import { cn } from "~/lib/utils";

@@ -88,7 +88,7 @@ function TakeawayItem(props: TakeawayItemProps) {
   /** hook for toast */
   const { toast } = useToast();
   /** utils to invalidate trpc query. */
-  const utils = api.useContext();
+  const utils = api.useUtils();
 
   /** router hook to for edit action. */
   const router = useRouter();

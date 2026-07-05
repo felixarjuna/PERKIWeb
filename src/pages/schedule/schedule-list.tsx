@@ -47,7 +47,7 @@ const verses = [
 
 export default function ScheduleList() {
   const { toast } = useToast();
-  const utils = api.useContext();
+  const utils = api.useUtils();
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
   const deleteSchedule = api.schedules.deleteSchedule.useMutation({
