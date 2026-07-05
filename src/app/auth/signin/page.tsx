@@ -1,8 +1,14 @@
-import type { GetServerSidePropsContext } from "next";
+import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import SignInForm from "./sign-in-form";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await auth();
+  // If the user is already logged in, redirect home.
+  if (session) {
+    redirect("/");
+  }
+
   return (
     <div className="mx-auto flex min-h-screen w-10/12 flex-col items-center justify-center text-cream-default">
       <div className="w-full max-w-lg rounded-lg bg-green-default/60 p-8">
@@ -13,17 +19,4 @@ export default function SignInPage() {
       </div>
     </div>
   );
-}
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await auth(context);
-
-  // If the user is already logged in, redirect.
-  // Note: Make sure not to redirect to the same page
-  // To avoid an infinite loop!
-  if (session) {
-    return { redirect: { destination: "/", permanent: false } };
-  }
-
-  return { props: {} };
 }

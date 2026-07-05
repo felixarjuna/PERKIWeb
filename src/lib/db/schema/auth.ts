@@ -12,7 +12,7 @@ export const insertUserSchema = createInsertSchema(users);
 export const insertUserParams = z.object({
   name: z.string(),
   username: z.string(),
-  password: z.string(),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
 
 /**
