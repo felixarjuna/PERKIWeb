@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ import {
   type UpdatePasswordParams,
   updatePasswordParams,
 } from "~/lib/db/schema/auth";
-import { api } from "~/utils/api";
+import { api } from "~/trpc/react";
 import { toast } from "sonner";
 
 export default function ChangePasswordForm() {
@@ -42,7 +42,7 @@ export default function ChangePasswordForm() {
     onSuccess: async () => {
       toast.success("Update password successful!", { description: "Your password has been updated! ✨" });
       // Redirect to login page after registration
-      await router.push("/account");
+      router.push("/account");
     },
     onError: ({ message }) => {
       toast.success("Update password failed! 👿", { description: message });
