@@ -1,7 +1,5 @@
 import type { GetServerSidePropsContext } from "next";
-import { getSession } from "next-auth/react";
 import Template from "~/components/template";
-import { authOptions } from "~/server/auth";
 import EditTakeawayForm from "./edit-takeaway-form";
 
 export default function EditTakeawayPage() {
@@ -22,13 +20,15 @@ export default function EditTakeawayPage() {
   );
 }
 
+import { auth } from "~/server/auth";
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getSession(context);
+  const session = await auth(context);
 
   if (!session) {
     return {
       redirect: {
-        destination: authOptions.pages?.signIn,
+        destination: "/auth/signin",
         permanent: false,
       },
     };

@@ -1,7 +1,7 @@
 # TODO
 
 ## [05.07.2026] 👨‍💻
-[ ]
+[ ] feature: build library
 
 ## [22.01.2025] 👨‍💻 Form for sensus
 
