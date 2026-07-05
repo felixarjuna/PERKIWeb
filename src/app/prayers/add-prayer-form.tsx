@@ -63,7 +63,7 @@ export default function AddPrayerForm() {
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         <div className="grid gap-y-4">
-          <div className="flex xs:gap-2 gap-x-4">
+          <div className="flex gap-x-4">
             <div className="flex-1">
               <FormField
                 control={form.control}
@@ -79,10 +79,10 @@ export default function AddPrayerForm() {
               />
             </div>
             <Button
-              className="gap-x-1 bg-green-default/70 xs:px-2 xs:py-1 xs:text-xs hover:bg-green-default"
+              className="gap-x-1 bg-green-default/70 hover:bg-green-default"
               type="submit"
             >
-              <Plus className="h-5 xs:h-4 w-5 xs:w-4" />
+              <Plus className="h-5 w-5" />
               Add
             </Button>
           </div>

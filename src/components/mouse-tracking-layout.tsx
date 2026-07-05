@@ -27,7 +27,7 @@ export default function MouseTrackingLayout({
     <div className="relative overflow-hidden" onMouseMove={onMouseMove}>
       <Mouse
         blur={false}
-        className="xs:hidden"
+        className=""
         r={4}
         x={position.x}
         y={position.y}
