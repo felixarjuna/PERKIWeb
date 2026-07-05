@@ -20,9 +20,9 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { PhoneInput } from "~/components/ui/phone-input";
-import { useToast } from "~/components/ui/use-toast";
 import { addProfileSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function JoinForm() {
   const router = useRouter();
@@ -43,39 +43,27 @@ export default function JoinForm() {
   }, [form, session?.user.id]);
 
   /** toast. */
-  const { toast } = useToast();
 
   /** handle form submission. */
   const utils = api.useUtils();
   const addProfile = api.profiles.addUserProfile.useMutation({
     onSuccess: async () => {
       await utils.profiles.invalidate();
-      toast({
-        title: "Form submitted successfully! 🎉",
-        description: "Thank you for filling out the form! ❤️",
-      });
+      toast.success("Form submitted successfully! 🎉", { description: "Thank you for filling out the form! ❤️" });
 
       setTimeout(() => {
         router.push("/");
       }, 2000);
     },
     onError: (error) => {
-      toast({
-        title: "Failed to submit the form 😢",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Failed to submit the form 😢", { description: error.message });
     },
   });
 
   function onSubmit(values: z.infer<typeof addProfileSchema>) {
     const userId = session?.user.id;
     if (!userId) {
-      toast({
-        title: "Session expired",
-        description:
-          "Your session has expired. Please sign in again to continue.",
-      });
+      toast.success("Session expired", { description: "Your session has expired. Please sign in again to continue." });
       return router.push("/auth/signin");
     }
 

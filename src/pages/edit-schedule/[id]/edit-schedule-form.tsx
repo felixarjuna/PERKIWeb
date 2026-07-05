@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import { useToast } from "~/components/ui/use-toast";
 import {
   accommodation,
   groupNames,
@@ -45,9 +44,9 @@ import {
 import { cn } from "~/lib/utils";
 import { updateScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function EditScheduleForm() {
-  const { toast } = useToast();
   const router = useRouter();
 
   const id = router.query.id as string;
@@ -73,10 +72,7 @@ export default function EditScheduleForm() {
   /** update schedule action. */
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "Schedule updated successfully! ✨",
-        description: "Thanks for your contributions!",
-      });
+      toast.success("Schedule updated successfully! ✨", { description: "Thanks for your contributions!" });
       await router.push("/schedule");
     },
   });
@@ -137,7 +133,7 @@ export default function EditScheduleForm() {
                       <PopoverContent align="start" className="w-auto p-1">
                         <Calendar
                           disabled={(date) => date < new Date("1900-01-01")}
-                          initialFocus
+                          autoFocus
                           mode="single"
                           onSelect={field.onChange}
                           selected={field.value}
@@ -427,10 +423,7 @@ export default function EditScheduleForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast({
-              title: "Something went wrong.",
-              description: JSON.stringify(error),
-            });
+            toast.success("Something went wrong.", { description: JSON.stringify(error) });
           })(event)
         }
       >

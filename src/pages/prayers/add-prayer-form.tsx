@@ -16,10 +16,10 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
-import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 import type { addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 const AddPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
@@ -29,15 +29,11 @@ const AddPrayerFormSchema = z.object({
 export default function AddPrayerForm() {
   const { data: session } = useSession();
 
-  const { toast } = useToast();
   const utils = api.useUtils();
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast({
-        title: "Your prayer is submitted! 🙏",
-        description: "Feel free to add another prayer!",
-      });
+      toast.success("Your prayer is submitted! 🙏", { description: "Feel free to add another prayer!" });
     },
   });
 

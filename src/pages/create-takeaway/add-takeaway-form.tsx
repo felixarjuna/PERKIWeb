@@ -25,10 +25,10 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 const addTakeawayFormSchema = z.object({
   scheduleId: z.string(),
@@ -47,7 +47,6 @@ export default function AddTakeawayForm() {
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
   /** toast and router. */
-  const { toast } = useToast();
   const router = useRouter();
 
   /** form definition. */
@@ -62,10 +61,7 @@ export default function AddTakeawayForm() {
   /** add takeaway action. */
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "Your takeaway has been submitted! ✨",
-        description: "Thanks for sharing!",
-      });
+      toast.success("Your takeaway has been submitted! ✨", { description: "Thanks for sharing!" });
       await router.push("/takeaway");
     },
   });
@@ -80,11 +76,7 @@ export default function AddTakeawayForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast({
-              variant: "destructive",
-              title: "Uh oh! Something went wrong.",
-              description: JSON.stringify(error),
-            });
+            toast.error("Uh oh! Something went wrong.", { description: JSON.stringify(error) });
           })(event)
         }
       >

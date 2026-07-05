@@ -4,12 +4,12 @@ import Snowfall from "react-snowfall";
 import secretSanta from "secret-santa-generator";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { useToast } from "~/components/ui/use-toast";
 import {
   sendChristmasGiftMessage,
   useAttendingGuests,
 } from "~/hooks/useChristmas";
 import useGiftExchange from "~/hooks/useGiftExchange";
+import { toast } from "sonner";
 
 type Guest = {
   id: number;
@@ -27,30 +27,20 @@ export default function Page() {
   /** local state to save randomized gift. */
   const { result, setResult } = useGiftExchange();
 
-  const { toast } = useToast();
 
   const randomize = async () => {
     if (guestsLoading) {
-      toast({
-        variant: "destructive",
-        title: "Guests are still loading.",
-      });
+      toast.error("Guests are still loading.");
       return;
     }
 
     if (guestsError) {
-      toast({
-        variant: "destructive",
-        title: "Failed to load guests.",
-      });
+      toast.error("Failed to load guests.");
       return;
     }
 
     if (!guests || guests.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No guests to randomize.",
-      });
+      toast.error("No guests to randomize.");
       return;
     }
 
@@ -66,18 +56,12 @@ export default function Page() {
 
   const handleSendChristmasGiftMessages = async () => {
     if (!result) {
-      toast({
-        variant: "destructive",
-        title: "Result for the exchange is still undefined.",
-      });
+      toast.error("Result for the exchange is still undefined.");
       return;
     }
 
     if (!guests || guests.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No guests available to send messages.",
-      });
+      toast.error("No guests available to send messages.");
       return;
     }
 
@@ -105,16 +89,10 @@ export default function Page() {
         )
       );
 
-      toast({
-        title: "✅ Messages sent",
-        description: "All gift messages have been sent 🎁",
-      });
+      toast.success("✅ Messages sent", { description: "All gift messages have been sent 🎁" });
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Failed to send some messages.",
-      });
+      toast.error("Failed to send some messages.");
     }
   };
 

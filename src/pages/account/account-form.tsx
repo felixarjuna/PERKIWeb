@@ -13,28 +13,22 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { useToast } from "~/components/ui/use-toast";
+import { Label } from "~/components/ui/label";
 import { type UpdateUserParams, updateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 const PASSWORD_PLACEHOLDER_LENGTH = 8;
 
 export default function AccountForm() {
   const { data: user } = api.users.getUserById.useQuery();
 
-  const { toast } = useToast();
   const updateAccount = api.users.updateUser.useMutation({
     onSuccess: () => {
-      toast({
-        title: "Update account info successful!",
-        description: "Your account has been updated! ✨",
-      });
+      toast.success("Update account info successful!", { description: "Your account has been updated! ✨" });
     },
     onError: ({ message }) => {
-      toast({
-        title: "Update user account failed! 👿",
-        description: message,
-      });
+      toast.success("Update user account failed! 👿", { description: message });
     },
   });
 
@@ -115,17 +109,13 @@ export default function AccountForm() {
           </div>
 
           <div className="space-y-2">
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  disabled
-                  readOnly
-                  type="password"
-                  value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
-                />
-              </FormControl>
-            </FormItem>
+            <Label>Password</Label>
+            <Input
+              disabled
+              readOnly
+              type="password"
+              value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
+            />
           </div>
         </div>
 

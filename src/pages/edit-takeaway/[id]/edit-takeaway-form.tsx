@@ -17,11 +17,12 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { useToast } from "~/components/ui/use-toast";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function EditTakeawayForm() {
   const { data: session } = useSession();
@@ -30,7 +31,6 @@ export default function EditTakeawayForm() {
     [session?.user.name]
   );
 
-  const { toast } = useToast();
   const router = useRouter();
 
   const id = router.query.id as string;
@@ -64,10 +64,7 @@ export default function EditTakeawayForm() {
   /** edit takeaway action. */
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "Your changes has been saved successfully! ✨",
-        description: "Thanks for your contribution!",
-      });
+      toast.success("Your changes has been saved successfully! ✨", { description: "Thanks for your contribution!" });
       await router.push("/takeaway");
     },
   });
@@ -82,11 +79,7 @@ export default function EditTakeawayForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast({
-              variant: "destructive",
-              title: "Uh oh! Something went wrong.",
-              description: JSON.stringify(error),
-            });
+            toast.error("Uh oh! Something went wrong.", { description: JSON.stringify(error) });
           })(event)
         }
       >
@@ -95,14 +88,9 @@ export default function EditTakeawayForm() {
             Fellowship Information
           </h3>
           <section className="grid grid-cols-2 gap-4 text-sm">
-            <div className="col-span-2">
-              <FormItem>
-                <FormLabel className="text-md">Schedule</FormLabel>
-                <FormControl>
-                  <Input disabled value={takeaway?.schedules?.title} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            <div className="col-span-2 space-y-2">
+              <Label className="text-md">Schedule</Label>
+              <Input disabled value={takeaway?.schedules?.title} />
             </div>
 
             <div className="col-span-2">

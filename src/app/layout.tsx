@@ -4,7 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "~/components/ui/toaster";
+import { Toaster } from "~/components/ui/sonner";
 import { cn } from "~/lib/utils";
 import { TRPCReactProvider } from "~/trpc/react";
 

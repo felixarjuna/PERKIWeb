@@ -17,9 +17,9 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { useToast } from "~/components/ui/use-toast";
 import { insertUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/utils/api";
+import { toast } from "sonner";
 
 export default function SignUpForm() {
   const { data: session } = useSession();
@@ -27,22 +27,15 @@ export default function SignUpForm() {
   const router = useRouter();
   if (session) router.back();
 
-  const { toast } = useToast();
   const signUpUser = api.users.createUser.useMutation({
     onSuccess: async () => {
-      toast({
-        title: "User account created successfully! 🚀",
-        description: "Please login!",
-      });
+      toast.success("User account created successfully! 🚀", { description: "Please login!" });
 
       // Redirect to login page after registration
       await router.push("/auth/signin");
     },
     onError: ({ message }) => {
-      toast({
-        title: "Create user account failed! 👿",
-        description: message,
-      });
+      toast.success("Create user account failed! 👿", { description: message });
     },
   });
 

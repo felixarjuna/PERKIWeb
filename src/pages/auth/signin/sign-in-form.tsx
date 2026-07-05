@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
-import { useToast } from "~/components/ui/use-toast";
 import { useAsPath } from "~/utils/hooks/usePathStore";
+import { toast } from "sonner";
 
 export default function SignInForm() {
   const { data: session } = useSession();
@@ -14,7 +14,6 @@ export default function SignInForm() {
 
   /** redirect to the previous visited path. */
   const prevRoute = useAsPath();
-  const { toast } = useToast();
 
   /** google oauth login action. */
   async function onGoogleLogin() {
@@ -22,14 +21,9 @@ export default function SignInForm() {
       await signIn("google", {
         callbackUrl: prevRoute.prevAsPath,
       });
-      toast({
-        title: "Authentication succesfull!",
-        description: "You are now logged in! ❤️",
-      });
+      toast.success("Authentication succesfull!", { description: "You are now logged in! ❤️" });
     } catch {
-      toast({
-        title: "Authentication failed!",
-      });
+      toast.success("Authentication failed!");
     }
   }
 
