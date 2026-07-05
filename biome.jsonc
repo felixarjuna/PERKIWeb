@@ -6,9 +6,9 @@
     // DB migration snapshots are not held to lint rules.
     "includes": [
       "**",
-      "!src/lib/notion/finance-database/**",
-      "!src/lib/notion/types/**",
-      "!src/lib/db/migrations/**"
+      "!src/lib/notion/finance-database",
+      "!src/lib/notion/types",
+      "!src/lib/db/migrations"
     ]
   }
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -20,7 +21,6 @@ import {
   updatePasswordParams,
 } from "~/lib/db/schema/auth";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 export default function ChangePasswordForm() {
   // Load user from database
@@ -40,7 +40,9 @@ export default function ChangePasswordForm() {
   const router = useRouter();
   const updatePassword = api.users.updatePassword.useMutation({
     onSuccess: async () => {
-      toast.success("Update password successful!", { description: "Your password has been updated! ✨" });
+      toast.success("Update password successful!", {
+        description: "Your password has been updated! ✨",
+      });
       // Redirect to login page after registration
       router.push("/account");
     },

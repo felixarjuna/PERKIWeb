@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
+import { toast } from "sonner";
 import Loader from "~/components/loader";
 import {
   Select,
@@ -14,7 +15,6 @@ import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import ActionButton from "../../components/action-button";
-import { toast } from "sonner";
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();

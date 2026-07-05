@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type * as z from "zod";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
@@ -22,7 +23,6 @@ import { Input } from "~/components/ui/input";
 import { PhoneInput } from "~/components/ui/phone-input";
 import { addProfileSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 export default function JoinForm() {
   const router = useRouter();
@@ -49,21 +49,28 @@ export default function JoinForm() {
   const addProfile = api.profiles.addUserProfile.useMutation({
     onSuccess: async () => {
       await utils.profiles.invalidate();
-      toast.success("Form submitted successfully! 🎉", { description: "Thank you for filling out the form! ❤️" });
+      toast.success("Form submitted successfully! 🎉", {
+        description: "Thank you for filling out the form! ❤️",
+      });
 
       setTimeout(() => {
         router.push("/");
       }, 2000);
     },
     onError: (error) => {
-      toast.error("Failed to submit the form 😢", { description: error.message });
+      toast.error("Failed to submit the form 😢", {
+        description: error.message,
+      });
     },
   });
 
   function onSubmit(values: z.infer<typeof addProfileSchema>) {
     const userId = session?.user.id;
     if (!userId) {
-      toast.success("Session expired", { description: "Your session has expired. Please sign in again to continue." });
+      toast.success("Session expired", {
+        description:
+          "Your session has expired. Please sign in again to continue.",
+      });
       return router.push("/auth/signin");
     }
 

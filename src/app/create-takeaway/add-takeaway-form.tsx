@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -26,9 +27,7 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { getUsernameFromName } from "~/lib/utils";
-
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 const addTakeawayFormSchema = z.object({
   scheduleId: z.string(),
@@ -61,7 +60,9 @@ export default function AddTakeawayForm() {
   /** add takeaway action. */
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onSuccess: async () => {
-      toast.success("Your takeaway has been submitted! ✨", { description: "Thanks for sharing!" });
+      toast.success("Your takeaway has been submitted! ✨", {
+        description: "Thanks for sharing!",
+      });
       router.push("/takeaway");
     },
   });
@@ -76,7 +77,9 @@ export default function AddTakeawayForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast.error("Uh oh! Something went wrong.", { description: JSON.stringify(error) });
+            toast.error("Uh oh! Something went wrong.", {
+              description: JSON.stringify(error),
+            });
           })(event)
         }
       >

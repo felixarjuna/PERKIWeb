@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import React from "react";
 
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
@@ -44,7 +45,6 @@ import {
 import { cn } from "~/lib/utils";
 import { updateScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 export default function EditScheduleForm() {
   const router = useRouter();
@@ -73,7 +73,9 @@ export default function EditScheduleForm() {
   /** update schedule action. */
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onSuccess: async () => {
-      toast.success("Schedule updated successfully! ✨", { description: "Thanks for your contributions!" });
+      toast.success("Schedule updated successfully! ✨", {
+        description: "Thanks for your contributions!",
+      });
       router.push("/schedule");
     },
   });
@@ -133,8 +135,8 @@ export default function EditScheduleForm() {
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-auto p-1">
                         <Calendar
-                          disabled={(date) => date < new Date("1900-01-01")}
                           autoFocus
+                          disabled={(date) => date < new Date("1900-01-01")}
                           mode="single"
                           onSelect={field.onChange}
                           selected={field.value}
@@ -424,7 +426,9 @@ export default function EditScheduleForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast.success("Something went wrong.", { description: JSON.stringify(error) });
+            toast.success("Something went wrong.", {
+              description: JSON.stringify(error),
+            });
           })(event)
         }
       >

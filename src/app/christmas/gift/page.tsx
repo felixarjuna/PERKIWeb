@@ -2,6 +2,7 @@
 
 import Snowfall from "react-snowfall";
 import secretSanta from "secret-santa-generator";
+import { toast } from "sonner";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
   useAttendingGuests,
 } from "~/hooks/useChristmas";
 import useGiftExchange from "~/hooks/useGiftExchange";
-import { toast } from "sonner";
 
 type Guest = {
   id: number;
@@ -26,7 +26,6 @@ export default function Page() {
 
   /** local state to save randomized gift. */
   const { result, setResult } = useGiftExchange();
-
 
   const randomize = async () => {
     if (guestsLoading) {
@@ -89,7 +88,9 @@ export default function Page() {
         )
       );
 
-      toast.success("✅ Messages sent", { description: "All gift messages have been sent 🎁" });
+      toast.success("✅ Messages sent", {
+        description: "All gift messages have been sent 🎁",
+      });
     } catch (error) {
       console.error(error);
       toast.error("Failed to send some messages.");

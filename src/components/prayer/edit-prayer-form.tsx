@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,7 +19,6 @@ import { Switch } from "~/components/ui/switch";
 import { getUsernameFromName } from "~/lib/utils";
 import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { toast } from "sonner";
 
 const EditPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
@@ -39,7 +39,9 @@ export default function EditPrayerForm({
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Your prayer is updated successfully! ✨", { description: "God bless you! ❤️" });
+      toast.success("Your prayer is updated successfully! ✨", {
+        description: "God bless you! ❤️",
+      });
     },
   });
 

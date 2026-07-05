@@ -10,8 +10,8 @@ import { DateTime } from "luxon";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
-
 import type { z } from "zod";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
@@ -53,7 +53,6 @@ import { eventTypeEnum, type NewSchedule } from "~/lib/db/schema/schema";
 import { cn } from "~/lib/utils";
 import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 export default function AddScheduleForm() {
   /** form definition. */
@@ -66,7 +65,9 @@ export default function AddScheduleForm() {
   const router = useRouter();
   const addSchedule = api.schedules.addSchedule.useMutation({
     onSuccess: () => {
-      toast.success("New schedule added! 🎉", { description: "Thanks for your contributions!" });
+      toast.success("New schedule added! 🎉", {
+        description: "Thanks for your contributions!",
+      });
       router.push("/schedule");
     },
   });
@@ -175,10 +176,10 @@ export default function AddScheduleForm() {
                               className="w-auto p-1"
                             >
                               <Calendar
+                                autoFocus
                                 disabled={(date) =>
                                   date < new Date("1900-01-01")
                                 }
-                                autoFocus
                                 mode="single"
                                 onSelect={field.onChange}
                                 selected={field.value}
@@ -575,7 +576,10 @@ function AddScheduleGoogleSpreadsheet() {
         setLoading(false);
       } catch {
         setLoading(false);
-        toast.error("Error", { description: "Error occurs when loading data from spreadsheet. Some data could not be fetched." });
+        toast.error("Error", {
+          description:
+            "Error occurs when loading data from spreadsheet. Some data could not be fetched.",
+        });
       }
     };
 
@@ -585,11 +589,15 @@ function AddScheduleGoogleSpreadsheet() {
   /** add schedules action. */
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
     onSuccess: () => {
-      toast.success("New schedules added! 🎉", { description: "Thanks for your contributions!" });
+      toast.success("New schedules added! 🎉", {
+        description: "Thanks for your contributions!",
+      });
       router.push("/schedule");
     },
     onError: (err) => {
-      toast.error("Error", { description: `An error occured while adding schedules. Error: ${err.message}.` });
+      toast.error("Error", {
+        description: `An error occured while adding schedules. Error: ${err.message}.`,
+      });
     },
   });
 
@@ -653,7 +661,10 @@ function AddScheduleGoogleSpreadsheet() {
                     cookingGroup: x.cookingGroup ?? undefined,
                   }));
                   if (_schedules === undefined) {
-                    toast.error("Error", { description: "Row is empty. Could not add empty schedules." });
+                    toast.error("Error", {
+                      description:
+                        "Row is empty. Could not add empty schedules.",
+                    });
                     return;
                   }
 
