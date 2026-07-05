@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -19,7 +20,6 @@ import { Switch } from "~/components/ui/switch";
 import { getUsernameFromName } from "~/lib/utils";
 import type { addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 const AddPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
@@ -33,7 +33,9 @@ export default function AddPrayerForm() {
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Your prayer is submitted! 🙏", { description: "Feel free to add another prayer!" });
+      toast.success("Your prayer is submitted! 🙏", {
+        description: "Feel free to add another prayer!",
+      });
     },
   });
 

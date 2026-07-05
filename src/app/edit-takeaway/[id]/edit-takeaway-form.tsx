@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import { Textarea } from "~/components/ui/textarea";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 export default function EditTakeawayForm() {
   const { data: session } = useSession();
@@ -65,7 +65,9 @@ export default function EditTakeawayForm() {
   /** edit takeaway action. */
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onSuccess: async () => {
-      toast.success("Your changes has been saved successfully! ✨", { description: "Thanks for your contribution!" });
+      toast.success("Your changes has been saved successfully! ✨", {
+        description: "Thanks for your contribution!",
+      });
       router.push("/takeaway");
     },
   });
@@ -80,7 +82,9 @@ export default function EditTakeawayForm() {
         className="mt-4 space-y-8 sm:mt-8"
         onSubmit={(event) =>
           void form.handleSubmit(onSubmit, (error) => {
-            toast.error("Uh oh! Something went wrong.", { description: JSON.stringify(error) });
+            toast.error("Uh oh! Something went wrong.", {
+              description: JSON.stringify(error),
+            });
           })(event)
         }
       >

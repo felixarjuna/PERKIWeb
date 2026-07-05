@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -16,7 +17,6 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { type UpdateUserParams, updateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 
 const PASSWORD_PLACEHOLDER_LENGTH = 8;
 
@@ -25,7 +25,9 @@ export default function AccountForm() {
 
   const updateAccount = api.users.updateUser.useMutation({
     onSuccess: () => {
-      toast.success("Update account info successful!", { description: "Your account has been updated! ✨" });
+      toast.success("Update account info successful!", {
+        description: "Your account has been updated! ✨",
+      });
     },
     onError: ({ message }) => {
       toast.success("Update user account failed! 👿", { description: message });

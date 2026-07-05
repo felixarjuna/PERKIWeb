@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import type { z } from "zod";
 import { toast } from "sonner";
+import type { z } from "zod";
 import type { addGuestSchema } from "~/app/christmas/page";
 
 export type Guest = {
@@ -40,11 +40,17 @@ export const useChristmasAddGuest = () => {
     },
     onError: () => {
       sessionStorage.setItem("sendInitialMessageStatus", "error");
-      toast.success("⚠️ Failed to send initial message.", { description: "There was an issue sending the initial message. Please contact support if you do not receive a message soon." });
+      toast.success("⚠️ Failed to send initial message.", {
+        description:
+          "There was an issue sending the initial message. Please contact support if you do not receive a message soon.",
+      });
     },
     onSuccess: () => {
       sessionStorage.setItem("sendInitialMessageStatus", "success");
-      toast.success("📱 Initial message sent.", { description: "You should receive a message shortly with further details." });
+      toast.success("📱 Initial message sent.", {
+        description:
+          "You should receive a message shortly with further details.",
+      });
     },
   });
 
@@ -60,13 +66,18 @@ export const useChristmasAddGuest = () => {
       /** send initial message */
       sendInitialMessage.mutate(variables.phoneNumber);
 
-      toast.success("✅ Registration successful.", { description: "Thank you for your registration!" });
+      toast.success("✅ Registration successful.", {
+        description: "Thank you for your registration!",
+      });
       router.push("/christmas/thankyou");
     },
     onError: (err) => {
       if (axios.isAxiosError(err) && err.response) {
-        toast.success("❌ Registration failed.", { description: err.response.data.message ||
-            "An error occurred during registration." });
+        toast.success("❌ Registration failed.", {
+          description:
+            err.response.data.message ||
+            "An error occurred during registration.",
+        });
       }
     },
   });

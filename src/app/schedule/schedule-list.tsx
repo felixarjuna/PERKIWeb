@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { toast } from "sonner";
 import ActionButton from "~/components/action-button";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
@@ -28,7 +29,6 @@ import { groups } from "~/lib/data";
 import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
-import { toast } from "sonner";
 
 type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
 const SUMMARY_MAX_LENGTH = 250;

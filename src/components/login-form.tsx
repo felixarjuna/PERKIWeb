@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import useAuth from "~/hooks/useAuth";
 import { cn } from "~/lib/utils";
-import { toast } from "sonner";
 
 const username = "mita";
 const password = "gongxifacai2025";
@@ -24,11 +24,15 @@ export function LoginForm({
     e.preventDefault();
     if (form.username === username && form.password === password) {
       setAuthorized(true);
-      toast.success("Login successful! ❤️", { description: "Welcome back, MitA!" });
+      toast.success("Login successful! ❤️", {
+        description: "Welcome back, MitA!",
+      });
       router.push("/admin/dashboard");
     } else {
       setAuthorized(false);
-      toast.error("Login failed!", { description: "Invalid username or password." });
+      toast.error("Login failed!", {
+        description: "Invalid username or password.",
+      });
     }
   };
 
