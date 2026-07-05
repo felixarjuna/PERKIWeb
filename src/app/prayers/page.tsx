@@ -12,7 +12,7 @@ export default async function PrayersPage() {
   return (
     <Template
       subtitle={
-        <div className="flex flex-col gap-y-2 text-base sm:px-14 sm:text-2xl">
+        <div className="flex flex-col gap-y-1">
           <p>
             “Therefore, I tell you, whatever you ask in prayer, believe that you
             have received it, and it will be yours.”

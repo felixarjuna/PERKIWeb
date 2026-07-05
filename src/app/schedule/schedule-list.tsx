@@ -65,7 +65,7 @@ export default function ScheduleList() {
     ].filter(Boolean);
 
     return (
-      <div className="flex flex-wrap items-center gap-x-1 whitespace-break-spaces font-reimbrandt text-muted-foreground text-xs sm:gap-x-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 whitespace-break-spaces text-muted-foreground text-xs">
         {details.map((detail, index) => (
           <React.Fragment key={detail}>
             {index > 0 ? <span>&middot;</span> : null}
@@ -82,7 +82,7 @@ export default function ScheduleList() {
       description = `${description.substring(0, SUMMARY_MAX_LENGTH)}...`;
     }
 
-    return <p className="mt-4 text-sm">{description}</p>;
+    return <p className="mt-4 text-sm sm:text-base">{description}</p>;
   }
 
   function renderScheduleServants(schedule: Schedule) {
@@ -101,7 +101,7 @@ export default function ScheduleList() {
       .at(0)?.members;
 
     return (
-      <div className="flex flex-col justify-center space-y-2 p-8 text-sm sm:w-1/4">
+      <div className="flex flex-col justify-center space-y-2 p-4 text-sm sm:w-1/4 sm:p-6">
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
@@ -147,7 +147,7 @@ export default function ScheduleList() {
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {cookingGroupMembers?.map((member, i) => (
                       <div
-                        className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground"
+                        className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
                         key={i}
                       >
                         {member}
@@ -190,7 +190,7 @@ export default function ScheduleList() {
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {cleaningGroupMembers?.map((member, i) => (
                       <div
-                        className="w-fit rounded-full bg-primary-foreground px-3 py-1 text-secondary-foreground"
+                        className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
                         key={i}
                       >
                         {member}
@@ -220,7 +220,7 @@ export default function ScheduleList() {
   function renderMobileActionButton(schedule: Schedule) {
     return (
       <ActionButton
-        className="visible flex w-full place-content-end gap-x-2 px-8 pb-8 sm:hidden xl:hidden"
+        className="flex w-full place-content-end gap-x-2 px-4 pb-4 sm:hidden"
         onDeleteClick={() => {
           deleteSchedule.mutate({ id: +schedule.id });
         }}
@@ -242,14 +242,14 @@ export default function ScheduleList() {
   function renderSchedule(schedule: Schedule) {
     return (
       <div
-        className="flex h-full flex-col gap-y-0 rounded-lg bg-accent/60 shadow-lg transition duration-300 hover:bg-accent/80 sm:flex-row sm:gap-y-2"
+        className="flex h-full flex-col rounded-xl bg-card transition duration-300 hover:bg-accent/40 sm:flex-row"
         key={schedule.id}
       >
-        <div className="cursor-pointer space-y-2 p-8 sm:w-3/4 xl:w-3/4">
+        <div className="space-y-2 p-4 sm:w-3/4 sm:p-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-reimbrandt text-xl tracking-wide">
+            <h2 className="font-reimbrandt text-lg tracking-wide sm:text-xl">
               {schedule.title}
-            </h1>
+            </h2>
             {renderDesktopActionButton(schedule)}
           </div>
           {renderScheduleDetails(schedule)}
@@ -257,7 +257,7 @@ export default function ScheduleList() {
         </div>
 
         <Separator
-          className="mx-auto h-px w-5/6 rounded-lg bg-paper sm:my-auto sm:h-48 sm:w-px xl:my-auto xl:h-48 xl:w-px"
+          className="mx-auto h-px w-5/6 bg-accent sm:my-auto sm:h-48 sm:w-px"
           orientation="vertical"
         />
 
@@ -284,7 +284,9 @@ export default function ScheduleList() {
   function renderThisWeekSchedule() {
     return (
       <div className="space-y-4">
-        <h1 className="font-reimbrandt text-2xl tracking-wide">This Week</h1>
+        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
+          This Week
+        </h2>
         {thisWeekSchedule ? (
           thisWeekSchedule.length === 0 ? (
             <div>No schedule found.</div>
@@ -308,9 +310,9 @@ export default function ScheduleList() {
   function renderUpcomingSchedule() {
     return (
       <div className="space-y-4">
-        <h1 className="font-reimbrandt text-2xl tracking-wide">
+        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           Upcoming Schedules
-        </h1>
+        </h2>
         {upcomingSchedules ? (
           upcomingSchedules.length === 0 ? (
             <div>No schedule found.</div>
@@ -333,9 +335,9 @@ export default function ScheduleList() {
   function renderPreviousSchedule() {
     return (
       <div className="space-y-4">
-        <h1 className="font-reimbrandt text-2xl tracking-wide">
+        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           Previous Schedules
-        </h1>
+        </h2>
         {previousSchedules ? (
           previousSchedules.length === 0 ? (
             <div>No schedule found.</div>

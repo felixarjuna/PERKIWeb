@@ -15,7 +15,7 @@ export default async function JoinPage() {
       subtitle="Register yourself as PERKI Aachen fellowship member! ❤️"
       title="Join us"
     >
-      <div className="mx-auto mt-4 grid w-full max-w-5xl gap-4 px-0 sm:px-14">
+      <div className="w-full">
         <JoinForm />
       </div>
     </Template>
