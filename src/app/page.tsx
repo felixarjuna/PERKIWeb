@@ -27,13 +27,13 @@ export default function Home() {
     <div>
       <Dialog defaultOpen={true}>
         <DialogContent>
-          <DialogHeader>
+          <DialogHeader className="items-center text-center sm:text-center">
             <DialogTitle>New update at PerkiWEB ✨</DialogTitle>
             <DialogDescription className="pt-4">
               Please register yourself as fellowship member.*
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex items-center justify-center">
+          <DialogFooter className="items-center sm:justify-center">
             <Link
               className={cn(
                 buttonVariants({ variant: "default" }),
@@ -45,7 +45,7 @@ export default function Home() {
             </Link>
           </DialogFooter>
 
-          <span className="flex text-center text-light-green-default text-xs">
+          <span className="flex justify-center text-center text-light-green-default text-xs">
             * you have to register yourself beforehand.
           </span>
         </DialogContent>

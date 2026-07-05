@@ -14,7 +14,6 @@ export default function WhereAreWe() {
           alt="MapsicleMap"
           className="h-screen w-screen object-cover"
           height={4000}
-          quality={100}
           src={"/images/mapsicleMap.png"}
           width={4000}
         />

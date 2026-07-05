@@ -88,7 +88,7 @@ export default function EditPrayerForm({
                 </FormItem>
               )}
             />
-            <div className="flex xs:flex-col xs:gap-2 gap-x-4">
+            <div className="flex gap-x-4">
               <div className="flex-1">
                 <FormField
                   control={form.control}
@@ -107,7 +107,7 @@ export default function EditPrayerForm({
                 />
               </div>
 
-              <div className="flex xs:justify-end">
+              <div className="flex">
                 <Button className="w-fit" type="submit">
                   Save changes
                 </Button>

@@ -33,7 +33,6 @@ export default function ParallaxImage({
         alt={alt}
         className="scale-75 rounded-lg brightness-50 filter sm:scale-75 md:scale-95 lg:scale-110 2xl:scale-125"
         height={height}
-        quality={100}
         src={img}
         width={width}
       />

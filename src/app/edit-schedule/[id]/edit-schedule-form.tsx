@@ -359,7 +359,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="">
             <FormField
               control={form.control}
               name="cookingGroup"
@@ -387,7 +387,7 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="xs:col-span-2">
+          <div className="">
             <FormField
               control={form.control}
               name="cleaningGroup"
