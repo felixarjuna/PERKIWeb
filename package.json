@@ -91,7 +91,7 @@
     "playwright-core": "^1.63.0",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "ultracite": "7.12.4"
   },
   "packageManager": "pnpm@10.5.2",
