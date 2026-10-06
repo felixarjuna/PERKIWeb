@@ -3,9 +3,9 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import { users } from "~/lib/db/schema/schema";
+import { profiles, users } from "~/lib/db/schema/schema";
 import { assertLocalDatabase, e2eEnv } from "./env";
-import { MEMBER } from "./fixtures";
+import { DASHBOARD_MEMBERS, MEMBER } from "./fixtures";
 
 /** Migrates the throwaway database from scratch and seeds known accounts. */
 export default async function globalSetup() {
@@ -28,6 +28,23 @@ export default async function globalSetup() {
       id: MEMBER.id,
       name: MEMBER.name,
     });
+
+    // Dashboard members only need a profile; they never sign in.
+    await db
+      .insert(users)
+      .values(
+        DASHBOARD_MEMBERS.map(({ email, id, name }) => ({ email, id, name }))
+      );
+    await db.insert(profiles).values(
+      DASHBOARD_MEMBERS.map(({ birthday, id, name }) => ({
+        address: `${name} Street 1`,
+        birthday,
+        location: "Aachen",
+        major: "Informatik",
+        phoneNumber: "+4915112345678",
+        userId: id,
+      }))
+    );
   } finally {
     await client.end();
   }
