@@ -56,7 +56,8 @@ export const columns: ColumnDef<DashboardFeatures, UserProfile>[] = [
     size: 200,
   },
   {
-    accessorFn: (row) => row.profiles.birthday,
+    // undefined (not null) so `sortUndefined` keeps missing birthdays last.
+    accessorFn: (row) => row.profiles.birthday ?? undefined,
     accessorKey: "birthday",
     cell: ({ row }) =>
       row.original.profiles.birthday
@@ -76,6 +77,7 @@ export const columns: ColumnDef<DashboardFeatures, UserProfile>[] = [
     ),
     size: 200, // Fixed width in pixels
     sortFn: sortByMonth,
+    sortUndefined: "last",
   },
   {
     accessorKey: "major",

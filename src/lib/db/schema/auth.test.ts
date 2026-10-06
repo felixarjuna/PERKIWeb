@@ -64,10 +64,7 @@ describe("updatePasswordParams (change-password form)", () => {
     expect(result.error?.issues).toHaveLength(3);
   });
 
-  // BUG: signup enforces an 8-character minimum (insertUserParams) but the
-  // change-password schema only requires 1 character, and users.updatePassword
-  // does no further length check, so a user can change their password to "a".
-  it.fails("enforces the same 8-character minimum as signup for the new password", () => {
+  it("enforces the same 8-character minimum as signup for the new password", () => {
     const result = updatePasswordParams.safeParse({
       ...valid,
       newPassword: "a",

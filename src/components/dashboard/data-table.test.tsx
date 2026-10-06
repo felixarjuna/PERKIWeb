@@ -242,12 +242,7 @@ describe("dashboard DataTable", () => {
       expect(names()).toEqual(["Anna", "Dan", "Cara"]);
     });
 
-    // BUG: sortByMonth returns "null sorts after everything", but TanStack
-    // negates the comparator for descending order, so profiles without a
-    // birthday jump to the TOP when sorting birthdays descending (received:
-    // ["Ben", "Anna", "Dan", "Cara"]). Returning nulls via `sortUndefined:
-    // "last"` / an accessor yielding undefined would keep them at the bottom.
-    it.fails("keeps null birthdays last when sorting descending", async () => {
+    it("keeps null birthdays last when sorting descending", async () => {
       const user = userEvent.setup();
       renderTable([
         profile("Anna", day(1990, 12, 1)),

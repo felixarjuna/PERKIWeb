@@ -192,10 +192,7 @@ describe("users.updatePassword", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  // BUG: createUser enforces an 8-character minimum, but updatePasswordParams
-  // only requires `min(1)` for newPassword, so a user can change their
-  // password to a single character and bypass the signup password policy.
-  it.fails("enforces the 8-character minimum on the new password", async () => {
+  it("enforces the 8-character minimum on the new password", async () => {
     const user = await insertUserWithPassword(PASSWORD);
 
     await expect(

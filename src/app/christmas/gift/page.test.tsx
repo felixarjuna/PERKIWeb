@@ -74,7 +74,9 @@ describe("christmas gift page", () => {
     mockGuests({ guests: [] });
     rerender(<Page />);
     await user.click(screen.getByRole("button", { name: RANDOMIZE }));
-    expect(toast.error).toHaveBeenLastCalledWith("No guests to randomize.");
+    expect(toast.error).toHaveBeenLastCalledWith(
+      "At least 2 guests are needed to randomize."
+    );
 
     expect(useGiftExchange.getState().result).toBeUndefined();
   });
@@ -122,12 +124,8 @@ describe("christmas gift page", () => {
     ]);
   });
 
-  // BUG: randomize() calls setResult(table) and then immediately
-  // handleSendChristmasGiftMessages(), which reads `result` from the render
-  // closure — still the previous value. On the first draw that is undefined,
-  // so no messages are sent and "Result for the exchange is still undefined."
-  // is shown even though the comment says "randomize then send".
-  it.fails("RANDOMIZE sends the freshly drawn numbers on the first draw", async () => {
+  // Regression: randomize() used to send the previous draw (stale state).
+  it("RANDOMIZE sends the freshly drawn numbers on the first draw", async () => {
     const user = userEvent.setup();
     render(<Page />);
 
@@ -138,9 +136,7 @@ describe("christmas gift page", () => {
     expect(sentPairs()).toEqual(expectedPairs(table));
   });
 
-  // BUG: same stale closure, worse consequence: re-drawing sends everyone the
-  // numbers from the PREVIOUS draw while the page shows the new one.
-  it.fails("RANDOMIZE on a re-draw sends the new numbers, not the previous ones", async () => {
+  it("RANDOMIZE on a re-draw sends the new numbers, not the previous ones", async () => {
     // Impossible as a real draw, so it can never equal the new table.
     const previous = { 1: 100, 2: 200, 3: 300, 4: 400 };
     useGiftExchange.setState({ result: previous });
@@ -154,14 +150,17 @@ describe("christmas gift page", () => {
     expect(sentPairs()).toEqual(expectedPairs(table));
   });
 
-  it("[current behaviour] RANDOMIZE on a re-draw sends the previous draw's numbers", async () => {
-    const previous = { 1: 100, 2: 200, 3: 300, 4: 400 };
-    useGiftExchange.setState({ result: previous });
+  it("refuses to randomize a single guest, which has no valid draw", async () => {
+    const [onlyGuest] = guests;
+    mockGuests({ guests: onlyGuest ? [onlyGuest] : [] });
     const user = userEvent.setup();
     render(<Page />);
 
     await user.click(screen.getByRole("button", { name: RANDOMIZE }));
 
-    expect(sentPairs()).toEqual(expectedPairs(previous));
+    expect(toast.error).toHaveBeenLastCalledWith(
+      "At least 2 guests are needed to randomize."
+    );
+    expect(sentPairs()).toEqual([]);
   });
 });
