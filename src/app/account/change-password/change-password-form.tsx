@@ -39,15 +39,15 @@ export default function ChangePasswordForm() {
 
   const router = useRouter();
   const updatePassword = api.users.updatePassword.useMutation({
+    onError: ({ message }) => {
+      toast.error("Update password failed", { description: message });
+    },
     onSuccess: async () => {
       toast.success("Update password successful!", {
         description: "Your password has been updated!",
       });
       // Redirect to login page after registration
       router.push("/account");
-    },
-    onError: ({ message }) => {
-      toast.error("Update password failed", { description: message });
     },
   });
 

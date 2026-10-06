@@ -131,8 +131,8 @@ const CountrySelect = ({
 );
 
 interface CountrySelectOptionProps extends RPNInput.FlagProps {
-  selectedCountry: RPNInput.Country;
   onChange: (country: RPNInput.Country) => void;
+  selectedCountry: RPNInput.Country;
 }
 
 const CountrySelectOption = ({

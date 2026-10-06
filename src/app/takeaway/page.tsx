@@ -23,7 +23,7 @@ export default function TakeawayPage() {
 
       <Link
         className={cn(
-          buttonVariants({ variant: "secondary", size: "sm" }),
+          buttonVariants({ size: "sm", variant: "secondary" }),
           "mt-6 gap-1 self-end"
         )}
         href={"/create-takeaway"}

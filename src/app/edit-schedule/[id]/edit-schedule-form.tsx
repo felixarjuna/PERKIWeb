@@ -63,10 +63,10 @@ export default function EditScheduleForm() {
   React.useEffect(() => {
     form.reset({
       ...schedule,
-      preacher: schedule?.preacher ?? undefined,
-      multimedia: schedule?.multimedia ?? undefined,
       accommodation: schedule?.accommodation ?? undefined,
       cookingGroup: schedule?.cookingGroup ?? undefined,
+      multimedia: schedule?.multimedia ?? undefined,
+      preacher: schedule?.preacher ?? undefined,
     });
   }, [form, schedule]);
 

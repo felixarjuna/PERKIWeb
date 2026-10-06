@@ -57,8 +57,8 @@ import { api } from "~/trpc/react";
 export default function AddScheduleForm() {
   /** form definition. */
   const form = useForm<z.infer<typeof addScheduleSchema>>({
-    resolver: zodResolver(addScheduleSchema),
     defaultValues: {},
+    resolver: zodResolver(addScheduleSchema),
   });
 
   /** add schedule action. */
@@ -554,19 +554,19 @@ function AddScheduleGoogleSpreadsheet() {
 
         const schedules = _rows.map((x) => {
           const schedule: NewSchedule = {
-            title: x["Event Title"],
-            description: x["Event Description"],
+            accommodation: x.Akomodasi,
             bibleVerse: x["Bible verse"],
-            type: x.Acara === "Kebaktian" ? "church_service" : "bible_study",
+            cleaningGroup: x.Piket,
+            cookingGroup: x.Masak,
             date: DateTime.fromFormat(x.Tanggal, "d.M.yyyy").toJSDate(),
-            preacher: x.Preacher,
+            description: x["Event Description"],
             leader: x.Acara === "Kebaktian" ? x.Liturgis : x.Leader,
+            multimedia: x.Multimedia,
             musician: x.Musik,
             noteWriter: x.Catatan,
-            cookingGroup: x.Masak,
-            cleaningGroup: x.Piket,
-            accommodation: x.Akomodasi,
-            multimedia: x.Multimedia,
+            preacher: x.Preacher,
+            title: x["Event Title"],
+            type: x.Acara === "Kebaktian" ? "church_service" : "bible_study",
           };
 
           return schedule;
@@ -588,16 +588,16 @@ function AddScheduleGoogleSpreadsheet() {
 
   /** add schedules action. */
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
+    onError: (err) => {
+      toast.error("Error", {
+        description: `An error occured while adding schedules. Error: ${err.message}.`,
+      });
+    },
     onSuccess: () => {
       toast.success("New schedules added!", {
         description: "Thanks for your contributions!",
       });
       router.push("/schedule");
-    },
-    onError: (err) => {
-      toast.error("Error", {
-        description: `An error occured while adding schedules. Error: ${err.message}.`,
-      });
     },
   });
 
@@ -655,10 +655,10 @@ function AddScheduleGoogleSpreadsheet() {
                 onClick={() => {
                   const _schedules = schedules?.map((x) => ({
                     ...x,
-                    preacher: x.preacher ?? undefined,
-                    multimedia: x.multimedia ?? undefined,
                     accommodation: x.accommodation ?? undefined,
                     cookingGroup: x.cookingGroup ?? undefined,
+                    multimedia: x.multimedia ?? undefined,
+                    preacher: x.preacher ?? undefined,
                   }));
                   if (_schedules === undefined) {
                     toast.error("Error", {

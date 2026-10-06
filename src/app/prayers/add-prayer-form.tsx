@@ -22,8 +22,8 @@ import type { addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 
 const AddPrayerFormSchema = z.object({
-  isAnonymous: z.boolean(),
   content: z.string().min(2),
+  isAnonymous: z.boolean(),
 });
 
 export default function AddPrayerForm() {
@@ -40,17 +40,17 @@ export default function AddPrayerForm() {
   });
 
   const form = useForm<z.infer<typeof AddPrayerFormSchema>>({
-    resolver: zodResolver(AddPrayerFormSchema),
     defaultValues: {
       isAnonymous: false,
     },
+    resolver: zodResolver(AddPrayerFormSchema),
   });
 
   function onSubmit(data: z.infer<typeof AddPrayerFormSchema>) {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
-      name: getUsernameFromName(session?.user.name ?? ""),
       isAnonymous: data.isAnonymous,
+      name: getUsernameFromName(session?.user.name ?? ""),
       prayerNames: [],
     };
     addPrayer.mutate(request);

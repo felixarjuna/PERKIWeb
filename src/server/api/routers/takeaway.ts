@@ -10,20 +10,12 @@ import {
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
-  getTakeaways: publicProcedure.query(
-    async () =>
-      await db
-        .select()
-        .from(takeaways)
-        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-        .orderBy(desc(schedules.date))
-  ),
   addTakeaway: protectedProcedure.input(addTakeawaySchema).mutation(
     async ({ input }) =>
       await db.insert(takeaways).values({
-        scheduleId: input.scheduleId,
-        keypoints: input.keypoints,
         contributors: input.contributors,
+        keypoints: input.keypoints,
+        scheduleId: input.scheduleId,
       })
   ),
   deleteTakeaway: protectedProcedure
@@ -42,14 +34,23 @@ export const takeawayRouter = createTRPCRouter({
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
         .then((data) => data.at(0));
 
-      if (takeaway === undefined)
+      if (takeaway === undefined) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Error occurs when loading takeaway from database.",
         });
+      }
 
       return takeaway;
     }),
+  getTakeaways: publicProcedure.query(
+    async () =>
+      await db
+        .select()
+        .from(takeaways)
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+        .orderBy(desc(schedules.date))
+  ),
   updateTakeaway: protectedProcedure.input(updateTakeawaySchema).mutation(
     async ({ input }) =>
       await db

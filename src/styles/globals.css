@@ -103,6 +103,8 @@
   --font-reimbrandt: var(--font-reimbrandt), ui-serif, Georgia, serif;
 
   --animate-gradient-x: gradient-x 10s ease infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes gradient-x {
     0%,
@@ -115,8 +117,6 @@
       background-position: right center;
     }
   }
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
     from {
@@ -158,11 +158,11 @@
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
   }
 
   /** edit scrollbar */

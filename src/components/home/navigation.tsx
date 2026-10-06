@@ -9,24 +9,24 @@ import { useIsMobile } from "~/hooks/use-mobile";
 
 const navigations = [
   {
+    href: "/",
     icon: <House className="h-4 w-4" />,
     name: "Home",
-    href: "/",
   },
   {
+    href: "/schedule",
     icon: <Calendar className="h-4 w-4" />,
     name: "Schedule",
-    href: "/schedule",
   },
   {
+    href: "/takeaway",
     icon: <NotebookPen className="h-4 w-4" />,
     name: "Takeaway",
-    href: "/takeaway",
   },
   {
+    href: "/prayers",
     icon: <HandHeart className="h-4 w-4" />,
     name: "Prayer",
-    href: "/prayers",
   },
 ];
 
@@ -46,14 +46,14 @@ export default function Navigation({ showNav }: INavigationProps) {
         {showNav ? (
           <motion.div
             animate={{
-              y: [0, 20, 0],
               opacity: 1,
               transition: {
-                y: { ease: [0.6, 0.01, -0.05, 0.95], duration: 0.8 },
+                y: { duration: 0.8, ease: [0.6, 0.01, -0.05, 0.95] },
               },
+              y: [0, 20, 0],
             }}
             className="fixed top-10 right-0 left-0 z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-lg bg-accent/80 px-4 py-3 text-center text-foreground sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4"
-            exit={{ opacity: 0, y: [0, 20, 0], transition: { duration: 0.5 } }}
+            exit={{ opacity: 0, transition: { duration: 0.5 }, y: [0, 20, 0] }}
             initial={{ opacity: 0 }}
             key="navigation"
           >

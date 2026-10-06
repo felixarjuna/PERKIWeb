@@ -22,6 +22,9 @@ export default function SignUpForm() {
   const router = useRouter();
 
   const signUpUser = api.users.createUser.useMutation({
+    onError: ({ message }) => {
+      toast.error("Create user account failed!", { description: message });
+    },
     onSuccess: () => {
       toast.success("User account created successfully!", {
         description: "Please login!",
@@ -30,19 +33,16 @@ export default function SignUpForm() {
       // Redirect to login page after registration
       router.push("/auth/signin");
     },
-    onError: ({ message }) => {
-      toast.error("Create user account failed!", { description: message });
-    },
   });
 
   // Define sign up form
   const form = useForm<z.infer<typeof insertUserParams>>({
-    resolver: zodResolver(insertUserParams),
     defaultValues: {
       name: "",
-      username: "",
       password: "",
+      username: "",
     },
+    resolver: zodResolver(insertUserParams),
   });
 
   // Define on submit callback function

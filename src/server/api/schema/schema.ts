@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const addTakeawaySchema = z.object({
-  scheduleId: z.number(),
-  keypoints: z.string(),
   contributors: z.array(z.string()),
+  keypoints: z.string(),
+  scheduleId: z.number(),
 });
 
 export const updateTakeawaySchema = addTakeawaySchema.extend({
@@ -11,32 +11,32 @@ export const updateTakeawaySchema = addTakeawaySchema.extend({
 });
 
 export const addScheduleSchema = z.object({
+  accommodation: z.string().optional(),
+  bibleVerse: z.string().min(2).max(50),
+  cleaningGroup: z.string().min(2).max(50),
+  cookingGroup: z.string().optional(),
+  date: z.date({
+    error: "A date of service is required.",
+  }),
+  description: z.string().min(2, {
+    message: "An event must have a description with at least 2 characters.",
+  }),
+  leader: z.string().min(2).max(50),
+  multimedia: z.string().optional(),
+  musician: z.string().min(2).max(50),
+  noteWriter: z.string().min(2).max(50),
+  preacher: z
+    .string({
+      error: "Please select the speaker for the service.",
+    })
+    .optional(),
   title: z
     .string()
     .min(2, {
       message: "An event must have a title with at least 2 characters.",
     })
     .max(50),
-  description: z.string().min(2, {
-    message: "An event must have a description with at least 2 characters.",
-  }),
-  date: z.date({
-    error: "A date of service is required.",
-  }),
-  bibleVerse: z.string().min(2).max(50),
   type: z.enum(["church_service", "bible_study"]),
-  preacher: z
-    .string({
-      error: "Please select the speaker for the service.",
-    })
-    .optional(),
-  leader: z.string().min(2).max(50),
-  musician: z.string().min(2).max(50),
-  multimedia: z.string().optional(),
-  accommodation: z.string().optional(),
-  noteWriter: z.string().min(2).max(50),
-  cookingGroup: z.string().optional(),
-  cleaningGroup: z.string().min(2).max(50),
 });
 
 export const addScheduleBatchSchema = z.array(addScheduleSchema);
@@ -46,9 +46,9 @@ export const updateScheduleSchema = addScheduleSchema.extend({
 });
 
 export const addPrayerSchema = z.object({
-  name: z.string().optional(),
   content: z.string().min(2).max(50),
   isAnonymous: z.boolean(),
+  name: z.string().optional(),
   prayerNames: z.array(z.string()),
 });
 
@@ -57,8 +57,8 @@ export const editPrayerSchema = addPrayerSchema.extend({
 });
 
 export const addPrayerCountSchema = z.object({
-  id: z.number(),
   count: z.number(),
+  id: z.number(),
   prayerNames: z.array(z.string()),
 });
 
@@ -67,11 +67,11 @@ export const queryByIdSchema = z.object({
 });
 
 export const addProfileSchema = z.object({
-  birthday: z.date(),
-  userId: z.string(),
   address: z.string(),
-  phoneNumber: z.string(),
+  bio: z.string().optional(),
+  birthday: z.date(),
   location: z.string(),
   major: z.string(),
-  bio: z.string().optional(),
+  phoneNumber: z.string(),
+  userId: z.string(),
 });

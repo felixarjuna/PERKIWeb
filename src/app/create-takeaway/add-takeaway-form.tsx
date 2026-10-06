@@ -30,9 +30,9 @@ import { getUsernameFromName } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const addTakeawayFormSchema = z.object({
-  scheduleId: z.string(),
-  keypoints: z.string(),
   contributors: z.array(z.string()),
+  keypoints: z.string(),
+  scheduleId: z.string(),
 });
 
 export default function AddTakeawayForm() {
@@ -50,11 +50,11 @@ export default function AddTakeawayForm() {
 
   /** form definition. */
   const form = useForm<z.infer<typeof addTakeawayFormSchema>>({
-    resolver: zodResolver(addTakeawayFormSchema),
     defaultValues: {
       // TODO: Automatically take contributors name from the username
       contributors: [username],
     },
+    resolver: zodResolver(addTakeawayFormSchema),
   });
 
   /** add takeaway action. */

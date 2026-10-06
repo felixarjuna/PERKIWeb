@@ -27,12 +27,14 @@ import { api } from "~/trpc/react";
 export default function JoinForm() {
   const router = useRouter();
   const { data: session } = useSession();
-  if (session === null) router.push("/auth/signin");
+  if (session === null) {
+    router.push("/auth/signin");
+  }
 
   /** define form. */
   const form = useForm<z.infer<typeof addProfileSchema>>({
-    resolver: zodResolver(addProfileSchema),
     defaultValues: {},
+    resolver: zodResolver(addProfileSchema),
   });
 
   /** load form data. */
@@ -47,6 +49,11 @@ export default function JoinForm() {
   /** handle form submission. */
   const utils = api.useUtils();
   const addProfile = api.profiles.addUserProfile.useMutation({
+    onError: (error) => {
+      toast.error("Failed to submit the form", {
+        description: error.message,
+      });
+    },
     onSuccess: async () => {
       await utils.profiles.invalidate();
       toast.success("Form submitted successfully!", {
@@ -56,11 +63,6 @@ export default function JoinForm() {
       setTimeout(() => {
         router.push("/");
       }, 2000);
-    },
-    onError: (error) => {
-      toast.error("Failed to submit the form", {
-        description: error.message,
-      });
     },
   });
 
@@ -93,7 +95,7 @@ export default function JoinForm() {
 
               <FormControl className="w-full">
                 <div className="relative w-full">
-                  <Calendar className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-muted-foreground" />
+                  <Calendar className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                   <Input
                     className="w-[190px] pl-8"
                     id="dob"

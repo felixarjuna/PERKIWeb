@@ -8,11 +8,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx ./src/lib/db/seed.ts",
+    "db:studio": "drizzle-kit studio",
     "dev": "next dev",
-    "lint": "biome check .",
     "format": "biome check --write .",
+    "lint": "biome check .",
     "start": "next start"
   },
   "dependencies": {
@@ -94,13 +94,13 @@
     "typescript": "^5.9.3",
     "ultracite": "7.12.4"
   },
-  "ct3aMetadata": {
-    "initVersion": "7.19.0"
-  },
   "packageManager": "pnpm@10.5.2",
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "ct3aMetadata": {
+    "initVersion": "7.19.0"
   }
 }

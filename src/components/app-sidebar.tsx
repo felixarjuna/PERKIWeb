@@ -18,19 +18,19 @@ import {
 
 const navMain = [
   {
-    title: "Members",
-    url: "#",
     icon: Users,
     isActive: true,
+    title: "Members",
+    url: "#",
   },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
   const user = {
-    name: session?.user.name ?? "Admin",
-    email: session?.user.email ?? "",
     avatar: session?.user.image ?? "",
+    email: session?.user.email ?? "",
+    name: session?.user.name ?? "Admin",
   };
 
   return (

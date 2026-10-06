@@ -9,11 +9,6 @@ const STALE_TIME_MS = 30 * 1000;
 export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
-      queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
-        staleTime: STALE_TIME_MS,
-      },
       dehydrate: {
         serializeData: superjson.serialize,
         shouldDehydrateQuery: (query) =>
@@ -22,6 +17,11 @@ export const createQueryClient = () =>
       },
       hydrate: {
         deserializeData: superjson.deserialize,
+      },
+      queries: {
+        // With SSR, we usually want to set some default staleTime
+        // above 0 to avoid refetching immediately on the client
+        staleTime: STALE_TIME_MS,
       },
     },
   });

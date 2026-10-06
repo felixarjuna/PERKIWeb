@@ -20,9 +20,11 @@ export default function AboutUs() {
       return;
     }
 
-    if (intersection && intersection.intersectionRatio < 1) setShowNav(false);
-    else if (intersection && intersection?.intersectionRatio == 1)
+    if (intersection && intersection.intersectionRatio < 1) {
+      setShowNav(false);
+    } else if (intersection && intersection?.intersectionRatio == 1) {
       setShowNav(true);
+    }
   }, [intersection, intersection?.boundingClientRect]);
 
   return (

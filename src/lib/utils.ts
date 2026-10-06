@@ -52,10 +52,14 @@ export const countBirthdaysThisMonth = (
 
   return profiles.reduce((count, row) => {
     const birthday = row.profiles?.birthday;
-    if (!birthday) return count; // Skip if no birthday
+    if (!birthday) {
+      return count; // Skip if no birthday
+    }
 
     const birthdayDt = DateTime.fromJSDate(birthday);
-    if (!birthdayDt.isValid) return count; // Skip invalid dates
+    if (!birthdayDt.isValid) {
+      return count; // Skip invalid dates
+    }
 
     return birthdayDt.month === currentMonth ? count + 1 : count;
   }, 0);

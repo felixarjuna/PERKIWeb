@@ -11,25 +11,22 @@ import {
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
-  getSchedules: publicProcedure.query(
-    async () => await db.select().from(schedules).orderBy(desc(schedules.date))
-  ),
   addSchedule: protectedProcedure.input(addScheduleSchema).mutation(
     async ({ input }) =>
       await db.insert(schedules).values({
-        title: input.title,
-        description: input.description,
-        date: input.date,
-        type: input.type,
-        bibleVerse: input.bibleVerse,
-        preacher: input.preacher,
-        noteWriter: input.noteWriter,
-        leader: input.leader,
-        musician: input.musician,
-        multimedia: input.multimedia,
         accommodation: input.accommodation,
-        cookingGroup: input.cookingGroup,
+        bibleVerse: input.bibleVerse,
         cleaningGroup: input.cleaningGroup,
+        cookingGroup: input.cookingGroup,
+        date: input.date,
+        description: input.description,
+        leader: input.leader,
+        multimedia: input.multimedia,
+        musician: input.musician,
+        noteWriter: input.noteWriter,
+        preacher: input.preacher,
+        title: input.title,
+        type: input.type,
       })
   ),
   addScheduleBatch: protectedProcedure
@@ -52,14 +49,18 @@ export const scheduleRouter = createTRPCRouter({
         .where(eq(schedules.id, input.id))
         .then((res) => res.at(0));
 
-      if (schedule === undefined)
+      if (schedule === undefined) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Error occurs when loading schedule from database.",
         });
+      }
 
       return { ...schedule, id: +schedule.id };
     }),
+  getSchedules: publicProcedure.query(
+    async () => await db.select().from(schedules).orderBy(desc(schedules.date))
+  ),
   updateSchedule: protectedProcedure.input(updateScheduleSchema).mutation(
     async ({ input }) =>
       await db

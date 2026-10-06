@@ -76,14 +76,14 @@ export default function TakeawayList() {
 }
 
 interface TakeawayItemProps {
+  readonly bibleVerse: string;
+  readonly contributors: Array<string>;
+  readonly date: string;
+  readonly eventType: EventTypeEnum;
+  readonly speaker: string;
+  readonly summary: string;
   readonly takeawayId: number;
   readonly title: string;
-  readonly date: string;
-  readonly speaker: string;
-  readonly bibleVerse: string;
-  readonly summary: string;
-  readonly contributors: Array<string>;
-  readonly eventType: EventTypeEnum;
 }
 
 function TakeawayItem(props: TakeawayItemProps) {

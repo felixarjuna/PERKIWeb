@@ -21,8 +21,8 @@ import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 const EditPrayerFormSchema = z.object({
-  isAnonymous: z.boolean(),
   content: z.string().min(2),
+  isAnonymous: z.boolean(),
 });
 
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
@@ -46,19 +46,19 @@ export default function EditPrayerForm({
   });
 
   const form = useForm<z.infer<typeof EditPrayerFormSchema>>({
-    resolver: zodResolver(EditPrayerFormSchema),
     defaultValues: {
-      isAnonymous: prayer.isAnonymous ?? undefined,
       content: prayer.content,
+      isAnonymous: prayer.isAnonymous ?? undefined,
     },
+    resolver: zodResolver(EditPrayerFormSchema),
   });
 
   function onSubmit(data: z.infer<typeof EditPrayerFormSchema>) {
     const request: z.infer<typeof editPrayerSchema> = {
       ...prayer,
-      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
       content: data.content,
       isAnonymous: data.isAnonymous,
+      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
       prayerNames: prayer.prayerNames as string[],
     };
     updatePrayer.mutate(request);

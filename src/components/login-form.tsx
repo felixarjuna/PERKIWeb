@@ -40,7 +40,7 @@ export function LoginForm({
   const [form, setForm] = React.useState<{
     username: string;
     password: string;
-  }>({ username: "", password: "" });
+  }>({ password: "", username: "" });
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

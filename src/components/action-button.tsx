@@ -12,9 +12,9 @@ import {
 } from "./ui/alert-dialog";
 
 interface ActionButtonProps {
-  onEditClick?: () => void;
-  onDeleteClick: () => void;
   className?: string;
+  onDeleteClick: () => void;
+  onEditClick?: () => void;
 }
 
 export default function ActionButton({

@@ -14,7 +14,7 @@ export default function WhatWeDo() {
   return (
     <div className="grid gap-y-8 bg-paper py-16 text-paper-foreground">
       <div className="grid grid-cols-4">
-        <div className="sm:-rotate-90 col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1">
+        <div className="col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1 sm:-rotate-90">
           <h1 className="text-center font-reimbrandt text-4xl text-paper-foreground sm:text-8xl">
             What We Do
           </h1>
@@ -37,8 +37,8 @@ export default function WhatWeDo() {
                   <DialogTrigger
                     className={cn(
                       buttonVariants({
-                        variant: "default",
                         size: "sm",
+                        variant: "default",
                       })
                     )}
                   >
