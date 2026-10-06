@@ -50,8 +50,11 @@ export const userRouter = createTRPCRouter({
         await db.insert(users).values(newUser);
         return { success: true };
       } catch (err) {
-        const message = (err as Error).message ?? "Error, please try again";
+        const message =
+          err instanceof Error ? err.message : "Error, please try again";
+        // biome-ignore lint/style/useErrorCause: TRPCError takes `cause` in its single options object (passed here); the rule only recognizes the `(message, { cause })` signature
         throw new TRPCError({
+          cause: err,
           code: "INTERNAL_SERVER_ERROR",
           message,
         });
@@ -115,8 +118,11 @@ export const userRouter = createTRPCRouter({
           .where(eq(users.id, input.id));
         return { success: true };
       } catch (err) {
-        const message = (err as Error).message ?? "Error, please try again";
+        const message =
+          err instanceof Error ? err.message : "Error, please try again";
+        // biome-ignore lint/style/useErrorCause: TRPCError takes `cause` in its single options object (passed here); the rule only recognizes the `(message, { cause })` signature
         throw new TRPCError({
+          cause: err,
           code: "INTERNAL_SERVER_ERROR",
           message,
         });
@@ -157,8 +163,11 @@ export const userRouter = createTRPCRouter({
         await db.update(users).set(newUser).where(eq(users.id, input.id));
         return { success: true };
       } catch (err) {
-        const message = (err as Error).message ?? "Error, please try again";
+        const message =
+          err instanceof Error ? err.message : "Error, please try again";
+        // biome-ignore lint/style/useErrorCause: TRPCError takes `cause` in its single options object (passed here); the rule only recognizes the `(message, { cause })` signature
         throw new TRPCError({
+          cause: err,
           code: "INTERNAL_SERVER_ERROR",
           message,
         });

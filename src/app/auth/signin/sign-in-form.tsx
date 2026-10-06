@@ -53,7 +53,7 @@ const GoogleIcon = () => (
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") ?? "/";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const form = useForm<z.infer<typeof signInSchema>>({
@@ -93,7 +93,7 @@ export default function SignInForm() {
       <Form {...form}>
         <form
           className="flex flex-col gap-4"
-          onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FormField
             control={form.control}
@@ -139,7 +139,7 @@ export default function SignInForm() {
 
       <button
         className="flex w-full items-center justify-center gap-x-2 rounded-md bg-paper p-2 font-medium text-paper-foreground text-sm transition-opacity hover:opacity-90"
-        onClick={() => void onGoogleLogin()}
+        onClick={onGoogleLogin}
         type="button"
       >
         <GoogleIcon />

@@ -18,7 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
-import useAuth from "~/hooks/useAuth";
+import useAuth from "~/hooks/use-auth";
 import { api } from "~/trpc/react";
 
 export default function DashboardView() {

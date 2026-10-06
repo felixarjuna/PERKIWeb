@@ -21,10 +21,10 @@ export default function OurPastors() {
         </div>
 
         <div className="col-span-4 flex flex-col gap-y-4 pr-0 sm:col-span-3 sm:gap-y-8 sm:pr-40">
-          {pastors.map((pastor, index) => (
+          {pastors.map((pastor) => (
             <div
               className="grid grid-cols-3 items-center gap-x-20 px-8 sm:gap-x-0"
-              key={index}
+              key={pastor.name}
             >
               <div className="col-span-3 flex flex-col sm:col-span-2">
                 <p className="mb-2 font-reimbrandt text-2xl sm:text-5xl">

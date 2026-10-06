@@ -1,8 +1,7 @@
 "use client";
 
-import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
+import { type ComponentProps, createContext, useContext, useId } from "react";
 import {
   Controller,
   type ControllerProps,
@@ -16,16 +15,14 @@ import { cn } from "~/lib/utils";
 
 const Form = FormProvider;
 
-type FormFieldContextValue<
+interface FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> = {
+> {
   name: TName;
-};
+}
 
-const FormFieldContext = React.createContext<FormFieldContextValue | null>(
-  null
-);
+const FormFieldContext = createContext<FormFieldContextValue | null>(null);
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -39,8 +36,8 @@ const FormField = <
 );
 
 const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext);
-  const itemContext = React.useContext(FormItemContext);
+  const fieldContext = useContext(FormFieldContext);
+  const itemContext = useContext(FormItemContext);
   const { getFieldState, formState } = useFormContext();
 
   if (!fieldContext) {
@@ -65,47 +62,35 @@ const useFormField = () => {
   };
 };
 
-type FormItemContextValue = {
+interface FormItemContextValue {
   id: string;
-};
+}
 
-const FormItemContext = React.createContext<FormItemContextValue | null>(null);
+const FormItemContext = createContext<FormItemContextValue | null>(null);
 
-const FormItem = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const id = React.useId();
+function FormItem({ className, ...props }: ComponentProps<"div">) {
+  const id = useId();
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div className={cn("space-y-2", className)} ref={ref} {...props} />
+      <div className={cn("space-y-2", className)} {...props} />
     </FormItemContext.Provider>
   );
-});
-FormItem.displayName = "FormItem";
+}
 
-const FormLabel = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
   const { error, formItemId } = useFormField();
 
   return (
     <Label
       className={cn(error && "text-destructive", className)}
       htmlFor={formItemId}
-      ref={ref}
       {...props}
     />
   );
-});
-FormLabel.displayName = "FormLabel";
+}
 
-const FormControl = React.forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+function FormControl({ ...props }: ComponentProps<typeof Slot>) {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
@@ -116,34 +101,24 @@ const FormControl = React.forwardRef<
       }
       aria-invalid={!!error}
       id={formItemId}
-      ref={ref}
       {...props}
     />
   );
-});
-FormControl.displayName = "FormControl";
+}
 
-const FormDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => {
+function FormDescription({ className, ...props }: ComponentProps<"p">) {
   const { formDescriptionId } = useFormField();
 
   return (
     <p
       className={cn("text-muted-foreground text-sm", className)}
       id={formDescriptionId}
-      ref={ref}
       {...props}
     />
   );
-});
-FormDescription.displayName = "FormDescription";
+}
 
-const FormMessage = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
+function FormMessage({ className, children, ...props }: ComponentProps<"p">) {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message ?? "") : children;
 
@@ -155,14 +130,12 @@ const FormMessage = React.forwardRef<
     <p
       className={cn("font-medium text-destructive text-sm", className)}
       id={formMessageId}
-      ref={ref}
       {...props}
     >
       {body}
     </p>
   );
-});
-FormMessage.displayName = "FormMessage";
+}
 
 export {
   Form,

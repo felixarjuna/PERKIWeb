@@ -85,7 +85,7 @@ export default function AddScheduleForm() {
         <Form {...form}>
           <form
             className="mt-4 space-y-8 sm:mt-8"
-            onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <div className="space-y-4">
               <h3 className="font-reimbrandt text-2xl sm:text-3xl">
@@ -210,8 +210,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {speakers.map((speaker, index) => (
-                                <SelectItem key={index} value={speaker}>
+                              {speakers.map((speaker) => (
+                                <SelectItem key={speaker} value={speaker}>
                                   {speaker}
                                 </SelectItem>
                               ))}
@@ -279,9 +279,9 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {liturgos.map((liturgos, index) => (
-                                <SelectItem key={index} value={liturgos}>
-                                  {liturgos}
+                              {liturgos.map((leader) => (
+                                <SelectItem key={leader} value={leader}>
+                                  {leader}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -310,8 +310,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {musicians.map((musician, index) => (
-                                <SelectItem key={index} value={musician}>
+                              {musicians.map((musician) => (
+                                <SelectItem key={musician} value={musician}>
                                   {musician}
                                 </SelectItem>
                               ))}
@@ -341,8 +341,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {noteWriter.map((writer, index) => (
-                                <SelectItem key={index} value={writer}>
+                              {noteWriter.map((writer) => (
+                                <SelectItem key={writer} value={writer}>
                                   {writer}
                                 </SelectItem>
                               ))}
@@ -372,8 +372,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {multimedia.map((mediator, index) => (
-                                <SelectItem key={index} value={mediator}>
+                              {multimedia.map((mediator) => (
+                                <SelectItem key={mediator} value={mediator}>
                                   {mediator}
                                 </SelectItem>
                               ))}
@@ -403,8 +403,11 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {accommodation.map((accomodator, index) => (
-                                <SelectItem key={index} value={accomodator}>
+                              {accommodation.map((accomodator) => (
+                                <SelectItem
+                                  key={accomodator}
+                                  value={accomodator}
+                                >
                                   {accomodator}
                                 </SelectItem>
                               ))}
@@ -434,8 +437,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {groupNames.map((group, index) => (
-                                <SelectItem key={index} value={group}>
+                              {groupNames.map((group) => (
+                                <SelectItem key={group} value={group}>
                                   {group}
                                 </SelectItem>
                               ))}
@@ -467,8 +470,8 @@ export default function AddScheduleForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {groupNames.map((group, index) => (
-                                <SelectItem key={index} value={group}>
+                              {groupNames.map((group) => (
+                                <SelectItem key={group} value={group}>
                                   {group}
                                 </SelectItem>
                               ))}
@@ -502,22 +505,22 @@ export default function AddScheduleForm() {
   );
 }
 
-type SpreadsheetSchedule = {
-  "Event Title": string;
-  "Event Description": string;
-  "Bible verse": string;
-  Tanggal: string;
+interface SpreadsheetSchedule {
   Acara: "Kebaktian" | "Penelaahaan Alkitab";
-  Preacher: string;
-  Liturgis: string;
-  Leader: string;
-  Catatan: string;
   Akomodasi: string;
+  "Bible verse": string;
+  Catatan: string;
+  "Event Description": string;
+  "Event Title": string;
+  Leader: string;
+  Liturgis: string;
+  Masak: string;
   Multimedia: string;
   Musik: string;
-  Masak: string;
   Piket: string;
-};
+  Preacher: string;
+  Tanggal: string;
+}
 
 const doc = new GoogleSpreadsheet(
   "1McH8SoN1ut6CfERNi6BSh45O8vhshfZElDA42FbTZMs",
@@ -552,8 +555,8 @@ function AddScheduleGoogleSpreadsheet() {
         const rows = await schedule?.getRows(_options);
         const _rows = rows?.map((x) => x.toObject()) as SpreadsheetSchedule[];
 
-        const schedules = _rows.map((x) => {
-          const schedule: NewSchedule = {
+        const loadedSchedules = _rows.map((x) => {
+          const newSchedule: NewSchedule = {
             accommodation: x.Akomodasi,
             bibleVerse: x["Bible verse"],
             cleaningGroup: x.Piket,
@@ -569,10 +572,10 @@ function AddScheduleGoogleSpreadsheet() {
             type: x.Acara === "Kebaktian" ? "church_service" : "bible_study",
           };
 
-          return schedule;
+          return newSchedule;
         });
 
-        setSchedules(schedules);
+        setSchedules(loadedSchedules);
         setLoading(false);
       } catch {
         setLoading(false);
@@ -583,8 +586,8 @@ function AddScheduleGoogleSpreadsheet() {
       }
     };
 
-    void load();
-  }, [toast, _options]);
+    load();
+  }, [_options]);
 
   /** add schedules action. */
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
@@ -653,14 +656,7 @@ function AddScheduleGoogleSpreadsheet() {
             <div className="mt-8 flex justify-between">
               <Button
                 onClick={() => {
-                  const _schedules = schedules?.map((x) => ({
-                    ...x,
-                    accommodation: x.accommodation ?? undefined,
-                    cookingGroup: x.cookingGroup ?? undefined,
-                    multimedia: x.multimedia ?? undefined,
-                    preacher: x.preacher ?? undefined,
-                  }));
-                  if (_schedules === undefined) {
+                  if (!schedules) {
                     toast.error("Error", {
                       description:
                         "Row is empty. Could not add empty schedules.",
@@ -668,6 +664,13 @@ function AddScheduleGoogleSpreadsheet() {
                     return;
                   }
 
+                  const _schedules = schedules.map((x) => ({
+                    ...x,
+                    accommodation: x.accommodation ?? undefined,
+                    cookingGroup: x.cookingGroup ?? undefined,
+                    multimedia: x.multimedia ?? undefined,
+                    preacher: x.preacher ?? undefined,
+                  }));
                   addScheduleBatch.mutate(_schedules);
                 }}
                 type="submit"

@@ -67,10 +67,7 @@ export default function EditPrayerForm({
 
   return (
     <Form {...form}>
-      <form
-        className="w-full space-y-6"
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-      >
+      <form className="w-full space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         <div>
           <div className="space-y-4">
             <FormField

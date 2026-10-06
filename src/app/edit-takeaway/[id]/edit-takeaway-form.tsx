@@ -33,19 +33,17 @@ export default function EditTakeawayForm() {
 
   const router = useRouter();
 
-  const params = useParams<{ id: string }>();
-  const id = params?.id ?? "";
+  const { id } = useParams<{ id: string }>();
   const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
-    id: Number.parseInt(id),
+    id: Number.parseInt(id, 10),
   });
 
   const contributors = React.useMemo(() => {
     if (takeaway) {
       const _contributors = takeaway.takeaways.contributors as string[];
-      const contributors = _contributors.includes(username)
+      return _contributors.includes(username)
         ? [..._contributors]
         : [..._contributors, username];
-      return contributors;
     }
   }, [takeaway, username]);
 
@@ -64,7 +62,7 @@ export default function EditTakeawayForm() {
 
   /** edit takeaway action. */
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Your changes has been saved successfully!", {
         description: "Thanks for your contribution!",
       });
@@ -80,13 +78,11 @@ export default function EditTakeawayForm() {
     <Form {...form}>
       <form
         className="mt-4 space-y-8 sm:mt-8"
-        onSubmit={(event) =>
-          void form.handleSubmit(onSubmit, (error) => {
-            toast.error("Uh oh! Something went wrong.", {
-              description: JSON.stringify(error),
-            });
-          })(event)
-        }
+        onSubmit={form.handleSubmit(onSubmit, (error) => {
+          toast.error("Uh oh! Something went wrong.", {
+            description: JSON.stringify(error),
+          });
+        })}
       >
         <div className="space-y-4">
           <h3 className="font-reimbrandt text-2xl sm:text-3xl">

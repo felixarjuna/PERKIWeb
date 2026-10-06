@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const calculateXAxes = (
-  step = 0.1,
+  step: number,
   multiplier: number,
   start: number,
   end: number
@@ -19,7 +19,7 @@ export const calculateXAxes = (
   });
 
 export const calculateYAxes = (
-  step = 0.1,
+  step: number,
   multiplier: number,
   start: number = Math.PI,
   end = -Math.PI
@@ -35,7 +35,7 @@ export const dateTimeFormatter = (date: string) => {
 };
 
 export const getUsernameFromName = (name: string) =>
-  name?.replace(/\s/g, "").toLowerCase();
+  name.replace(/\s/g, "").toLowerCase();
 
 export function getNextDayOfWeek(date: Date, dayOfWeek: number) {
   const resultDate = new Date(date.getTime());

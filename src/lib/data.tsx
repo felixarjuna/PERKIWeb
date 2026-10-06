@@ -1,9 +1,9 @@
-type Event = {
-  name: string;
-  time: string;
-  notes: string;
+interface Event {
   description: string | React.ReactNode;
-};
+  name: string;
+  notes: string;
+  time: string;
+}
 
 export const events: Event[] = [
   {
@@ -82,12 +82,12 @@ export const events: Event[] = [
   },
 ];
 
-type Pastor = {
-  name: string;
+interface Pastor {
   favoriteVerse: string;
   img: string;
+  name: string;
   story: string | React.ReactNode;
-};
+}
 
 export const pastors: Pastor[] = [
   {
@@ -114,10 +114,10 @@ export const pastors: Pastor[] = [
   },
 ];
 
-type Service = {
-  title: string;
+interface Service {
   description: string | React.ReactNode;
-};
+  title: string;
+}
 
 export const services: Service[] = [
   {

@@ -42,7 +42,7 @@ export default function ChangePasswordForm() {
     onError: ({ message }) => {
       toast.error("Update password failed", { description: message });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Update password successful!", {
         description: "Your password has been updated!",
       });
@@ -60,7 +60,7 @@ export default function ChangePasswordForm() {
     <Form {...form}>
       <form
         className="w-full min-w-[10rem] space-y-8 sm:min-w-[32rem]"
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="space-y-4">
           <div>

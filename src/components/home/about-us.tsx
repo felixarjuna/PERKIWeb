@@ -22,7 +22,7 @@ export default function AboutUs() {
 
     if (intersection && intersection.intersectionRatio < 1) {
       setShowNav(false);
-    } else if (intersection && intersection?.intersectionRatio == 1) {
+    } else if (intersection && intersection?.intersectionRatio === 1) {
       setShowNav(true);
     }
   }, [intersection, intersection?.boundingClientRect]);

@@ -55,19 +55,19 @@ export default function TakeawayList() {
         </SelectContent>
       </Select>
 
-      {takeaways.map((data, index) => {
-        const contributors = data.takeaways.contributors as string[];
+      {takeaways.map((item) => {
+        const contributors = item.takeaways.contributors as string[];
         return (
           <TakeawayItem
-            bibleVerse={data.schedules.bibleVerse}
+            bibleVerse={item.schedules.bibleVerse}
             contributors={contributors}
-            date={dateTimeFormatter(data.schedules.date.toString())}
-            eventType={data.schedules.type}
-            key={index}
-            speaker={data.schedules.leader}
-            summary={data.takeaways.keypoints}
-            takeawayId={data.takeaways.id}
-            title={data.schedules.title}
+            date={dateTimeFormatter(item.schedules.date.toString())}
+            eventType={item.schedules.type}
+            key={item.takeaways.id}
+            speaker={item.schedules.leader}
+            summary={item.takeaways.keypoints}
+            takeawayId={item.takeaways.id}
+            title={item.schedules.title}
           />
         );
       })}
@@ -77,7 +77,7 @@ export default function TakeawayList() {
 
 interface TakeawayItemProps {
   readonly bibleVerse: string;
-  readonly contributors: Array<string>;
+  readonly contributors: string[];
   readonly date: string;
   readonly eventType: EventTypeEnum;
   readonly speaker: string;
@@ -114,7 +114,7 @@ function TakeawayItem(props: TakeawayItemProps) {
               deleteTakeaway.mutate({ id: +props.takeawayId })
             }
             onEditClick={() =>
-              void router.push(`/edit-takeaway/${props.takeawayId}`)
+              router.push(`/edit-takeaway/${props.takeawayId}`)
             }
           />
           <span className="whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs">
@@ -141,9 +141,7 @@ function TakeawayItem(props: TakeawayItemProps) {
       <ActionButton
         className="mt-3 flex w-full place-content-end gap-x-2 sm:hidden"
         onDeleteClick={() => deleteTakeaway.mutate({ id: +props.takeawayId })}
-        onEditClick={() =>
-          void router.push(`/edit-takeaway/${props.takeawayId}`)
-        }
+        onEditClick={() => router.push(`/edit-takeaway/${props.takeawayId}`)}
       />
     </article>
   );

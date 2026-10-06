@@ -82,10 +82,7 @@ export default function JoinForm() {
 
   return (
     <Form {...form}>
-      <form
-        className="space-y-4 py-10"
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-      >
+      <form className="space-y-4 py-10" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
           name="birthday"

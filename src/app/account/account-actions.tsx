@@ -24,7 +24,7 @@ export default function AccountActions() {
 
       <Button
         className="mt-4 w-fit gap-2 place-self-end"
-        onClick={() => void signOut({ callbackUrl: "/auth/signin" })}
+        onClick={() => signOut({ callbackUrl: "/auth/signin" })}
         type="button"
         variant="ghost"
       >

@@ -58,10 +58,7 @@ export default function AddPrayerForm() {
 
   return (
     <Form {...form}>
-      <form
-        className="w-full space-y-6"
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-      >
+      <form className="w-full space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-y-4">
           <div className="flex gap-x-4">
             <div className="flex-1">
