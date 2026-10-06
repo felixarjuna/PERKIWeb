@@ -43,7 +43,7 @@ export const updatePasswordParams = z.object({
   id: z.string(),
   newPassword: z
     .string()
-    .min(1, { message: "Password must contain at least 1 character(s)" }),
+    .min(8, { message: "Password must be at least 8 characters." }),
   retypeNewPassword: z
     .string()
     .min(1, { message: "Password must contain at least 1 character(s)" }),

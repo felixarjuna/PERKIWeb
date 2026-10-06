@@ -13,6 +13,9 @@ import {
 } from "~/hooks/use-christmas";
 import useGiftExchange from "~/hooks/use-gift-exchange";
 
+/** A secret santa draw needs someone other than yourself to draw. */
+const MIN_PARTICIPANTS = 2;
+
 interface Guest {
   id: number;
   names: string;
@@ -40,8 +43,10 @@ export default function Page() {
       return;
     }
 
-    if (!guests || guests.length === 0) {
-      toast.error("No guests to randomize.");
+    if (!guests || guests.length < MIN_PARTICIPANTS) {
+      toast.error(
+        `At least ${MIN_PARTICIPANTS} guests are needed to randomize.`
+      );
       return;
     }
 
@@ -51,12 +56,12 @@ export default function Page() {
 
     setResult(table);
 
-    // keep old behavior: randomize then send
-    await handleSendChristmasGiftMessages();
+    // Send the table just drawn; `result` still holds the previous draw here.
+    await sendGiftMessages(table);
   };
 
-  const handleSendChristmasGiftMessages = async () => {
-    if (!result) {
+  const sendGiftMessages = async (draw: Record<number, number> | undefined) => {
+    if (!draw) {
       toast.error("Result for the exchange is still undefined.");
       return;
     }
@@ -66,7 +71,7 @@ export default function Page() {
       return;
     }
 
-    const list = Object.entries(result).map(([key, value]) => {
+    const list = Object.entries(draw).map(([key, value]) => {
       const guest = guests.find(
         (candidate: Guest) => candidate.id === Number(key)
       );
@@ -117,7 +122,7 @@ export default function Page() {
 
             <Button
               className="bg-white/20"
-              onClick={handleSendChristmasGiftMessages}
+              onClick={() => sendGiftMessages(result)}
             >
               <Send className="size-4" /> SEND MESSAGE!
             </Button>

@@ -90,10 +90,10 @@ describe("secret santa draw", () => {
     expect(pairs).toBeGreaterThan(0);
   });
 
-  // BUG: with a single participant no valid draw exists, and the library
-  // retries by unbounded recursion (shuffleArrayCompletely) until the stack
-  // overflows with a RangeError. gift/page.tsx only guards against 0 guests, so
-  // one attending guest makes RANDOMIZE throw "Maximum call stack size exceeded".
+  // BUG (upstream, secret-santa-generator): with a single participant no valid
+  // draw exists, and the library retries by unbounded recursion
+  // (shuffleArrayCompletely) until the stack overflows with a RangeError.
+  // gift/page.tsx guards against fewer than 2 guests, so the app never hits it.
   it.fails("does not overflow the stack for a single participant", () => {
     expect(() => draw([1])).not.toThrow(RangeError);
   });
