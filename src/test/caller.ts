@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 import type { Session } from "next-auth";
 import { users } from "~/lib/db/schema/schema";
 import { createCaller } from "~/server/api/root";
@@ -33,3 +34,16 @@ export const insertUser = async (
   }
   return user;
 };
+
+/** Low bcrypt cost keeps fixture hashing fast; production uses 10. */
+const FIXTURE_BCRYPT_ROUNDS = 4;
+
+/** Inserts a credentials user whose password hashes to `password`. */
+export const insertUserWithPassword = async (
+  password: string,
+  overrides: Partial<typeof users.$inferInsert> = {}
+) =>
+  insertUser({
+    ...overrides,
+    hashedPassword: await bcrypt.hash(password, FIXTURE_BCRYPT_ROUNDS),
+  });
