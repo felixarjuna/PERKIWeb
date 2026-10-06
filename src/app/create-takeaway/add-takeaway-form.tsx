@@ -3,8 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,7 +24,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import { getUsernameFromName } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const addTakeawayFormSchema = z.object({
@@ -35,13 +32,8 @@ const addTakeawayFormSchema = z.object({
   scheduleId: z.string(),
 });
 
-export default function AddTakeawayForm() {
-  const { data: session } = useSession();
-  const username = React.useMemo(
-    () => getUsernameFromName(session?.user.name ?? ""),
-    [session?.user.name]
-  );
-
+/** `username` comes from the server session, so it is set on first render. */
+export default function AddTakeawayForm({ username }: { username: string }) {
   /** loading schedule selection. */
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
@@ -51,15 +43,16 @@ export default function AddTakeawayForm() {
   /** form definition. */
   const form = useForm<z.infer<typeof addTakeawayFormSchema>>({
     defaultValues: {
-      // TODO: Automatically take contributors name from the username
       contributors: [username],
     },
     resolver: zodResolver(addTakeawayFormSchema),
   });
 
   /** add takeaway action. */
+  const utils = api.useUtils();
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([utils.takeaways.invalidate()]);
       toast.success("Your takeaway has been submitted!", {
         description: "Thanks for sharing!",
       });

@@ -5,7 +5,7 @@ import {
   DASHBOARD_NAME_PREFIX,
   MEMBER_STORAGE_STATE,
 } from "./fixtures";
-import { adminLogin, toast } from "./helpers";
+import { adminLogin, setDashboardPageSize, toast } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
@@ -23,15 +23,6 @@ const visibleNames = async (page: Page) => {
 
 const seededNames = (names: string[]) =>
   names.filter((name) => name.startsWith(DASHBOARD_NAME_PREFIX));
-
-const setPageSize = async (page: Page, size: number) => {
-  await page.getByRole("combobox").click();
-  await page.getByRole("option", { exact: true, name: String(size) }).click();
-  // While the select is open Radix hides the rest of the page from the
-  // accessibility tree; wait until the table is exposed again.
-  await expect(page.getByRole("listbox")).toBeHidden();
-  await expect(page.getByRole("table")).toBeVisible();
-};
 
 const pageLabel = (page: Page) => page.getByText(PAGE_LABEL);
 
@@ -88,7 +79,7 @@ const toggleSort = async (page: Page, column: "Name" | "Birthday") => {
 
 test("dashboard sorts by name and by birthday", async ({ page }) => {
   await adminLogin(page);
-  await setPageSize(page, 50);
+  await setDashboardPageSize(page, 50);
   await expect(pageLabel(page)).toHaveText("Page 1 of 1");
 
   const allSeeded = DASHBOARD_MEMBERS.map((member) => member.name);
@@ -128,12 +119,6 @@ test("dashboard sorts by name and by birthday", async ({ page }) => {
 test("dashboard Name header is not covered by the sidebar", async ({
   page,
 }) => {
-  // BUG: the desktop sidebar overlaps the dashboard content, hiding the
-  // "Name" column and its sort button (clicks land on the sidebar). The
-  // sidebar gap/width classes use Tailwind v3 syntax (`w-[--sidebar-width]`
-  // in src/components/ui/sidebar.tsx), which Tailwind v4 no longer resolves.
-  test.fail();
-
   await adminLogin(page);
   await expect(page.getByRole("table")).toBeVisible();
   const ASSERTION_TIMEOUT_MS = 3000;
@@ -188,7 +173,7 @@ test("dashboard pagination controls work", async ({ page }) => {
   await expect(label).toHaveText(`Page 1 of ${lastPage}`);
 
   // A bigger page size fits every member on one page.
-  await setPageSize(page, 50);
+  await setDashboardPageSize(page, 50);
   await expect(label).toHaveText("Page 1 of 1");
   expect((await visibleNames(page)).length).toBeGreaterThan(DEFAULT_PAGE_SIZE);
 });

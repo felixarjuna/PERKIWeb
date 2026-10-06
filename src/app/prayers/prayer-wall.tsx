@@ -1,25 +1,17 @@
 "use client";
 
 import { HandHeart } from "lucide-react";
-import { useSession } from "next-auth/react";
-import React from "react";
 import { toast } from "sonner";
 import { DeleteButton } from "~/components/action-button";
 import Loader from "~/components/loader";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Toggle } from "~/components/ui/toggle";
-import { getUsernameFromName } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import AddPrayerForm from "./add-prayer-form";
 
-export default function PrayerWall() {
-  const { data: session } = useSession();
-  const username = React.useMemo(
-    () => getUsernameFromName(session?.user.name ?? ""),
-    [session?.user.name]
-  );
-
+/** `username` comes from the server session, so it is never empty mid-load. */
+export default function PrayerWall({ username }: { username: string }) {
   const utils = api.useUtils();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
 
@@ -106,7 +98,7 @@ export default function PrayerWall() {
         Let&apos;s pray together every Wednesday at 18.30 a.m
       </p>
 
-      <AddPrayerForm />
+      <AddPrayerForm username={username} />
 
       <div className="space-y-4">
         <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">

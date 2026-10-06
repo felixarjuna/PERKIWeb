@@ -1,5 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
-import { adminLogin, signUpAndSignIn, toast, waitForSession } from "./helpers";
+import {
+  adminLogin,
+  setDashboardPageSize,
+  signUpAndSignIn,
+  toast,
+  waitForSession,
+} from "./helpers";
 
 const BIRTHDAY_ERROR = "Invalid input: expected date, received string";
 
@@ -21,12 +27,6 @@ const fillProfile = async (page: Page) => {
 test("submits a member profile once and rejects a second submission", async ({
   page,
 }) => {
-  // BUG: the "Date of birth" <input type="date"> hands its string value to a
-  // `z.date()` schema (addProfileSchema.birthday), so client validation always
-  // fails with "Invalid input: expected date, received string" and the join
-  // form can never be submitted. Remove `test.fail()` once it coerces dates.
-  test.fail();
-
   const user = await signUpAndSignIn(page, "joiner");
 
   await page.goto("/member/join");
@@ -44,6 +44,8 @@ test("submits a member profile once and rejects a second submission", async ({
 
   // The new member shows up on the admin dashboard.
   await adminLogin(page);
+  // Seeded members fill page 1, so show every row before looking.
+  await setDashboardPageSize(page, 50);
   const row = page.getByRole("row").filter({ hasText: user.name });
   await expect(row).toHaveCount(1);
   await expect(row).toContainText("Maschinenbau");

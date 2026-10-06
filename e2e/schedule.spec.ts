@@ -117,12 +117,6 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
 test("schedule list shows a new schedule right after adding it", async ({
   page,
 }) => {
-  // BUG: addSchedule/updateSchedule don't invalidate `schedules.getSchedules`,
-  // and queries are fresh for 30s (src/trpc/query-client.ts). After
-  // /schedule -> "Add schedule" -> submit, the redirect shows the cached list
-  // without the new schedule until a reload. Same for edits.
-  test.fail();
-
   const title = `Fresh ${uniqueSuffix()}`;
   await page.goto("/schedule");
   await expect(

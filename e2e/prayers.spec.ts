@@ -88,11 +88,6 @@ test("adds an anonymous prayer", async ({ page }) => {
 test("a prayer added while the session is still loading keeps its author", async ({
   page,
 }) => {
-  // BUG: AddPrayerForm reads the author from `useSession()` at submit time and
-  // falls back to "" while the session is loading, so an early submit stores
-  // the prayer without a name; its author then can't edit or delete it.
-  test.fail();
-
   const content = `Early ${uniqueSuffix()}`;
   const SESSION_DELAY_MS = 4000;
   await page.route("**/api/auth/session", async (route) => {

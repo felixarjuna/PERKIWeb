@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import { getUsernameFromName } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import AddTakeawayForm from "./add-takeaway-form";
 
@@ -20,7 +21,9 @@ export default async function AddTakeawayPage() {
       title="Add takeaway"
     >
       <div className="w-full">
-        <AddTakeawayForm />
+        <AddTakeawayForm
+          username={getUsernameFromName(session.user.name ?? "")}
+        />
       </div>
     </Template>
   );

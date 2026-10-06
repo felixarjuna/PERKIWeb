@@ -88,12 +88,6 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
 test("takeaway list shows a new takeaway right after adding it", async ({
   page,
 }) => {
-  // BUG: addTakeaway/updateTakeaway don't invalidate `takeaways.getTakeaways`,
-  // and queries are fresh for 30s (src/trpc/query-client.ts). After
-  // /takeaway -> "Add takeaway" -> submit, the redirect shows the cached list
-  // ("No takeaway found." on an empty list) until a reload. Same for edits.
-  test.fail();
-
   const suffix = uniqueSuffix();
   const scheduleTitle = `Fresh takeaway schedule ${suffix}`;
   const keypoints = `Fresh insight ${suffix}`;
@@ -108,11 +102,6 @@ test("takeaway list shows a new takeaway right after adding it", async ({
 test("a takeaway created from a direct link credits its author", async ({
   page,
 }) => {
-  // BUG: AddTakeawayForm puts the username into `useForm` defaultValues on the
-  // first render, before `useSession()` has loaded, so opening
-  // /create-takeaway directly (bookmark, reload) saves contributors [""].
-  test.fail();
-
   const suffix = uniqueSuffix();
   const scheduleTitle = `Direct takeaway schedule ${suffix}`;
   const keypoints = `Direct insight ${suffix}`;

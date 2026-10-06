@@ -63,8 +63,13 @@ export default function AddScheduleForm() {
 
   /** add schedule action. */
   const router = useRouter();
+  const utils = api.useUtils();
   const addSchedule = api.schedules.addSchedule.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        utils.schedules.invalidate(),
+        utils.takeaways.invalidate(),
+      ]);
       toast.success("New schedule added!", {
         description: "Thanks for your contributions!",
       });
@@ -590,13 +595,18 @@ function AddScheduleGoogleSpreadsheet() {
   }, [_options]);
 
   /** add schedules action. */
+  const utils = api.useUtils();
   const addScheduleBatch = api.schedules.addScheduleBatch.useMutation({
     onError: (err) => {
       toast.error("Error", {
         description: `An error occured while adding schedules. Error: ${err.message}.`,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        utils.schedules.invalidate(),
+        utils.takeaways.invalidate(),
+      ]);
       toast.success("New schedules added!", {
         description: "Thanks for your contributions!",
       });
