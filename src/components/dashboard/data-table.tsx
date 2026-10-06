@@ -1,11 +1,9 @@
 import {
   type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
+  FlexRender,
+  type RowData,
   type SortingState,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import { Cake } from "lucide-react";
 import React from "react";
@@ -22,27 +20,26 @@ import { countBirthdaysThisMonth } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "../ui/badge";
 import DataTablePagination from "./data-table-pagination";
+import { type DashboardFeatures, dashboardFeatures } from "./table-features";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData extends RowData> {
+  columns: ColumnDef<DashboardFeatures, TData>[];
   data: TData[];
 }
 
-export default function DataTable<TData, TValue>({
+export default function DataTable<TData extends RowData>({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   /** local state to handle sorting. */
   const [sorting, setSorting] = React.useState<SortingState>([
     { desc: false, id: "name" },
   ]);
 
-  const table = useReactTable({
+  const table = useTable({
     columns,
     data,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    features: dashboardFeatures,
     onSortingChange: setSorting,
     state: {
       sorting,
@@ -94,12 +91,9 @@ export default function DataTable<TData, TValue>({
                     key={header.id}
                     style={{ width: `${header.getSize()}px` }}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                    {header.isPlaceholder ? null : (
+                      <FlexRender header={header} />
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -112,12 +106,9 @@ export default function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   key={row.id}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getAllCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      <FlexRender cell={cell} />
                     </TableCell>
                   ))}
                 </TableRow>

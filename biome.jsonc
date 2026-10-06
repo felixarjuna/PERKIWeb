@@ -5,11 +5,6 @@
     "ultracite/biome/react",
     "ultracite/biome/next"
   ],
-  // ultracite 7 forces LF; follow the platform so Windows checkouts
-  // (core.autocrlf=true) don't flag every file.
-  "formatter": { "lineEnding": "auto" },
-  "css": { "formatter": { "lineEnding": "auto" } },
-  "json": { "formatter": { "lineEnding": "auto" } },
   "linter": {
     "rules": {
       // Inline handlers are idiomatic in React 19; this rule only adds noise.

@@ -1,11 +1,16 @@
-import type { ColumnDef, SortingFn } from "@tanstack/react-table";
+import type { ColumnDef, SortFn } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { DateTime } from "luxon";
 import { Button } from "~/components/ui/button";
 import type { RouterOutputs } from "~/trpc/react";
+import type { DashboardFeatures } from "./table-features";
 
 type UserProfile = RouterOutputs["profiles"]["getUserProfiles"][number];
-const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
+const sortByMonth: SortFn<DashboardFeatures, UserProfile> = (
+  profileA,
+  profileB,
+  columnId
+) => {
   const dateA = DateTime.fromJSDate(profileA.getValue(columnId));
   const dateB = DateTime.fromJSDate(profileB.getValue(columnId));
 
@@ -32,7 +37,7 @@ const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
   return monthA === monthB ? dayA - dayB : monthA - monthB;
 };
 
-export const columns: ColumnDef<UserProfile>[] = [
+export const columns: ColumnDef<DashboardFeatures, UserProfile>[] = [
   {
     accessorFn: (row) => row.user?.name,
     accessorKey: "name",
@@ -70,7 +75,7 @@ export const columns: ColumnDef<UserProfile>[] = [
       </Button>
     ),
     size: 200, // Fixed width in pixels
-    sortingFn: sortByMonth,
+    sortFn: sortByMonth,
   },
   {
     accessorKey: "major",
