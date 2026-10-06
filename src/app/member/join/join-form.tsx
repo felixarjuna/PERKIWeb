@@ -24,6 +24,9 @@ import { PhoneInput } from "~/components/ui/phone-input";
 import { addProfileSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 
+/** Length of the `YYYY-MM-DD` prefix of an ISO timestamp. */
+const ISO_DATE_LENGTH = 10;
+
 export default function JoinForm() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -96,9 +99,17 @@ export default function JoinForm() {
                   <Input
                     className="w-[190px] pl-8"
                     id="dob"
-                    onChange={(e) => field.onChange(e.target.value)}
+                    // The schema expects a Date; valueAsDate is UTC midnight,
+                    // matching how the old z.coerce.date() parsed the string.
+                    onChange={(e) =>
+                      field.onChange(e.target.valueAsDate ?? undefined)
+                    }
                     type="date"
-                    value={field.value?.toString()}
+                    value={
+                      field.value
+                        ? field.value.toISOString().slice(0, ISO_DATE_LENGTH)
+                        : ""
+                    }
                   />
                 </div>
               </FormControl>

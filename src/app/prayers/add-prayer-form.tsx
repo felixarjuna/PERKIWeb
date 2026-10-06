@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -17,7 +16,6 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
-import { getUsernameFromName } from "~/lib/utils";
 import type { addPrayerSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 
@@ -26,9 +24,7 @@ const AddPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
 });
 
-export default function AddPrayerForm() {
-  const { data: session } = useSession();
-
+export default function AddPrayerForm({ username }: { username: string }) {
   const utils = api.useUtils();
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
@@ -50,7 +46,7 @@ export default function AddPrayerForm() {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
       isAnonymous: data.isAnonymous,
-      name: getUsernameFromName(session?.user.name ?? ""),
+      name: username,
       prayerNames: [],
     };
     addPrayer.mutate(request);

@@ -118,3 +118,13 @@ export const adminLogin = async (page: Page) => {
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL("/admin/dashboard");
 };
+
+/** Sets the admin dashboard's rows-per-page select. */
+export const setDashboardPageSize = async (page: Page, size: number) => {
+  await page.getByRole("combobox").click();
+  await page.getByRole("option", { exact: true, name: String(size) }).click();
+  // While the select is open Radix hides the rest of the page from the
+  // accessibility tree; wait until the table is exposed again.
+  await expect(page.getByRole("listbox")).toBeHidden();
+  await expect(page.getByRole("table")).toBeVisible();
+};

@@ -70,8 +70,13 @@ export default function EditScheduleForm() {
   }, [form, schedule]);
 
   /** update schedule action. */
+  const utils = api.useUtils();
   const updateSchedule = api.schedules.updateSchedule.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        utils.schedules.invalidate(),
+        utils.takeaways.invalidate(),
+      ]);
       toast.success("Schedule updated successfully!", {
         description: "Thanks for your contributions!",
       });

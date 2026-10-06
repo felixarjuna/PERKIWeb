@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import { getUsernameFromName } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import PrayerWall from "./prayer-wall";
 
@@ -22,7 +23,7 @@ export default async function PrayersPage() {
       }
       title="Prayers"
     >
-      <PrayerWall />
+      <PrayerWall username={getUsernameFromName(session.user.name ?? "")} />
     </Template>
   );
 }
