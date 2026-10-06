@@ -79,10 +79,10 @@ export default function PrayerWall() {
                           className="h-6 w-6 p-1"
                           onPressedChange={(pressed) => {
                             updatePrayerCount.mutate({
-                              id: prayer.id,
                               count: pressed
                                 ? prayer.count + 1
                                 : prayer.count - 1,
+                              id: prayer.id,
                               prayerNames: pressed
                                 ? [...names, username]
                                 : names.filter(
@@ -110,7 +110,7 @@ export default function PrayerWall() {
                     </div>
 
                     <Badge
-                      className="-right-2 -top-2 absolute flex h-5 w-5 items-center justify-center rounded-full border-accent px-0 py-0 font-thin text-[0.6rem]"
+                      className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full border-accent px-0 py-0 font-thin text-[0.6rem]"
                       variant={"secondary"}
                     >
                       {prayer.count}

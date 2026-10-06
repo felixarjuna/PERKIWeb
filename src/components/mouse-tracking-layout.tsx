@@ -14,8 +14,8 @@ export default function MouseTrackingLayout({
   children: React.ReactNode;
 }) {
   const [position, setPosition] = React.useState<Position>({
-    x: typeof window !== "undefined" ? window?.innerWidth / 2 : 0,
-    y: typeof window !== "undefined" ? window?.innerHeight / 2 : 0,
+    x: typeof window === "undefined" ? 0 : window?.innerWidth / 2,
+    y: typeof window === "undefined" ? 0 : window?.innerHeight / 2,
   });
 
   const onMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {

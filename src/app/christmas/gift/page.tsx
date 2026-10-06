@@ -70,9 +70,9 @@ export default function Page() {
       const guest = guests.find((guest: Guest) => guest.id === Number(key));
 
       return {
+        giftId: value,
         name: guest?.names ?? "",
         phoneNumber: guest?.phoneNumber ?? "",
-        giftId: value,
       };
     });
 
@@ -84,8 +84,8 @@ export default function Page() {
       await Promise.all(
         filteredList.map((data) =>
           sendChristmasGiftMessage({
-            phoneNumber: data.phoneNumber,
             luckyNumber: data.giftId,
+            phoneNumber: data.phoneNumber,
           })
         )
       );

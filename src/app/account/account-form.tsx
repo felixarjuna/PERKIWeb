@@ -25,11 +25,11 @@ export default function AccountForm() {
   const { data: user } = api.users.getUserById.useQuery();
 
   const updateAccount = api.users.updateUser.useMutation({
-    onSuccess: () => {
-      toast.success("Account updated!");
-    },
     onError: ({ message }) => {
       toast.error("Update account failed", { description: message });
+    },
+    onSuccess: () => {
+      toast.success("Account updated!");
     },
   });
 
@@ -44,9 +44,9 @@ export default function AccountForm() {
     }
     form.reset({
       id: user.id,
+      image: user.image,
       name: user.name ?? "",
       username: user.email ?? "",
-      image: user.image,
     });
   }, [form, user]);
 

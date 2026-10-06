@@ -41,10 +41,10 @@ export const profileRouter = createTRPCRouter({
         .select({
           profiles,
           user: {
-            id: users.id,
-            name: users.name,
             email: users.email,
+            id: users.id,
             image: users.image,
+            name: users.name,
           },
         })
         .from(profiles)

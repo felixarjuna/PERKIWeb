@@ -34,16 +34,16 @@ export default function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   /** local state to handle sorting. */
   const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "name", desc: false },
+    { desc: false, id: "name" },
   ]);
 
   const table = useReactTable({
-    data,
     columns,
+    data,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
     state: {
       sorting,
     },
@@ -66,7 +66,7 @@ export default function DataTable<TData, TValue>({
           </h1>
           <p className="font-satoshi text-lg sm:text-xl">{count}</p>
 
-          <div className="-translate-y-1/2 absolute top-0 right-0 translate-x-1/2">
+          <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
             <span className="relative flex size-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex size-3 rounded-full bg-green-300" />

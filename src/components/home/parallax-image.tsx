@@ -4,10 +4,10 @@ import React from "react";
 import { cn } from "~/lib/utils";
 
 interface ParallaxImageProps extends React.HTMLAttributes<HTMLDivElement> {
-  readonly img: string;
   readonly alt: string;
-  readonly width: number;
   readonly height: number;
+  readonly img: string;
+  readonly width: number;
 }
 
 export default function ParallaxImage({

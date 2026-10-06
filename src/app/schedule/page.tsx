@@ -21,7 +21,7 @@ export default function SchedulePage() {
     >
       <Link
         className={cn(
-          buttonVariants({ variant: "secondary", size: "sm" }),
+          buttonVariants({ size: "sm", variant: "secondary" }),
           "gap-1 self-end"
         )}
         href={"/create-schedule"}

@@ -15,7 +15,7 @@ export default function OurPastors() {
     <div className="bg-paper py-20 text-paper-foreground sm:py-40">
       <div className="grid grid-cols-4 gap-y-4">
         <div className="col-span-4 my-auto flex h-full items-center justify-center whitespace-nowrap sm:col-span-1 sm:translate-y-[50%] sm:items-start sm:justify-start">
-          <h1 className="sm:-rotate-90 text-center font-reimbrandt text-4xl sm:text-8xl">
+          <h1 className="text-center font-reimbrandt text-4xl sm:-rotate-90 sm:text-8xl">
             Our Pastors
           </h1>
         </div>
@@ -38,8 +38,8 @@ export default function OurPastors() {
                   <Dialog>
                     <DialogTrigger
                       className={buttonVariants({
-                        variant: "default",
                         size: "sm",
+                        variant: "default",
                       })}
                     >
                       see more ...

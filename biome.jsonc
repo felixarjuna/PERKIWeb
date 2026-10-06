@@ -1,14 +1,23 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next"
+  ],
+  // ultracite 7 forces LF; follow the platform so Windows checkouts
+  // (core.autocrlf=true) don't flag every file.
+  "formatter": { "lineEnding": "auto" },
+  "css": { "formatter": { "lineEnding": "auto" } },
+  "json": { "formatter": { "lineEnding": "auto" } },
+  "linter": {
+    "rules": {
+      // Inline handlers are idiomatic in React 19; this rule only adds noise.
+      "performance": { "noJsxPropsBind": "off" }
+    }
+  },
   "files": {
-    // Generated code (notion-ts-client SDK + vendored Notion API types) and
     // DB migration snapshots are not held to lint rules.
-    "includes": [
-      "**",
-      "!src/lib/notion/finance-database",
-      "!src/lib/notion/types",
-      "!src/lib/db/migrations"
-    ]
+    "includes": ["!src/lib/db/migrations"]
   }
 }

@@ -2,9 +2,9 @@ import type React from "react";
 import Navigation from "./home/navigation";
 
 interface ITemplateProps {
-  readonly title: string;
-  readonly subtitle?: string | React.ReactNode;
   readonly children?: React.ReactNode;
+  readonly subtitle?: string | React.ReactNode;
+  readonly title: string;
 }
 
 /**

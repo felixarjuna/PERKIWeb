@@ -19,9 +19,9 @@ const reimbrandt = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PerkiWEB",
   description: "Website from Perki Aachen",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
+  title: "PerkiWEB",
 };
 
 export default function RootLayout({

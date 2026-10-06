@@ -29,9 +29,9 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
-    usersTable: users,
     accountsTable: accounts,
     sessionsTable: sessions,
+    usersTable: users,
     verificationTokensTable: verificationTokens,
   }),
   callbacks: {
@@ -43,17 +43,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   },
+  debug: env.NODE_ENV === "development",
+  pages: {
+    newUser: "/auth/signup",
+    signIn: "/auth/signin",
+  },
   providers: [
     Google({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
     Credentials({
-      name: "credentials",
-      credentials: {
-        username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" },
-      },
       authorize: async (credentials) => {
         const username = credentials?.username;
         const password = credentials?.password;
@@ -81,22 +81,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         return {
-          id: user.id,
-          name: user.name,
           email: user.email,
+          id: user.id,
           image: user.image,
+          name: user.name,
         };
       },
+      credentials: {
+        password: { label: "Password", type: "password" },
+        username: { label: "Username", type: "text" },
+      },
+      name: "credentials",
     }),
   ],
-  pages: {
-    signIn: "/auth/signin",
-    newUser: "/auth/signup",
-  },
+  secret: env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
-  secret: env.NEXTAUTH_SECRET,
   trustHost: true,
-  debug: env.NODE_ENV === "development",
 });

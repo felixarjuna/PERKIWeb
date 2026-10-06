@@ -15,29 +15,29 @@ const APP_URL = "https://rsvp-perkiaachen.fly.dev";
 
 export const useChristmasGuestCount = () => {
   const { data: totalGuests, isLoading } = useQuery({
-    queryKey: ["total-guests"],
     queryFn: async () => {
       const response = await fetch(`${APP_URL}/api/guest/count?eventId=31`);
       const data = await response.json();
       return data.data.count;
     },
+    queryKey: ["total-guests"],
   });
 
-  return { totalGuests, isLoading };
+  return { isLoading, totalGuests };
 };
 
 export const useChristmasAddGuest = () => {
   const router = useRouter();
 
   const sendInitialMessage = useMutation({
-    mutationKey: ["send-initial-message"],
     mutationFn: async (phoneNumber: string) => {
       sessionStorage.setItem("sendInitialMessageStatus", "pending");
       await axios.post(`${APP_URL}/api/send-template`, {
-        type: "initial",
         phoneNumber,
+        type: "initial",
       });
     },
+    mutationKey: ["send-initial-message"],
     onError: () => {
       sessionStorage.setItem("sendInitialMessageStatus", "error");
       toast.error("Failed to send initial message.", {
@@ -55,12 +55,21 @@ export const useChristmasAddGuest = () => {
   });
 
   const addGuest = useMutation({
-    mutationKey: ["add-christmas-guest"],
     mutationFn: async (request: z.infer<typeof addGuestSchema>) => {
       await axios.post(`${APP_URL}/api/guest`, {
-        method: "POST",
         data: request,
+        method: "POST",
       });
+    },
+    mutationKey: ["add-christmas-guest"],
+    onError: (err) => {
+      if (axios.isAxiosError(err) && err.response) {
+        toast.error("Registration failed.", {
+          description:
+            err.response.data.message ||
+            "An error occurred during registration.",
+        });
+      }
     },
     onSuccess: (_, variables) => {
       /** send initial message */
@@ -70,15 +79,6 @@ export const useChristmasAddGuest = () => {
         description: "Thank you for your registration!",
       });
       router.push("/christmas/thankyou");
-    },
-    onError: (err) => {
-      if (axios.isAxiosError(err) && err.response) {
-        toast.error("Registration failed.", {
-          description:
-            err.response.data.message ||
-            "An error occurred during registration.",
-        });
-      }
     },
   });
 
@@ -95,8 +95,8 @@ export const sendChristmasGiftMessage = async ({
   luckyNumber,
 }: ChristmasGiftRequest) => {
   const request = {
-    phoneNumber,
     luckyNumber: luckyNumber.toString(),
+    phoneNumber,
   };
 
   return await axios.post(`${APP_URL}/api/lucky-draw`, request);
@@ -104,7 +104,6 @@ export const sendChristmasGiftMessage = async ({
 
 export const useAttendingGuests = () => {
   const { data, isLoading, error } = useQuery<Guest[]>({
-    queryKey: ["attending-guests"],
     queryFn: async () => {
       const response = await fetch(`${APP_URL}/api/guest/attending?eventId=31`);
       if (!response.ok) {
@@ -113,7 +112,8 @@ export const useAttendingGuests = () => {
       const json = await response.json();
       return (json.data?.guests as Guest[]) || [];
     },
+    queryKey: ["attending-guests"],
   });
 
-  return { guests: data, isLoading, error };
+  return { error, guests: data, isLoading };
 };

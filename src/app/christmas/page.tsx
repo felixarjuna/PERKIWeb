@@ -29,10 +29,12 @@ import { delta, isMoreThanOneWeekApart, toIdDate, toIdTime } from "~/lib/utils";
 
 const phoneNumberRegEx = /^\+?[1-9]\d{1,14}$/;
 export const addGuestSchema = z.object({
+  dietary: z.string().max(255).optional(),
   eventId: z.number().min(1, "An event id must be provided."),
   names: z.string().min(2, {
     message: "Guest name must be at least 2 characters.",
   }),
+  nRsvp: z.number().min(1),
   phoneNumber: z
     .string()
     .regex(
@@ -40,16 +42,14 @@ export const addGuestSchema = z.object({
       "Invalid phone number format. Must start with + followed by 1-14 digits."
     )
     .transform((val) => (val.startsWith("+") ? val.slice(1) : val)),
-  dietary: z.string().max(255).optional(),
-  nRsvp: z.number().min(1),
 });
 
 const MAX_GUESTS = 80;
 const eventDate = new Date("2025-12-20T15:00:00+01:00");
 export default function ChristmasPage() {
   const form = useForm<z.infer<typeof addGuestSchema>>({
-    resolver: zodResolver(addGuestSchema),
     defaultValues: { eventId: 31, nRsvp: 1 },
+    resolver: zodResolver(addGuestSchema),
   });
 
   const { addGuest } = useChristmasAddGuest();

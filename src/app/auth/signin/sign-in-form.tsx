@@ -19,8 +19,8 @@ import {
 import { Input } from "~/components/ui/input";
 
 const signInSchema = z.object({
-  username: z.string().min(1, { message: "Please enter your username." }),
   password: z.string().min(1, { message: "Please enter your password." }),
+  username: z.string().min(1, { message: "Please enter your username." }),
 });
 
 const GoogleIcon = () => (
@@ -57,16 +57,16 @@ export default function SignInForm() {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const form = useForm<z.infer<typeof signInSchema>>({
+    defaultValues: { password: "", username: "" },
     resolver: zodResolver(signInSchema),
-    defaultValues: { username: "", password: "" },
   });
 
   const onSubmit = async (values: z.infer<typeof signInSchema>) => {
     setIsSigningIn(true);
     const result = await signIn("credentials", {
-      username: values.username,
       password: values.password,
       redirect: false,
+      username: values.username,
     });
     setIsSigningIn(false);
 

@@ -11,10 +11,10 @@ export const insertUserSchema = createInsertSchema(users);
 /** Payload accepted from the signup form. */
 export const insertUserParams = z.object({
   name: z.string(),
-  username: z.string(),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
+  username: z.string(),
 });
 
 /**
@@ -22,25 +22,25 @@ export const insertUserParams = z.object({
  * `hashedPassword` is deliberately excluded — see `updatePassword`.
  */
 export const updateUserSchema = z.object({
-  name: z.string(),
   email: z.string(),
   image: z.string().nullish(),
+  name: z.string(),
 });
 
 /** Payload accepted from the account form. */
 export const updateUserParams = z.object({
   id: z.string(),
+  image: z.string().nullish(),
   name: z.string(),
   username: z.string(),
-  image: z.string().nullish(),
 });
 
 /** Payload accepted from the change-password form. */
 export const updatePasswordParams = z.object({
-  id: z.string(),
   currentPassword: z
     .string()
     .min(1, { message: "Password must contain at least 1 character(s)" }),
+  id: z.string(),
   newPassword: z
     .string()
     .min(1, { message: "Password must contain at least 1 character(s)" }),

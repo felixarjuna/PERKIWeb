@@ -3,10 +3,10 @@ import React from "react";
 import { calculateXAxes, calculateYAxes, cn } from "~/lib/utils";
 
 interface IRoundedBackground extends React.HTMLAttributes<HTMLDivElement> {
-  r: number; // radius in rem
   blur?: boolean;
   delay?: number;
   duration?: number;
+  r: number; // radius in rem
   reverse?: boolean;
 }
 
@@ -30,13 +30,13 @@ export default function CircleBackground({
   return (
     <motion.div
       animate={{
-        x,
-        y,
         transition: {
+          delay,
           duration,
           repeat: Number.POSITIVE_INFINITY,
-          delay,
         },
+        x,
+        y,
       }}
       className={cn(
         "absolute inset-0 mx-auto animate-gradient-x rounded-full opacity-50 filter",
@@ -44,7 +44,7 @@ export default function CircleBackground({
         blur && "blur-3xl"
       )}
       layout
-      style={{ width: `${r}rem`, height: `${r}rem` }}
+      style={{ height: `${r}rem`, width: `${r}rem` }}
     />
   );
 }
