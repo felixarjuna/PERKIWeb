@@ -24,7 +24,7 @@ import { PhoneInput } from "~/components/ui/phone-input";
 import {
   useChristmasAddGuest,
   useChristmasGuestCount,
-} from "~/hooks/useChristmas";
+} from "~/hooks/use-christmas";
 import { delta, isMoreThanOneWeekApart, toIdDate, toIdTime } from "~/lib/utils";
 
 const phoneNumberRegEx = /^\+?[1-9]\d{1,14}$/;

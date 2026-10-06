@@ -14,7 +14,7 @@ export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
   };
 
   return (
-    <Dialog onOpenChange={(isOpen) => setIsOpen(isOpen)} open={isOpen}>
+    <Dialog onOpenChange={(open) => setIsOpen(open)} open={isOpen}>
       <DialogTrigger>
         <EditButton />
       </DialogTrigger>

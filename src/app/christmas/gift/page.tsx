@@ -10,14 +10,14 @@ import { Button } from "~/components/ui/button";
 import {
   sendChristmasGiftMessage,
   useAttendingGuests,
-} from "~/hooks/useChristmas";
-import useGiftExchange from "~/hooks/useGiftExchange";
+} from "~/hooks/use-christmas";
+import useGiftExchange from "~/hooks/use-gift-exchange";
 
-type Guest = {
+interface Guest {
   id: number;
   names: string;
   phoneNumber: string;
-};
+}
 
 export default function Page() {
   const {
@@ -67,7 +67,9 @@ export default function Page() {
     }
 
     const list = Object.entries(result).map(([key, value]) => {
-      const guest = guests.find((guest: Guest) => guest.id === Number(key));
+      const guest = guests.find(
+        (candidate: Guest) => candidate.id === Number(key)
+      );
 
       return {
         giftId: value,

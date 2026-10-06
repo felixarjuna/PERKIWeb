@@ -77,28 +77,24 @@ export default function ScheduleList() {
   }
 
   function renderScheduleSummary(schedule: Schedule) {
-    let description = schedule.description;
+    let { description } = schedule;
     if (description.length > SUMMARY_MAX_LENGTH) {
-      description = `${description.substring(0, SUMMARY_MAX_LENGTH)}...`;
+      description = `${description.slice(0, SUMMARY_MAX_LENGTH)}...`;
     }
 
     return <p className="mt-4 text-sm sm:text-base">{description}</p>;
   }
 
   function renderScheduleServants(schedule: Schedule) {
-    const cookingGroupMembers = groups
-      .filter(
-        (group) =>
-          group.name.toLowerCase() === schedule.cookingGroup?.toLowerCase()
-      )
-      .at(0)?.members;
+    const cookingGroupMembers = groups.find(
+      (group) =>
+        group.name.toLowerCase() === schedule.cookingGroup?.toLowerCase()
+    )?.members;
 
-    const cleaningGroupMembers = groups
-      .filter(
-        (group) =>
-          group.name.toLowerCase() === schedule.cleaningGroup?.toLowerCase()
-      )
-      .at(0)?.members;
+    const cleaningGroupMembers = groups.find(
+      (group) =>
+        group.name.toLowerCase() === schedule.cleaningGroup?.toLowerCase()
+    )?.members;
 
     return (
       <div className="flex flex-col justify-center space-y-2 p-4 text-sm sm:w-1/4 sm:p-6">
@@ -145,10 +141,10 @@ export default function ScheduleList() {
                   <RandomVerse items={verses} />
 
                   <div className="flex flex-wrap items-center justify-center gap-2">
-                    {cookingGroupMembers?.map((member, i) => (
+                    {cookingGroupMembers?.map((member) => (
                       <div
                         className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
-                        key={i}
+                        key={member}
                       >
                         {member}
                       </div>
@@ -160,7 +156,7 @@ export default function ScheduleList() {
             <DrawerFooter className="pt-0">
               <Button
                 className="w-fit self-center"
-                onClick={() => void router.push("/group")}
+                onClick={() => router.push("/group")}
               >
                 See all groups
               </Button>
@@ -188,10 +184,10 @@ export default function ScheduleList() {
                   <RandomVerse items={verses} />
 
                   <div className="flex flex-wrap items-center justify-center gap-2">
-                    {cleaningGroupMembers?.map((member, i) => (
+                    {cleaningGroupMembers?.map((member) => (
                       <div
                         className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
-                        key={i}
+                        key={member}
                       >
                         {member}
                       </div>
@@ -203,7 +199,7 @@ export default function ScheduleList() {
             <DrawerFooter className="pt-0">
               <Button
                 className="w-fit self-center"
-                onClick={() => void router.push("/group")}
+                onClick={() => router.push("/group")}
               >
                 See all groups
               </Button>
@@ -224,7 +220,7 @@ export default function ScheduleList() {
         onDeleteClick={() => {
           deleteSchedule.mutate({ id: +schedule.id });
         }}
-        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
+        onEditClick={() => router.push(`/edit-schedule/${schedule.id}`)}
       />
     );
   }
@@ -234,7 +230,7 @@ export default function ScheduleList() {
       <ActionButton
         className="hidden gap-x-2 sm:flex"
         onDeleteClick={() => deleteSchedule.mutate({ id: +schedule.id })}
-        onEditClick={() => void router.push(`/edit-schedule/${schedule.id}`)}
+        onEditClick={() => router.push(`/edit-schedule/${schedule.id}`)}
       />
     );
   }
@@ -267,6 +263,21 @@ export default function ScheduleList() {
     );
   }
 
+  function renderScheduleCollection(
+    list: Schedule[] | undefined,
+    loadingMessage: string
+  ) {
+    if (!list) {
+      return <Loader message={loadingMessage} />;
+    }
+
+    if (list.length === 0) {
+      return <div>No schedule found.</div>;
+    }
+
+    return list.map((schedule) => renderSchedule(schedule));
+  }
+
   const thisWeekSchedule = React.useMemo(() => {
     const mondayDate = getNextDayOfWeek(new Date(), 0);
     const saturdayDate = getNextDayOfWeek(new Date(), 6);
@@ -289,14 +300,9 @@ export default function ScheduleList() {
         <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           This Week
         </h2>
-        {thisWeekSchedule ? (
-          thisWeekSchedule.length === 0 ? (
-            <div>No schedule found.</div>
-          ) : (
-            thisWeekSchedule.map((schedule) => renderSchedule(schedule))
-          )
-        ) : (
-          <Loader message="Loading this week schedules ..." />
+        {renderScheduleCollection(
+          thisWeekSchedule,
+          "Loading this week schedules ..."
         )}
       </div>
     );
@@ -315,14 +321,9 @@ export default function ScheduleList() {
         <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           Upcoming Schedules
         </h2>
-        {upcomingSchedules ? (
-          upcomingSchedules.length === 0 ? (
-            <div>No schedule found.</div>
-          ) : (
-            upcomingSchedules.map((schedule) => renderSchedule(schedule))
-          )
-        ) : (
-          <Loader message="Loading upcoming schedules ..." />
+        {renderScheduleCollection(
+          upcomingSchedules,
+          "Loading upcoming schedules ..."
         )}
       </div>
     );
@@ -340,14 +341,9 @@ export default function ScheduleList() {
         <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
           Previous Schedules
         </h2>
-        {previousSchedules ? (
-          previousSchedules.length === 0 ? (
-            <div>No schedule found.</div>
-          ) : (
-            previousSchedules.map((schedule) => renderSchedule(schedule))
-          )
-        ) : (
-          <Loader message="Loading previous schedules ..." />
+        {renderScheduleCollection(
+          previousSchedules,
+          "Loading previous schedules ..."
         )}
       </div>
     );

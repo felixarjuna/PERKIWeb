@@ -49,10 +49,9 @@ import { api } from "~/trpc/react";
 export default function EditScheduleForm() {
   const router = useRouter();
 
-  const params = useParams<{ id: string }>();
-  const id = params?.id ?? "";
+  const { id } = useParams<{ id: string }>();
   const { data: schedule } = api.schedules.getScheduleById.useQuery({
-    id: Number.parseInt(id),
+    id: Number.parseInt(id, 10),
   });
 
   /** form defintion. */
@@ -72,7 +71,7 @@ export default function EditScheduleForm() {
 
   /** update schedule action. */
   const updateSchedule = api.schedules.updateSchedule.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Schedule updated successfully!", {
         description: "Thanks for your contributions!",
       });
@@ -164,8 +163,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {speakers.map((speaker, index) => (
-                          <SelectItem key={index} value={speaker}>
+                        {speakers.map((speaker) => (
+                          <SelectItem key={speaker} value={speaker}>
                             {speaker}
                           </SelectItem>
                         ))}
@@ -234,9 +233,9 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {liturgos.map((liturgos, index) => (
-                          <SelectItem key={index} value={liturgos}>
-                            {liturgos}
+                        {liturgos.map((leader) => (
+                          <SelectItem key={leader} value={leader}>
+                            {leader}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -262,8 +261,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {noteWriter.map((writer, index) => (
-                          <SelectItem key={index} value={writer}>
+                        {noteWriter.map((writer) => (
+                          <SelectItem key={writer} value={writer}>
                             {writer}
                           </SelectItem>
                         ))}
@@ -290,8 +289,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {musicians.map((musician, index) => (
-                          <SelectItem key={index} value={musician}>
+                        {musicians.map((musician) => (
+                          <SelectItem key={musician} value={musician}>
                             {musician}
                           </SelectItem>
                         ))}
@@ -318,8 +317,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {multimedia.map((mediator, index) => (
-                          <SelectItem key={index} value={mediator}>
+                        {multimedia.map((mediator) => (
+                          <SelectItem key={mediator} value={mediator}>
                             {mediator}
                           </SelectItem>
                         ))}
@@ -346,8 +345,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {accommodation.map((accomodator, index) => (
-                          <SelectItem key={index} value={accomodator}>
+                        {accommodation.map((accomodator) => (
+                          <SelectItem key={accomodator} value={accomodator}>
                             {accomodator}
                           </SelectItem>
                         ))}
@@ -374,8 +373,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groupNames.map((group, index) => (
-                          <SelectItem key={index} value={group}>
+                        {groupNames.map((group) => (
+                          <SelectItem key={group} value={group}>
                             {group}
                           </SelectItem>
                         ))}
@@ -402,8 +401,8 @@ export default function EditScheduleForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groupNames.map((group, index) => (
-                          <SelectItem key={index} value={group}>
+                        {groupNames.map((group) => (
+                          <SelectItem key={group} value={group}>
                             {group}
                           </SelectItem>
                         ))}
@@ -424,13 +423,11 @@ export default function EditScheduleForm() {
     <Form {...form}>
       <form
         className="mt-4 space-y-8 sm:mt-8"
-        onSubmit={(event) =>
-          void form.handleSubmit(onSubmit, (error) => {
-            toast.success("Something went wrong.", {
-              description: JSON.stringify(error),
-            });
-          })(event)
-        }
+        onSubmit={form.handleSubmit(onSubmit, (error) => {
+          toast.success("Something went wrong.", {
+            description: JSON.stringify(error),
+          });
+        })}
       >
         {renderFellowshipForm()}
         {renderServantsForm()}

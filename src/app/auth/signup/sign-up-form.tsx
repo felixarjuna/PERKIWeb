@@ -55,7 +55,7 @@ export default function SignUpForm() {
       <Form {...form}>
         <form
           className="flex flex-col gap-4"
-          onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <FormField
             control={form.control}

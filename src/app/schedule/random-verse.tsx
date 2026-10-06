@@ -26,7 +26,9 @@ export default function RandomVerse({ items }: { items: readonly string[] }) {
         <Shuffle className="size-4" />
         Randomize me!
       </Button>
-      {verse && <p className="px-8 font-reimbrandt text-foreground">{verse}</p>}
+      {verse ? (
+        <p className="px-8 font-reimbrandt text-foreground">{verse}</p>
+      ) : null}
     </div>
   );
 }

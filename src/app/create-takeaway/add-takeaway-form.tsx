@@ -59,7 +59,7 @@ export default function AddTakeawayForm() {
 
   /** add takeaway action. */
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Your takeaway has been submitted!", {
         description: "Thanks for sharing!",
       });
@@ -75,13 +75,11 @@ export default function AddTakeawayForm() {
     <Form {...form}>
       <form
         className="mt-4 space-y-8 sm:mt-8"
-        onSubmit={(event) =>
-          void form.handleSubmit(onSubmit, (error) => {
-            toast.error("Uh oh! Something went wrong.", {
-              description: JSON.stringify(error),
-            });
-          })(event)
-        }
+        onSubmit={form.handleSubmit(onSubmit, (error) => {
+          toast.error("Uh oh! Something went wrong.", {
+            description: JSON.stringify(error),
+          });
+        })}
       >
         <div className="space-y-4">
           <h3 className="font-reimbrandt text-2xl sm:text-3xl">
@@ -106,9 +104,9 @@ export default function AddTakeawayForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {schedules?.map((schedule, index) => (
+                          {schedules?.map((schedule) => (
                             <SelectItem
-                              key={index}
+                              key={schedule.id}
                               value={schedule.id.toString()}
                             >
                               {schedule.title

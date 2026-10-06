@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import type { addGuestSchema } from "~/app/christmas/page";
 
-export type Guest = {
+export interface Guest {
   id: number;
   names: string;
   phoneNumber: string;
-};
+}
 
 const APP_URL = "https://rsvp-perkiaachen.fly.dev";
 
@@ -85,10 +85,10 @@ export const useChristmasAddGuest = () => {
   return { addGuest, sendInitialMessage };
 };
 
-export type ChristmasGiftRequest = {
-  phoneNumber: string;
+export interface ChristmasGiftRequest {
   luckyNumber: number;
-};
+  phoneNumber: string;
+}
 
 export const sendChristmasGiftMessage = async ({
   phoneNumber,

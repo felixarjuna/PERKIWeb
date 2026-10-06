@@ -57,8 +57,8 @@ export default function Navigation({ showNav }: INavigationProps) {
             initial={{ opacity: 0 }}
             key="navigation"
           >
-            {navigations.map((nav, index) => (
-              <div key={index}>
+            {navigations.map((nav) => (
+              <div key={nav.href}>
                 <Link
                   className="flex cursor-pointer flex-col items-center gap-1 sm:gap-2"
                   href={nav.href}
@@ -71,17 +71,16 @@ export default function Navigation({ showNav }: INavigationProps) {
               </div>
             ))}
 
-            <div
+            <button
               className="flex w-fit cursor-pointer flex-col items-center gap-1 sm:gap-2"
-              onClick={
-                session ? () => router.push("/account") : () => void signIn()
-              }
+              onClick={session ? () => router.push("/account") : () => signIn()}
+              type="button"
             >
               <span className="flex aspect-square items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-1 sm:h-8 sm:w-8 sm:p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8">
                 <User className="h-4 w-4" />
               </span>
               {isMobile ? null : <p>{session ? "Account" : "Sign in"}</p>}
-            </div>
+            </button>
           </motion.div>
         ) : null}
       </div>

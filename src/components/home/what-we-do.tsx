@@ -21,8 +21,11 @@ export default function WhatWeDo() {
         </div>
 
         <div className="col-span-4 flex flex-col gap-y-8 pr-0 text-paper-foreground sm:col-span-3 sm:gap-y-8 sm:pr-40">
-          {events.map((event, index) => (
-            <div className="col-span-2 mx-8 flex max-w-lg flex-col" key={index}>
+          {events.map((event) => (
+            <div
+              className="col-span-2 mx-8 flex max-w-lg flex-col"
+              key={event.name}
+            >
               <h1 className="font-reimbrandt text-2xl sm:text-3xl">
                 {event.name}
               </h1>

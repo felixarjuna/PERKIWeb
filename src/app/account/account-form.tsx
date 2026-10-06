@@ -73,7 +73,7 @@ export default function AccountForm() {
 
       <form
         className="flex w-full flex-col gap-6"
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-4">
           <FormField
