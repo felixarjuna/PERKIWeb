@@ -86,7 +86,9 @@ export const signOut = async (page: Page) => {
  * "Account"). Forms read the username from it, so submit only after this.
  */
 export const waitForSession = async (page: Page) => {
-  await expect(page.getByRole("button", { name: "Account" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Account" })
+  ).toBeVisible();
 };
 
 /** Picks `option` (or the first option) from the Radix select labelled `label`. */

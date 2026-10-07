@@ -45,7 +45,7 @@ test("adds, prays for, edits and deletes a prayer", async ({ page }) => {
   await expect(prayToggle).toHaveAttribute("aria-pressed", "false");
 
   // Edit
-  await item.getByRole("button", { name: "Edit" }).first().click();
+  await item.getByRole("button", { exact: true, name: "Edit" }).first().click();
   const dialog = page.getByRole("dialog");
   const input = dialog.getByPlaceholder("Insert your prayer here...");
   await expect(input).toHaveValue(content);
@@ -61,7 +61,7 @@ test("adds, prays for, edits and deletes a prayer", async ({ page }) => {
   await expect(prayerItem(page, content)).toHaveCount(0);
 
   // Delete
-  await edited.getByRole("button", { name: "Delete" }).click();
+  await edited.getByRole("button", { exact: true, name: "Delete" }).click();
   await page
     .getByRole("alertdialog", { name: "Are you absolutely sure?" })
     .getByRole("button", { name: "Continue" })
@@ -102,5 +102,7 @@ test("a prayer added while the session is still loading keeps its author", async
   const item = prayerItem(page, content);
   await expect(item).toHaveCount(1);
   await expect(item).toContainText(MEMBER_USERNAME);
-  await expect(item.getByRole("button", { name: "Delete" })).toBeVisible();
+  await expect(
+    item.getByRole("button", { exact: true, name: "Delete" })
+  ).toBeVisible();
 });
