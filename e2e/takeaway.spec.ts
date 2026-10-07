@@ -59,7 +59,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(article).toContainText(MEMBER_USERNAME);
 
   // Edit
-  await article.getByRole("button", { name: "Edit" }).click();
+  await article.getByRole("button", { exact: true, name: "Edit" }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveValue(keypoints);
@@ -76,7 +76,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(takeawayArticle(page, keypoints)).toHaveCount(0);
 
   // Delete
-  await edited.getByRole("button", { name: "Delete" }).click();
+  await edited.getByRole("button", { exact: true, name: "Delete" }).click();
   await page
     .getByRole("alertdialog", { name: "Are you absolutely sure?" })
     .getByRole("button", { name: "Continue" })

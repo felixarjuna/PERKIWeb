@@ -21,7 +21,7 @@ const fillProfile = async (page: Page) => {
   await page.getByLabel("Location", { exact: true }).fill("Aachen");
   await page.getByLabel("Major", { exact: true }).fill("Maschinenbau");
   await page.getByLabel("Bio", { exact: true }).fill("Loves e2e tests");
-  await page.getByRole("button", { name: "Submit" }).click();
+  await page.getByRole("button", { exact: true, name: "Submit" }).click();
 };
 
 test("submits a member profile once and rejects a second submission", async ({
@@ -57,7 +57,7 @@ test("join form validates required fields", async ({ page }) => {
 
   await page.goto("/member/join");
   await waitForSession(page);
-  await page.getByRole("button", { name: "Submit" }).click();
+  await page.getByRole("button", { exact: true, name: "Submit" }).click();
 
   await expect(page).toHaveURL("/member/join");
   await expect(
