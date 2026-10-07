@@ -1,12 +1,14 @@
+"use client";
+
 import { useRouter } from "next/navigation";
 import React from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import useAuth from "~/hooks/useAuth";
+import useAuth from "~/hooks/use-auth";
 import { cn } from "~/lib/utils";
-import { useToast } from "./ui/use-toast";
 
 const username = "mita";
 const password = "gongxifacai2025";
@@ -18,22 +20,18 @@ export function LoginForm({
   const { setAuthorized } = useAuth();
 
   const router = useRouter();
-  const { toast } = useToast();
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (form.username === username && form.password === password) {
       setAuthorized(true);
-      toast({
-        title: "Login successful! ❤️",
+      toast.success("Login successful!", {
         description: "Welcome back, MitA!",
       });
       router.push("/admin/dashboard");
     } else {
       setAuthorized(false);
-      toast({
-        title: "Login failed!",
+      toast.error("Login failed!", {
         description: "Invalid username or password.",
-        variant: "destructive",
       });
     }
   };
@@ -42,7 +40,7 @@ export function LoginForm({
   const [form, setForm] = React.useState<{
     username: string;
     password: string;
-  }>({ username: "", password: "" });
+  }>({ password: "", username: "" });
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -56,13 +54,13 @@ export function LoginForm({
               <div className="grid gap-2">
                 <Label htmlFor="email">Username</Label>
                 <Input
+                  className="text-foreground"
                   id="email"
-                  type="text"
-                  required
-                  className="text-cream-default"
                   onChange={(event) =>
                     setForm({ ...form, username: event.target.value })
                   }
+                  required
+                  type="text"
                 />
               </div>
               <div className="grid gap-2">
@@ -70,16 +68,16 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                 </div>
                 <Input
+                  className="text-foreground"
                   id="password"
-                  type="password"
-                  required
-                  className="text-cream-default"
                   onChange={(event) =>
                     setForm({ ...form, password: event.target.value })
                   }
+                  required
+                  type="password"
                 />
               </div>
-              <Button type="submit" className="w-full bg-green-default">
+              <Button className="w-full bg-accent" type="submit">
                 Login
               </Button>
             </div>

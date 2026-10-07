@@ -1,6 +1,5 @@
 import { prayerRouter } from "~/server/api/routers/prayers";
-import { createTRPCRouter } from "~/server/api/trpc";
-import { financeRouter } from "./routers/finance";
+import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { profileRouter } from "./routers/profile";
 import { scheduleRouter } from "./routers/schedules";
 import { takeawayRouter } from "./routers/takeaway";
@@ -12,13 +11,21 @@ import { userRouter } from "./routers/users";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  users: userRouter,
   prayers: prayerRouter,
+  profiles: profileRouter,
   schedules: scheduleRouter,
   takeaways: takeawayRouter,
-  finances: financeRouter,
-  profiles: profileRouter,
+  users: userRouter,
 });
 
 // export type definition of API
 export type AppRouter = typeof appRouter;
+
+/**
+ * Create a server-side caller for the tRPC API.
+ *
+ * @example
+ * const trpc = createCaller(createContext);
+ * const res = await trpc.schedules.getSchedules();
+ */
+export const createCaller = createCallerFactory(appRouter);

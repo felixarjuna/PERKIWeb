@@ -1,0 +1,86 @@
+"use client";
+
+import { FileText, Sparkles } from "lucide-react";
+import Link from "next/link";
+import CircleBackground from "~/components/circle-background";
+import AboutUs from "~/components/home/about-us";
+import Footer from "~/components/home/footer";
+import OurPastors from "~/components/home/our-pastors";
+import Welcome from "~/components/home/welcome";
+import WhatWeDo from "~/components/home/what-we-do";
+import WhereAreWe from "~/components/home/where-are-we";
+import { buttonVariants } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
+
+export default function Home() {
+  const isMobile = useIsMobile();
+
+  return (
+    <div>
+      <Dialog defaultOpen={true}>
+        <DialogContent>
+          <DialogHeader className="items-center text-center sm:text-center">
+            <DialogTitle className="flex items-center justify-center gap-2">
+              New update at PerkiWEB
+              <Sparkles className="size-4" />
+            </DialogTitle>
+            <DialogDescription className="pt-4">
+              Please register yourself as fellowship member.*
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="items-center sm:justify-center">
+            <Link
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "flex w-fit items-center justify-center"
+              )}
+              href={"/member/join"}
+            >
+              <FileText className="size-4" />
+              Fill out form!
+            </Link>
+          </DialogFooter>
+
+          <span className="flex justify-center text-center text-foreground text-xs">
+            * you have to register yourself beforehand.
+          </span>
+        </DialogContent>
+      </Dialog>
+
+      <div className="relative inset-0 z-10">
+        <CircleBackground
+          blur
+          className={
+            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default mix-blend-lighten"
+          }
+          r={isMobile ? 60 : 100}
+        />
+        <CircleBackground
+          blur
+          className={
+            "bg-gradient-to-r from-green-100 via-light-green-100 to-light-green-default mix-blend-multiply"
+          }
+          duration={25}
+          r={isMobile ? 60 : 100}
+          reverse
+        />
+      </div>
+
+      <Welcome />
+      <AboutUs />
+      <WhatWeDo />
+      <OurPastors />
+      <WhereAreWe />
+      <Footer />
+    </div>
+  );
+}

@@ -48,11 +48,11 @@ ALTER TABLE "prayers" ALTER COLUMN "createdAt" SET DATA TYPE timestamp with time
 ALTER TABLE "prayers" ALTER COLUMN "createdAt" DROP DEFAULT;--> statement-breakpoint
 ALTER TABLE "schedules" ALTER COLUMN "date" SET DATA TYPE timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "schedules" ALTER COLUMN "preacher" DROP NOT NULL;--> statement-breakpoint
-UPDATE schedules SET leader = '' WHERE leader IS NULL;
+UPDATE schedules SET leader = '' WHERE leader IS NULL;--> statement-breakpoint
 ALTER TABLE "schedules" ALTER COLUMN "leader" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "schedules" ALTER COLUMN "musician" SET NOT NULL;--> statement-breakpoint
-UPDATE schedules SET type = 'church_service' WHERE type = 'ChurchService';
-UPDATE schedules SET type = 'bible_study' WHERE type = 'BigGroupBibleStudy';
+UPDATE schedules SET type = 'church_service' WHERE type = 'ChurchService';--> statement-breakpoint
+UPDATE schedules SET type = 'bible_study' WHERE type = 'BigGroupBibleStudy';--> statement-breakpoint
 ALTER TABLE "schedules" ALTER COLUMN "type" SET DATA TYPE event_type USING type::event_type;--> statement-breakpoint
 ALTER TABLE "schedules" ADD COLUMN "noteWriter" text DEFAULT '' NOT NULL;--> statement-breakpoint
 DO $$ BEGIN

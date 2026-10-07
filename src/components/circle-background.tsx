@@ -1,12 +1,12 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import React from "react";
 import { calculateXAxes, calculateYAxes, cn } from "~/lib/utils";
 
 interface IRoundedBackground extends React.HTMLAttributes<HTMLDivElement> {
-  r: number; // radius in rem
   blur?: boolean;
   delay?: number;
   duration?: number;
+  r: number; // radius in rem
   reverse?: boolean;
 }
 
@@ -18,28 +18,33 @@ export default function CircleBackground({
   duration = 20,
   reverse = false,
 }: IRoundedBackground) {
+  const { x, y } = React.useMemo(() => {
+    const xAxes = calculateXAxes(0.01, 850, -Math.PI, Math.PI);
+    const yAxes = calculateYAxes(0.01, 850, -Math.PI, Math.PI);
+    return {
+      x: reverse ? xAxes.map((value) => value * -1) : xAxes,
+      y: yAxes,
+    };
+  }, [reverse]);
+
   return (
     <motion.div
-      layout
       animate={{
-        x: reverse
-          ? calculateXAxes(0.01, 850, -Math.PI, Math.PI).map((x) => x * -1)
-          : calculateXAxes(0.01, 850, -Math.PI, Math.PI),
-        y: reverse
-          ? calculateYAxes(0.01, 850, -Math.PI, Math.PI)
-          : calculateYAxes(0.01, 850, -Math.PI, Math.PI),
         transition: {
-          duration: duration,
-          repeat: Infinity,
-          delay: delay,
+          delay,
+          duration,
+          repeat: Number.POSITIVE_INFINITY,
         },
+        x,
+        y,
       }}
-      style={{ width: `${r}rem`, height: `${r}rem` }}
       className={cn(
-        `animate-gradient-x absolute inset-0 mx-auto rounded-full opacity-50 filter`,
+        "absolute inset-0 mx-auto animate-gradient-x rounded-full opacity-50 filter",
         className,
-        blur && "blur-3xl",
+        blur && "blur-3xl"
       )}
+      layout
+      style={{ height: `${r}rem`, width: `${r}rem` }}
     />
   );
 }

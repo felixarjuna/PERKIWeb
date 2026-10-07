@@ -1,14 +1,14 @@
 import { type ClassValue, clsx } from "clsx";
 import { DateTime } from "luxon";
 import { twMerge } from "tailwind-merge";
-import type { RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export const calculateXAxes = (
-  step = 0.1,
+  step: number,
   multiplier: number,
   start: number,
   end: number
@@ -19,7 +19,7 @@ export const calculateXAxes = (
   });
 
 export const calculateYAxes = (
-  step = 0.1,
+  step: number,
   multiplier: number,
   start: number = Math.PI,
   end = -Math.PI
@@ -35,7 +35,7 @@ export const dateTimeFormatter = (date: string) => {
 };
 
 export const getUsernameFromName = (name: string) =>
-  name?.replace(/\s/g, "").toLowerCase();
+  name.replace(/\s/g, "").toLowerCase();
 
 export function getNextDayOfWeek(date: Date, dayOfWeek: number) {
   const resultDate = new Date(date.getTime());
@@ -52,10 +52,14 @@ export const countBirthdaysThisMonth = (
 
   return profiles.reduce((count, row) => {
     const birthday = row.profiles?.birthday;
-    if (!birthday) return count; // Skip if no birthday
+    if (!birthday) {
+      return count; // Skip if no birthday
+    }
 
     const birthdayDt = DateTime.fromJSDate(birthday);
-    if (!birthdayDt.isValid) return count; // Skip invalid dates
+    if (!birthdayDt.isValid) {
+      return count; // Skip invalid dates
+    }
 
     return birthdayDt.month === currentMonth ? count + 1 : count;
   }, 0);
