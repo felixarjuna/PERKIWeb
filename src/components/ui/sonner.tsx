@@ -1,31 +1,41 @@
-"use client"
+"use client";
 
-import { useTheme } from "next-themes"
-import { Toaster as Sonner } from "sonner"
+import {
+  CircleCheck,
+  Info,
+  LoaderCircle,
+  OctagonX,
+  TriangleAlert,
+} from "lucide-react";
+import { Toaster as Sonner } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>
+type ToasterProps = React.ComponentProps<typeof Sonner>;
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+const Toaster = ({ ...props }: ToasterProps) => (
+  <Sonner
+    className="toaster group"
+    icons={{
+      error: <OctagonX className="h-4 w-4" />,
+      info: <Info className="h-4 w-4" />,
+      loading: <LoaderCircle className="h-4 w-4 animate-spin" />,
+      success: <CircleCheck className="h-4 w-4" />,
+      warning: <TriangleAlert className="h-4 w-4" />,
+    }}
+    // The site ships a single dark-green theme; no next-themes provider.
+    theme="dark"
+    toastOptions={{
+      classNames: {
+        actionButton:
+          "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+        cancelButton:
+          "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+        description: "group-[.toast]:text-muted-foreground",
+        toast:
+          "group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border-none group-[.toaster]:shadow-lg",
+      },
+    }}
+    {...props}
+  />
+);
 
-  return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      toastOptions={{
-        classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-        },
-      }}
-      {...props}
-    />
-  )
-}
-
-export { Toaster }
+export { Toaster };

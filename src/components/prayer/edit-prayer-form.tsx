@@ -1,7 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -14,16 +16,15 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
-import { useToast } from "~/components/ui/use-toast";
-import { type editPrayerSchema } from "~/server/api/schema/schema";
-import { api, type RouterOutputs } from "~/utils/api";
+import { getUsernameFromName } from "~/lib/utils";
+import type { editPrayerSchema } from "~/server/api/schema/schema";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 const EditPrayerFormSchema = z.object({
-  isAnonymous: z.boolean().default(false),
   content: z.string().min(2),
+  isAnonymous: z.boolean(),
 });
 
-const username = "felixarjuna";
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
 
 export default function EditPrayerForm({
@@ -33,32 +34,31 @@ export default function EditPrayerForm({
   prayer: Prayer;
   onCloseDialog: () => void;
 }) {
-  const { toast } = useToast();
-  const utils = api.useContext();
+  const { data: session } = useSession();
+  const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast({
-        title: "Your prayer is updated successfully! ✨",
-        description: "God bless you! ❤️",
+      toast.success("Your prayer is updated successfully!", {
+        description: "God bless you!",
       });
     },
   });
 
   const form = useForm<z.infer<typeof EditPrayerFormSchema>>({
-    resolver: zodResolver(EditPrayerFormSchema),
     defaultValues: {
-      isAnonymous: prayer.isAnonymous ?? undefined,
       content: prayer.content,
+      isAnonymous: prayer.isAnonymous ?? undefined,
     },
+    resolver: zodResolver(EditPrayerFormSchema),
   });
 
   function onSubmit(data: z.infer<typeof EditPrayerFormSchema>) {
     const request: z.infer<typeof editPrayerSchema> = {
       ...prayer,
-      name: prayer.name ?? username,
       content: data.content,
       isAnonymous: data.isAnonymous,
+      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
       prayerNames: prayer.prayerNames as string[],
     };
     updatePrayer.mutate(request);
@@ -67,10 +67,7 @@ export default function EditPrayerForm({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="w-full space-y-6"
-      >
+      <form className="w-full space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         <div>
           <div className="space-y-4">
             <FormField
@@ -88,7 +85,7 @@ export default function EditPrayerForm({
                 </FormItem>
               )}
             />
-            <div className="xs:flex-col xs:gap-2 flex gap-x-4">
+            <div className="flex gap-x-4">
               <div className="flex-1">
                 <FormField
                   control={form.control}
@@ -107,8 +104,8 @@ export default function EditPrayerForm({
                 />
               </div>
 
-              <div className="xs:justify-end flex">
-                <Button type="submit" className="w-fit">
+              <div className="flex">
+                <Button className="w-fit" type="submit">
                   Save changes
                 </Button>
               </div>

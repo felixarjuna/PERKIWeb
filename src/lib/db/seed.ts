@@ -1,57 +1,62 @@
+import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { type Schedule, schedules } from "./schema/schema";
 
-import * as dotenv from "dotenv";
-dotenv.config();
+config();
 
 const scheduleList: Schedule[] = [
   {
-    id: 40,
-    title: "Exposition Book of Romans",
-    date: new Date("2024-04-26T22:00:00.000Z"),
-    preacher: "Ev. Nehemiah Riggruben",
+    accommodation: "Danny Kurniawan",
     bibleVerse: "Roma 4:1-12",
+    cleaningGroup: "Group 4",
+    cookingGroup: "Group 3",
+    createdAt: new Date(),
+    date: new Date("2024-04-26T22:00:00.000Z"),
     description: "Exposition the book of romans.",
+    id: 40,
     leader: "Toni Setiawan",
+    multimedia: "Felix Arjuna",
     musician: "Clarissa Adelyne",
     noteWriter: "Lionel Erico",
-    multimedia: "Felix Arjuna",
-    accommodation: "Danny Kurniawan",
-    cookingGroup: "Group 3",
-    cleaningGroup: "Group 4",
+    preacher: "Ev. Nehemiah Riggruben",
+    title: "Exposition Book of Romans",
     type: "church_service",
-    createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: 41,
-    title: "Exposition Book of Romans",
-    date: new Date("2024-05-03T22:00:00.000Z"),
-    preacher: "Danny Kurniawan",
+    accommodation: null,
     bibleVerse: "Roma 4:13-25",
+    cleaningGroup: "Group 5",
+    cookingGroup: null,
+    createdAt: new Date(),
+    date: new Date("2024-05-03T22:00:00.000Z"),
     description: "Exposition the book of romans.",
+    id: 41,
     leader: "Felix Arjuna",
+    multimedia: null,
     musician: "Clarissa Adelyne",
     noteWriter: "Lionel Erico",
-    multimedia: null,
-    accommodation: null,
-    cookingGroup: null,
-    cleaningGroup: "Group 5",
+    preacher: "Danny Kurniawan",
+    title: "Exposition Book of Romans",
     type: "bible_study",
-    createdAt: new Date(),
     updatedAt: new Date(),
   },
 ];
 
-const DATABASE_URL =
-  "postgres://postgres.ofwbvpmgfffrzynmcsxf:felixarjuna123!@aws-0-eu-central-1.pooler.supabase.com:5432/postgres";
+const main = async () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
-export const main = async () => {
-  const connection = postgres(DATABASE_URL);
+  const connection = postgres(databaseUrl);
   const db = drizzle(connection);
 
   console.log("Seed start");
   await db.insert(schedules).values(scheduleList);
   console.log("Seed done");
+  await connection.end();
 };
+
+await main();

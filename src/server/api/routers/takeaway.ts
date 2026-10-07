@@ -7,30 +7,23 @@ import {
   queryByIdSchema,
   updateTakeawaySchema,
 } from "../schema/schema";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const takeawayRouter = createTRPCRouter({
-  getTakeaways: publicProcedure.query(async () => {
-    return await db
-      .select()
-      .from(takeaways)
-      .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-      .orderBy(desc(schedules.date));
-  }),
-  addTakeaway: publicProcedure
-    .input(addTakeawaySchema)
-    .mutation(async ({ input }) => {
-      return await db.insert(takeaways).values({
-        scheduleId: input.scheduleId,
-        keypoints: input.keypoints,
+  addTakeaway: protectedProcedure.input(addTakeawaySchema).mutation(
+    async ({ input }) =>
+      await db.insert(takeaways).values({
         contributors: input.contributors,
-      });
-    }),
-  deleteTakeaway: publicProcedure
+        keypoints: input.keypoints,
+        scheduleId: input.scheduleId,
+      })
+  ),
+  deleteTakeaway: protectedProcedure
     .input(queryByIdSchema)
-    .mutation(async ({ input }) => {
-      return await db.delete(takeaways).where(eq(takeaways.id, input.id));
-    }),
+    .mutation(
+      async ({ input }) =>
+        await db.delete(takeaways).where(eq(takeaways.id, input.id))
+    ),
   getTakeawayById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
@@ -41,20 +34,28 @@ export const takeawayRouter = createTRPCRouter({
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
         .then((data) => data.at(0));
 
-      if (takeaway === undefined)
+      if (takeaway === undefined) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Error occurs when loading takeaway from database.",
         });
+      }
 
       return takeaway;
     }),
-  updateTakeaway: publicProcedure
-    .input(updateTakeawaySchema)
-    .mutation(async ({ input }) => {
-      return await db
+  getTakeaways: publicProcedure.query(
+    async () =>
+      await db
+        .select()
+        .from(takeaways)
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+        .orderBy(desc(schedules.date))
+  ),
+  updateTakeaway: protectedProcedure.input(updateTakeawaySchema).mutation(
+    async ({ input }) =>
+      await db
         .update(takeaways)
         .set({ ...input })
-        .where(eq(takeaways.id, input.id));
-    }),
+        .where(eq(takeaways.id, input.id))
+  ),
 });

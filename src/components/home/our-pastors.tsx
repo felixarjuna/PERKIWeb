@@ -12,7 +12,7 @@ import {
 
 export default function OurPastors() {
   return (
-    <div className="bg-cream-default py-20 text-green-default sm:py-40">
+    <div className="bg-paper py-20 text-paper-foreground sm:py-40">
       <div className="grid grid-cols-4 gap-y-4">
         <div className="col-span-4 my-auto flex h-full items-center justify-center whitespace-nowrap sm:col-span-1 sm:translate-y-[50%] sm:items-start sm:justify-start">
           <h1 className="text-center font-reimbrandt text-4xl sm:-rotate-90 sm:text-8xl">
@@ -20,11 +20,11 @@ export default function OurPastors() {
           </h1>
         </div>
 
-        <div className="col-span-4 flex flex-col gap-y-4 pr-0  sm:col-span-3 sm:gap-y-8 sm:pr-40">
-          {pastors.map((pastor, index) => (
+        <div className="col-span-4 flex flex-col gap-y-4 pr-0 sm:col-span-3 sm:gap-y-8 sm:pr-40">
+          {pastors.map((pastor) => (
             <div
               className="grid grid-cols-3 items-center gap-x-20 px-8 sm:gap-x-0"
-              key={index}
+              key={pastor.name}
             >
               <div className="col-span-3 flex flex-col sm:col-span-2">
                 <p className="mb-2 font-reimbrandt text-2xl sm:text-5xl">
@@ -38,8 +38,8 @@ export default function OurPastors() {
                   <Dialog>
                     <DialogTrigger
                       className={buttonVariants({
-                        variant: "default",
                         size: "sm",
+                        variant: "default",
                       })}
                     >
                       see more ...
@@ -56,13 +56,13 @@ export default function OurPastors() {
                 </div>
               </div>
 
-              <div className="col-span-3 mx-auto mt-8 aspect-square h-44 overflow-hidden rounded-full border-4 border-green-default bg-green-default sm:h-64">
+              <div className="col-span-3 mx-auto mt-8 aspect-square h-44 overflow-hidden rounded-full border-4 border-accent bg-accent sm:h-64">
                 <Image
-                  src={pastor.img}
                   alt="Chen"
                   className="mx-auto rounded-lg object-cover"
-                  width={500}
                   height={500}
+                  src={pastor.img}
+                  width={500}
                 />
               </div>
             </div>

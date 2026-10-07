@@ -1,18 +1,29 @@
-import { type ColumnDef, type SortingFn } from "@tanstack/react-table";
+import type { ColumnDef, SortFn } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { DateTime } from "luxon";
 import { Button } from "~/components/ui/button";
-import { type RouterOutputs } from "~/utils/api";
+import type { RouterOutputs } from "~/trpc/react";
+import type { DashboardFeatures } from "./table-features";
 
 type UserProfile = RouterOutputs["profiles"]["getUserProfiles"][number];
-const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
+const sortByMonth: SortFn<DashboardFeatures, UserProfile> = (
+  profileA,
+  profileB,
+  columnId
+) => {
   const dateA = DateTime.fromJSDate(profileA.getValue(columnId));
   const dateB = DateTime.fromJSDate(profileB.getValue(columnId));
 
   /** handle null/undefine cases.  */
-  if (!dateA.isValid && !dateB.isValid) return 0;
-  if (!dateA.isValid) return 1;
-  if (!dateB.isValid) return -1;
+  if (!(dateA.isValid || dateB.isValid)) {
+    return 0;
+  }
+  if (!dateA.isValid) {
+    return 1;
+  }
+  if (!dateB.isValid) {
+    return -1;
+  }
 
   /** compare months. */
   const monthA = dateA.month;
@@ -26,77 +37,74 @@ const sortByMonth: SortingFn<UserProfile> = (profileA, profileB, columnId) => {
   return monthA === monthB ? dayA - dayB : monthA - monthB;
 };
 
-export const columns: ColumnDef<UserProfile>[] = [
+export const columns: ColumnDef<DashboardFeatures, UserProfile>[] = [
   {
-    accessorKey: "name",
     accessorFn: (row) => row.user?.name,
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
-          onClick={() => {
-            console.log("sort by name");
-            column.toggleSorting(column.getIsSorted() === "asc");
-          }}
-        >
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    accessorKey: "name",
     cell: ({ row }) => row.original.user?.name,
+    header: ({ column }) => (
+      <Button
+        onClick={() => {
+          column.toggleSorting(column.getIsSorted() === "asc");
+        }}
+        variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
+      >
+        Name
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     size: 200,
   },
   {
+    // undefined (not null) so `sortUndefined` keeps missing birthdays last.
+    accessorFn: (row) => row.profiles.birthday ?? undefined,
     accessorKey: "birthday",
-    accessorFn: (row) => row.profiles.birthday,
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Birthday
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
     cell: ({ row }) =>
       row.original.profiles.birthday
         ? DateTime.fromJSDate(row.original.profiles.birthday).toLocaleString(
             DateTime.DATE_FULL,
-            { locale: "id" },
+            { locale: "id" }
           )
         : "N/A",
-    sortingFn: sortByMonth,
+    header: ({ column }) => (
+      <Button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant={column.getIsSorted() === "asc" ? "default" : "ghost"}
+      >
+        Birthday
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     size: 200, // Fixed width in pixels
+    sortFn: sortByMonth,
+    sortUndefined: "last",
   },
   {
     accessorKey: "major",
-    header: "Major",
     cell: ({ row }) => row.original.profiles.major,
+    header: "Major",
     size: 400,
   },
   {
     accessorKey: "phoneNumber",
-    header: "Phone Number",
     cell: ({ row }) => row.original.profiles.phoneNumber,
+    header: "Phone Number",
   },
   {
     accessorKey: "location",
-    header: "Location",
     cell: ({ row }) => row.original.profiles.location,
+    header: "Location",
   },
   {
     accessorKey: "address",
-    header: "Address",
     cell: ({ row }) => row.original.profiles.address,
+    header: "Address",
     size: 400,
   },
   {
     accessorKey: "bio",
-    header: "Bio",
     cell: ({ row }) => row.original.profiles.bio,
+    header: "Bio",
     size: 300,
   },
 ];

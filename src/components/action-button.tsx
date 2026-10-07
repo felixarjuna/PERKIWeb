@@ -11,9 +11,10 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 
-interface ActionButtonProps extends React.HTMLAttributes<HTMLDivElement> {
-  onEditClick: () => void;
+interface ActionButtonProps {
+  className?: string;
   onDeleteClick: () => void;
+  onEditClick?: () => void;
 }
 
 export default function ActionButton({
@@ -29,37 +30,43 @@ export default function ActionButton({
   );
 }
 
-export function EditButton({ onEditClick }: { onEditClick: () => void }) {
+export function EditButton({ onEditClick }: { onEditClick?: () => void }) {
   return (
-    <div
-      className="flex h-6 w-6 items-center justify-center rounded-md bg-green-default/80 hover:bg-dark-green-default"
-      onClick={() => onEditClick()}
+    <button
+      aria-label="Edit"
+      className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/80 hover:bg-accent"
+      onClick={onEditClick}
+      type="button"
     >
-      <PenBoxIcon className="xs:h-3 xs:w-3 h-4 w-4" />
-    </div>
+      <PenBoxIcon className="h-4 w-4" />
+    </button>
   );
 }
 
 export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger>
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-300/30 hover:bg-red-300/50">
-          <TrashIcon className="xs:h-3 xs:w-3 h-4 w-4" />
-        </div>
+      <AlertDialogTrigger asChild>
+        <button
+          aria-label="Delete"
+          className="flex h-6 w-6 items-center justify-center rounded-md bg-destructive/50 hover:bg-destructive/70"
+          type="button"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent className="w-10/12">
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete your entry and cannot be undone. 😥
+            This will permanently delete your entry and cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-red-300/50 hover:bg-red-300/30"
-            onClick={() => onDeleteClick()}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+            onClick={onDeleteClick}
           >
             Continue
           </AlertDialogAction>

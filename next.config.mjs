@@ -6,18 +6,16 @@ await import("./src/env.mjs");
 
 /** @type {import("next").NextConfig} */
 const config = {
-  reactStrictMode: true,
-
-  /**
-   * If you are using `appDir` then you must comment the below `i18n` config out.
-   *
-   * @see https://github.com/vercel/next.js/issues/41980
-   */
-  i18n: {
-    locales: ["en"],
-    defaultLocale: "en",
-  },
   crossOrigin: "anonymous",
+  /** Pin the root so a stray lockfile in a parent directory is ignored. */
+  outputFileTracingRoot: import.meta.dirname,
+  reactStrictMode: true,
+  /**
+   * next-auth v5 (beta) ships ESM that imports `next/server` without an
+   * extension; bundling it avoids Node ESM resolution errors at runtime.
+   */
+  transpilePackages: ["next-auth"],
+  turbopack: { root: import.meta.dirname },
 };
 
 export default config;

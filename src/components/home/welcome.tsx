@@ -1,7 +1,7 @@
 export default function Welcome() {
   return (
-    <div className="bg-dark-green-default">
-      <div className="flex h-screen flex-col items-center justify-center gap-5 text-light-green-default">
+    <div className="bg-background">
+      <div className="flex h-screen flex-col items-center justify-center gap-5 text-foreground">
         <div className="-mt-20 flex flex-col gap-y-2 text-center">
           <h3 className="text-base uppercase xl:text-4xl 2xl:text-4xl">
             Welcome to our fellowship

@@ -1,0 +1,137 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { z } from "zod";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
+import { getUsernameFromName } from "~/lib/utils";
+import { updateTakeawaySchema } from "~/server/api/schema/schema";
+import { api } from "~/trpc/react";
+
+export default function EditTakeawayForm() {
+  const { data: session } = useSession();
+  const username = React.useMemo(
+    () => getUsernameFromName(session?.user.name ?? ""),
+    [session?.user.name]
+  );
+
+  const router = useRouter();
+
+  const { id } = useParams<{ id: string }>();
+  const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
+    id: Number.parseInt(id, 10),
+  });
+
+  const contributors = React.useMemo(() => {
+    if (takeaway) {
+      const _contributors = takeaway.takeaways.contributors as string[];
+      return _contributors.includes(username)
+        ? [..._contributors]
+        : [..._contributors, username];
+    }
+  }, [takeaway, username]);
+
+  /** form definition. */
+  const form = useForm<z.infer<typeof updateTakeawaySchema>>({
+    resolver: zodResolver(updateTakeawaySchema),
+  });
+
+  /** load form data. */
+  React.useEffect(() => {
+    form.reset({
+      ...takeaway?.takeaways,
+      contributors,
+    });
+  }, [contributors, form, takeaway]);
+
+  /** edit takeaway action. */
+  const utils = api.useUtils();
+  const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
+    onSuccess: async () => {
+      await Promise.all([utils.takeaways.invalidate()]);
+      toast.success("Your changes has been saved successfully!", {
+        description: "Thanks for your contribution!",
+      });
+      router.push("/takeaway");
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
+    updateTakeaway.mutate(values);
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        className="mt-4 space-y-8 sm:mt-8"
+        onSubmit={form.handleSubmit(onSubmit, (error) => {
+          toast.error("Uh oh! Something went wrong.", {
+            description: JSON.stringify(error),
+          });
+        })}
+      >
+        <div className="space-y-4">
+          <h3 className="font-reimbrandt text-2xl sm:text-3xl">
+            Fellowship Information
+          </h3>
+          <section className="grid grid-cols-2 gap-4 text-sm">
+            <div className="col-span-2 space-y-2">
+              <Label className="text-md">Schedule</Label>
+              <Input disabled value={takeaway?.schedules?.title} />
+            </div>
+
+            <div className="col-span-2">
+              <FormField
+                control={form.control}
+                name="keypoints"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-md">Key points</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        className="h-48 resize-none"
+                        {...field}
+                        defaultValue={field.value}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+        </div>
+
+        <div className="flex justify-between">
+          <Button type="submit" variant={"default"}>
+            Save changes
+          </Button>
+          <Button
+            className="flex gap-x-2"
+            onClick={() => router.back()}
+            type="button"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}

@@ -1,16 +1,12 @@
-type Event = {
-  name: string;
-  time: string;
-  notes: string;
+interface Event {
   description: string | React.ReactNode;
-};
+  name: string;
+  notes: string;
+  time: string;
+}
 
 export const events: Event[] = [
   {
-    name: "Church Service / Big Group Bible Study",
-    time: "Saturday, 15.30 - 17.00",
-    notes:
-      "Spending moments to listening to God words from another God's children.",
     description: (
       <div className="space-y-4">
         <div className="space-y-2">
@@ -63,65 +59,68 @@ export const events: Event[] = [
         </div>
       </div>
     ),
+    name: "Church Service / Big Group Bible Study",
+    notes:
+      "Spending moments to listening to God words from another God's children.",
+    time: "Saturday, 15.30 - 17.00",
   },
   {
-    name: "Small Group Bible Study",
-    time: "Saturday, 13.00 - 15.00",
-    notes:
-      "Focusing our attention deeply on the truth that the Word of God has for us.",
     description:
       "Small Group Bible Study is a Bible Study group where members invite and are also invited and called and have a desire to know God and grow in God through discussion of certain themes. In this small PA group, we are also given the opportunity to be open to each other in sharing experiences gained with God or sharing struggles or difficulties that are being experienced. Because we also long to be closer and get to know each other better as a fellowship in God. (1 John 1:7).",
+    name: "Small Group Bible Study",
+    notes:
+      "Focusing our attention deeply on the truth that the Word of God has for us.",
+    time: "Saturday, 13.00 - 15.00",
   },
   {
-    name: "Prayer Fellowship (Aachen)",
-    time: "Thursday, 18:00 - 21.00",
-    notes:
-      "Having the moments in the middle of our busy live to meditate about the Word of God together.",
     description:
       "In the midst of our busy schedules, we take time together to share what happened during the week and pray together, exchange advice, and provide support for those in need.",
+    name: "Prayer Fellowship (Aachen)",
+    notes:
+      "Having the moments in the middle of our busy live to meditate about the Word of God together.",
+    time: "Thursday, 18:00 - 21.00",
   },
 ];
 
-type Pastor = {
-  name: string;
+interface Pastor {
   favoriteVerse: string;
   img: string;
+  name: string;
   story: string | React.ReactNode;
-};
+}
 
 export const pastors: Pastor[] = [
   {
-    name: "Pdt. John Kusuma",
     favoriteVerse: "All honor and glory be to the Lord Jesus Christ!",
     img: "/images/john.jpg",
+    name: "Pdt. John Kusuma",
     story:
       "John Kusuma was born in Banda Aceh and lived in Methodist Junior High School Banda Aceh until the age of 13, where he completed 1st grade. He then attended Methodist 2 Junior High School and Sutomo High School in Medan. In 1989-1999, he continued his studies in chemical engineering at the Technical University of Berlin. From 1999-2003, he continued his studies at SAAT Malang and did one year of practical service (2003-2004) at Abdiel Christian Church (GKA) Gracia, Surabaya. After that, he served as pastor of the church in the same place from 2004-2011. Since January 2012, he has been serving in Jemaat Kristen Immanuel Berlin (FeG Immanuel Berlin since Sept. 2015) as a pastor and was ordained as a pastor of FeG Immanuel Berlin by the FeG Synod on March 25, 2012.",
   },
   {
-    name: "Pdt. Titus Christanto",
     favoriteVerse: "He who has Jesus has life.",
     img: "/images/titus.png",
+    name: "Pdt. Titus Christanto",
     story:
       "Titus Christianto serves at PERKI Aachen every second week of the month. He began his ministry by entering the Southeast Asian Bible Seminary (SAAT). After his studies, he was sent to serve the Pasamuan Urip Anyar Suriname (PUAS) congregation in Pamaribo, Suriname. Here he began his commitment to expand the kingdom of God and in early 2015 he was called to an outreach ministry to the Indonesian Diaspora community in the city of Hamburg, Germany. After receiving his Bachelor of Theology (S.Th) he was ordained as a pastor for FeG Maranatha Hamburg on December 10, 2017.",
   },
   {
-    name: "Ev. Riggruben",
     favoriteVerse:
       "My ministry is of Christ, belongs to Christ, and is for Christ alone. May God be glorified always through my life.",
     img: "/images/riggrubben.jpg",
+    name: "Ev. Riggruben",
     story:
       "When I accepted God's call as a full-time pastor, I had no idea at the time where I would serve. My prayer was more or less, lead me where God is calling me and give me an obedient heart and strength to live it. Four times I practiced ministry (assigned by SAAT) located in Eastern Indonesia, namely in Palu, Bali, Papua, and Makassar. But this year it feels like the direction of the wind of ministry has changed and pushed my ministry heart to the West. This is where I am anchored, at FeG Immanuel Berlin \n I completed my bachelor's degree in Theology at Southeast Asia Bible Seminary in 2019 and continued my post-graduate program in 2020. In my ministry practice, I served for one year at Kalam Kudus Church in Makassar. My ministry is also fully supported by my loving family. My father is a doctor and my mother is a teacher. I am the third of three children, where my older siblings also serve as doctors and servants of God. They also fully support my ministry in this place.",
   },
 ];
 
-type Service = {
-  title: string;
+interface Service {
   description: string | React.ReactNode;
-};
+  title: string;
+}
 
 export const services: Service[] = [
   {
-    title: "Church service",
     description: (
       <>
         <p>
@@ -142,9 +141,9 @@ export const services: Service[] = [
         </p>
       </>
     ),
+    title: "Church service",
   },
   {
-    title: "Big Group Bible Study",
     description: (
       <p>
         Big Group Bible Study is a joint Bible Study activity held on the first,
@@ -160,9 +159,9 @@ export const services: Service[] = [
         with prayer, offerings and announcements.
       </p>
     ),
+    title: "Big Group Bible Study",
   },
   {
-    title: "Small Group Bible Study",
     description: (
       <p>
         Small Group Bible Study is a Bible Study group where members invite and
@@ -174,9 +173,9 @@ export const services: Service[] = [
         each other better as a fellowship in God. (1 John 1:7).
       </p>
     ),
+    title: "Small Group Bible Study",
   },
   {
-    title: "Eating & Chatting",
     description: (
       <p>
         Every month Perki organizes a meal together twice, after the worship
@@ -185,6 +184,7 @@ export const services: Service[] = [
         chatting.
       </p>
     ),
+    title: "Eating & Chatting",
   },
 ];
 
@@ -272,11 +272,26 @@ export const accommodation = [
   "Ido Manuel",
 ].sort();
 
+/** Cleaning and cooking groups with their members. */
 export const groups = [
-  "Group 1",
-  "Group 2",
-  "Group 3",
-  "Group 4",
-  "Group 5",
-  "Group 6",
-].sort();
+  {
+    members: ["Danny", "Shane", "Wisnu", "Ruth", "Dian", "Gerry"],
+    name: "Group 1",
+  },
+  { members: ["Reggy", "Felix", "Jason", "Erico", "Gaby"], name: "Group 2" },
+  {
+    members: ["Toni", "Victor", "Angel", "Ricky", "Deronn", "Trevor"],
+    name: "Group 3",
+  },
+  {
+    members: ["Aldi", "Billy", "Andrew", "Mary", "Winston S.", "Randy"],
+    name: "Group 4",
+  },
+  {
+    members: ["Winston Y.", "Steffen", "Karyn", "Jco", "Grace", "Vincent"],
+    name: "Group 5",
+  },
+  { members: ["Chen", "Ido", "Wynnona", "Tius", "Daven"], name: "Group 6" },
+];
+
+export const groupNames = groups.map((group) => group.name);
