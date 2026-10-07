@@ -12,43 +12,68 @@ concurrency:
 permissions:
   contents: read
 
-# Each check is its own job so they run in parallel, fail independently and
-# show up as separate status checks on pull requests.
+# Stages are expressed through job names (check:*, build, test:*). Jobs run in
+# parallel; the only ordering is a real data dependency: test:e2e runs against
+# the production build produced by the build job. Deployment is handled by
+# Vercel's GitHub integration, so there is no deploy job.
 jobs:
-  lint:
-    name: Lint
+  check-lint:
+    name: check:lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # Biome check covers formatting, linting and import sorting.
       - run: pnpm lint
 
-  typecheck:
-    name: Typecheck
+  check-types:
+    name: check:types
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm typecheck
 
-  unit:
-    name: Unit tests
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    env:
+      # Real secrets are not needed to build; runtime env is provided where the
+      # app is started (Vercel for deploys, playwright.config.ts for e2e).
+      SKIP_ENV_VALIDATION: "1"
+      NEXT_PUBLIC_GOOGLE_API_KEY: e2e-google-api-key
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          include-hidden-files: true
+          retention-days: 1
+
+  test-unit:
+    name: test:unit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm test:unit
 
-  integration:
-    name: Integration tests
+  test-integration:
+    name: test:integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm test:integration
 
-  e2e:
-    name: E2E tests
+  test-e2e:
+    name: test:e2e
+    needs: build
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -67,8 +92,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with:
+          name: next-build
+          path: .next
       - run: pnpm exec playwright install --with-deps chromium
+      # Reuse the build job's output instead of building again.
       - run: pnpm test:e2e
+        env:
+          E2E_SKIP_BUILD: "1"
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
