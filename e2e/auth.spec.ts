@@ -19,7 +19,7 @@ test("signs up a new account, signs in with it and signs out", async ({
 
   // The navigation now offers the account page instead of signing in.
   await page.goto("/schedule");
-  await page.getByRole("button", { name: "Account" }).click();
+  await page.getByRole("button", { exact: true, name: "Account" }).click();
   await expect(page).toHaveURL("/account");
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(user.name);
 

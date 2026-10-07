@@ -75,7 +75,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   await expect(card).toContainText("Toni Setiawan");
 
   // Edit
-  await header.getByRole("button", { name: "Edit" }).click();
+  await header.getByRole("button", { exact: true, name: "Edit" }).click();
   await expect(page).toHaveURL(EDIT_SCHEDULE_URL);
   const titleInput = page.getByLabel("Title", { exact: true });
   await expect(titleInput).toHaveValue(title);
@@ -98,7 +98,9 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   ).toHaveCount(0);
 
   // Delete: cancelling keeps it, confirming removes it.
-  await editedHeader.getByRole("button", { name: "Delete" }).click();
+  await editedHeader
+    .getByRole("button", { exact: true, name: "Delete" })
+    .click();
   const dialog = page.getByRole("alertdialog", {
     name: "Are you absolutely sure?",
   });
@@ -106,7 +108,9 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   await expect(dialog).toBeHidden();
   await expect(editedHeader).toBeVisible();
 
-  await editedHeader.getByRole("button", { name: "Delete" }).click();
+  await editedHeader
+    .getByRole("button", { exact: true, name: "Delete" })
+    .click();
   await dialog.getByRole("button", { name: "Continue" }).click();
   await expect(toast(page, "Schedule successfully deleted!")).toBeVisible();
   await expect(
