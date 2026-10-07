@@ -28,7 +28,7 @@ Tests never touch the real database (`.env` points at production Supabase).
 - `pnpm test:e2e:db` then `pnpm test:e2e` (Playwright, `e2e/`): builds and starts the app on :3100 against a throwaway Docker Postgres (`compose.test.yml`, port 54329, tmpfs). `e2e/global-setup.ts` recreates the schema from the migrations and seeds the `MEMBER` account; `auth.setup.ts` saves its signed-in state. `playwright.config.ts` refuses any non-local `DATABASE_URL`. Set `E2E_SKIP_BUILD=1` to reuse an existing build. Specs share one DB and run in parallel, so create data with `uniqueSuffix()`.
 - Known gaps are pinned with `it.fails` / `test.fail()` and a `// BUG:` or `// SECURITY:` comment. Fixing the gap makes that test fail, so remove the marker when you fix it.
 - Hand-written SQL in a migration must end each statement with `--> statement-breakpoint`, or fresh databases (tests, CI) can't apply it.
-- CI (`.github/workflows/ci.yml`) runs separate parallel jobs (Lint, Typecheck, Unit tests, Integration tests, E2E tests) on PRs and pushes to `main`. Shared setup lives in `.github/actions/setup`.
+- CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`) and run in parallel. The only ordering is `test:e2e` → `build`, which reuses the uploaded `.next` output (`E2E_SKIP_BUILD=1`). Shared setup lives in `.github/actions/setup`. There is no deploy job because Vercel's GitHub integration deploys.
 
 ## Architecture
 
