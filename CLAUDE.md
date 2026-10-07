@@ -21,14 +21,14 @@ Package manager is **pnpm**.
 
 Tests never touch the real database (`.env` points at production Supabase).
 
-- `pnpm test` (Vitest, `vitest.config.ts`) runs three projects:
+- `pnpm test` (Vitest, `vitest.config.ts`) runs three projects; `pnpm test:unit` runs `unit` + `dom`, `pnpm test:integration` runs `server`:
   - `unit`: node, `src/**/*.test.ts` outside `src/server`.
   - `server`: tRPC routers against **PGlite** (in-process Postgres built from `src/lib/db/migrations`, truncated after each test). `src/test/setup-server.ts` mocks `~/server` and `~/server/auth`; call procedures with `callerFor(userId)` / `anonymousCaller()` from `src/test/caller.ts`.
   - `dom`: jsdom + Testing Library for `*.test.tsx`.
 - `pnpm test:e2e:db` then `pnpm test:e2e` (Playwright, `e2e/`): builds and starts the app on :3100 against a throwaway Docker Postgres (`compose.test.yml`, port 54329, tmpfs). `e2e/global-setup.ts` recreates the schema from the migrations and seeds the `MEMBER` account; `auth.setup.ts` saves its signed-in state. `playwright.config.ts` refuses any non-local `DATABASE_URL`. Set `E2E_SKIP_BUILD=1` to reuse an existing build. Specs share one DB and run in parallel, so create data with `uniqueSuffix()`.
 - Known gaps are pinned with `it.fails` / `test.fail()` and a `// BUG:` or `// SECURITY:` comment. Fixing the gap makes that test fail, so remove the marker when you fix it.
 - Hand-written SQL in a migration must end each statement with `--> statement-breakpoint`, or fresh databases (tests, CI) can't apply it.
-- CI (`.github/workflows/ci.yml`) runs `check` and `e2e` on pushes and PRs.
+- CI (`.github/workflows/ci.yml`) runs separate parallel jobs (Lint, Typecheck, Unit tests, Integration tests, E2E tests) on PRs and pushes to `main`. Shared setup lives in `.github/actions/setup`.
 
 ## Architecture
 

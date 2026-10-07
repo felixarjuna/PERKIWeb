@@ -19,6 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:db": "docker compose -f compose.test.yml up -d --wait",
     "test:e2e:db:down": "docker compose -f compose.test.yml down",
+    "test:integration": "vitest run --project server",
+    "test:unit": "vitest run --project unit --project dom",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
