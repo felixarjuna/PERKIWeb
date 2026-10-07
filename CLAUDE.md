@@ -67,6 +67,12 @@ All app pages (everything except the landing page and admin dashboard) render in
 
 **UI:** shadcn/ui components in `src/components/ui/` (`components.json`, style "default", RSC). Toasts use **sonner** (`toast.success/error` from `"sonner"`; `<Toaster/>` mounted in the root layout) — the legacy Radix toast was removed. `cn()` helper in `src/lib/utils.ts`. Static content data (groups, pastors, events, name lists) lives in `src/lib/data.tsx`.
 
+## Workflow
+
+- Branch from `main` and open a PR into `main`. Merged branches are deleted automatically.
+- Work that resolves an issue must put `Closes #<n>` in the **PR description** (one line per issue; `.github/pull_request_template.md` has the slot). GitHub then closes the issue when the PR merges into `main`. A closing keyword in a commit message works too, but the PR description is where it's checked.
+- The repo is public. Security problems are tracked in private draft security advisories, never in public issues, PRs or commit messages, until they're fixed.
+
 ## Gotchas
 
 - `xs:` responsive classes were never a defined breakpoint and are inert; don't add new ones.
