@@ -17,7 +17,7 @@ export default function Home() {
         <div className="relative isolate overflow-hidden bg-background">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10"
+            className="hero-atmosphere pointer-events-none absolute inset-0 -z-10"
           >
             <div className="hero-orb hero-orb-a" />
             <div className="hero-orb hero-orb-b" />
