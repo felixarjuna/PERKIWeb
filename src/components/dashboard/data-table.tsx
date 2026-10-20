@@ -55,33 +55,25 @@ export default function DataTable<TData extends RowData>({
   );
 
   return (
-    <div className="space-y-4 p-4 text-foreground">
-      <div className="flex justify-between gap-x-4">
-        <div className="relative w-fit rounded-md border bg-accent/50 px-4 py-4 font-normal">
-          <h2 className="font-reimbrandt tracking-wide sm:text-lg">
+    <div className="flex min-w-0 flex-col gap-6 p-4 text-foreground sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="rounded-xl bg-card p-4 sm:p-6">
+          <h2 className="type-subheading">
             Birthday this month <Cake className="inline size-4" />
           </h2>
-          <p className="font-satoshi text-lg sm:text-xl">{count}</p>
-
-          <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
-            <span className="relative flex size-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex size-3 rounded-full bg-green-300" />
-            </span>
-          </div>
+          <p className="type-heading mt-2 tabular-nums">{count}</p>
         </div>
 
-        <Badge className="flex h-fit items-center gap-x-2 self-end font-normal font-satoshi">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-green-300" />
-          </span>
-          <p>perki.bot operational</p>
+        <Badge className="type-caption h-fit" variant="secondary">
+          {data.length} members
         </Badge>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <p className="type-caption text-muted-foreground md:hidden">
+        Scroll across the table to see all member details.
+      </p>
+      <div className="min-w-0 overflow-hidden rounded-xl border">
+        <Table aria-label="Fellowship members" className="min-w-[56rem]">
           <TableHeader className="bg-muted">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

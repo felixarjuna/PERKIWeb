@@ -22,12 +22,17 @@ export default function RandomVerse({ items }: { items: readonly string[] }) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Button className="w-fit" onClick={pickRandomItem}>
+      <Button
+        className="w-fit"
+        onClick={pickRandomItem}
+        type="button"
+        variant="secondary"
+      >
         <Shuffle className="size-4" />
         Randomize me!
       </Button>
       {verse ? (
-        <p className="px-8 font-reimbrandt text-foreground">{verse}</p>
+        <p className="type-quote px-4 text-foreground">{verse}</p>
       ) : null}
     </div>
   );

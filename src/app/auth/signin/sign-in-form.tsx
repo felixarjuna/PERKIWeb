@@ -56,7 +56,7 @@ export default function SignInForm({ returnPath }: { returnPath?: string }) {
   return (
     <div className="mt-8 flex flex-col gap-6">
       {searchParams.get("error") ? (
-        <p className="text-destructive text-sm" role="alert">
+        <p className="type-body-sm text-destructive-text" role="alert">
           Google sign-in could not be completed. Please try again.
         </p>
       ) : null}

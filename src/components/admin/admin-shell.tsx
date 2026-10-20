@@ -53,10 +53,10 @@ export default function AdminShell({
     return <Loader message="Opening admin sign-in ..." />;
   }
   return (
-    <div className="dark min-h-screen">
+    <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="min-w-0">
+        <SidebarInset className="min-w-0" id="main-content">
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -73,9 +73,7 @@ export default function AdminShell({
             </div>
           </header>
           <div className="mx-auto w-full min-w-0 max-w-5xl p-4 sm:p-6">
-            <h1 className="mb-6 font-reimbrandt text-2xl leading-tight sm:text-3xl">
-              {title}
-            </h1>
+            <h1 className="type-heading mb-6">{title}</h1>
             {children}
           </div>
         </SidebarInset>

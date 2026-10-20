@@ -81,7 +81,7 @@ export default function AddScheduleForm() {
   }
 
   return (
-    <Tabs className="mt-8" defaultValue="manual">
+    <Tabs className="w-full" defaultValue="manual">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="manual">Manual</TabsTrigger>
         <TabsTrigger value="spreadsheet">Google Spreadsheet</TabsTrigger>
@@ -89,23 +89,19 @@ export default function AddScheduleForm() {
       <TabsContent value="manual">
         <Form {...form}>
           <form
-            className="mt-4 space-y-8 sm:mt-8"
+            className="flex flex-col gap-8"
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <div className="space-y-4">
-              <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-                Fellowship Information
-              </h3>
-              <section className="grid grid-cols-2 gap-4 text-sm">
-                <div className="col-span-2">
+              <h2 className="type-heading">Fellowship Information</h2>
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">
-                          Fellowship Type
-                        </FormLabel>
+                        <FormLabel>Fellowship Type</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -134,13 +130,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Title</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -149,23 +145,24 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel className="text-md">Date</FormLabel>
+                        <FormLabel>Date</FormLabel>
                         <FormControl>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
                                   className={cn(
-                                    "!text-foreground pl-3 text-left font-normal",
+                                    "w-full justify-start pl-3 text-left",
                                     !field.value && "text-muted-foreground"
                                   )}
-                                  variant={"default"}
+                                  type="button"
+                                  variant="outline"
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP")
@@ -197,13 +194,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="preacher"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Preacher</FormLabel>
+                        <FormLabel>Preacher</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -228,13 +225,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="bibleVerse"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Bible Verse</FormLabel>
+                        <FormLabel>Bible Verse</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -243,15 +240,15 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Description</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea className="h-48 resize-none" {...field} />
+                          <Textarea className="min-h-48" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -262,17 +259,15 @@ export default function AddScheduleForm() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-                Servant Information
-              </h3>
-              <section className="grid grid-cols-2 gap-4 text-sm">
-                <div className="col-span-2">
+              <h2 className="type-heading">Servant Information</h2>
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="leader"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Liturgos</FormLabel>
+                        <FormLabel>Liturgos</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -297,13 +292,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="musician"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Musician</FormLabel>
+                        <FormLabel>Musician</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -328,13 +323,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="noteWriter"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Note writer</FormLabel>
+                        <FormLabel>Note writer</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -359,13 +354,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="multimedia"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Multimedia</FormLabel>
+                        <FormLabel>Multimedia</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -390,13 +385,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="accommodation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Accommodation</FormLabel>
+                        <FormLabel>Accommodation</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -424,13 +419,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="cookingGroup"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">Cooking Group</FormLabel>
+                        <FormLabel>Cooking Group</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -455,15 +450,13 @@ export default function AddScheduleForm() {
                     )}
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <FormField
                     control={form.control}
                     name="cleaningGroup"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-md">
-                          Cleaning Group
-                        </FormLabel>
+                        <FormLabel>Cleaning Group</FormLabel>
                         <FormControl>
                           <Select
                             defaultValue={field.value}
@@ -491,7 +484,7 @@ export default function AddScheduleForm() {
               </section>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <Button type="submit" variant={"default"}>
                 Add schedule
               </Button>
@@ -499,6 +492,7 @@ export default function AddScheduleForm() {
                 className="flex gap-x-2"
                 onClick={() => router.push("/admin/schedules")}
                 type="button"
+                variant="secondary"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -621,12 +615,15 @@ function AddScheduleGoogleSpreadsheet() {
   return (
     <div className="mt-4 grid gap-y-4 sm:mt-8">
       <div className="grid gap-y-2 overflow-hidden">
-        <h1 className="font-reimbrandt text-2xl">Settings</h1>
+        <h2 className="type-heading">Settings</h2>
         <div className="grid grid-cols-2 gap-x-2">
           <div className="col-span-1 grid gap-2">
-            <Label className="text-sm">Offset</Label>
+            <Label className="type-body-sm" htmlFor="schedule-import-offset">
+              Offset
+            </Label>
             <Input
               defaultValue={0}
+              id="schedule-import-offset"
               onChange={(e) =>
                 setOptions((opts) => ({ ...opts, offset: +e.target.value }))
               }
@@ -634,9 +631,12 @@ function AddScheduleGoogleSpreadsheet() {
             />
           </div>
           <div className="col-span-1 grid gap-2">
-            <Label className="text-sm">Limit</Label>
+            <Label className="type-body-sm" htmlFor="schedule-import-limit">
+              Limit
+            </Label>
             <Input
               defaultValue={4}
+              id="schedule-import-limit"
               onChange={(e) =>
                 setOptions((opts) => ({ ...opts, limit: +e.target.value }))
               }
@@ -647,7 +647,7 @@ function AddScheduleGoogleSpreadsheet() {
       </div>
 
       <div className={loading ? "" : "overflow-auto"}>
-        <h1 className="font-reimbrandt text-2xl">Data Preview</h1>
+        <h2 className="type-heading">Data preview</h2>
 
         {loading || addScheduleBatch.isPending ? (
           <div className="mt-4 w-full">
@@ -662,7 +662,7 @@ function AddScheduleGoogleSpreadsheet() {
         ) : (
           <>
             <div className="my-4 flex max-h-72 flex-col gap-2 overflow-x-scroll overflow-y-scroll">
-              <pre className="text-sm">
+              <pre className="type-body-sm">
                 {JSON.stringify(schedules, null, 2)}
               </pre>
             </div>
@@ -696,6 +696,7 @@ function AddScheduleGoogleSpreadsheet() {
                 className="flex gap-x-2"
                 onClick={() => router.push("/admin/schedules")}
                 type="button"
+                variant="secondary"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back

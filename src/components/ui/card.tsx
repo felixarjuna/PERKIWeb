@@ -5,10 +5,7 @@ import { cn } from "~/lib/utils";
 function Card({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn(
-        "rounded-lg bg-card text-card-foreground shadow-sm",
-        className
-      )}
+      className={cn("rounded-xl bg-card text-card-foreground", className)}
       {...props}
     />
   );
@@ -24,15 +21,7 @@ function CardHeader({ className, ...props }: ComponentProps<"div">) {
 }
 
 function CardTitle({ className, ...props }: ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "font-semibold text-2xl leading-none tracking-tight",
-        className
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("type-heading", className)} {...props} />;
 }
 
 function CardDescription({ className, ...props }: ComponentProps<"div">) {

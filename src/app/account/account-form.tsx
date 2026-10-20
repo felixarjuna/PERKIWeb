@@ -53,7 +53,7 @@ export default function AccountForm() {
 
   return (
     <Form {...form}>
-      <div className="flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground text-sm">
+      <div className="type-body-sm flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground">
         <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <p>
           You sign in with Google. Your email is managed by your Google account.

@@ -95,7 +95,10 @@ export default function JoinForm({ userId }: { userId: string }) {
 
   return (
     <Form {...form}>
-      <form className="space-y-4 py-10" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-6"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="birthday"
@@ -105,7 +108,7 @@ export default function JoinForm({ userId }: { userId: string }) {
 
               <FormControl>
                 <Input
-                  className="w-[190px]"
+                  className="w-full"
                   name={field.name}
                   onBlur={field.onBlur}
                   // The schema expects a Date; valueAsDate is UTC midnight,

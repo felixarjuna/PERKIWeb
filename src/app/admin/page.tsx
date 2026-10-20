@@ -1,4 +1,5 @@
 import { LoginForm } from "~/components/login-form";
+import Template from "~/components/template";
 import { getReturnPath, type PageSearchParams } from "~/lib/auth-redirect";
 
 export default async function AdminPage({
@@ -14,11 +15,11 @@ export default async function AdminPage({
     ? callback
     : "/admin/dashboard";
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <LoginForm
-        className="w-11/12 text-foreground sm:max-w-lg"
-        returnPath={returnPath}
-      />
-    </div>
+    <Template
+      subtitle="Sign in to manage fellowship content and members."
+      title="Administration"
+    >
+      <LoginForm returnPath={returnPath} />
+    </Template>
   );
 }

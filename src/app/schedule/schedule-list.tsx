@@ -61,7 +61,7 @@ export default function ScheduleList({
     ].filter(Boolean);
 
     return (
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 whitespace-break-spaces text-muted-foreground text-xs">
+      <div className="type-caption flex flex-wrap items-center gap-x-2 gap-y-1 whitespace-break-spaces text-muted-foreground">
         {details.map((detail, index) => (
           <React.Fragment key={detail}>
             {index > 0 ? <span>&middot;</span> : null}
@@ -78,7 +78,21 @@ export default function ScheduleList({
       description = `${description.slice(0, SUMMARY_MAX_LENGTH)}...`;
     }
 
-    return <p className="mt-4 text-sm sm:text-base">{description}</p>;
+    return (
+      <div className="mt-4">
+        <p className="type-body">{description}</p>
+        {schedule.description.length > SUMMARY_MAX_LENGTH ? (
+          <details className="mt-3">
+            <summary className="type-body-sm w-fit cursor-pointer rounded-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Read full description
+            </summary>
+            <p className="type-body mt-3 whitespace-pre-wrap">
+              {schedule.description}
+            </p>
+          </details>
+        ) : null}
+      </div>
+    );
   }
 
   function renderScheduleServants(schedule: Schedule) {
@@ -93,7 +107,7 @@ export default function ScheduleList({
     )?.members;
 
     return (
-      <div className="flex flex-col justify-center space-y-2 p-4 text-sm sm:w-1/4 sm:p-6">
+      <div className="type-body-sm flex min-w-0 flex-col justify-center gap-2 p-4 sm:w-48 sm:shrink-0">
         <div className="flex items-center gap-x-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
             <PersonStanding className="h-5 w-5" />
@@ -121,7 +135,10 @@ export default function ScheduleList({
         </div>
 
         <Drawer>
-          <DrawerTrigger>
+          <DrawerTrigger
+            className="min-h-10 rounded-md text-start hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            type="button"
+          >
             <div className="flex items-center gap-x-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
                 <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -132,19 +149,21 @@ export default function ScheduleList({
           <DrawerContent className="border-0 text-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cookingGroup}</DrawerTitle>
-              <DrawerDescription className="flex items-center justify-center gap-2 py-6">
-                <div className="flex flex-col gap-4">
-                  <RandomVerse items={verses} />
+              <DrawerDescription asChild>
+                <div className="flex items-center justify-center gap-2 py-6">
+                  <div className="flex flex-col gap-4">
+                    <RandomVerse items={verses} />
 
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    {cookingGroupMembers?.map((member) => (
-                      <div
-                        className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
-                        key={member}
-                      >
-                        {member}
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {cookingGroupMembers?.map((member) => (
+                        <div
+                          className="type-body-sm w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground"
+                          key={member}
+                        >
+                          {member}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </DrawerDescription>
@@ -156,15 +175,20 @@ export default function ScheduleList({
               >
                 See all groups
               </Button>
-              <DrawerClose>
-                <Button variant="outline">Cancel</Button>
+              <DrawerClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
               </DrawerClose>
             </DrawerFooter>
           </DrawerContent>
         </Drawer>
 
         <Drawer>
-          <DrawerTrigger>
+          <DrawerTrigger
+            className="min-h-10 rounded-md text-start hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            type="button"
+          >
             <div className="flex items-center gap-x-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/60 p-1 sm:h-7 sm:w-7">
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -175,19 +199,21 @@ export default function ScheduleList({
           <DrawerContent className="border-0 text-foreground">
             <DrawerHeader>
               <DrawerTitle>{schedule.cleaningGroup}</DrawerTitle>
-              <DrawerDescription className="flex items-center justify-center gap-2 py-6">
-                <div className="flex flex-col gap-4">
-                  <RandomVerse items={verses} />
+              <DrawerDescription asChild>
+                <div className="flex items-center justify-center gap-2 py-6">
+                  <div className="flex flex-col gap-4">
+                    <RandomVerse items={verses} />
 
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    {cleaningGroupMembers?.map((member) => (
-                      <div
-                        className="w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground text-sm"
-                        key={member}
-                      >
-                        {member}
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {cleaningGroupMembers?.map((member) => (
+                        <div
+                          className="type-body-sm w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground"
+                          key={member}
+                        >
+                          {member}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </DrawerDescription>
@@ -199,8 +225,10 @@ export default function ScheduleList({
               >
                 See all groups
               </Button>
-              <DrawerClose>
-                <Button variant="outline">Cancel</Button>
+              <DrawerClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
               </DrawerClose>
             </DrawerFooter>
           </DrawerContent>
@@ -212,14 +240,14 @@ export default function ScheduleList({
   function renderSchedule(schedule: Schedule) {
     return (
       <div
-        className="flex h-full flex-col rounded-xl bg-card transition duration-300 hover:bg-accent/40 sm:flex-row"
+        className="flex h-full flex-col rounded-xl bg-card transition-colors duration-150 hover:bg-accent/40 sm:flex-row"
         key={schedule.id}
       >
-        <div className="space-y-2 p-4 sm:w-3/4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-reimbrandt text-lg tracking-wide sm:text-xl">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="type-subheading min-w-0 flex-1 break-words">
               {schedule.title}
-            </h2>
+            </h3>
             {management ? (
               <ScheduleActions
                 className="hidden gap-x-2 sm:flex"
@@ -232,7 +260,7 @@ export default function ScheduleList({
         </div>
 
         <Separator
-          className="mx-auto h-px w-5/6 bg-accent sm:my-auto sm:h-48 sm:w-px"
+          className="mx-auto h-px w-5/6 bg-border sm:mx-0 sm:h-auto sm:w-px sm:self-stretch"
           orientation="vertical"
         />
 
@@ -256,7 +284,11 @@ export default function ScheduleList({
     }
 
     if (list.length === 0) {
-      return <div>No schedule found.</div>;
+      return (
+        <p className="type-body rounded-xl bg-card p-4 text-muted-foreground sm:p-6">
+          No gatherings scheduled here yet.
+        </p>
+      );
     }
 
     return list.map((schedule) => renderSchedule(schedule));
@@ -281,9 +313,7 @@ export default function ScheduleList({
   function renderThisWeekSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-          This Week
-        </h2>
+        <h2 className="type-heading">This Week</h2>
         {renderScheduleCollection(
           thisWeekSchedule,
           "Loading this week schedules ..."
@@ -302,9 +332,7 @@ export default function ScheduleList({
   function renderUpcomingSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-          Upcoming Schedules
-        </h2>
+        <h2 className="type-heading">Upcoming Schedules</h2>
         {renderScheduleCollection(
           upcomingSchedules,
           "Loading upcoming schedules ..."
@@ -322,9 +350,7 @@ export default function ScheduleList({
   function renderPreviousSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-          Previous Schedules
-        </h2>
+        <h2 className="type-heading">Previous Schedules</h2>
         {renderScheduleCollection(
           previousSchedules,
           "Loading previous schedules ..."

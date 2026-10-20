@@ -67,7 +67,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
   return (
     <Form {...form}>
       <form
-        className="mt-4 space-y-8 sm:mt-8"
+        className="flex flex-col gap-8"
         onSubmit={form.handleSubmit(onSubmit, (error) => {
           toast.error("Uh oh! Something went wrong.", {
             description: JSON.stringify(error),
@@ -75,18 +75,16 @@ export default function AddTakeawayForm({ username }: { username: string }) {
         })}
       >
         <div className="space-y-4">
-          <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-            Fellowship Information
-          </h3>
-          <section className="grid grid-cols-2 gap-4 text-sm">
-            <div className="col-span-2">
+          <h2 className="type-heading">Fellowship Information</h2>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
               <FormField
                 control={form.control}
                 name="scheduleId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-md">Schedule</FormLabel>
-                    <FormDescription className="text-xs">
+                    <FormLabel>Schedule</FormLabel>
+                    <FormDescription className="type-caption">
                       The schedule on which the keypoints should be based
                     </FormDescription>
                     <FormControl>
@@ -118,15 +116,15 @@ export default function AddTakeawayForm({ username }: { username: string }) {
               />
             </div>
 
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <FormField
                 control={form.control}
                 name="keypoints"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-md">Key points</FormLabel>
+                    <FormLabel>Key points</FormLabel>
                     <FormControl>
-                      <Textarea className="h-48 resize-none" {...field} />
+                      <Textarea className="min-h-48" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -136,7 +134,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
           </section>
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button type="submit" variant={"default"}>
             Add takeaway
           </Button>
@@ -144,6 +142,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
             className="flex gap-x-2"
             onClick={() => router.push("/admin/takeaways")}
             type="button"
+            variant="secondary"
           >
             <ArrowLeft className="h-4 w-4" />
             Back

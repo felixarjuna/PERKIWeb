@@ -2,6 +2,7 @@
 
 import { UserPlus, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "~/components/ui/button";
@@ -16,6 +17,7 @@ const STORAGE_KEY = "perki:member-prompt-dismissed";
  * newcomers). Hidden once dismissed on this device.
  */
 export default function MemberPrompt() {
+  const pathname = usePathname();
   const { data: session } = useSession();
   const [dismissed, setDismissed] = useState(true);
   const { data: hasProfile } = api.profiles.hasOwnProfile.useQuery(undefined, {
@@ -39,7 +41,12 @@ export default function MemberPrompt() {
     }
   };
 
-  if (dismissed || !session || hasProfile !== false) {
+  if (
+    dismissed ||
+    !session ||
+    hasProfile !== false ||
+    pathname === "/member/join"
+  ) {
     return null;
   }
 
@@ -55,7 +62,10 @@ export default function MemberPrompt() {
           services and events.
         </p>
         <Link
-          className={cn(buttonVariants({ size: "sm" }), "mt-3")}
+          className={cn(
+            buttonVariants({ size: "sm", variant: "secondary" }),
+            "mt-3"
+          )}
           href="/member/join"
           onClick={dismiss}
         >

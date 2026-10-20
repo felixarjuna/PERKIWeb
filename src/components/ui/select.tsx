@@ -31,19 +31,28 @@ const SelectValue = SelectPrimitiveValue;
 function SelectTrigger({
   className,
   children,
+  variant = "default",
   ...props
-}: ComponentProps<typeof SelectPrimitiveTrigger>) {
+}: ComponentProps<typeof SelectPrimitiveTrigger> & {
+  variant?: "default" | "filter";
+}) {
   return (
     <SelectPrimitiveTrigger
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground [&>span]:line-clamp-1",
+        "type-body-sm flex h-10 w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-start ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground [&>span]:min-w-0 [&>span]:truncate",
+        variant === "filter"
+          ? "border-transparent bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80"
+          : "border-input bg-background",
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitiveIcon asChild>
-        <ChevronDown className="h-4 w-4 opacity-50" />
+        <ChevronDown
+          aria-hidden="true"
+          className="size-3.5 shrink-0 text-muted-foreground"
+        />
       </SelectPrimitiveIcon>
     </SelectPrimitiveTrigger>
   );
@@ -93,21 +102,17 @@ function SelectContent({
     <SelectPrimitivePortal>
       <SelectPrimitiveContent
         className={cn(
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in",
-          position === "popper" &&
-            "data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
+          "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-y-auto overflow-x-hidden overscroll-contain rounded-xl border border-transparent bg-popover text-popover-foreground shadow-lg",
+          position === "popper" && "w-(--radix-select-trigger-width)",
           className
         )}
         position={position}
+        sideOffset={6}
         {...props}
       >
         <SelectScrollUpButton />
         <SelectPrimitiveViewport
-          className={cn(
-            "p-1",
-            position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
-          )}
+          className={cn("p-1.5", position === "popper" && "w-full")}
         >
           {children}
         </SelectPrimitiveViewport>
@@ -137,14 +142,14 @@ function SelectItem({
   return (
     <SelectPrimitiveItem
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "type-body-sm relative flex min-h-10 w-full cursor-default select-none items-center rounded-md py-2 pr-3 pl-9 outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[state=checked]:bg-secondary data-[disabled]:opacity-50",
         className
       )}
       {...props}
     >
-      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <span className="absolute left-3 flex size-3.5 items-center justify-center">
         <SelectPrimitiveItemIndicator>
-          <Check className="h-4 w-4" />
+          <Check aria-hidden="true" className="size-3.5" />
         </SelectPrimitiveItemIndicator>
       </span>
 

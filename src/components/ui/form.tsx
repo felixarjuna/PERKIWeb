@@ -83,7 +83,7 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
 
   return (
     <Label
-      className={cn(error && "text-destructive", className)}
+      className={cn(error && "text-destructive-text", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -128,7 +128,7 @@ function FormMessage({ className, children, ...props }: ComponentProps<"p">) {
 
   return (
     <p
-      className={cn("font-medium text-destructive text-sm", className)}
+      className={cn("type-body-sm text-destructive-text", className)}
       id={formMessageId}
       {...props}
     >

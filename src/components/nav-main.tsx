@@ -45,7 +45,10 @@ export function NavMain({
                 isActive={item.isActive}
                 tooltip={item.title}
               >
-                <a href={item.url}>
+                <a
+                  aria-current={item.isActive ? "page" : undefined}
+                  href={item.url}
+                >
                   <item.icon />
                   <span>{item.title}</span>
                 </a>

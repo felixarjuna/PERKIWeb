@@ -55,7 +55,7 @@ export default async function SignInPage({
           Your account is created automatically on your first visit. You can
           register as a fellowship member after signing in.
         </p>
-        <p className="mt-4 text-center text-sm">
+        <p className="type-body-sm mt-4 text-center">
           <Link
             className="text-foreground underline underline-offset-4"
             href="/"

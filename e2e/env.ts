@@ -1,4 +1,4 @@
-const E2E_PORT = 3100;
+const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 
 /** Base URL of the production build that Playwright drives. */
 export const BASE_URL = `http://localhost:${E2E_PORT}`;
