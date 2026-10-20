@@ -45,21 +45,20 @@ export const updateScheduleSchema = addScheduleSchema.extend({
   id: z.number(),
 });
 
+/** The author and their name come from the session, not from input. */
 export const addPrayerSchema = z.object({
   content: z.string().min(2).max(50),
   isAnonymous: z.boolean(),
-  name: z.string().optional(),
-  prayerNames: z.array(z.string()),
 });
 
 export const editPrayerSchema = addPrayerSchema.extend({
   id: z.number(),
 });
 
-export const addPrayerCountSchema = z.object({
-  count: z.number(),
+/** Whether the signed-in user is praying for prayer `id`. */
+export const setPrayedSchema = z.object({
   id: z.number(),
-  prayerNames: z.array(z.string()),
+  prayed: z.boolean(),
 });
 
 export const queryByIdSchema = z.object({

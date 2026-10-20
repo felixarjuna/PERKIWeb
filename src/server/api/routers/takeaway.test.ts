@@ -26,7 +26,10 @@ const insertSchedule = async (title: string, date: Date) => {
   return row;
 };
 
-const signedIn = async () => callerFor((await insertUser()).id);
+/** Content writes are admin-only. */
+const signedIn = async () =>
+  callerFor((await insertUser({ role: "admin" })).id);
+const signedInMember = async () => callerFor((await insertUser()).id);
 
 const onlyTakeaway = async () => {
   const rows = await testDb.select().from(takeaways);
@@ -196,6 +199,35 @@ describe("takeaways router", () => {
     await expect(
       api.takeaways.getTakeawayById({ id: "1" } as never)
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("forbids members from writing takeaways", async () => {
+    const admin = await signedIn();
+    const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+    await admin.takeaways.addTakeaway({
+      contributors: [],
+      keypoints: "Notes",
+      scheduleId: schedule.id,
+    });
+    const { id } = await onlyTakeaway();
+    const member = await signedInMember();
+    const takeaway = {
+      contributors: [],
+      keypoints: "Hacked",
+      scheduleId: schedule.id,
+    };
+    const calls = [
+      member.takeaways.addTakeaway(takeaway),
+      member.takeaways.updateTakeaway({ ...takeaway, id }),
+      member.takeaways.deleteTakeaway({ id }),
+    ];
+
+    await Promise.all(
+      calls.map((call) =>
+        expect(call).rejects.toMatchObject({ code: "FORBIDDEN" })
+      )
+    );
+    expect((await onlyTakeaway()).keypoints).toBe("Notes");
   });
 
   it("rejects writes from signed-out visitors", async () => {

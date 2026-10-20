@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { createTestAccount, setTestSession } from "./auth-fixtures";
-import { ADMIN_PASSCODE } from "./fixtures";
+import { ADMIN } from "./fixtures";
 
 const NOTIFICATIONS = /^Notifications/;
 
@@ -65,16 +65,13 @@ export const selectOption = async (
   await expect(page.getByRole("listbox")).toBeHidden();
 };
 
-/** Passes the client-side passcode gate in front of /admin/dashboard. */
+/** Signs the browser in as the seeded admin and opens the dashboard. */
 export const adminLogin = async (page: Page) => {
+  // A session request still in flight from the previous page would re-set
+  // that user's cookie after the switch.
+  await page.waitForLoadState("networkidle");
+  await setTestSession(page, ADMIN);
   await page.goto("/admin");
-  await page
-    .getByLabel("Username", { exact: true })
-    .fill(ADMIN_PASSCODE.username);
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill(ADMIN_PASSCODE.password);
-  await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL("/admin/dashboard");
 };
 

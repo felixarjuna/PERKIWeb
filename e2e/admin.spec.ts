@@ -1,15 +1,15 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
-  ADMIN_PASSCODE,
   DASHBOARD_MEMBERS,
   DASHBOARD_NAME_PREFIX,
   MEMBER_STORAGE_STATE,
 } from "./fixtures";
-import { adminLogin, setDashboardPageSize, toast } from "./helpers";
+import { adminLogin, setDashboardPageSize } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
 const DEFAULT_PAGE_SIZE = 10;
+const NOT_FOUND = 404;
 const PAGE_LABEL = /^Page (\d+) of (\d+)$/;
 const FIRST_PAGE_LABEL = /^Page 1 of \d+$/;
 
@@ -31,23 +31,27 @@ const namesByBirthday = () =>
     .sort((a, b) => a.birthday.getTime() - b.birthday.getTime())
     .map((member) => member.name);
 
-test("rejects a wrong admin passcode", async ({ page }) => {
-  await page.goto("/admin");
-  await page
-    .getByLabel("Username", { exact: true })
-    .fill(ADMIN_PASSCODE.username);
-  await page.getByLabel("Password", { exact: true }).fill("wrong-passcode");
-  await page.getByRole("button", { name: "Login" }).click();
+for (const path of [
+  "/admin/dashboard",
+  "/admin/schedules",
+  "/admin/takeaways/new",
+]) {
+  test(`members who are not admins get a 404 at ${path}`, async ({ page }) => {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(NOT_FOUND);
+    await expect(page.getByRole("table")).toHaveCount(0);
+  });
+}
 
-  await expect(toast(page, "Invalid username or password.")).toBeVisible();
-  await expect(page).toHaveURL("/admin");
-});
-
-test("dashboard without the passcode sends visitors back to /admin", async ({
-  page,
-}) => {
+test("signed-out visitors are sent to sign-in", async ({ browser }) => {
+  // A fresh context still inherits the file's member storage state.
+  const context = await browser.newContext({
+    storageState: { cookies: [], origins: [] },
+  });
+  const page = await context.newPage();
   await page.goto("/admin/dashboard");
-  await expect(page).toHaveURL("/admin?callbackUrl=%2Fadmin%2Fdashboard");
+  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Fadmin%2Fdashboard");
+  await context.close();
 });
 
 test("dashboard lists members sorted by name by default", async ({ page }) => {

@@ -5,7 +5,6 @@ import {
   type PageSearchParams,
   requestedPath,
 } from "~/lib/auth-redirect";
-import { getUsernameFromName } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import PrayerWall from "./prayer-wall";
 
@@ -34,7 +33,7 @@ export default async function PrayersPage({
       }
       title="Prayers"
     >
-      <PrayerWall username={getUsernameFromName(session.user.name ?? "")} />
+      <PrayerWall />
     </Template>
   );
 }
