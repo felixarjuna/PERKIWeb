@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import { isAdmin } from "../../authz";
+import { isAdmin } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
 import {
   addTakeawaySchema,
@@ -23,32 +23,40 @@ const rethrowMissingSchedule = (error: unknown): never => {
   throw error;
 };
 
-/** Staff manage every takeaway; writers only the ones they wrote. */
-export const canManageTakeaway = async (
+/** The one rule: staff manage every takeaway, writers only their own. */
+const mayManage = (authorId: string | null, userId: string, staff: boolean) =>
+  staff || authorId === userId;
+
+/** Whether the takeaway is missing, or `userId` may or may not manage it. */
+const manageAccess = async (
   takeawayId: number,
   userId: string
-): Promise<boolean> => {
-  const [takeaway] = await db
-    .select({ authorId: takeaways.authorId })
-    .from(takeaways)
-    .where(eq(takeaways.id, takeawayId))
-    .limit(1);
-  return takeaway
-    ? takeaway.authorId === userId || (await isAdmin(userId))
-    : false;
-};
-
-/** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not manageable. */
-const assertCanManage = async (takeawayId: number, userId: string) => {
+): Promise<"allowed" | "forbidden" | "missing"> => {
   const [takeaway] = await db
     .select({ authorId: takeaways.authorId })
     .from(takeaways)
     .where(eq(takeaways.id, takeawayId))
     .limit(1);
   if (!takeaway) {
+    return "missing";
+  }
+  return mayManage(takeaway.authorId, userId, await isAdmin(userId))
+    ? "allowed"
+    : "forbidden";
+};
+
+export const canManageTakeaway = async (
+  takeawayId: number,
+  userId: string
+): Promise<boolean> => (await manageAccess(takeawayId, userId)) === "allowed";
+
+/** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not manageable. */
+const assertCanManage = async (takeawayId: number, userId: string) => {
+  const access = await manageAccess(takeawayId, userId);
+  if (access === "missing") {
     throw new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
   }
-  if (takeaway.authorId !== userId && !(await isAdmin(userId))) {
+  if (access === "forbidden") {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "You can only change your own takeaways.",
@@ -92,7 +100,7 @@ export const takeawayRouter = createTRPCRouter({
       .orderBy(desc(schedules.date));
     return rows.map(
       ({ takeaways: { authorId, ...note }, schedules: schedule }) => ({
-        canManage: staff || authorId === viewer,
+        canManage: mayManage(authorId, viewer, staff),
         schedules: schedule,
         takeaways: note,
       })
