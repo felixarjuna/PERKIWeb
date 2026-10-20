@@ -39,8 +39,8 @@ describe("maskEmail", () => {
 describe("planGrants", () => {
   const accounts = [
     account("1", "Alice", "alice@test.local"),
-    account("2", "Sam Q", "victor1@test.local"),
-    account("3", "Sam Q", "victor2@test.local"),
+    account("2", "Sam Q", "sam1@test.local"),
+    account("3", "Sam Q", "sam2@test.local"),
     account("4", "Bob", "bob@test.local", { role: "writer" }),
   ];
 
@@ -76,7 +76,7 @@ describe("planGrants", () => {
       [account("1", "Alice", "alice@test.local", { role: "writer" })],
       { writer: ["Alice"] }
     );
-    expect(plan).toEqual({ changes: [], problems: [] });
+    expect(plan).toEqual({ changes: [], problems: [], unrequestedStaff: [] });
   });
 
   it("refuses a second owner", () => {
@@ -97,7 +97,7 @@ describe("planGrants", () => {
       [account("1", "Alice", "alice@test.local", { role: "owner" })],
       { owner: "alice@test.local" }
     );
-    expect(plan).toEqual({ changes: [], problems: [] });
+    expect(plan).toEqual({ changes: [], problems: [], unrequestedStaff: [] });
   });
 
   it("grants the owner and reports the previous role", () => {
@@ -115,6 +115,30 @@ describe("planGrants", () => {
     expect(plan.changes).toEqual([]);
     expect(plan.problems).toHaveLength(1);
   });
+
+  it("reports current staff that the request leaves out, without blocking", () => {
+    const plan = planGrants(
+      [
+        account("1", "Olive", "olive@test.local", { role: "owner" }),
+        account("2", "Mia", "mia@test.local", { role: "mita" }),
+        account("3", "Kept", "kept@test.local", { role: "mita" }),
+        account("4", "Wren", "wren@test.local", { role: "writer" }),
+        account("5", "Max", "max@test.local"),
+      ],
+      { mita: ["kept@test.local", "max@test.local"] }
+    );
+    expect(plan.problems).toEqual([]);
+    expect(plan.changes.map((c) => c.userId)).toEqual(["5"]);
+    expect(plan.unrequestedStaff.map((a) => a.id)).toEqual(["1", "2"]);
+  });
+
+  it("does not list requested staff as left out", () => {
+    const plan = planGrants(
+      [account("1", "Olive", "olive@test.local", { role: "owner" })],
+      { owner: "olive@test.local" }
+    );
+    expect(plan.unrequestedStaff).toEqual([]);
+  });
 });
 
 describe("planCleanup", () => {
@@ -129,7 +153,9 @@ describe("planCleanup", () => {
     ];
     const plan = planCleanup(
       accounts,
-      accounts.map((a) => a.email ?? "").concat("missing@test.local"),
+      {
+        emails: accounts.map((a) => a.email ?? "").concat("missing@test.local"),
+      },
       new Set(["6"])
     );
     expect(plan.deletable.map((a) => a.id)).toEqual(["1"]);
@@ -144,5 +170,33 @@ describe("planCleanup", () => {
       "profile"
     );
     expect(plan.notFound).toEqual(["missing@test.local"]);
+  });
+
+  it("targets accounts by id, including ones without an email", () => {
+    const accounts = [
+      account("u-1", null, null),
+      account("u-2", "No email, has profile", null, { hasProfile: true }),
+      account("u-3", "Has history", "hist@test.local"),
+    ];
+    const plan = planCleanup(
+      accounts,
+      { ids: ["u-1", "u-2", "u-3", "u-missing"] },
+      new Set(["u-3"])
+    );
+    expect(plan.deletable.map((a) => a.id)).toEqual(["u-1"]);
+    expect(plan.kept).toEqual([
+      { account: accounts[1], reason: "has a profile" },
+      { account: accounts[2], reason: "has role history" },
+    ]);
+    expect(plan.notFound).toEqual(["u-missing"]);
+  });
+
+  it("checks an account once when targeted by both email and id", () => {
+    const plan = planCleanup([account("1", "Empty", "empty@test.local")], {
+      emails: ["empty@test.local"],
+      ids: ["1"],
+    });
+    expect(plan.deletable.map((a) => a.id)).toEqual(["1"]);
+    expect(plan.notFound).toEqual([]);
   });
 });

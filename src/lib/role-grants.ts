@@ -70,10 +70,20 @@ function resolve(accounts: AccountSummary[], identifier: string): Resolution {
   return { problem: `${matches.length} accounts match "${identifier}"` };
 }
 
+export interface GrantPlan {
+  changes: PlannedChange[];
+  problems: string[];
+  /**
+   * Accounts that already hold mita or owner but are not in the request.
+   * Informational only: never a problem and never changed.
+   */
+  unrequestedStaff: AccountSummary[];
+}
+
 export function planGrants(
   accounts: AccountSummary[],
   request: GrantRequest
-): { changes: PlannedChange[]; problems: string[] } {
+): GrantPlan {
   const changes: PlannedChange[] = [];
   const problems: string[] = [];
   const requested = new Map<string, Role>();
@@ -130,12 +140,39 @@ export function planGrants(
     changes.push({ from: account.role, label, to, userId: account.id });
   }
 
-  return { changes, problems };
+  const unrequestedStaff = accounts.filter(
+    (a) => (a.role === "mita" || a.role === "owner") && !requested.has(a.id)
+  );
+
+  return { changes, problems, unrequestedStaff };
 }
 
+export interface CleanupTargets {
+  emails?: string[];
+  ids?: string[];
+}
+
+const referenceReasons = (
+  account: AccountSummary,
+  withRoleHistory: ReadonlySet<string>
+) =>
+  [
+    account.hasProfile ? "has a profile" : null,
+    account.prayerCount > 0 ? `${account.prayerCount} prayer(s)` : null,
+    account.takeawayCount > 0 ? `${account.takeawayCount} takeaway(s)` : null,
+    account.acknowledgementCount > 0
+      ? `${account.acknowledgementCount} prayer acknowledgement(s)`
+      : null,
+    withRoleHistory.has(account.id) ? "has role history" : null,
+  ].filter((reason) => reason !== null);
+
+/**
+ * Splits the targeted accounts (by `--email` or `--id`) into deletable ones
+ * and ones still referenced. An account targeted twice is checked once.
+ */
 export function planCleanup(
   accounts: AccountSummary[],
-  emails: string[],
+  targets: CleanupTargets,
   withRoleHistory: ReadonlySet<string> = new Set()
 ): {
   deletable: AccountSummary[];
@@ -145,23 +182,31 @@ export function planCleanup(
   const deletable: AccountSummary[] = [];
   const kept: { account: AccountSummary; reason: string }[] = [];
   const notFound: string[] = [];
+  const seen = new Set<string>();
 
-  for (const email of emails) {
-    const lower = email.trim().toLowerCase();
-    const account = accounts.find((a) => a.email?.toLowerCase() === lower);
+  const lookups = [
+    ...(targets.emails ?? []).map((email) => ({
+      find: (a: AccountSummary) =>
+        a.email?.toLowerCase() === email.trim().toLowerCase(),
+      identifier: email,
+    })),
+    ...(targets.ids ?? []).map((id) => ({
+      find: (a: AccountSummary) => a.id === id.trim(),
+      identifier: id,
+    })),
+  ];
+
+  for (const { find, identifier } of lookups) {
+    const account = accounts.find(find);
     if (!account) {
-      notFound.push(email);
+      notFound.push(identifier);
       continue;
     }
-    const reasons = [
-      account.hasProfile ? "has a profile" : null,
-      account.prayerCount > 0 ? `${account.prayerCount} prayer(s)` : null,
-      account.takeawayCount > 0 ? `${account.takeawayCount} takeaway(s)` : null,
-      account.acknowledgementCount > 0
-        ? `${account.acknowledgementCount} prayer acknowledgement(s)`
-        : null,
-      withRoleHistory.has(account.id) ? "has role history" : null,
-    ].filter((reason) => reason !== null);
+    if (seen.has(account.id)) {
+      continue;
+    }
+    seen.add(account.id);
+    const reasons = referenceReasons(account, withRoleHistory);
     if (reasons.length > 0) {
       kept.push({ account, reason: reasons.join(", ") });
     } else {

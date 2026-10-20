@@ -2,7 +2,7 @@
  * Dry-run-first CLI for initial role grants and duplicate-account cleanup.
  *
  *   pnpm roles grant --owner <email> --mita "<name or email>" --writer "<name or email>"
- *   pnpm roles cleanup --email <email> [--email <email> ...]
+ *   pnpm roles cleanup --email <email> [--email <email> ...] [--id <userId> ...]
  *
  * Add `--apply` to perform the changes. A non-local database additionally
  * needs `--confirm-host <hostname>`.
@@ -34,7 +34,7 @@ const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
 
 const USAGE = `Usage:
   pnpm roles grant [--owner <email>] [--mita <name|email>]... [--writer <name|email>]... [--apply] [--confirm-host <host>]
-  pnpm roles cleanup --email <email>... [--apply] [--confirm-host <host>]`;
+  pnpm roles cleanup [--email <email>]... [--id <userId>]... [--apply] [--confirm-host <host>]`;
 
 const fail = (message: string): never => {
   console.error(message);
@@ -108,6 +108,12 @@ async function runGrant(
     fail(`Nothing to grant.\n${USAGE}`);
   }
   const plan = planGrants(await loadAccounts(db), request);
+  if (plan.unrequestedStaff.length > 0) {
+    printList(
+      "Current staff not in this request (unchanged):",
+      plan.unrequestedStaff.map((a) => `${describeAccount(a)}: ${a.role}`)
+    );
+  }
   reportProblems(plan.problems);
 
   if (plan.changes.length === 0) {
@@ -163,19 +169,20 @@ async function runCleanup(
   apply: boolean
 ) {
   const emails = values.email ?? [];
-  if (emails.length === 0) {
-    fail(`No --email given.\n${USAGE}`);
+  const ids = values.id ?? [];
+  if (emails.length === 0 && ids.length === 0) {
+    fail(`No --email or --id given.\n${USAGE}`);
   }
   const history = await db
     .selectDistinct({ userId: roleChanges.userId })
     .from(roleChanges);
   const plan = planCleanup(
     await loadAccounts(db),
-    emails,
+    { emails, ids },
     new Set(history.map((row) => row.userId))
   );
   reportProblems(
-    plan.notFound.map((email) => `No account has that email: ${email}`)
+    plan.notFound.map((target) => `No account has that email or id: ${target}`)
   );
 
   if (plan.kept.length > 0) {
@@ -196,15 +203,15 @@ async function runCleanup(
     console.log("\nDry run: nothing applied. Re-run with --apply.");
     return;
   }
-  const ids = plan.deletable.map((a) => a.id);
+  const deleteIds = plan.deletable.map((a) => a.id);
   // account/session rows cascade from the user, but delete them explicitly so
   // this does not depend on the constraint definitions.
   await db.transaction(async (tx) => {
-    await tx.delete(accounts).where(inArray(accounts.userId, ids));
-    await tx.delete(sessions).where(inArray(sessions.userId, ids));
-    await tx.delete(users).where(inArray(users.id, ids));
+    await tx.delete(accounts).where(inArray(accounts.userId, deleteIds));
+    await tx.delete(sessions).where(inArray(sessions.userId, deleteIds));
+    await tx.delete(users).where(inArray(users.id, deleteIds));
   });
-  console.log(`\nDeleted ${ids.length} account(s).`);
+  console.log(`\nDeleted ${deleteIds.length} account(s).`);
 }
 
 function parseCli() {
@@ -215,6 +222,7 @@ function parseCli() {
       apply: { type: "boolean" },
       "confirm-host": { type: "string" },
       email: { multiple: true, type: "string" },
+      id: { multiple: true, type: "string" },
       mita: { multiple: true, type: "string" },
       owner: { type: "string" },
       writer: { multiple: true, type: "string" },
