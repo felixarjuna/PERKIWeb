@@ -2,10 +2,10 @@ import Link from "next/link";
 import AdminShell from "~/components/admin/admin-shell";
 import TakeawayManager from "~/components/admin/content/takeaway-manager";
 import { buttonVariants } from "~/components/ui/button";
-import { requireAdmin } from "~/server/authz";
+import { requireTakeawayAccess } from "~/server/authz";
 
 export default async function ManagementPage() {
-  await requireAdmin("/admin/takeaways");
+  await requireTakeawayAccess("/admin/takeaways");
   return (
     <AdminShell
       actions={

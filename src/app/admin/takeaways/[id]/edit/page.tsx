@@ -1,6 +1,8 @@
+import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
-import { requireAdmin } from "~/server/authz";
+import { canManageTakeaway } from "~/server/api/routers/takeaway";
+import { requireTakeawayAccess } from "~/server/authz";
 import EditTakeawayForm from "./edit-takeaway-form";
 
 export default async function EditorPage({
@@ -10,12 +12,22 @@ export default async function EditorPage({
   searchParams: Promise<PageSearchParams>;
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin(
+  const { id } = await params;
+  const { session } = await requireTakeawayAccess(
     requestedPath(
-      `/admin/takeaways/${encodeURIComponent((await params).id)}/edit`,
+      `/admin/takeaways/${encodeURIComponent(id)}/edit`,
       await searchParams
     )
   );
+  const takeawayId = Number(id);
+  if (
+    !(
+      Number.isSafeInteger(takeawayId) &&
+      (await canManageTakeaway(takeawayId, session.user.id))
+    )
+  ) {
+    notFound();
+  }
   return (
     <AdminShell section="Takeaways" title="Edit takeaway">
       <EditTakeawayForm />

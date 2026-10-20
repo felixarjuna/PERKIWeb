@@ -245,4 +245,165 @@ describe("takeaways router", () => {
       )
     );
   });
+
+  describe("roles", () => {
+    const sample = (scheduleId: number, keypoints = "Notes") => ({
+      contributors: [],
+      keypoints,
+      scheduleId,
+    });
+    const rows = () => testDb.select().from(takeaways).orderBy(takeaways.id);
+
+    it("lets a writer add a takeaway for any schedule and credits them", async () => {
+      const writer = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+
+      await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
+
+      expect((await onlyTakeaway()).authorId).toBe(writer.id);
+    });
+
+    it("lets a writer edit and delete only their own takeaways", async () => {
+      const mine = await insertUser({ role: "writer" });
+      const other = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(mine.id).takeaways.addTakeaway(
+        sample(schedule.id, "Mine")
+      );
+      await callerFor(other.id).takeaways.addTakeaway(
+        sample(schedule.id, "Theirs")
+      );
+      const [own, foreign] = await rows();
+      if (!(own && foreign)) {
+        throw new Error("expected two takeaways");
+      }
+      const api = callerFor(mine.id);
+
+      await expect(
+        api.takeaways.updateTakeaway({
+          ...sample(schedule.id, "Hacked"),
+          id: foreign.id,
+        })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(
+        api.takeaways.deleteTakeaway({ id: foreign.id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect((await rows()).map((row) => row.keypoints)).toEqual([
+        "Mine",
+        "Theirs",
+      ]);
+
+      await api.takeaways.updateTakeaway({
+        ...sample(schedule.id, "Edited"),
+        id: own.id,
+      });
+      expect((await rows()).map((row) => row.keypoints)).toEqual([
+        "Edited",
+        "Theirs",
+      ]);
+      await api.takeaways.deleteTakeaway({ id: own.id });
+      expect((await rows()).map((row) => row.keypoints)).toEqual(["Theirs"]);
+    });
+
+    it("lets mita and the owner manage every takeaway, including authorless ones", async () => {
+      const writer = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
+      await testDb
+        .insert(takeaways)
+        .values({ ...sample(schedule.id, "Legacy"), authorId: null });
+
+      const mita = callerFor((await insertUser({ role: "mita" })).id);
+      const owner = callerFor((await insertUser({ role: "owner" })).id);
+      const [first, second] = await rows();
+      if (!(first && second)) {
+        throw new Error("expected two takeaways");
+      }
+
+      await Promise.all([
+        mita.takeaways.updateTakeaway({
+          ...sample(schedule.id, "Mita"),
+          id: first.id,
+        }),
+        owner.takeaways.updateTakeaway({
+          ...sample(schedule.id, "Owner"),
+          id: second.id,
+        }),
+      ]);
+      expect((await rows()).map((row) => row.keypoints)).toEqual([
+        "Mita",
+        "Owner",
+      ]);
+
+      await Promise.all([
+        owner.takeaways.deleteTakeaway({ id: first.id }),
+        mita.takeaways.deleteTakeaway({ id: second.id }),
+      ]);
+      expect(await rows()).toEqual([]);
+    });
+
+    it("keeps writers from authorless takeaways", async () => {
+      const writer = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await testDb.insert(takeaways).values(sample(schedule.id, "Legacy"));
+      const { id } = await onlyTakeaway();
+
+      await expect(
+        callerFor(writer.id).takeaways.deleteTakeaway({ id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("keeps members out of takeaway writes", async () => {
+      const member = callerFor((await insertUser({ role: "member" })).id);
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+
+      await expect(
+        member.takeaways.addTakeaway(sample(schedule.id))
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(member.takeaways.getManageable()).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      expect(await rows()).toEqual([]);
+    });
+
+    it("marks canManage per viewer and never sends authorId", async () => {
+      const mine = await insertUser({ role: "writer" });
+      const other = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(mine.id).takeaways.addTakeaway(
+        sample(schedule.id, "Mine")
+      );
+      await callerFor(other.id).takeaways.addTakeaway(
+        sample(schedule.id, "Theirs")
+      );
+      await testDb.insert(takeaways).values(sample(schedule.id, "Legacy"));
+      const flags = (
+        list: Awaited<
+          ReturnType<ReturnType<typeof callerFor>["takeaways"]["getManageable"]>
+        >
+      ) =>
+        Object.fromEntries(
+          list.map((row) => [row.takeaways.keypoints, row.canManage])
+        );
+
+      const asWriter = await callerFor(mine.id).takeaways.getManageable();
+      expect(flags(asWriter)).toEqual({
+        Legacy: false,
+        Mine: true,
+        Theirs: false,
+      });
+      const asOwner = await callerFor(
+        (await insertUser({ role: "owner" })).id
+      ).takeaways.getManageable();
+      expect(flags(asOwner)).toEqual({
+        Legacy: true,
+        Mine: true,
+        Theirs: true,
+      });
+      for (const row of [...asWriter, ...asOwner]) {
+        expect(row.takeaways).not.toHaveProperty("authorId");
+        expect(row.schedules.title).toBe("Faith");
+      }
+    });
+  });
 });
