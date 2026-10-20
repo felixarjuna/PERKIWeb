@@ -16,7 +16,7 @@ export default function Hero() {
       className="relative flex min-h-dvh flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-foreground sm:px-6"
       id="hero"
     >
-      <p className="enter type-lead text-muted-foreground">Since 1990</p>
+      <p className="enter type-lead text-muted-foreground">since 1990</p>
 
       <h1 className="enter type-display mt-3" id="hero-title">
         Perki Aachen
