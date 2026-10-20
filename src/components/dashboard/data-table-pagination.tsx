@@ -23,6 +23,8 @@ interface DataTablePaginationProps<TData extends RowData> {
 export default function DataTablePagination<TData extends RowData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  // An empty table still shows one (empty) page, not "Page 1 of 0".
+  const pageCount = Math.max(1, table.getPageCount());
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="type-body-sm flex-1 text-muted-foreground">
@@ -53,7 +55,7 @@ export default function DataTablePagination<TData extends RowData>({
           </Select>
         </div>
         <div className="type-body-sm flex items-center justify-center tabular-nums">
-          Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
+          Page {table.state.pagination.pageIndex + 1} of {pageCount}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -86,7 +88,7 @@ export default function DataTablePagination<TData extends RowData>({
           <Button
             className="hidden h-8 w-8 p-0 lg:flex"
             disabled={!table.getCanNextPage()}
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            onClick={() => table.setPageIndex(pageCount - 1)}
             variant="outline"
           >
             <span className="sr-only">Go to last page</span>

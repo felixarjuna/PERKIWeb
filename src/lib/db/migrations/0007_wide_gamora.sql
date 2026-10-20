@@ -1,0 +1,2 @@
+ALTER TABLE "takeaways" ADD CONSTRAINT "takeaways_scheduleId_schedules_id_fk" FOREIGN KEY ("scheduleId") REFERENCES "public"."schedules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_userId_unique" UNIQUE("userId");

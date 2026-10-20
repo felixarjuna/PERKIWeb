@@ -88,16 +88,55 @@ describe("takeaways router", () => {
     }
   });
 
-  it("omits takeaways whose schedule does not exist", async () => {
+  it("rejects a takeaway for a missing schedule with NOT_FOUND", async () => {
     const api = await signedIn();
 
+    await expect(
+      api.takeaways.addTakeaway({
+        contributors: [],
+        keypoints: "Orphan",
+        scheduleId: MISSING_ID,
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await testDb.select().from(takeaways)).toEqual([]);
+  });
+
+  it("rejects moving a takeaway to a missing schedule with NOT_FOUND", async () => {
+    const api = await signedIn();
+    const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
     await api.takeaways.addTakeaway({
       contributors: [],
-      keypoints: "Orphan",
-      scheduleId: MISSING_ID,
+      keypoints: "Notes",
+      scheduleId: schedule.id,
     });
+    const { id } = await onlyTakeaway();
 
-    expect(await anonymousCaller().takeaways.getTakeaways()).toEqual([]);
+    await expect(
+      api.takeaways.updateTakeaway({
+        contributors: [],
+        id,
+        keypoints: "Notes",
+        scheduleId: MISSING_ID,
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect((await onlyTakeaway()).scheduleId).toBe(schedule.id);
+  });
+
+  it("returns NOT_FOUND when updating or deleting a missing takeaway", async () => {
+    const api = await signedIn();
+    const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+
+    await expect(
+      api.takeaways.updateTakeaway({
+        contributors: [],
+        id: MISSING_ID,
+        keypoints: "x",
+        scheduleId: schedule.id,
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      api.takeaways.deleteTakeaway({ id: MISSING_ID })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
   it("returns NOT_FOUND for a missing takeaway", async () => {

@@ -120,7 +120,7 @@ describe("dashboard DataTable", () => {
     renderTable([]);
     const cell = screen.getByRole("cell", { name: "No results." });
     expect(cell.getAttribute("colspan")).toBe(String(COLUMN_COUNT));
-    expect(screen.getByText("Page 1 of 0")).toBeDefined();
+    expect(screen.getByText("Page 1 of 1")).toBeDefined();
   });
 
   it("applies the column sizes as header widths", () => {

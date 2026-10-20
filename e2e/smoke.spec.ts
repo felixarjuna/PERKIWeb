@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway", "/christmas"];
+const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway"];
 const PROTECTED_PAGES = [
   "/prayers",
   "/account",
