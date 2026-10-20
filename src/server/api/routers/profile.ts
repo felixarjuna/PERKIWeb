@@ -50,4 +50,13 @@ export const profileRouter = createTRPCRouter({
         .from(profiles)
         .leftJoin(users, eq(profiles.userId, users.id))
   ),
+  /** Whether the signed-in user has already registered as a member. */
+  hasOwnProfile: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({ userId: profiles.userId })
+      .from(profiles)
+      .where(eq(profiles.userId, ctx.session.user.id))
+      .limit(1);
+    return rows.length > 0;
+  }),
 });

@@ -117,3 +117,35 @@ describe("profiles.getUserProfiles", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
+
+describe("profiles.hasOwnProfile", () => {
+  it("is false before the user registers as a member", async () => {
+    const user = await insertUser();
+
+    expect(await callerFor(user.id).profiles.hasOwnProfile()).toBe(false);
+  });
+
+  it("is true once the user's profile exists", async () => {
+    const user = await insertUser();
+    const api = callerFor(user.id);
+    await api.profiles.addUserProfile(profileFor(user.id));
+
+    expect(await api.profiles.hasOwnProfile()).toBe(true);
+  });
+
+  it("does not leak another user's registration", async () => {
+    const registered = await insertUser();
+    const other = await insertUser();
+    await callerFor(registered.id).profiles.addUserProfile(
+      profileFor(registered.id)
+    );
+
+    expect(await callerFor(other.id).profiles.hasOwnProfile()).toBe(false);
+  });
+
+  it("rejects anonymous callers with UNAUTHORIZED", async () => {
+    await expect(
+      anonymousCaller().profiles.hasOwnProfile()
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+});

@@ -1,9 +1,11 @@
 "use client";
 
 import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
 
 const navigations = [
@@ -14,45 +16,83 @@ const navigations = [
 ] as const;
 
 const itemClass =
-  "flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3";
+  "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-14 sm:px-2";
+const tileClass =
+  "flex size-8 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-primary group-hover:text-primary-foreground";
+
+interface NavigationProps {
+  /**
+   * Id of the element the bar should stay hidden behind. The bar appears
+   * once that element has scrolled out of view (landing page hero).
+   * Omit to show the bar immediately.
+   */
+  readonly revealAfter?: string;
+}
 
 /**
- * Site header. Fixed, translucent, always visible. Labels are visually
- * hidden below `sm` but stay in the accessible name, so icon-only links
- * on phones are still announced and still match in tests.
+ * Floating pill navigation. On the landing page it slides in after the
+ * hero; on app pages it is always there. Labels are visually hidden on
+ * phones but stay in the accessible name.
  */
-export default function Navigation() {
+export default function Navigation({ revealAfter }: NavigationProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+  const [visible, setVisible] = useState(!revealAfter);
+
+  useEffect(() => {
+    if (!revealAfter) {
+      return;
+    }
+    const target = document.getElementById(revealAfter);
+    if (!target) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry ? !entry.isIntersecting : true),
+      { rootMargin: "-80px 0px 0px 0px", threshold: 0 }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [revealAfter]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 bg-background/80 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
-        <Link
-          className="rounded-sm font-reimbrandt text-xl tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          href="/"
+    <AnimatePresence>
+      {visible ? (
+        <motion.nav
+          animate={{ opacity: 1, y: 0 }}
+          aria-label="Primary"
+          className="fixed top-4 left-1/2 z-40 -translate-x-1/2 sm:top-6"
+          exit={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
+          initial={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
+          key="navigation"
+          transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
         >
-          Perki Aachen
-        </Link>
-
-        <nav aria-label="Primary">
-          <ul className="flex items-center gap-1">
-            {navigations.map(({ href, icon: Icon, name }) => (
-              <li key={href}>
-                <Link
-                  aria-current={pathname === href ? "page" : undefined}
-                  className={cn(
-                    itemClass,
-                    pathname === href && "bg-accent/60 text-accent-foreground"
-                  )}
-                  href={href}
-                >
-                  <Icon aria-hidden="true" className="size-4" />
-                  <span className="sr-only sm:not-sr-only">{name}</span>
-                </Link>
-              </li>
-            ))}
+          <ul className="flex items-center gap-1 rounded-2xl bg-accent/80 px-2 py-1.5 text-foreground shadow-lg backdrop-blur sm:gap-2 sm:px-3 sm:py-2">
+            {navigations.map(({ href, icon: Icon, name }) => {
+              const current = pathname === href;
+              return (
+                <li key={href}>
+                  <Link
+                    aria-current={current ? "page" : undefined}
+                    className={itemClass}
+                    href={href}
+                  >
+                    <span
+                      className={cn(
+                        tileClass,
+                        current && "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      <Icon aria-hidden="true" className="size-4" />
+                    </span>
+                    <span className="sr-only sm:not-sr-only">{name}</span>
+                  </Link>
+                </li>
+              );
+            })}
             <li>
               <button
                 className={itemClass}
@@ -61,15 +101,17 @@ export default function Navigation() {
                 }
                 type="button"
               >
-                <User aria-hidden="true" className="size-4" />
+                <span className={tileClass}>
+                  <User aria-hidden="true" className="size-4" />
+                </span>
                 <span className="sr-only sm:not-sr-only">
                   {session ? "Account" : "Sign in"}
                 </span>
               </button>
             </li>
           </ul>
-        </nav>
-      </div>
-    </header>
+        </motion.nav>
+      ) : null}
+    </AnimatePresence>
   );
 }

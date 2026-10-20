@@ -2,38 +2,44 @@
 
 import { UserPlus, X } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
-const STORAGE_KEY = "perki:member-banner-dismissed";
+const STORAGE_KEY = "perki:member-prompt-dismissed";
 
 /**
- * Non-blocking replacement for the old auto-opening "register as member"
- * dialog. Renders only after mount (so SSR and the first client paint
- * match) and stays hidden once dismissed.
+ * Nudges signed-in users who have not registered as a fellowship member
+ * yet. Lives on the app pages (not the landing page, which is for
+ * newcomers). Hidden once dismissed on this device.
  */
-export default function MemberBanner() {
-  const [visible, setVisible] = useState(false);
+export default function MemberPrompt() {
+  const { data: session } = useSession();
+  const [dismissed, setDismissed] = useState(true);
+  const { data: hasProfile } = api.profiles.hasOwnProfile.useQuery(undefined, {
+    enabled: Boolean(session),
+  });
 
   useEffect(() => {
     try {
-      setVisible(window.localStorage.getItem(STORAGE_KEY) !== "1");
+      setDismissed(window.localStorage.getItem(STORAGE_KEY) === "1");
     } catch {
-      setVisible(true);
+      setDismissed(false);
     }
   }, []);
 
   const dismiss = () => {
-    setVisible(false);
+    setDismissed(true);
     try {
       window.localStorage.setItem(STORAGE_KEY, "1");
     } catch {
-      // Private mode or storage disabled: just hide it for this visit.
+      // Storage unavailable: hide it for this visit only.
     }
   };
 
-  if (!visible) {
+  if (dismissed || !session || hasProfile !== false) {
     return null;
   }
 
@@ -44,10 +50,11 @@ export default function MemberBanner() {
     >
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm sm:text-base">
-          Part of the fellowship?
+          You are not registered as a member yet
         </p>
         <p className="mt-1 text-muted-foreground text-xs sm:text-sm">
-          Register as a member so we can reach you about services and events.
+          Fill in the member form once so the fellowship can reach you about
+          services and events.
         </p>
         <Link
           className={cn(buttonVariants({ size: "sm" }), "mt-3")}

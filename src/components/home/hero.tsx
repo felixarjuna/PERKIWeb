@@ -17,14 +17,18 @@ export default function Hero() {
     <section
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-4 pt-24 pb-16 text-center text-foreground sm:px-6"
+      id="hero"
     >
       <div
         aria-hidden="true"
         className="hero-glow pointer-events-none absolute inset-0 -z-10"
       />
 
-      <p className="text-muted-foreground text-xs uppercase tracking-[0.2em] sm:text-sm">
-        Indonesian Christian fellowship in Aachen · since 1990
+      <p className="text-muted-foreground text-xs uppercase tracking-[0.15em] sm:text-sm sm:tracking-[0.2em]">
+        <span>Indonesian Christian fellowship</span>
+        <br className="sm:hidden" />
+        <span className="hidden sm:inline"> · </span>
+        <span>Aachen · since 1990</span>
       </p>
 
       <h1
