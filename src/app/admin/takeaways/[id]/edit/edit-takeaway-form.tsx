@@ -63,6 +63,7 @@ export default function EditTakeawayForm() {
   /** edit takeaway action. */
   const utils = api.useUtils();
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await Promise.all([utils.takeaways.invalidate()]);
       toast.success("Your changes has been saved successfully!", {
@@ -121,7 +122,11 @@ export default function EditTakeawayForm() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="submit" variant={"default"}>
+          <Button
+            disabled={updateTakeaway.isPending}
+            type="submit"
+            variant={"default"}
+          >
             Save changes
           </Button>
           <Button

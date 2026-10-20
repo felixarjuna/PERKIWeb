@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway"];
-const PROTECTED_PAGES = [
-  "/prayers",
-  "/account",
-  "/member/join",
-  "/admin/dashboard",
-];
+const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway", "/prayers"];
+const PROTECTED_PAGES = ["/account", "/member/join", "/admin/dashboard"];
 
 for (const path of PUBLIC_PAGES) {
   test(`public page ${path} renders without client errors`, async ({
@@ -33,3 +28,16 @@ for (const path of PROTECTED_PAGES) {
     );
   });
 }
+
+test("Visit us and the footer invite visitors to Discord", async ({ page }) => {
+  await page.goto("/");
+  const links = page.getByRole("link", {
+    exact: true,
+    name: "Join our Discord",
+  });
+  await expect(links).toHaveCount(2);
+  for (const link of await links.all()) {
+    // biome-ignore lint/performance/noAwaitInLoops: two links, checked in order.
+    await expect(link).toHaveAttribute("href", "https://discord.gg/4hf5yWFfVP");
+  }
+});

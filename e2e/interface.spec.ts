@@ -78,13 +78,12 @@ for (const width of widths) {
         });
       }
 
-      test("member dashboard keeps overflow inside the data table", async ({
-        page,
-      }) => {
+      test("member directory fits the viewport", async ({ page }) => {
         await adminLogin(page);
-        await expect(page.getByRole("table")).toBeVisible();
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         await expectUsablePage(page);
-        await expect(page.getByRole("combobox")).toHaveAccessibleName(
+        await page.goto("/admin/members");
+        await expect(page.getByLabel("Rows per page")).toHaveAccessibleName(
           "Rows per page"
         );
       });
@@ -104,7 +103,7 @@ for (const width of widths) {
         page,
       }) => {
         await adminLogin(page);
-        await expect(page.getByRole("table")).toBeVisible();
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         if (width === 320) {
           await page.getByRole("button", { name: "Toggle Sidebar" }).click();
         }
@@ -131,9 +130,9 @@ for (const width of widths) {
         await page.getByRole("button", { name: "Add takeaway" }).click();
         await expect(page).toHaveURL("/admin/takeaways");
         await page
-          .getByRole("article")
+          .getByRole("listitem")
           .filter({ hasText: keypoints })
-          .getByRole("button", { exact: true, name: "Edit" })
+          .getByRole("link", { exact: true, name: `Edit ${title}` })
           .click();
         const editor = page.getByLabel("Key points", { exact: true });
         await expect(editor).toHaveValue(keypoints);

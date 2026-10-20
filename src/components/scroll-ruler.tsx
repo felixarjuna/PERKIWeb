@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
 
@@ -27,10 +28,12 @@ const readWindow = (): Viewport | null => {
  * pointer devices: a column of ticks on the right edge, with the ticks
  * for the part of the page currently on screen drawn longer and
  * brighter. Clicking a tick scrolls there. Decorative for assistive
- * tech; keyboard users scroll as usual.
+ * tech; keyboard users scroll as usual. Hidden in the admin workspace,
+ * whose full-width tables would sit underneath it.
  */
 export default function ScrollRuler() {
   const [view, setView] = useState<Viewport | null>(null);
+  const admin = usePathname().startsWith("/admin/");
 
   useEffect(() => {
     let frame = 0;
@@ -51,7 +54,7 @@ export default function ScrollRuler() {
     };
   }, []);
 
-  if (!view) {
+  if (!view || admin) {
     return null;
   }
 

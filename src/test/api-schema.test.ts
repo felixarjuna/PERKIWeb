@@ -6,8 +6,8 @@ import {
   addScheduleSchema,
   addTakeawaySchema,
   editPrayerSchema,
+  prayerAcknowledgementSchema,
   queryByIdSchema,
-  setPrayedSchema,
   updateScheduleSchema,
   updateTakeawaySchema,
 } from "~/server/api/schema/schema";
@@ -196,12 +196,15 @@ describe("prayer schemas", () => {
     expect(addPrayerSchema.safeParse(prayer).success).toBe(true);
   });
 
-  it("enforces 2-50 characters on content", () => {
+  it("enforces 2-280 characters on content", () => {
     expect(addPrayerSchema.safeParse({ ...prayer, content: "x" }).success).toBe(
       false
     );
     expect(
-      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(51) }).success
+      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(280) }).success
+    ).toBe(true);
+    expect(
+      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(281) }).success
     ).toBe(false);
   });
 
@@ -217,12 +220,12 @@ describe("prayer schemas", () => {
   });
 
   it("validates praying toggles", () => {
-    expect(setPrayedSchema.safeParse({ id: 1, prayed: true }).success).toBe(
-      true
-    );
-    expect(setPrayedSchema.safeParse({ id: 1, prayed: "yes" }).success).toBe(
-      false
-    );
+    expect(
+      prayerAcknowledgementSchema.safeParse({ id: 1, pressed: true }).success
+    ).toBe(true);
+    expect(
+      prayerAcknowledgementSchema.safeParse({ id: 1, pressed: "yes" }).success
+    ).toBe(false);
   });
 });
 

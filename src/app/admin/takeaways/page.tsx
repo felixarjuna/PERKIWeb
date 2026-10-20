@@ -1,22 +1,22 @@
 import Link from "next/link";
-import TakeawayList from "~/app/takeaway/takeaway-list";
 import AdminShell from "~/components/admin/admin-shell";
+import TakeawayManager from "~/components/admin/content/takeaway-manager";
 import { buttonVariants } from "~/components/ui/button";
 import { requireAdmin } from "~/server/authz";
 
 export default async function ManagementPage() {
   await requireAdmin("/admin/takeaways");
   return (
-    <AdminShell section="Takeaways">
-      <div className="mb-4 flex justify-end">
-        <Link
-          className={buttonVariants({ variant: "secondary" })}
-          href="/admin/takeaways/new"
-        >
+    <AdminShell
+      actions={
+        <Link className={buttonVariants()} href="/admin/takeaways/new">
           Add takeaway
         </Link>
-      </div>
-      <TakeawayList management />
+      }
+      section="Takeaways"
+      subtitle="Share reflections and notes from your gatherings."
+    >
+      <TakeawayManager />
     </AdminShell>
   );
 }

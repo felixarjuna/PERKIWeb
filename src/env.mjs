@@ -24,6 +24,7 @@ export const env = createEnv({
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NODE_ENV: process.env.NODE_ENV,
+    PERKI_BOT_URL: process.env.PERKI_BOT_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
@@ -47,6 +48,8 @@ export const env = createEnv({
       process.env.VERCEL ? z.string().min(1) : z.string().url()
     ),
     NODE_ENV: z.enum(["development", "test", "production"]),
+    /** perki.bot status URL; defaults to the Fly.io deployment. */
+    PERKI_BOT_URL: z.string().url().optional(),
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

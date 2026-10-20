@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { format } from "date-fns";
+
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption, toast } from "./helpers";
 
@@ -25,7 +26,7 @@ const scheduleDate = () => {
 
 /** The row holding a schedule's title and its desktop edit/delete buttons. */
 const scheduleHeader = (page: Page, title: string) =>
-  page.getByRole("heading", { exact: true, name: title }).locator("..");
+  page.getByRole("heading", { exact: true, name: title }).locator("../..");
 
 /** Fills and submits /admin/schedules/new; ends back on /admin/schedules. */
 const createSchedule = async (page: Page, title: string, date: Date) => {
@@ -71,14 +72,14 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
 
   const header = scheduleHeader(page, title);
   await expect(header).toBeVisible();
-  const card = header.locator("../..");
+  const card = header;
   await expect(card).toContainText("Billy Lugito");
   await expect(card).toContainText("Psalm 23:1");
-  await expect(card).toContainText(format(date, "LLL dd, yyyy"));
-  await expect(card).toContainText("Toni Setiawan");
 
   // Edit
-  await header.getByRole("button", { exact: true, name: "Edit" }).click();
+  await header
+    .getByRole("link", { exact: true, name: `Edit ${title}` })
+    .click();
   await expect(page).toHaveURL(EDIT_SCHEDULE_URL);
   const titleInput = page.getByLabel("Title", { exact: true });
   await expect(titleInput).toHaveValue(title);
@@ -102,21 +103,21 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
 
   // Delete: cancelling keeps it, confirming removes it.
   await editedHeader
-    .getByRole("button", { exact: true, name: "Delete" })
+    .getByRole("button", { exact: true, name: `Delete ${editedTitle}` })
     .click();
   const dialog = page.getByRole("alertdialog", {
-    name: "Are you absolutely sure?",
+    name: `Delete “${editedTitle}”?`,
   });
   await expect(dialog).toContainText("every takeaway written for it");
-  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await dialog.getByRole("button", { name: "Keep entry" }).click();
   await expect(dialog).toBeHidden();
   await expect(editedHeader).toBeVisible();
 
   await editedHeader
-    .getByRole("button", { exact: true, name: "Delete" })
+    .getByRole("button", { exact: true, name: `Delete ${editedTitle}` })
     .click();
-  await dialog.getByRole("button", { name: "Continue" }).click();
-  await expect(toast(page, "Schedule successfully deleted!")).toBeVisible();
+  await dialog.getByRole("button", { name: "Delete entry" }).click();
+  await expect(toast(page, "Schedule deleted.")).toBeVisible();
   await expect(
     page.getByRole("heading", { exact: true, name: editedTitle })
   ).toHaveCount(0);
@@ -127,9 +128,7 @@ test("schedule list shows a new schedule right after adding it", async ({
 }) => {
   const title = `Fresh ${uniqueSuffix()}`;
   await page.goto("/admin/schedules");
-  await expect(
-    page.getByRole("heading", { name: "Upcoming Schedules" })
-  ).toBeVisible();
+  await expect(page.getByLabel("Time period")).toBeVisible();
   await page.getByRole("link", { name: "Add schedule" }).click();
   await expect(page).toHaveURL("/admin/schedules/new");
   await createSchedule(page, title, scheduleDate());

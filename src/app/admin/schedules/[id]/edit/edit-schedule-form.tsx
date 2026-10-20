@@ -72,6 +72,7 @@ export default function EditScheduleForm() {
   /** update schedule action. */
   const utils = api.useUtils();
   const updateSchedule = api.schedules.updateSchedule.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await Promise.all([
         utils.schedules.invalidate(),
@@ -434,7 +435,11 @@ export default function EditScheduleForm() {
         {renderFellowshipForm()}
         {renderServantsForm()}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="submit" variant={"default"}>
+          <Button
+            disabled={updateSchedule.isPending}
+            type="submit"
+            variant={"default"}
+          >
             Save changes
           </Button>
           <Button

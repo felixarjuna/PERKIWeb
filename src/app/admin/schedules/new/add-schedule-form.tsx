@@ -65,6 +65,7 @@ export default function AddScheduleForm() {
   const router = useRouter();
   const utils = api.useUtils();
   const addSchedule = api.schedules.addSchedule.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await Promise.all([
         utils.schedules.invalidate(),
@@ -485,7 +486,11 @@ export default function AddScheduleForm() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button type="submit" variant={"default"}>
+              <Button
+                disabled={addSchedule.isPending}
+                type="submit"
+                variant={"default"}
+              >
                 Add schedule
               </Button>
               <Button

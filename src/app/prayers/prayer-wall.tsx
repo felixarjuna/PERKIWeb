@@ -1,113 +1,148 @@
 "use client";
 
 import { HandHeart } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { DeleteButton } from "~/components/action-button";
-import Loader from "~/components/loader";
-import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Toggle } from "~/components/ui/toggle";
+import { QueryMessage } from "~/components/admin/admin-controls";
+import { Button, buttonVariants } from "~/components/ui/button";
+import { authPageUrl } from "~/lib/auth-redirect";
 import { api } from "~/trpc/react";
 import AddPrayerForm from "./add-prayer-form";
+import OwnPrayers from "./own-prayers";
 
-export default function PrayerWall() {
+export default function PrayerWall({ signedIn }: { signedIn: boolean }) {
   const utils = api.useUtils();
-  const { data: prayers } = api.prayers.getPrayers.useQuery();
-
-  const setPrayed = api.prayers.setPrayed.useMutation({
-    onSuccess: () => utils.prayers.invalidate(),
+  const query = api.prayers.getPublishedPrayers.useQuery();
+  const own = api.prayers.getOwnPrayerAcknowledgements.useQuery(undefined, {
+    enabled: signedIn,
   });
-
-  const deletePrayer = api.prayers.deletePrayer.useMutation({
+  const acknowledge = api.prayers.acknowledgePrayer.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await utils.prayers.invalidate();
-      toast.success("Prayer successfully deleted!", {
-        description: "Don't be shy, it's okay!",
-      });
     },
   });
-
-  function renderPrayers() {
-    if (prayers === undefined) {
-      return (
-        <li>
-          <Loader className="mt-4" message="Loading prayers ..." />
-        </li>
-      );
-    }
-
-    if (prayers.length === 0) {
-      return (
-        <li className="type-body rounded-xl bg-card p-4 text-muted-foreground sm:p-6">
-          No prayer requests yet. Share a request above so others can pray with
-          you.
-        </li>
-      );
-    }
-
-    return prayers.map((prayer) => (
-      <li
-        className="relative flex flex-col gap-y-2 rounded-xl bg-card p-4 sm:p-6"
-        key={prayer.id}
-      >
-        <Badge className="type-caption w-fit" variant={"secondary"}>
-          {prayer.isAnonymous ? "unknown" : prayer.name}
-        </Badge>
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <p className="type-body min-w-0 flex-1">{prayer.content}</p>
-
-          <div className="flex shrink-0 gap-2 self-end">
-            <Toggle
-              aria-label="Pray for this request"
-              className="size-10"
-              onPressedChange={(pressed) =>
-                setPrayed.mutate({ id: prayer.id, prayed: pressed })
-              }
-              pressed={prayer.prayedByMe}
-            >
-              <HandHeart aria-hidden="true" className="size-4" />
-            </Toggle>
-
-            {prayer.canManage ? (
-              <div className="flex gap-x-2">
-                <EditPrayerDialog prayer={prayer} />
-
-                <DeleteButton
-                  onDeleteClick={() => deletePrayer.mutate({ id: prayer.id })}
-                />
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <Badge
-          className="type-caption absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full px-0 py-0 tabular-nums"
-          variant={"secondary"}
-        >
-          {prayer.count}
-        </Badge>
-      </li>
-    ));
-  }
-
+  const acknowledgementDisabled =
+    acknowledge.isPending || own.isLoading || own.isError;
   return (
-    <div className="flex w-full flex-col gap-y-4">
-      <p className="type-body mb-2">
-        Share a prayer request and pray for one another.
-      </p>
-
-      <AddPrayerForm />
-
-      <div className="space-y-4">
-        <h2 className="type-heading">Prayer requests</h2>
-
-        <div>
-          <ul className="my-4 flex flex-col justify-center gap-2 gap-y-3">
-            {renderPrayers()}
-          </ul>
+    <div className="flex flex-col gap-6">
+      <p className="type-body">Let's pray together every Wednesday at 18:30.</p>
+      {signedIn ? null : (
+        <Link
+          className={buttonVariants({
+            className: "self-start",
+            variant: "secondary",
+          })}
+          href={authPageUrl("signin", "/prayers")}
+        >
+          Sign in to share a prayer
+        </Link>
+      )}
+      {signedIn ? (
+        <>
+          <section className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-6">
+            <div>
+              <h2 className="type-subheading">Share a prayer request</h2>
+              <p className="type-caption text-muted-foreground">
+                It's sent privately for review before it appears here.
+              </p>
+            </div>
+            <AddPrayerForm />
+          </section>
+          <OwnPrayers />
+        </>
+      ) : null}
+      <h2 className="type-heading" id="community-prayers">
+        Community prayers
+      </h2>
+      {own.isError ? (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4"
+          role="alert"
+        >
+          <p className="type-body-sm">
+            We couldn't load your prayer status. You can still read the
+            requests.
+          </p>
+          <Button
+            onClick={() => {
+              own.refetch();
+            }}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Retry prayer status
+          </Button>
         </div>
-      </div>
+      ) : null}
+      {query.isLoading ? <QueryMessage>Loading prayers…</QueryMessage> : null}
+      {query.isError ? (
+        <QueryMessage
+          error
+          onRetry={() => {
+            query.refetch();
+          }}
+        />
+      ) : null}
+      {query.data?.length ? (
+        <ul aria-labelledby="community-prayers" className="grid gap-3">
+          {query.data.map((prayer) => {
+            const pressed = own.data?.includes(prayer.id) ?? false;
+            return (
+              <li
+                className="flex flex-col gap-4 rounded-xl bg-card p-5 sm:p-6"
+                key={prayer.id}
+              >
+                <p className="type-caption text-muted-foreground">
+                  {prayer.isAnonymous
+                    ? "Anonymous"
+                    : prayer.name || "Community member"}
+                </p>
+                <p className="type-body break-words">{prayer.content}</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="type-caption text-muted-foreground">
+                    {prayer.count} praying
+                  </span>
+                  {signedIn ? null : (
+                    <Link
+                      className="type-caption underline underline-offset-4"
+                      href={authPageUrl("signin", "/prayers")}
+                    >
+                      Sign in to pray
+                    </Link>
+                  )}
+                  {signedIn ? (
+                    <Button
+                      aria-pressed={pressed}
+                      disabled={acknowledgementDisabled}
+                      onClick={() =>
+                        acknowledge.mutate({
+                          id: prayer.id,
+                          pressed: !pressed,
+                        })
+                      }
+                      size="sm"
+                      type="button"
+                      variant={pressed ? "default" : "secondary"}
+                    >
+                      <HandHeart className="size-4">
+                        <title>Prayer</title>
+                      </HandHeart>
+                      {pressed ? "Praying with you" : "Pray with them"}
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {query.isSuccess && query.data.length === 0 ? (
+        <p className="type-body-sm text-muted-foreground">
+          No public prayer requests yet.
+        </p>
+      ) : null}
     </div>
   );
 }

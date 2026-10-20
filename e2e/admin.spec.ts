@@ -1,38 +1,19 @@
-import { expect, type Page, test } from "@playwright/test";
-import {
-  DASHBOARD_MEMBERS,
-  DASHBOARD_NAME_PREFIX,
-  MEMBER_STORAGE_STATE,
-} from "./fixtures";
-import { adminLogin, setDashboardPageSize } from "./helpers";
+import { expect, test } from "@playwright/test";
+import { MEMBER_STORAGE_STATE } from "./fixtures";
+import { adminLogin, selectOption } from "./helpers";
 
+const SECOND_PAGE = /page=2/;
+const MEMBER_PARAM = /member=/;
+const NAME_DESC = /sort=name\.desc/;
+const BIRTHDAY_PARAM = /birthday=/;
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
-const DEFAULT_PAGE_SIZE = 10;
 const NOT_FOUND = 404;
-const PAGE_LABEL = /^Page (\d+) of (\d+)$/;
-const FIRST_PAGE_LABEL = /^Page 1 of \d+$/;
-
-/** Names in the first column of every visible body row, top to bottom. */
-const visibleNames = async (page: Page) => {
-  const rows = page.getByRole("rowgroup").nth(1).getByRole("row");
-  return await rows.evaluateAll((elements) =>
-    elements.map((row) => row.querySelector("td")?.textContent?.trim() ?? "")
-  );
-};
-
-const seededNames = (names: string[]) =>
-  names.filter((name) => name.startsWith(DASHBOARD_NAME_PREFIX));
-
-const pageLabel = (page: Page) => page.getByText(PAGE_LABEL);
-
-const namesByBirthday = () =>
-  [...DASHBOARD_MEMBERS]
-    .sort((a, b) => a.birthday.getTime() - b.birthday.getTime())
-    .map((member) => member.name);
 
 for (const path of [
   "/admin/dashboard",
+  "/admin/members",
+  "/admin/prayers",
   "/admin/schedules",
   "/admin/takeaways/new",
 ]) {
@@ -54,130 +35,98 @@ test("signed-out visitors are sent to sign-in", async ({ browser }) => {
   await context.close();
 });
 
-test("dashboard lists members sorted by name by default", async ({ page }) => {
-  await adminLogin(page);
-
-  await expect(page.getByRole("table")).toBeVisible();
-  await expect(pageLabel(page)).toBeVisible();
-
-  const names = await visibleNames(page);
-  expect(names).toHaveLength(DEFAULT_PAGE_SIZE);
-  // Seeded "Dash Seed NN" members sort before every other test user.
-  expect(names).toEqual(
-    DASHBOARD_MEMBERS.slice(0, DEFAULT_PAGE_SIZE).map((member) => member.name)
-  );
-
-  const first = page.getByRole("row").filter({ hasText: "Dash Seed 01" });
-  await expect(first).toContainText("Informatik");
-  await expect(first).toContainText("Dash Seed 01 Street 1");
-});
-
-/**
- * Activates a column's sort button with the keyboard. At desktop widths the
- * sidebar covers the "Name" header so it can't be clicked (see the BUG test).
- */
-const toggleSort = async (page: Page, column: "Name" | "Birthday") => {
-  await page.getByRole("button", { exact: true, name: column }).focus();
-  await page.keyboard.press("Enter");
-};
-
-test("dashboard sorts by name and by birthday", async ({ page }) => {
-  await adminLogin(page);
-  await setDashboardPageSize(page, 50);
-  await expect(pageLabel(page)).toHaveText("Page 1 of 1");
-
-  const allSeeded = DASHBOARD_MEMBERS.map((member) => member.name);
-  expect(seededNames(await visibleNames(page))).toEqual(allSeeded);
-
-  // Name: ascending -> descending
-  await toggleSort(page, "Name");
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual([...allSeeded].reverse());
-
-  // Name: descending -> ascending again
-  await toggleSort(page, "Name");
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual(allSeeded);
-
-  // Birthday: ascending by month and day, regardless of the year.
-  await toggleSort(page, "Birthday");
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual(namesByBirthday());
-
-  // Birthday: descending
-  await toggleSort(page, "Birthday");
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual(namesByBirthday().reverse());
-
-  // The mouse works on the uncovered "Birthday" header too.
-  await page.getByRole("button", { exact: true, name: "Birthday" }).click();
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual(namesByBirthday());
-});
-
-test("dashboard Name header is not covered by the sidebar", async ({
+test("directory supports search, sort, pagination, URL state and details", async ({
   page,
 }) => {
   await adminLogin(page);
+  await page.goto("/admin/members");
   await expect(page.getByRole("table")).toBeVisible();
-  const ASSERTION_TIMEOUT_MS = 3000;
+  await expect(page.getByText("Page 1 of", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Go to next page" }).click();
+  await expect(page).toHaveURL(SECOND_PAGE);
+  await page.getByLabel("Search members", { exact: true }).fill("Dash Seed");
+  await expect(page).not.toHaveURL(SECOND_PAGE);
+  await selectOption(page, "Rows per page", "25");
   await page
-    .getByRole("button", { exact: true, name: "Name" })
-    .click({ timeout: ASSERTION_TIMEOUT_MS });
-  await expect
-    .poll(async () => seededNames(await visibleNames(page)))
-    .toEqual(
-      DASHBOARD_MEMBERS.map((member) => member.name)
-        .reverse()
-        .slice(0, DEFAULT_PAGE_SIZE)
-    );
+    .getByRole("button", { exact: true, name: "Member column options" })
+    .click();
+  await page.getByRole("menuitem", { name: "Z–A" }).click();
+  await expect(page).toHaveURL(NAME_DESC);
+  const rows = page.getByRole("table").getByRole("row");
+  await expect(rows.nth(1)).toContainText("Dash Seed 12");
+  await page.reload();
+  await expect(page.getByLabel("Search members", { exact: true })).toHaveValue(
+    "Dash Seed"
+  );
+  await expect(rows.nth(1)).toContainText("Dash Seed 12");
+  await page.getByRole("button", { exact: true, name: "Dash Seed 12" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Dash Seed 12");
+  await expect(page).toHaveURL(MEMBER_PARAM);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(
+    page.getByRole("button", {
+      exact: true,
+      name: "Dash Seed 12",
+    })
+  ).toBeFocused();
+  await page
+    .getByLabel("Search members", { exact: true })
+    .fill("No matching member");
+  await expect(
+    page.getByText("No members match these filters.", { exact: false })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.getByLabel("Search members", { exact: true })).toHaveValue(
+    ""
+  );
+  await expect(rows.filter({ hasText: "Dash Seed 12" })).toHaveCount(1);
 });
 
-test("dashboard pagination controls work", async ({ page }) => {
+test("malformed query state and unknown members remain recoverable", async ({
+  page,
+}) => {
   await adminLogin(page);
+  await page.goto(
+    "/admin/members?page=9999&pageSize=900&sort=bad&member=missing"
+  );
+  await expect(page.getByRole("dialog")).toContainText("Member not found");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("table")).toBeVisible();
+  await expect(page.getByLabel("Rows per page")).toHaveText("10");
+});
 
-  const label = pageLabel(page);
-  await expect(label).toHaveText(FIRST_PAGE_LABEL);
-  const lastPage = Number((await label.textContent())?.match(PAGE_LABEL)?.[2]);
-  expect(lastPage).toBeGreaterThanOrEqual(2);
+test("directory handles a failed query and retry", async ({ page }) => {
+  await adminLogin(page);
+  await page.route("**/api/trpc/*profiles.getUserProfiles*", (route) =>
+    route.abort()
+  );
+  await page.goto("/admin/members");
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(
+    page.getByLabel("Search members", { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Location" })
+  ).toBeVisible();
+  await page.unroute("**/api/trpc/*profiles.getUserProfiles*");
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByRole("table")).toBeVisible();
+});
 
-  const first = page.getByRole("button", { name: "Go to first page" });
-  const previous = page.getByRole("button", { name: "Go to previous page" });
-  const next = page.getByRole("button", { name: "Go to next page" });
-  const last = page.getByRole("button", { name: "Go to last page" });
-
-  await expect(first).toBeDisabled();
-  await expect(previous).toBeDisabled();
-  await expect(next).toBeEnabled();
-  const firstPageNames = await visibleNames(page);
-
-  await next.click();
-  await expect(label).toHaveText(`Page 2 of ${lastPage}`);
-  await expect(previous).toBeEnabled();
-  const secondPageNames = await visibleNames(page);
-  expect(secondPageNames.length).toBeGreaterThan(0);
-  expect(secondPageNames).not.toContain(firstPageNames[0]);
-  expect(secondPageNames[0]).toBe("Dash Seed 11");
-
-  await previous.click();
-  await expect(label).toHaveText(`Page 1 of ${lastPage}`);
-  expect(await visibleNames(page)).toEqual(firstPageNames);
-
-  await last.click();
-  await expect(label).toHaveText(`Page ${lastPage} of ${lastPage}`);
-  await expect(next).toBeDisabled();
-  await expect(last).toBeDisabled();
-
-  await first.click();
-  await expect(label).toHaveText(`Page 1 of ${lastPage}`);
-
-  // A bigger page size fits every member on one page.
-  await setDashboardPageSize(page, 50);
-  await expect(label).toHaveText("Page 1 of 1");
-  expect((await visibleNames(page)).length).toBeGreaterThan(DEFAULT_PAGE_SIZE);
+test("birthday month filter comes from the URL and can be cleared", async ({
+  page,
+}) => {
+  await adminLogin(page);
+  await page.goto("/admin/members?birthday=10&sort=birthday.asc");
+  const birthday = page.getByRole("button", { name: "Birthday October" });
+  await expect(birthday).toBeVisible();
+  const rows = page.getByRole("table").getByRole("row");
+  await expect(rows.filter({ hasText: "Dash Seed 06" })).toHaveCount(1);
+  await expect(rows.filter({ hasText: "Dash Seed 01" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page).not.toHaveURL(BIRTHDAY_PARAM);
+  await expect(rows.filter({ hasText: "Dash Seed 01" })).toHaveCount(1);
 });

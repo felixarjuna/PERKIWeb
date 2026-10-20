@@ -64,6 +64,13 @@
       "when": 1792505468020,
       "tag": "0008_illegal_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792507660739,
+      "tag": "0009_prayer_visibility",
+      "breakpoints": true
     }
   ]
 }

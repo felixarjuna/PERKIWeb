@@ -1,6 +1,7 @@
-import { InstagramLogoIcon } from "@radix-ui/react-icons";
+import { DiscordLogoIcon, InstagramLogoIcon } from "@radix-ui/react-icons";
 import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import { DISCORD_INVITE_URL } from "~/lib/data";
 
 const siteLinks = [
   { href: "/schedule", label: "Schedule" },
@@ -72,6 +73,17 @@ export default function Footer() {
                 target="_blank"
               >
                 @perki.aachen
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <DiscordLogoIcon aria-hidden="true" className="size-4 shrink-0" />
+              <a
+                className={linkClass}
+                href={DISCORD_INVITE_URL}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Join our Discord
               </a>
             </li>
           </ul>

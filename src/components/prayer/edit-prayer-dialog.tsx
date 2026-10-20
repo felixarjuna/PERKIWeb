@@ -1,5 +1,8 @@
-import React from "react";
-import { EditButton } from "~/components/action-button";
+"use client";
+
+import { Pencil } from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,31 +11,33 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import type { RouterOutputs } from "~/trpc/react";
-import EditPrayerForm from "./edit-prayer-form";
+import EditPrayerForm, { type EditablePrayer } from "./edit-prayer-form";
 
-type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
-
-export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
-  const [isOpen, setIsOpen] = React.useState<boolean>(false);
-
-  const onCloseDialog = () => {
-    setIsOpen(false);
-  };
-
+export default function EditPrayerDialog({
+  prayer,
+  note = "Publication status stays as it is.",
+}: {
+  prayer: EditablePrayer;
+  /** What happens to the request's visibility after saving. */
+  note?: string;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <Dialog onOpenChange={(open) => setIsOpen(open)} open={isOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <EditButton />
+        <Button size="sm" type="button" variant="secondary">
+          <Pencil aria-hidden="true" />
+          Edit
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit prayer</DialogTitle>
+          <DialogTitle>Edit prayer request</DialogTitle>
           <DialogDescription>
-            Update your prayer request or change its visibility.
+            Change the wording or whether the name is shown. {note}
           </DialogDescription>
         </DialogHeader>
-        <EditPrayerForm onCloseDialog={() => onCloseDialog()} prayer={prayer} />
+        <EditPrayerForm onCloseDialog={() => setOpen(false)} prayer={prayer} />
       </DialogContent>
     </Dialog>
   );

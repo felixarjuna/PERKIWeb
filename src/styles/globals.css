@@ -181,6 +181,7 @@
  *   type-heading     h3, card-group heading           Reimbrandt  20-24px   lh 1.25
  *   type-subheading  card title, dt, list name        Reimbrandt  18-20px   lh 1.3
  *   type-quote       verse, pull line                 Reimbrandt  18-20px   lh 1.35
+ *   type-figure      stat-tile value, chart headline  Satoshi     24-30px   lh 1.1
  *   type-lead        intro paragraph under a title    Satoshi     16-20px   lh 1.5
  *   type-body        all reading text                 Satoshi     16px      lh 1.6
  *   type-body-sm     short secondary copy, meta rows  Satoshi     14px      lh 1.5
@@ -197,6 +198,7 @@
   --type-size-title: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
   --type-size-heading: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
   --type-size-subheading: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --type-size-figure: clamp(1.5rem, 1.35rem + 0.5vw, 1.875rem);
   --type-size-lead: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
   --type-size-body: 1rem;
   --type-size-body-sm: 0.875rem;
@@ -238,6 +240,11 @@
   font-size: var(--type-size-subheading);
   line-height: 1.35;
   letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-figure {
+  font-size: var(--type-size-figure);
+  line-height: 1.1;
 }
 
 @utility type-lead {
