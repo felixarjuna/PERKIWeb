@@ -2,23 +2,24 @@ import { DateTime } from "luxon";
 import type { RouterOutputs } from "~/trpc/react";
 
 export type Member = RouterOutputs["profiles"]["getUserProfiles"][number];
-export const memberSorts = [
-  { label: "Name A–Z", value: "name" },
-  { label: "Name Z–A", value: "name-desc" },
-  { label: "Newest registration", value: "newest" },
-  { label: "Oldest registration", value: "oldest" },
-  { label: "Location A–Z", value: "location" },
-  { label: "Birthday · calendar order", value: "birthday" },
+/** Sortable table columns; the URL stores `sort=<column>.<asc|desc>`. */
+export const memberSortColumns = [
+  "name",
+  "location",
+  "birthday",
+  "registered",
+  "major",
 ] as const;
-export type MemberSort = (typeof memberSorts)[number]["value"];
+export type MemberSortColumn = (typeof memberSortColumns)[number];
 export interface MemberFilters {
-  location: string;
+  /** Normalised location keys (see `normalizeLocation`). */
+  locations: string[];
   page: number;
   pageSize: number;
   q: string;
-  sort: MemberSort;
+  sort: { desc: boolean; id: MemberSortColumn };
 }
-export const PAGE_SIZES = [10, 25, 50];
+export const PAGE_SIZES = [10, 25, 50, 100] as const;
 export const DEFAULT_PAGE_SIZE = 10;
 export const normalizeLocation = (location: string | null) =>
   location?.trim().toLowerCase() || "missing";
@@ -42,20 +43,82 @@ export const memberDate = (date: Date | null, birthday = false) => {
   }).toFormat(birthday ? "d LLL" : "d LLL yyyy");
 };
 
+const DEFAULT_SORT: MemberFilters["sort"] = { desc: false, id: "name" };
+const SORT_DIRECTIONS = new Set(["asc", "desc"]);
+
+function readSort(value: string | null): MemberFilters["sort"] {
+  const [id, direction = "asc"] = (value ?? "").split(".");
+  const column = memberSortColumns.find((item) => item === id);
+  if (!(column && SORT_DIRECTIONS.has(direction))) {
+    return DEFAULT_SORT;
+  }
+  return { desc: direction === "desc", id: column };
+}
+
 export function readMemberFilters(params: URLSearchParams): MemberFilters {
   const page = Number(params.get("page") ?? 1);
   const size = Number(params.get("pageSize") ?? DEFAULT_PAGE_SIZE);
-  const sort =
-    memberSorts.find((item) => item.value === params.get("sort"))?.value ??
-    "name";
   return {
-    location: params.get("location") ?? "",
+    locations: [
+      ...new Set(
+        (params.get("location") ?? "")
+          .split(",")
+          .map((location) => location.trim())
+          .filter(Boolean)
+      ),
+    ],
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
-    pageSize: PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE,
+    pageSize: PAGE_SIZES.find((item) => item === size) ?? DEFAULT_PAGE_SIZE,
     q: params.get("q") ?? "",
-    sort,
+    sort: readSort(params.get("sort")),
   };
 }
+
+/** URL values for `filters`; defaults become "" so they drop out of the URL. */
+export function memberFilterParams(
+  filters: Partial<MemberFilters>
+): Record<string, string> {
+  const values: Record<string, string> = {};
+  if (filters.q !== undefined) {
+    values.q = filters.q;
+  }
+  if (filters.locations) {
+    values.location = filters.locations.join(",");
+  }
+  if (filters.sort) {
+    const { desc, id } = filters.sort;
+    values.sort =
+      id === DEFAULT_SORT.id && desc === DEFAULT_SORT.desc
+        ? ""
+        : `${id}.${desc ? "desc" : "asc"}`;
+  }
+  if (filters.page !== undefined) {
+    values.page = filters.page > 1 ? String(filters.page) : "";
+  }
+  if (filters.pageSize !== undefined) {
+    values.pageSize =
+      filters.pageSize === DEFAULT_PAGE_SIZE ? "" : String(filters.pageSize);
+  }
+  return values;
+}
+
+/** Lower-cased text the directory search matches against. */
+export const memberSearchText = (member: Member) =>
+  [memberName(member), member.user?.email, member.profiles.phoneNumber]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+/** Calendar position (MMDD) so birthdays sort Jan→Dec regardless of year. */
+export const birthdayOrder = (member: Member) => {
+  const birthday = calendarBirthday(member.profiles.birthday);
+  return birthday ? birthday.month * 100 + birthday.day : undefined;
+};
+
+export const registeredTime = (member: Member) => {
+  const date = member.profiles.createdAt;
+  return validDate(date) && date ? date.getTime() : undefined;
+};
 
 export function getMemberLocations(members: Member[]) {
   const locations = new Map<string, string>();
@@ -75,66 +138,5 @@ export function getMemberLocations(members: Member[]) {
         return -1;
       }
       return a.label.localeCompare(b.label);
-    });
-}
-
-function compareDates(a: Member, b: Member, sort: MemberSort) {
-  const left = sort === "birthday" ? a.profiles.birthday : a.profiles.createdAt;
-  const right =
-    sort === "birthday" ? b.profiles.birthday : b.profiles.createdAt;
-  if (!validDate(left)) {
-    return validDate(right) ? 1 : 0;
-  }
-  if (!validDate(right)) {
-    return -1;
-  }
-  if (!(left && right)) {
-    return 0;
-  }
-  if (sort === "birthday") {
-    const leftDate = DateTime.fromJSDate(left, { zone: "utc" });
-    const rightDate = DateTime.fromJSDate(right, { zone: "utc" });
-    return leftDate.month - rightDate.month || leftDate.day - rightDate.day;
-  }
-  return (left.getTime() - right.getTime()) * (sort === "newest" ? -1 : 1);
-}
-
-export function filterAndSortMembers(
-  members: Member[],
-  filters: MemberFilters
-): Member[] {
-  const query = filters.q.trim().toLowerCase();
-  return members
-    .filter(
-      (member) =>
-        (!filters.location ||
-          normalizeLocation(member.profiles.location) === filters.location) &&
-        [
-          memberName(member),
-          member.user?.email ?? "",
-          member.profiles.phoneNumber ?? "",
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query)
-    )
-    .sort((a, b) => {
-      let order = 0;
-      if (
-        filters.sort === "birthday" ||
-        filters.sort === "newest" ||
-        filters.sort === "oldest"
-      ) {
-        order = compareDates(a, b, filters.sort);
-      } else if (filters.sort === "location") {
-        order = (a.profiles.location?.trim() ?? "").localeCompare(
-          b.profiles.location?.trim() ?? ""
-        );
-      } else {
-        order =
-          memberName(a).localeCompare(memberName(b)) *
-          (filters.sort === "name-desc" ? -1 : 1);
-      }
-      return order || a.profiles.id.localeCompare(b.profiles.id);
     });
 }

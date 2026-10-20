@@ -1,6 +1,7 @@
-import { InstagramLogoIcon } from "@radix-ui/react-icons";
+import { DiscordLogoIcon, InstagramLogoIcon } from "@radix-ui/react-icons";
 import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import { env } from "~/env.mjs";
 
 const siteLinks = [
   { href: "/schedule", label: "Schedule" },
@@ -18,6 +19,7 @@ const linkClass =
   "rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export default function Footer() {
+  const discord = env.NEXT_PUBLIC_DISCORD_INVITE_URL;
   return (
     <footer className="relative -mt-8 rounded-t-[2.5rem] bg-background pt-4 text-foreground">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 sm:py-20">
@@ -74,6 +76,22 @@ export default function Footer() {
                 @perki.aachen
               </a>
             </li>
+            {discord ? (
+              <li className="flex items-center gap-2">
+                <DiscordLogoIcon
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                />
+                <a
+                  className={linkClass}
+                  href={discord}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Join our Discord
+                </a>
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>

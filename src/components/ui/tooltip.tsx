@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Arrow as TooltipPrimitiveArrow,
   Content as TooltipPrimitiveContent,
+  Portal as TooltipPrimitivePortal,
   Provider as TooltipPrimitiveProvider,
   Root as TooltipPrimitiveRoot,
   Trigger as TooltipPrimitiveTrigger,
@@ -10,26 +12,50 @@ import type { ComponentProps } from "react";
 
 import { cn } from "~/lib/utils";
 
-const TooltipProvider = TooltipPrimitiveProvider;
+// shadcn/ui new-york-v4 tooltip, with named Radix imports.
 
-const Tooltip = TooltipPrimitiveRoot;
+function TooltipProvider({
+  delayDuration = 0,
+  ...props
+}: ComponentProps<typeof TooltipPrimitiveProvider>) {
+  return (
+    <TooltipPrimitiveProvider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  );
+}
 
-const TooltipTrigger = TooltipPrimitiveTrigger;
+function Tooltip(props: ComponentProps<typeof TooltipPrimitiveRoot>) {
+  return <TooltipPrimitiveRoot data-slot="tooltip" {...props} />;
+}
+
+function TooltipTrigger(props: ComponentProps<typeof TooltipPrimitiveTrigger>) {
+  return <TooltipPrimitiveTrigger data-slot="tooltip-trigger" {...props} />;
+}
 
 function TooltipContent({
   className,
-  sideOffset = 4,
+  sideOffset = 0,
+  children,
   ...props
 }: ComponentProps<typeof TooltipPrimitiveContent>) {
   return (
-    <TooltipPrimitiveContent
-      className={cn(
-        "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-(--radix-tooltip-content-transform-origin) animate-in overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-popover-foreground text-sm shadow-md data-[state=closed]:animate-out",
-        className
-      )}
-      sideOffset={sideOffset}
-      {...props}
-    />
+    <TooltipPrimitivePortal>
+      <TooltipPrimitiveContent
+        className={cn(
+          "fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in text-balance rounded-md bg-foreground px-3 py-1.5 text-background text-xs data-[state=closed]:animate-out",
+          className
+        )}
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitiveArrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground" />
+      </TooltipPrimitiveContent>
+    </TooltipPrimitivePortal>
   );
 }
 

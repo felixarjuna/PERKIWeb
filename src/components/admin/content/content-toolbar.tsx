@@ -1,10 +1,24 @@
 "use client";
 
+import { X } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { AdminSelect } from "../admin-controls";
+import { AdminSearch, AdminSelect } from "../admin-controls";
 import type { ContentFilters } from "./content-filters";
+
+const TYPES = [
+  { label: "All gatherings", value: "all" },
+  { label: "Church service", value: "church_service" },
+  { label: "Bible study", value: "bible_study" },
+] as const;
+const PERIODS = [
+  { label: "Upcoming", value: "upcoming" },
+  { label: "Past", value: "past" },
+  { label: "All dates", value: "all" },
+] as const;
+const ORDERS = [
+  { label: "Earliest first", value: "asc" },
+  { label: "Latest first", value: "desc" },
+] as const;
 
 export default function ContentToolbar({
   filters,
@@ -15,77 +29,70 @@ export default function ContentToolbar({
   onChange: (value: ContentFilters) => void;
   schedules?: boolean;
 }) {
+  const defaults: ContentFilters = {
+    order: schedules ? "asc" : "desc",
+    period: "all",
+    q: "",
+    type: "all",
+  };
+  const isFiltered =
+    filters.q !== defaults.q ||
+    filters.type !== defaults.type ||
+    filters.order !== defaults.order ||
+    (schedules && (filters.period ?? "all") !== defaults.period);
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-5">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="flex flex-col gap-2">
-          <Label
-            className="type-caption text-muted-foreground"
-            htmlFor="content-search"
-          >
-            Search {schedules ? "schedules" : "takeaways"}
-          </Label>
-          <Input
-            className="h-11"
-            id="content-search"
-            onChange={(event) =>
-              onChange({ ...filters, q: event.target.value })
-            }
-            placeholder={
-              schedules ? "Title or speaker" : "Title or takeaway text"
-            }
-            type="search"
-            value={filters.q}
-          />
-        </div>
-        <AdminSelect
-          id="content-type"
-          label="Gathering type"
-          onChange={(type) => onChange({ ...filters, type })}
-          value={filters.type}
-        >
-          <option value="all">All gatherings</option>
-          <option value="church_service">Church service</option>
-          <option value="bible_study">Bible study</option>
-        </AdminSelect>
-        {schedules ? (
-          <AdminSelect
-            id="content-period"
-            label="Time period"
-            onChange={(period) => onChange({ ...filters, period })}
-            value={filters.period ?? "all"}
-          >
-            <option value="upcoming">Upcoming</option>
-            <option value="past">Past</option>
-            <option value="all">All dates</option>
-          </AdminSelect>
-        ) : null}
-        <AdminSelect
-          id="content-order"
-          label="Event date"
-          onChange={(order) => onChange({ ...filters, order })}
-          value={filters.order}
-        >
-          <option value="asc">Earliest first</option>
-          <option value="desc">Latest first</option>
-        </AdminSelect>
-      </div>
-      <Button
-        className="self-start"
-        onClick={() =>
-          onChange({
-            order: schedules ? "asc" : "desc",
-            period: "all",
-            q: "",
-            type: "all",
-          })
+    <div className="flex flex-wrap items-center gap-2">
+      <AdminSearch
+        className="w-full sm:w-72"
+        id="content-search"
+        label={`Search ${schedules ? "schedules" : "takeaways"}`}
+        onChange={(event) => onChange({ ...filters, q: event.target.value })}
+        placeholder={
+          schedules ? "Search title or speaker" : "Search title or takeaway"
         }
-        size="sm"
-        type="button"
-        variant="ghost"
-      >
-        Reset filters
-      </Button>
+        value={filters.q}
+      />
+      <AdminSelect
+        className="w-[calc(50%-0.25rem)] sm:w-44"
+        hideLabel
+        id="content-type"
+        label="Gathering type"
+        onChange={(type) => onChange({ ...filters, type })}
+        options={TYPES}
+        value={filters.type}
+      />
+      {schedules ? (
+        <AdminSelect
+          className="w-[calc(50%-0.25rem)] sm:w-36"
+          hideLabel
+          id="content-period"
+          label="Time period"
+          onChange={(period) => onChange({ ...filters, period })}
+          options={PERIODS}
+          value={filters.period ?? "all"}
+        />
+      ) : null}
+      <AdminSelect
+        className="w-[calc(50%-0.25rem)] sm:w-40"
+        hideLabel
+        id="content-order"
+        label="Event date"
+        onChange={(order) => onChange({ ...filters, order })}
+        options={ORDERS}
+        value={filters.order}
+      />
+      {isFiltered ? (
+        <Button
+          className="h-10"
+          onClick={() => onChange(defaults)}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          Reset
+          <X aria-hidden="true" />
+        </Button>
+      ) : null}
     </div>
   );
 }

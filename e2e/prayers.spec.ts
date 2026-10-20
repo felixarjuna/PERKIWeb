@@ -12,7 +12,9 @@ test("prayer submission, publication, acknowledgement, editing and unpublication
   const edited = `Updated ${uniqueSuffix()}`;
   await page.goto("/prayers");
   await page.getByLabel("Prayer request").fill(content);
-  await page.getByRole("button", { exact: true, name: "Add" }).click();
+  await page
+    .getByRole("button", { exact: true, name: "Submit request" })
+    .click();
   await expect(toast(page, "Your prayer is submitted!")).toBeVisible();
   await expect(
     page.getByRole("listitem").filter({ hasText: content })
@@ -21,7 +23,7 @@ test("prayer submission, publication, acknowledgement, editing and unpublication
   await page.goto("/admin/prayers");
   const item = page.getByRole("listitem").filter({ hasText: content });
   await expect(item).toContainText("Private");
-  await item.getByRole("button", { name: "Publish prayer" }).click();
+  await item.getByRole("button", { exact: true, name: "Publish" }).click();
   await expect(item).toContainText("Published");
   const anonymous = await browser.newContext();
   const publicPage = await anonymous.newPage();
@@ -42,11 +44,13 @@ test("prayer submission, publication, acknowledgement, editing and unpublication
   ).toHaveAttribute("aria-pressed", "true");
   await page.goto("/admin/prayers");
   await item.getByRole("button", { exact: true, name: "Edit" }).click();
-  await page.getByRole("dialog").getByLabel("Prayer content").fill(edited);
+  await page.getByRole("dialog").getByLabel("Prayer request").fill(edited);
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
   const updated = page.getByRole("listitem").filter({ hasText: edited });
-  await updated.getByRole("button", { name: "Return to private" }).click();
+  await updated
+    .getByRole("button", { exact: true, name: "Make private" })
+    .click();
   await expect(updated).toContainText("Private");
   await publicPage.reload();
   await expect(
@@ -66,11 +70,16 @@ test("anonymous prayers retain anonymity after publication", async ({
   await adminLogin(page);
   await page.goto("/admin/prayers");
   const content = `Anonymous ${uniqueSuffix()}`;
-  await page.getByLabel("Prayer request").fill(content);
-  await page.getByRole("switch", { name: "Anonymous" }).click();
-  await page.getByRole("button", { exact: true, name: "Add" }).click();
+  await page.getByRole("button", { exact: true, name: "Add request" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Prayer request").fill(content);
+  await dialog.getByRole("switch", { name: "Post anonymously" }).click();
+  await dialog
+    .getByRole("button", { exact: true, name: "Submit request" })
+    .click();
+  await expect(dialog).toBeHidden();
   const item = page.getByRole("listitem").filter({ hasText: content });
-  await item.getByRole("button", { name: "Publish prayer" }).click();
+  await item.getByRole("button", { exact: true, name: "Publish" }).click();
   await expect(item).toContainText("Published");
   await page.goto("/prayers");
   await expect(

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { MEMBER_STORAGE_STATE } from "./fixtures";
-import { adminLogin } from "./helpers";
+import { adminLogin, selectOption } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
@@ -11,20 +11,32 @@ test("overview shows real registration and birthday controls", async ({
   await expect(
     page.getByRole("heading", { name: "Your community, at a glance." })
   ).toBeVisible();
-  await page.getByLabel("Month", { exact: true }).fill("2026-10");
+  const month = page.getByRole("group", { name: "Month" }).locator("output");
+  const shown = await month.textContent();
+  await page.getByRole("button", { name: "Next month" }).click();
+  await expect(month).not.toHaveText(shown ?? "");
+  await page.getByRole("button", { name: "This month" }).click();
+  await expect(month).toHaveText(shown ?? "");
   await expect(
     page.getByRole("heading", { name: "Time to celebrate" })
   ).toBeVisible();
-  await page.getByLabel("Chart range").selectOption("12");
+  await page.getByRole("radio", { name: "12M" }).click();
   await expect(
     page
       .getByRole("list", { name: "Registration history" })
       .getByRole("listitem")
   ).toHaveCount(12);
-  await page.getByLabel("Show", { exact: true }).selectOption("cumulative");
-  await page.getByLabel("Location", { exact: true }).selectOption("aachen");
+  await page.getByRole("radio", { name: "Total" }).click();
+  // Clicking a column moves the overview to that month.
+  await page
+    .getByRole("list", { name: "Registration history" })
+    .getByRole("button")
+    .first()
+    .click();
+  await expect(month).not.toHaveText(shown ?? "");
+  await selectOption(page, "Location", "Aachen");
   await expect(
-    page.getByText("Registered members", { exact: true })
+    page.getByRole("term").filter({ hasText: "Members" })
   ).toBeVisible();
 });
 
@@ -60,14 +72,14 @@ for (const width of [320, 390, 1440]) {
       await sidebar.getByRole("link", { exact: true, name: "Members" }).click();
       await expect(sidebar).toBeHidden();
       await expect(page).toHaveURL("/admin/members");
-      await expect(page.getByRole("table")).toBeHidden();
+      await expect(page.getByRole("table")).toBeVisible();
       await page
         .getByLabel("Search members", { exact: true })
         .fill("Dash Seed 01");
       await page
         .getByRole("button", {
           exact: true,
-          name: "View details for Dash Seed 01",
+          name: "Dash Seed 01",
         })
         .click();
       await expect(page.getByRole("dialog")).toContainText("Dash Seed 01");

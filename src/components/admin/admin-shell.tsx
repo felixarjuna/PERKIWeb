@@ -1,9 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { AppSidebar } from "~/components/app-sidebar";
 import Loader from "~/components/loader";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
+import { Separator } from "~/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
@@ -49,21 +59,27 @@ export default function AdminShell({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="min-w-0 bg-background" id="main-content">
-          <header className="flex h-16 shrink-0 items-center gap-3 border-border/40 border-b px-4 sm:px-8">
-            <SidebarTrigger />
-            <span className="type-caption text-muted-foreground">
-              Workspace
-            </span>
-            <span className="type-caption text-muted-foreground">/</span>
-            <span className="type-body-sm">{section}</span>
+          <header className="flex h-14 shrink-0 items-center gap-2 border-border/40 border-b px-3 sm:h-16 sm:px-6">
+            <SidebarTrigger className="size-10" />
+            <Separator className="mx-1 h-4" orientation="vertical" />
+            <Breadcrumb>
+              <BreadcrumbList className="type-body-sm flex-nowrap gap-1.5 sm:gap-2">
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/admin/dashboard">Workspace</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{section}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </header>
-          <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-7 px-4 py-7 sm:px-8 sm:py-10 lg:px-10">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex min-w-0 flex-col gap-2">
-                <p className="type-eyebrow text-muted-foreground">
-                  PERKI administration
-                </p>
-                <h1 className="type-title">{title}</h1>
+          <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="flex min-w-0 flex-col gap-1">
+                <h1 className="type-heading">{title}</h1>
                 {subtitle ? (
                   <p className="type-body-sm max-w-xl text-muted-foreground">
                     {subtitle}

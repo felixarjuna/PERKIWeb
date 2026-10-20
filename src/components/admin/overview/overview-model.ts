@@ -71,6 +71,8 @@ export function getCommunityOverview(
     monthLabel: month.toFormat("LLLL yyyy"),
     months,
     previous: countBetween(month.minus({ months: 1 }), month),
+    previousLabel: month.minus({ months: 1 }).toFormat("LLL"),
+    shortMonthLabel: month.toFormat("LLL"),
     total: scoped.length,
   };
 }

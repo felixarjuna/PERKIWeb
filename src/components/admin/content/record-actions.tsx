@@ -60,7 +60,10 @@ export default function RecordActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep entry</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete}>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={onDelete}
+            >
               Delete entry
             </AlertDialogAction>
           </AlertDialogFooter>

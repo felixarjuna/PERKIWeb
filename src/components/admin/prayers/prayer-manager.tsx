@@ -1,20 +1,59 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { EyeOff, Globe, Lock } from "lucide-react";
+import { DateTime } from "luxon";
 import { useState } from "react";
 import { toast } from "sonner";
-import AddPrayerForm from "~/app/prayers/add-prayer-form";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { getUsernameFromName } from "~/lib/utils";
-import { api } from "~/trpc/react";
-import { AdminSelect, QueryMessage } from "../admin-controls";
+import { cn } from "~/lib/utils";
+import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  AdminSearch,
+  AdminSegmented,
+  AdminSelect,
+  QueryMessage,
+} from "../admin-controls";
 import RecordActions from "../content/record-actions";
 
+type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
+
+const ORDERS = [
+  { label: "Newest first", value: "desc" },
+  { label: "Oldest first", value: "asc" },
+] as const;
+
+function StatusChip({ published }: { published: boolean }) {
+  const Icon = published ? Globe : Lock;
+  return (
+    <span
+      className={cn(
+        "type-caption inline-flex items-center gap-1 rounded-full px-2 py-1",
+        published
+          ? "bg-paper text-paper-foreground"
+          : "bg-secondary text-secondary-foreground"
+      )}
+    >
+      <Icon aria-hidden="true" className="size-3" />
+      {published ? "Published" : "Private"}
+    </span>
+  );
+}
+
+function prayerMeta(prayer: Prayer) {
+  const praying = Array.isArray(prayer.prayerNames)
+    ? prayer.prayerNames.length
+    : 0;
+  return [
+    prayer.isAnonymous ? "Anonymous" : prayer.name || "Unnamed",
+    prayer.createdAt ? DateTime.fromJSDate(prayer.createdAt).toRelative() : "",
+    praying ? `${praying} praying` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export default function PrayerManager() {
-  const { data: session } = useSession();
   const query = api.prayers.getPrayers.useQuery();
   const utils = api.useUtils();
   const [q, setQ] = useState("");
@@ -22,9 +61,13 @@ export default function PrayerManager() {
   const [order, setOrder] = useState("desc");
   const publish = api.prayers.setPrayerVisibility.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: async () => {
+    onSuccess: async (_, input) => {
       await utils.prayers.invalidate();
-      toast.success("Prayer visibility updated.");
+      toast.success(
+        input.visibility === "published"
+          ? "Prayer published on the prayer wall."
+          : "Prayer is private again."
+      );
     },
   });
   const remove = api.prayers.deletePrayer.useMutation({
@@ -34,7 +77,9 @@ export default function PrayerManager() {
       toast.success("Prayer deleted.");
     },
   });
-  const records = (query.data ?? [])
+  const all = query.data ?? [];
+  const privateCount = all.filter((p) => p.visibility !== "published").length;
+  const records = all
     .filter(
       (prayer) =>
         prayer.content.toLowerCase().includes(q.trim().toLowerCase()) &&
@@ -46,52 +91,35 @@ export default function PrayerManager() {
           (order === "desc" ? -1 : 1) || a.id - b.id
     );
   return (
-    <div className="flex flex-col gap-5">
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-5">
-        <h2 className="type-subheading">Add a prayer request</h2>
-        <p className="type-body-sm text-muted-foreground">
-          Requests stay private until you review and publish them. Published
-          requests can be read by everyone.
-        </p>
-        <AddPrayerForm
-          username={getUsernameFromName(session?.user.name ?? "")}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminSearch
+          className="w-full sm:w-72"
+          id="prayer-search"
+          label="Search prayers"
+          onChange={(event) => setQ(event.target.value)}
+          placeholder="Search prayer requests"
+          value={q}
         />
-      </section>
-      <div className="grid gap-4 rounded-xl bg-card p-5 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <Label
-            className="type-caption text-muted-foreground"
-            htmlFor="prayer-search"
-          >
-            Search prayers
-          </Label>
-          <Input
-            className="h-11"
-            id="prayer-search"
-            onChange={(event) => setQ(event.target.value)}
-            type="search"
-            value={q}
-          />
-        </div>
-        <AdminSelect
-          id="prayer-visibility"
+        <AdminSegmented
           label="Visibility"
           onChange={setVisibility}
+          options={[
+            { label: "All", value: "all" },
+            { label: `Private (${privateCount})`, value: "private" },
+            { label: "Published", value: "published" },
+          ]}
           value={visibility}
-        >
-          <option value="all">All requests</option>
-          <option value="private">Private</option>
-          <option value="published">Published</option>
-        </AdminSelect>
+        />
         <AdminSelect
+          className="w-40"
+          hideLabel
           id="prayer-order"
           label="Sort by"
           onChange={setOrder}
+          options={ORDERS}
           value={order}
-        >
-          <option value="desc">Newest first</option>
-          <option value="asc">Oldest first</option>
-        </AdminSelect>
+        />
       </div>
       {query.isLoading ? <QueryMessage>Loading prayers…</QueryMessage> : null}
       {query.isError ? (
@@ -105,61 +133,62 @@ export default function PrayerManager() {
       {query.isLoading || query.isError ? null : (
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
-            {records.length} requests
+            {records.length} {records.length === 1 ? "request" : "requests"} ·
+            Only published requests appear on the prayer wall
           </p>
           {records.length ? (
-            <ul className="grid gap-3">
-              {records.map((prayer) => (
-                <li
-                  className="flex flex-col gap-4 rounded-xl bg-card p-5"
-                  key={prayer.id}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="type-caption rounded-full bg-secondary px-3 py-1">
-                      {prayer.visibility === "published"
-                        ? "Published · Public"
-                        : "Private · Admin only"}
-                    </span>
-                    <span className="type-caption text-muted-foreground">
-                      {prayer.isAnonymous
-                        ? "Anonymous"
-                        : prayer.name || "Unnamed"}
-                    </span>
-                  </div>
-                  <p className="type-body break-words">{prayer.content}</p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      disabled={publish.isPending}
-                      onClick={() =>
-                        publish.mutate({
-                          id: prayer.id,
-                          visibility:
-                            prayer.visibility === "published"
-                              ? "private"
-                              : "published",
-                        })
-                      }
-                      size="sm"
-                      type="button"
-                      variant="secondary"
-                    >
-                      {prayer.visibility === "published"
-                        ? "Return to private"
-                        : "Publish prayer"}
-                    </Button>
-                    <EditPrayerDialog prayer={prayer} />
-                    <RecordActions
-                      name={prayer.content}
-                      onDelete={() => remove.mutate({ id: prayer.id })}
-                      pending={remove.isPending}
-                    />
-                  </div>
-                </li>
-              ))}
+            <ul className="flex flex-col gap-3">
+              {records.map((prayer) => {
+                const published = prayer.visibility === "published";
+                return (
+                  <li
+                    className="flex flex-col gap-3 rounded-xl bg-card p-4 sm:p-5"
+                    key={prayer.id}
+                  >
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <StatusChip published={published} />
+                      <span className="type-caption text-muted-foreground">
+                        {prayerMeta(prayer)}
+                      </span>
+                    </div>
+                    <p className="type-body break-words">{prayer.content}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        disabled={publish.isPending}
+                        onClick={() =>
+                          publish.mutate({
+                            id: prayer.id,
+                            visibility: published ? "private" : "published",
+                          })
+                        }
+                        size="sm"
+                        type="button"
+                        variant={published ? "secondary" : "default"}
+                      >
+                        {published ? (
+                          <EyeOff aria-hidden="true" />
+                        ) : (
+                          <Globe aria-hidden="true" />
+                        )}
+                        {published ? "Make private" : "Publish"}
+                      </Button>
+                      <EditPrayerDialog prayer={prayer} />
+                      <RecordActions
+                        description="This permanently removes the prayer request, including who prayed for it."
+                        name={prayer.content}
+                        onDelete={() => remove.mutate({ id: prayer.id })}
+                        pending={remove.isPending}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <QueryMessage>
-              No prayer requests match. Change the search or visibility filter.
+              {all.length
+                ? "No prayer requests match. Change the search or visibility filter."
+                : "No prayer requests yet. New requests from the prayer wall appear here for review."}
             </QueryMessage>
           )}
         </>

@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { ADMIN_PASSCODE, MEMBER_STORAGE_STATE } from "./fixtures";
-import { adminLogin, toast } from "./helpers";
+import { adminLogin, selectOption, toast } from "./helpers";
 
 const SECOND_PAGE = /page=2/;
 const MEMBER_PARAM = /member=/;
+const NAME_DESC = /sort=name\.desc/;
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
 test("rejects an incorrect admin passcode", async ({ page }) => {
@@ -27,8 +28,12 @@ test("directory supports search, sort, pagination, URL state and details", async
   await expect(page).toHaveURL(SECOND_PAGE);
   await page.getByLabel("Search members", { exact: true }).fill("Dash Seed");
   await expect(page).not.toHaveURL(SECOND_PAGE);
-  await page.getByLabel("Rows per page").selectOption("25");
-  await page.getByLabel("Sort by", { exact: true }).selectOption("name-desc");
+  await selectOption(page, "Rows per page", "25");
+  await page
+    .getByRole("button", { exact: true, name: "Member column options" })
+    .click();
+  await page.getByRole("menuitem", { name: "Z–A" }).click();
+  await expect(page).toHaveURL(NAME_DESC);
   const rows = page.getByRole("table").getByRole("row");
   await expect(rows.nth(1)).toContainText("Dash Seed 12");
   await page.reload();
@@ -36,9 +41,7 @@ test("directory supports search, sort, pagination, URL state and details", async
     "Dash Seed"
   );
   await expect(rows.nth(1)).toContainText("Dash Seed 12");
-  await page
-    .getByRole("button", { exact: true, name: "View details for Dash Seed 12" })
-    .click();
+  await page.getByRole("button", { exact: true, name: "Dash Seed 12" }).click();
   await expect(page.getByRole("dialog")).toContainText("Dash Seed 12");
   await expect(page).toHaveURL(MEMBER_PARAM);
   await page.keyboard.press("Escape");
@@ -46,7 +49,7 @@ test("directory supports search, sort, pagination, URL state and details", async
   await expect(
     page.getByRole("button", {
       exact: true,
-      name: "View details for Dash Seed 12",
+      name: "Dash Seed 12",
     })
   ).toBeFocused();
   await page
@@ -55,8 +58,11 @@ test("directory supports search, sort, pagination, URL state and details", async
   await expect(
     page.getByText("No members match these filters.", { exact: false })
   ).toBeVisible();
-  await page.getByRole("button", { name: "Clear filters" }).click();
-  await expect(page.getByRole("table")).toBeVisible();
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.getByLabel("Search members", { exact: true })).toHaveValue(
+    ""
+  );
+  await expect(rows.filter({ hasText: "Dash Seed 12" })).toHaveCount(1);
 });
 
 test("malformed query state and unknown members remain recoverable", async ({
@@ -69,12 +75,12 @@ test("malformed query state and unknown members remain recoverable", async ({
   await expect(page.getByRole("dialog")).toContainText("Member not found");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("table")).toBeVisible();
-  await expect(page.getByLabel("Rows per page")).toHaveValue("10");
+  await expect(page.getByLabel("Rows per page")).toHaveText("10");
 });
 
 test("directory handles a failed query and retry", async ({ page }) => {
   await adminLogin(page);
-  await page.route("**/api/trpc/profiles.getUserProfiles*", (route) =>
+  await page.route("**/api/trpc/*profiles.getUserProfiles*", (route) =>
     route.abort()
   );
   await page.goto("/admin/members");
@@ -84,8 +90,10 @@ test("directory handles a failed query and retry", async ({ page }) => {
   await expect(
     page.getByLabel("Search members", { exact: true })
   ).toBeVisible();
-  await expect(page.getByLabel("Sort by", { exact: true })).toBeVisible();
-  await page.unroute("**/api/trpc/profiles.getUserProfiles*");
+  await expect(
+    page.getByRole("button", { exact: true, name: "Location" })
+  ).toBeVisible();
+  await page.unroute("**/api/trpc/*profiles.getUserProfiles*");
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("table")).toBeVisible();
 });

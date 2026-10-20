@@ -83,6 +83,6 @@ export const setDashboardPageSize = async (page: Page, size: number) => {
   if (!page.url().includes("/admin/members")) {
     await page.goto("/admin/members");
   }
-  await page.getByLabel("Rows per page").selectOption(String(size));
+  await selectOption(page, "Rows per page", String(size));
   await expect(page.getByRole("table")).toBeVisible();
 };

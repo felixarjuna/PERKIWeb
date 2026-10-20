@@ -37,11 +37,14 @@ export default function PrayerWall({ username }: { username: string | null }) {
           Sign in to share a prayer
         </Link>
       ) : (
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-6">
+          <div>
+            <h2 className="type-subheading">Share a prayer request</h2>
+            <p className="type-caption text-muted-foreground">
+              It's sent privately for review before it appears here.
+            </p>
+          </div>
           <AddPrayerForm username={username} />
-          <p className="type-caption text-muted-foreground">
-            Your request is sent privately for review before it appears here.
-          </p>
         </section>
       )}
       <h2 className="type-heading">Community prayers</h2>

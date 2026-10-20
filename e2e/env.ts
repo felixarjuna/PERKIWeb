@@ -17,6 +17,8 @@ export const e2eEnv = {
   NEXT_PUBLIC_GOOGLE_API_KEY: "e2e-google-api-key",
   NEXTAUTH_SECRET: "e2e-secret-not-for-production",
   NEXTAUTH_URL: BASE_URL,
+  // Never contact the real bot from tests; nothing listens on port 9.
+  PERKI_BOT_URL: "http://127.0.0.1:9",
   PORT: String(E2E_PORT),
 };
 

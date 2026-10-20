@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getCommunityOverview } from "../overview/overview-model";
 import {
-  filterAndSortMembers,
+  birthdayOrder,
   getMemberLocations,
   type Member,
+  memberFilterParams,
+  memberSearchText,
   readMemberFilters,
 } from "./member-model";
 
@@ -41,54 +43,66 @@ const list = [
   }),
   member("c", "Cara"),
 ];
-const defaults = readMemberFilters(new URLSearchParams());
-describe("member directory", () => {
-  it("searches names, email and phone and combines location filters", () => {
+describe("member directory URL state", () => {
+  it("reads and normalises location, sort and paging", () => {
     expect(
-      filterAndSortMembers(list, { ...defaults, q: "  BEN@TEST " }).map(
-        (m) => m.profiles.id
+      readMemberFilters(
+        new URLSearchParams(
+          "q=ben&location=aachen,,missing,aachen&sort=birthday.desc&page=3&pageSize=25"
+        )
       )
-    ).toEqual(["b"]);
+    ).toEqual({
+      locations: ["aachen", "missing"],
+      page: 3,
+      pageSize: 25,
+      q: "ben",
+      sort: { desc: true, id: "birthday" },
+    });
+  });
+  it("falls back from malformed URL filters", () => {
+    for (const sort of ["bad", "name.sideways", "phone.asc"]) {
+      expect(
+        readMemberFilters(
+          new URLSearchParams(`page=-1&pageSize=900&sort=${sort}`)
+        )
+      ).toMatchObject({
+        page: 1,
+        pageSize: 10,
+        sort: { desc: false, id: "name" },
+      });
+    }
+  });
+  it("drops defaults from the URL", () => {
     expect(
-      filterAndSortMembers(list, { ...defaults, location: "aachen", q: "123" })
-    ).toHaveLength(1);
+      memberFilterParams({
+        locations: [],
+        page: 1,
+        pageSize: 10,
+        q: "",
+        sort: { desc: false, id: "name" },
+      })
+    ).toEqual({ location: "", page: "", pageSize: "", q: "", sort: "" });
     expect(
-      filterAndSortMembers(list, { ...defaults, location: "missing" }).map(
-        (m) => m.profiles.id
-      )
-    ).toEqual(["c"]);
+      memberFilterParams({
+        locations: ["aachen", "missing"],
+        page: 2,
+        sort: { desc: true, id: "registered" },
+      })
+    ).toEqual({
+      location: "aachen,missing",
+      page: "2",
+      sort: "registered.desc",
+    });
+  });
+  it("derives search text, calendar order and locations", () => {
+    expect(memberSearchText(list[0] as Member)).toBe(
+      "ben ben@test.local +49123"
+    );
+    expect(list.map(birthdayOrder)).toEqual([1022, 104, undefined]);
     expect(getMemberLocations(list)).toEqual([
       { label: "Aachen", value: "aachen" },
       { label: "Not provided", value: "missing" },
     ]);
-  });
-  it("sorts calendar birthdays and keeps missing dates last in both date directions", () => {
-    expect(
-      filterAndSortMembers(list, { ...defaults, sort: "birthday" }).map(
-        (m) => m.profiles.id
-      )
-    ).toEqual(["a", "b", "c"]);
-    expect(
-      filterAndSortMembers(list, { ...defaults, sort: "oldest" }).map(
-        (m) => m.profiles.id
-      )
-    ).toEqual(["a", "b", "c"]);
-    expect(
-      filterAndSortMembers(list, { ...defaults, sort: "newest" }).map(
-        (m) => m.profiles.id
-      )
-    ).toEqual(["b", "a", "c"]);
-    expect(
-      filterAndSortMembers(
-        [member("z", "Same"), member("a", "Same")],
-        defaults
-      ).map((m) => m.profiles.id)
-    ).toEqual(["a", "z"]);
-  });
-  it("validates malformed URL filters", () => {
-    expect(
-      readMemberFilters(new URLSearchParams("page=-1&pageSize=900&sort=bad"))
-    ).toMatchObject({ page: 1, pageSize: 10, sort: "name" });
   });
 });
 describe("community metrics", () => {

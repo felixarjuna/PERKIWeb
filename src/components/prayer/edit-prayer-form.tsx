@@ -1,29 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "~/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-import { Switch } from "~/components/ui/switch";
 import { getUsernameFromName } from "~/lib/utils";
-import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/trpc/react";
-
-const EditPrayerFormSchema = z.object({
-  content: z.string().min(2),
-  isAnonymous: z.boolean(),
-});
+import PrayerForm from "./prayer-form";
 
 type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
 
@@ -36,90 +18,40 @@ export default function EditPrayerForm({
 }) {
   const { data: session } = useSession();
   const utils = api.useUtils();
-  const updatePrayer = api.prayers.updatePrayer.useMutation({
-    onError: (error) => toast.error(error.message),
-    onSuccess: async () => {
-      await utils.prayers.invalidate();
-      toast.success("Your prayer is updated successfully!", {
-        description: "God bless you!",
-      });
-      onCloseDialog();
-    },
-  });
-
-  const form = useForm<z.infer<typeof EditPrayerFormSchema>>({
-    defaultValues: {
-      content: prayer.content,
-      isAnonymous: prayer.isAnonymous ?? undefined,
-    },
-    resolver: zodResolver(EditPrayerFormSchema),
-  });
-
-  function onSubmit(data: z.infer<typeof EditPrayerFormSchema>) {
-    const request: z.infer<typeof editPrayerSchema> = {
-      ...prayer,
-      content: data.content,
-      isAnonymous: data.isAnonymous,
-      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
-      prayerNames: prayer.prayerNames as string[],
-    };
-    updatePrayer.mutate(request);
-  }
-
+  const updatePrayer = api.prayers.updatePrayer.useMutation();
   return (
-    <Form {...form}>
-      <form className="w-full space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-        <div>
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="isAnonymous"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="type-body-sm">Anonymous</FormLabel>
-                </FormItem>
-              )}
-            />
-            <div className="flex gap-x-4">
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          aria-label="Prayer content"
-                          maxLength={50}
-                          placeholder="Insert your prayer here..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex">
-                <Button
-                  className="w-fit"
-                  disabled={updatePrayer.isPending}
-                  type="submit"
-                >
-                  Save changes
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </Form>
+    <PrayerForm
+      defaultValues={{
+        content: prayer.content,
+        isAnonymous: prayer.isAnonymous ?? false,
+      }}
+      onSubmit={async ({ content, isAnonymous }) => {
+        try {
+          await updatePrayer.mutateAsync({
+            ...prayer,
+            content,
+            isAnonymous,
+            name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
+            prayerNames: prayer.prayerNames as string[],
+          });
+        } catch (error) {
+          toast.error(
+            error instanceof Error ? error.message : "Something went wrong."
+          );
+          return false;
+        }
+        await utils.prayers.invalidate();
+        toast.success("Prayer request updated.");
+        onCloseDialog();
+        return false;
+      }}
+      pending={updatePrayer.isPending}
+      secondaryAction={
+        <Button onClick={onCloseDialog} type="button" variant="ghost">
+          Cancel
+        </Button>
+      }
+      submitLabel="Save changes"
+    />
   );
 }
