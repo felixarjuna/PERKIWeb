@@ -1,10 +1,9 @@
 "use client";
 
 import { Dices, Send } from "lucide-react";
-
-import Snowfall from "react-snowfall";
 import secretSanta from "secret-santa-generator";
 import { toast } from "sonner";
+import Template from "~/components/template";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -100,52 +99,48 @@ export default function Page() {
       toast.success("Messages sent", {
         description: "All gift messages have been sent",
       });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Failed to send some messages.");
     }
   };
 
   return (
-    <div className="flex h-screen flex-col bg-cover bg-stary-night-plain">
-      <div className="h-full bg-background/40 backdrop-blur-sm">
-        <Snowfall radius={[0, 2.5]} snowflakeCount={100} speed={[1.0, 2.0]} />
-        <h1 className="mt-20 text-center text-3xl">
-          TUKER KADO PERKI AACHEN 2025
-        </h1>
+    <Template
+      subtitle="Christmas gift exchange"
+      title="Tuker kado PERKI Aachen 2025"
+    >
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={randomize} type="button">
+            <Dices aria-hidden="true" /> Randomize
+          </Button>
 
-        <div className="mx-auto mt-16 md:w-10/12">
-          <div className="flex items-center space-x-2">
-            <Button className="bg-white/20" onClick={randomize}>
-              <Dices className="size-4" /> RANDOMIZE!
-            </Button>
-
-            <Button
-              className="bg-white/20"
-              onClick={() => sendGiftMessages(result)}
-            >
-              <Send className="size-4" /> SEND MESSAGE!
-            </Button>
-          </div>
-
-          <div className="mt-4">
-            <h3 className="mb-2 text-xl">RESULTS</h3>
-            {result === undefined ? (
-              <p>
-                The exchange has not begin yet. Please tell everyone to come ...
-              </p>
-            ) : (
-              <div className="grid flex-wrap gap-x-4 gap-y-2 md:grid-cols-3 lg:grid-cols-4">
-                {guests?.map((guest: Guest) => (
-                  <Badge className="flex w-fit gap-x-2" key={guest.id}>
-                    <p>{guest.names}</p>|<p>{result[guest.id]}</p>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          <Button
+            onClick={() => sendGiftMessages(result)}
+            type="button"
+            variant="secondary"
+          >
+            <Send aria-hidden="true" /> Send messages
+          </Button>
         </div>
+
+        <section className="rounded-xl bg-card p-4 sm:p-6">
+          <h2 className="type-heading mb-4">Results</h2>
+          {result === undefined ? (
+            <p>
+              The exchange has not begin yet. Please tell everyone to come ...
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {guests?.map((guest: Guest) => (
+                <Badge className="flex w-fit gap-x-2" key={guest.id}>
+                  <p>{guest.names}</p>|<p>{result[guest.id]}</p>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
-    </div>
+    </Template>
   );
 }

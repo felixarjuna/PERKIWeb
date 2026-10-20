@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -9,6 +10,10 @@ import {
 } from "~/hooks/use-christmas";
 import useGiftExchange from "~/hooks/use-gift-exchange";
 import Page from "./page";
+
+vi.mock("~/components/template", () => ({
+  default: ({ children }: { children: ReactNode }) => <main>{children}</main>,
+}));
 
 vi.mock("react-snowfall", () => ({ default: () => null }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));

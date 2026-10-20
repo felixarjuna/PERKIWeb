@@ -6,7 +6,6 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
-import Snowfall from "react-snowfall";
 import { z } from "zod";
 import Template from "~/components/template";
 import { Button } from "~/components/ui/button";
@@ -66,20 +65,20 @@ export default function ChristmasPage() {
 
   return (
     <Template title="Christmas Event">
-      <div className="relative flex items-center justify-center bg-background/40 backdrop-blur-sm">
+      <div className="flex flex-col gap-6">
         {agree ? null : (
-          <div className="fixed inset-0 top-10 mx-auto grid h-12 w-10/12 grid-cols-2 items-center justify-center gap-x-1 rounded-mdtext-foreground lg:w-1/2">
-            <div className="col-span-2 flex h-9 justify-center gap-x-1 rounded-sm bg-white/20 px-2 py-2">
+          <div className="rounded-xl bg-card p-4">
+            <div className="flex items-center gap-2">
               {delta(eventDate) === 0 ? (
                 <div className="flex items-center gap-x-1">
                   <Calendar className="h-4 w-4" />
-                  <p className="mb-1 text-sm">Registration closed</p>
+                  <p className="type-body-sm mb-1">Registration closed</p>
                 </div>
               ) : (
                 <div>
                   <div className="flex items-center gap-x-1">
                     <Calendar className="h-4 w-4" />
-                    <p className="text-sm">{delta(eventDate)} days left</p>
+                    <p className="type-body-sm">{delta(eventDate)} days left</p>
                   </div>
                 </div>
               )}
@@ -87,19 +86,23 @@ export default function ChristmasPage() {
           </div>
         )}
 
-        <Snowfall radius={[0, 2.5]} snowflakeCount={100} speed={[1.0, 2.0]} />
-
         {agree ? (
-          <div className="mt-8 grid">
+          <div className="grid">
             <div className="mb-4">
-              <Button onClick={() => setAgree(false)} size={"icon"}>
+              <Button
+                aria-label="Back to event details"
+                onClick={() => setAgree(false)}
+                size="icon"
+                type="button"
+                variant="secondary"
+              >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </div>
 
             <Form {...form}>
               <form
-                className="flex w-full flex-col space-y-4 sm:w-[500px]"
+                className="flex w-full flex-col gap-6"
                 onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FormField
@@ -151,12 +154,15 @@ export default function ChristmasPage() {
                 />
 
                 {addGuest.isPending ? (
-                  <Button className="flex w-full items-center gap-2 bg-white/20">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <p className="text-sm">Registering ...</p>
+                  <Button className="w-full" disabled type="submit">
+                    <Loader2
+                      aria-hidden="true"
+                      className="motion-safe:animate-spin"
+                    />
+                    <p className="type-body-sm">Registering ...</p>
                   </Button>
                 ) : (
-                  <Button className="mt-8 bg-white/20" type="submit">
+                  <Button className="mt-8" type="submit">
                     Submit
                   </Button>
                 )}
@@ -164,7 +170,7 @@ export default function ChristmasPage() {
             </Form>
           </div>
         ) : (
-          <div className="mt-28 lg:w-1/2">
+          <div lang="id">
             <div className="grid gap-y-4">
               <p>Shalom Saudara/i,</p>
               <p>
@@ -219,10 +225,10 @@ export default function ChristmasPage() {
                 Diharapkan Jemaat tidak terlambat untuk datang ke dalam ibadah.
               </p>
 
-              <div className="flex w-full items-center gap-x-4 rounded-md bg-neutral-200/20 p-4">
+              <div className="flex w-full items-start gap-3 rounded-xl bg-card p-4 sm:p-6">
                 <Info className="w-8" />
                 <div className="">
-                  <p className="text-sm">
+                  <p className="type-body-sm">
                     Untuk bantuan dan informasi lebih lanjut, silahkan hubungi{" "}
                     <Link
                       className="font-bold underline"
@@ -236,7 +242,7 @@ export default function ChristmasPage() {
                   </p>
 
                   {totalGuests >= MAX_GUESTS && (
-                    <p className="text-sm text-yellow-300">
+                    <p className="type-body-sm mt-3 text-foreground">
                       Karena kapasitas orang yang sudah mendaftar lebih dari
                       kapasitas maksimal konsumsi, Anda tetap bisa mendaftar dan
                       mengikuti ibadah, namun kita tidak menjamin ketersediaan
@@ -253,14 +259,11 @@ export default function ChristmasPage() {
 
             <div className="mt-12 flex justify-center">
               {isMoreThanOneWeekApart(new Date("2025-12-20T23:59:00+01:00")) ? (
-                <Button className="bg-white/20 font-bold">
+                <Button disabled type="button" variant="secondary">
                   Registration closed!
                 </Button>
               ) : (
-                <Button
-                  className="bg-white/20 font-bold"
-                  onClick={() => setAgree(true)}
-                >
+                <Button onClick={() => setAgree(true)} type="button">
                   <TreePine className="size-4" /> Sign me up!
                 </Button>
               )}

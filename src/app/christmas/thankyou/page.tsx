@@ -1,8 +1,9 @@
 "use client";
 
-import { AlertCircle, Heart, Loader2 } from "lucide-react";
+import { AlertCircle, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "~/components/ui/button";
+import Loader from "~/components/loader";
+import Template from "~/components/template";
 
 export default function Page() {
   const [messageStatus, setMessageStatus] = useState<
@@ -38,30 +39,30 @@ export default function Page() {
 
   function renderStatus() {
     if (isLoading) {
-      return (
-        <Button className="flex w-full items-center gap-2 bg-white/20">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <p className="text-sm">Sending confirmation message ...</p>
-        </Button>
-      );
+      return <Loader message="Sending confirmation message …" />;
     }
 
     if (isError) {
       return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 rounded-md bg-yellow-500/20 p-4">
-            <AlertCircle className="h-5 w-5 text-yellow-500" />
+          <div className="flex items-start gap-3 rounded-xl bg-card p-4 sm:p-6">
+            <AlertCircle aria-hidden="true" className="mt-1 size-5 shrink-0" />
             <div>
-              <p className="font-bold">Registration Successful</p>
-              <p className="text-sm">
+              <h2 className="type-heading mb-2">Registration confirmed</h2>
+              <p className="type-body-sm">
                 However, we could not send the confirmation message via
                 WhatsApp. Please contact support if you do not receive a message
                 soon.
               </p>
-              <p>WA: +49 152 3736 3126 - Felix Arjuna</p>
+              <a
+                className="underline underline-offset-4"
+                href="https://wa.me/4915237363126"
+              >
+                Contact Felix Arjuna on WhatsApp
+              </a>
             </div>
           </div>
-          <p className="text-sm">
+          <p className="type-body-sm">
             You are successfully registered for Perki Aachen christmas
             celebration.
           </p>
@@ -71,10 +72,10 @@ export default function Page() {
 
     return (
       <>
-        <p className="flex items-center gap-2 font-bold">
-          Congratulations! <Heart className="size-4" />
+        <p className="type-heading flex items-center gap-2">
+          Congratulations! <Heart aria-hidden="true" className="size-4" />
         </p>
-        <p className="text-base">
+        <p className="type-body">
           You are successfully registered for Perki Aachen christmas
           celebration. You will receive an automated message for confirmation
           via WhatsApp.
@@ -84,8 +85,10 @@ export default function Page() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted font-mono text-foreground">
-      <div className="w-10/12 md:w-1/3">{renderStatus()}</div>
-    </div>
+    <Template title="Christmas registration">
+      <div className="flex flex-col gap-4" role="status">
+        {renderStatus()}
+      </div>
+    </Template>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Command, Users } from "lucide-react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import type * as React from "react";
 
@@ -21,7 +22,7 @@ const navMain = [
     icon: Users,
     isActive: true,
     title: "Members",
-    url: "#",
+    url: "/admin/dashboard",
   },
 ];
 
@@ -39,15 +40,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
-              <div>
+              <Link href="/">
                 <div className="flex aspect-square items-center justify-center rounded-lg bg-sidebar-primary p-2 text-sidebar-primary-foreground">
                   <Command className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="type-body-sm grid flex-1 text-left leading-tight">
                   <span className="truncate font-semibold">Perki Aachen</span>
-                  <span className="truncate text-xs">Christian fellowship</span>
+                  <span className="type-caption truncate">
+                    Christian fellowship
+                  </span>
                 </div>
-              </div>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

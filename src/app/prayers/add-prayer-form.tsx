@@ -57,12 +57,13 @@ export default function AddPrayerForm({ username }: { username: string }) {
       <form className="w-full space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-y-4">
           <div className="flex gap-x-4">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <FormField
                 control={form.control}
                 name="content"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Prayer request</FormLabel>
                     <FormControl>
                       <Input placeholder="Insert prayer ..." {...field} />
                     </FormControl>
@@ -71,10 +72,7 @@ export default function AddPrayerForm({ username }: { username: string }) {
                 )}
               />
             </div>
-            <Button
-              className="gap-x-1 bg-accent/70 hover:bg-accent"
-              type="submit"
-            >
+            <Button className="mt-7 gap-x-1" type="submit">
               <Plus className="h-5 w-5" />
               Add
             </Button>
@@ -92,7 +90,7 @@ export default function AddPrayerForm({ username }: { username: string }) {
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="text-sm">Anonymous</FormLabel>
+                  <FormLabel className="type-body-sm">Anonymous</FormLabel>
                 </FormItem>
               )}
             />

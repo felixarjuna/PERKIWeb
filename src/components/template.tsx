@@ -20,7 +20,10 @@ export default function Template(props: ITemplateProps) {
   return (
     <div className="min-h-screen bg-background pb-24 text-foreground">
       <Navigation />
-      <main className="mx-auto flex w-full max-w-2xl flex-col px-4 pt-28 sm:px-6 sm:pt-36">
+      <main
+        className="type-body mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pt-28 sm:px-6 sm:pt-36"
+        id="main-content"
+      >
         <header className="flex flex-col items-center gap-3 text-center">
           <h1 className="type-title">{props.title}</h1>
           {props.subtitle ? (

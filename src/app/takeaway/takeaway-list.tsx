@@ -1,5 +1,6 @@
 "use client";
 
+import { ListFilter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import Loader from "~/components/loader";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -34,26 +36,48 @@ export default function TakeawayList() {
     return <Loader className="mt-8" message="Loading takeaways ..." />;
   }
 
-  if (takeaways.length === 0) {
-    return <div className="mt-8 text-center">No takeaway found.</div>;
-  }
-
   return (
     <div className="space-y-4">
-      <Select onValueChange={(value: EventTypeEnum) => setType(value)}>
-        <SelectTrigger>
-          <SelectValue placeholder="Fellowship type" />
+      <Select
+        onValueChange={(value) => {
+          if (
+            value === "all" ||
+            value === "church_service" ||
+            value === "bible_study"
+          ) {
+            setType(value);
+          }
+        }}
+        value={type}
+      >
+        <SelectTrigger
+          aria-label="Fellowship type"
+          className="sm:w-56"
+          variant="filter"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <ListFilter aria-hidden="true" className="size-3.5 shrink-0" />
+            <SelectValue className="truncate" />
+          </span>
         </SelectTrigger>
         <SelectContent>
-          {eventTypeEnum.enumValues.map((value) => (
-            <SelectItem key={value} value={value}>
-              {value === "bible_study" ? "Bible study" : "Church service"}
-            </SelectItem>
-          ))}
-
-          <SelectItem value={"all"}>All</SelectItem>
+          <SelectGroup>
+            <SelectItem value="all">All fellowships</SelectItem>
+            {eventTypeEnum.enumValues.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value === "bible_study" ? "Bible study" : "Church service"}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
+
+      {takeaways.length === 0 ? (
+        <p className="type-body rounded-xl bg-card p-6 text-muted-foreground">
+          No takeaways for this fellowship type yet. Choose another type or add
+          a takeaway.
+        </p>
+      ) : null}
 
       {takeaways.map((item) => {
         const contributors = item.takeaways.contributors as string[];
@@ -102,9 +126,9 @@ function TakeawayItem(props: TakeawayItemProps) {
   });
 
   return (
-    <article className="w-full rounded-xl bg-card p-4 transition duration-300 hover:bg-accent/40 sm:p-6">
-      <div className="flex items-start justify-between gap-x-3">
-        <h2 className="font-reimbrandt text-lg tracking-wide sm:text-xl">
+    <article className="w-full rounded-xl bg-card p-4 transition-colors duration-150 hover:bg-accent/40 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 className="type-subheading min-w-0 flex-1 break-words">
           {props.title}
         </h2>
         <div className="flex shrink-0 items-center gap-x-2">
@@ -117,24 +141,22 @@ function TakeawayItem(props: TakeawayItemProps) {
               router.push(`/edit-takeaway/${props.takeawayId}`)
             }
           />
-          <span className="whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground text-xs">
+          <span className="type-caption whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
             {props.eventType === "bible_study"
               ? "bible study"
               : "church service"}
           </span>
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
+      <div className="type-caption mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
         <p>{props.speaker}</p>
         <span>&middot;</span>
         <p>{props.bibleVerse}</p>
         <span>&middot;</span>
         <p>{props.date}</p>
       </div>
-      <p className="mt-4 whitespace-break-spaces text-sm sm:text-base">
-        {props.summary}
-      </p>
-      <p className="mt-4 text-muted-foreground text-xs">
+      <p className="type-body mt-4 whitespace-break-spaces">{props.summary}</p>
+      <p className="type-caption mt-4 text-muted-foreground">
         {props.contributors.join(" ")}
       </p>
 

@@ -11,9 +11,7 @@ const BIRTHDAY_ERROR = "Invalid input: expected date, received string";
 
 const fillProfile = async (page: Page) => {
   await waitForSession(page);
-  // The date input's <label> points at a wrapper <div>, not the input, so it
-  // cannot be found by label (a11y gap). `#dob` is its only stable handle.
-  await page.locator("#dob").fill("2000-03-15");
+  await page.getByLabel("Date of birth", { exact: true }).fill("2000-03-15");
   await page.getByLabel("Address", { exact: true }).fill("Roermonderstr. 110");
   await page
     .getByLabel("Whatsapp Number", { exact: true })

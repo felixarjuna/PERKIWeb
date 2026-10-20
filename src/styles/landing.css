@@ -4,6 +4,17 @@
  * canvas shared by the hero and About. They sit still unless the
  * visitor allows motion.
  */
+.hero-atmosphere::after {
+  /* Dither after the blurred layers are composited: blurring the noise with
+   * an orb would erase it and bring back the visible 8-bit gradient bands.
+   * This small static tile adds no animation or full-screen SVG filter. */
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image: url("/hero-dither.svg");
+  opacity: 0.035;
+}
+
 .hero-orb {
   position: absolute;
   border-radius: 9999px;

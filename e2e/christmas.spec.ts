@@ -41,11 +41,11 @@ test("gift exchange page renders without the RSVP API", async ({ page }) => {
   await page.goto("/christmas/gift");
 
   await expect(
-    page.getByRole("heading", { name: "TUKER KADO PERKI AACHEN 2025" })
+    page.getByRole("heading", { name: "Tuker kado PERKI Aachen 2025" })
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "RANDOMIZE!" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Randomize" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "SEND MESSAGE!" })
+    page.getByRole("button", { name: "Send messages" })
   ).toBeVisible();
   await expect(
     page.getByText("The exchange has not begin yet.", { exact: false })

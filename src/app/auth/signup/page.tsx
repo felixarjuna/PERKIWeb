@@ -11,22 +11,21 @@ export default async function SignUpPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 text-foreground">
+    <main
+      className="type-body flex min-h-dvh flex-col items-center justify-center px-4 py-12 text-foreground"
+      id="main-content"
+    >
       <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg sm:p-10">
-        <p className="text-muted-foreground text-xs uppercase tracking-[0.2em]">
-          Perki Aachen
-        </p>
-        <h1 className="mt-2 font-reimbrandt text-3xl sm:text-4xl">
-          Create your account
-        </h1>
-        <p className="mt-1 text-muted-foreground text-sm">
+        <p className="type-eyebrow text-muted-foreground">Perki Aachen</p>
+        <h1 className="type-title mt-2">Create your account</h1>
+        <p className="type-body-sm mt-1 text-muted-foreground">
           Create an account to see schedules, takeaways and the prayer wall.
           Part of the fellowship? You can register as a member right after.
         </p>
 
         <SignUpForm />
 
-        <p className="mt-8 text-center text-muted-foreground text-sm">
+        <p className="type-body-sm mt-8 text-center text-muted-foreground">
           Already have an account?{" "}
           <Link
             className="text-foreground underline underline-offset-4"

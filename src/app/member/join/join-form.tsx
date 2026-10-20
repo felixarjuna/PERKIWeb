@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
@@ -85,7 +84,10 @@ export default function JoinForm() {
 
   return (
     <Form {...form}>
-      <form className="space-y-4 py-10" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-6"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="birthday"
@@ -94,24 +96,20 @@ export default function JoinForm() {
               <FormLabel>Date of birth</FormLabel>
 
               <FormControl className="w-full">
-                <div className="relative w-full">
-                  <Calendar className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-                  <Input
-                    className="w-[190px] pl-8"
-                    id="dob"
-                    // The schema expects a Date; valueAsDate is UTC midnight,
-                    // matching how the old z.coerce.date() parsed the string.
-                    onChange={(e) =>
-                      field.onChange(e.target.valueAsDate ?? undefined)
-                    }
-                    type="date"
-                    value={
-                      field.value
-                        ? field.value.toISOString().slice(0, ISO_DATE_LENGTH)
-                        : ""
-                    }
-                  />
-                </div>
+                <Input
+                  className="w-full"
+                  // The schema expects a Date; valueAsDate is UTC midnight,
+                  // matching how the old z.coerce.date() parsed the string.
+                  onChange={(e) =>
+                    field.onChange(e.target.valueAsDate ?? undefined)
+                  }
+                  type="date"
+                  value={
+                    field.value
+                      ? field.value.toISOString().slice(0, ISO_DATE_LENGTH)
+                      : ""
+                  }
+                />
               </FormControl>
 
               <FormDescription>
@@ -216,7 +214,7 @@ export default function JoinForm() {
         />
         <Button disabled={addProfile.isPending} type="submit">
           {addProfile.isPending ? (
-            <Loader className="text-xs" message="Adding profile ..." />
+            <Loader className="type-caption" message="Adding profile ..." />
           ) : (
             "Submit"
           )}

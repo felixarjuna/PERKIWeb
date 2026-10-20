@@ -9,14 +9,13 @@ export default function Loader(props: ILoaderProps) {
   return (
     <div
       className={cn(
-        "flex animate-pulse items-center justify-center gap-1 sm:gap-2",
+        "type-body-sm flex items-center justify-center gap-2 text-muted-foreground",
         props.className
       )}
+      role="status"
     >
-      <Loader2 className="size-4 animate-spin sm:size-5" />
-      <p className="font-reimbrandt text-sm tracking-wider sm:text-lg">
-        {props.message}
-      </p>
+      <Loader2 aria-hidden="true" className="size-4 motion-safe:animate-spin" />
+      <p>{props.message}</p>
     </div>
   );
 }

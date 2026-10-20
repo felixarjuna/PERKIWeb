@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
+import { Button, type ButtonProps } from "./ui/button";
 
 interface ActionButtonProps {
   className?: string;
@@ -30,16 +31,21 @@ export default function ActionButton({
   );
 }
 
-export function EditButton({ onEditClick }: { onEditClick?: () => void }) {
+export function EditButton({
+  onEditClick,
+  ...props
+}: ButtonProps & { onEditClick?: () => void }) {
   return (
-    <button
+    <Button
       aria-label="Edit"
-      className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/80 hover:bg-accent"
       onClick={onEditClick}
+      size="icon-sm"
       type="button"
+      variant="secondary"
+      {...props}
     >
-      <PenBoxIcon className="h-4 w-4" />
-    </button>
+      <PenBoxIcon aria-hidden="true" />
+    </Button>
   );
 }
 
@@ -47,13 +53,14 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <button
+        <Button
           aria-label="Delete"
-          className="flex h-6 w-6 items-center justify-center rounded-md bg-destructive/50 hover:bg-destructive/70"
+          size="icon-sm"
           type="button"
+          variant="destructive"
         >
-          <TrashIcon className="h-4 w-4" />
-        </button>
+          <TrashIcon aria-hidden="true" />
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="w-10/12">
         <AlertDialogHeader>
