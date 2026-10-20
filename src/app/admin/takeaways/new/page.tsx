@@ -9,7 +9,7 @@ export default async function EditorPage({
 }: {
   searchParams: Promise<PageSearchParams>;
 }) {
-  const session = await requireAdmin(
+  const { session } = await requireAdmin(
     requestedPath("/admin/takeaways/new", await searchParams)
   );
   return (
