@@ -1,5 +1,5 @@
 import {
-  HandHeart,
+  CodeXml,
   HandHelping,
   type LucideIcon,
   PenLine,
@@ -11,13 +11,14 @@ import { cn } from "~/lib/utils";
 const roleStyles: Record<Role, { className: string; icon: LucideIcon }> = {
   member: { className: "bg-secondary text-muted-foreground", icon: User },
   mita: { className: "bg-paper text-paper-foreground", icon: HandHelping },
-  owner: { className: "bg-primary text-primary-foreground", icon: HandHeart },
+  owner: { className: "bg-primary text-primary-foreground", icon: CodeXml },
   writer: { className: "bg-accent text-foreground", icon: PenLine },
 };
 
 /**
- * A role pill sized to its label. Staff roles use serving
- * icons rather than marks of rank; members get the quietest tone.
+ * A role pill sized to its label. The dev (stored as `owner`) gets a code
+ * icon and mita a serving one rather than marks of rank; members get the
+ * quietest tone.
  */
 export function RoleBadge({
   className,

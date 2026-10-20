@@ -61,3 +61,6 @@ request/*
 
 # Agent worktrees (Claude Code); never commit them
 .claude/worktrees/
+
+# Local MCP config (Supabase project ref); never commit it
+.mcp.json

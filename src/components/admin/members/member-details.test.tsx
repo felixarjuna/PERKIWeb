@@ -85,7 +85,7 @@ it("returns focus to the directory search when details were opened through a URL
 
 it("shows the owner read-only with no role select", () => {
   render(<DetailHarness member={target("owner")} />);
-  expect(screen.getByText("The owner's role can't be changed.")).toBeTruthy();
+  expect(screen.getByText("The dev role can't be changed.")).toBeTruthy();
   expect(screen.queryByRole("combobox", { name: "Role" })).toBeNull();
 });
 
