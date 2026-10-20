@@ -1,11 +1,6 @@
-import { redirect } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
-import {
-  authPageUrl,
-  type PageSearchParams,
-  requestedPath,
-} from "~/lib/auth-redirect";
-import { auth } from "~/server/auth";
+import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
+import { requireAdmin } from "~/server/authz";
 import AddScheduleForm from "./add-schedule-form";
 
 export default async function EditorPage({
@@ -13,15 +8,7 @@ export default async function EditorPage({
 }: {
   searchParams: Promise<PageSearchParams>;
 }) {
-  const session = await auth();
-  if (!session) {
-    redirect(
-      authPageUrl(
-        "signin",
-        requestedPath("/admin/schedules/new", await searchParams)
-      )
-    );
-  }
+  await requireAdmin(requestedPath("/admin/schedules/new", await searchParams));
   return (
     <AdminShell section="Schedules" title="Add schedule">
       <AddScheduleForm />

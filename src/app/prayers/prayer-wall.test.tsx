@@ -7,6 +7,7 @@ const { retry } = vi.hoisted(() => ({ retry: vi.fn() }));
 vi.mock("./add-prayer-form", () => ({
   default: () => <p>Prayer request form</p>,
 }));
+vi.mock("./own-prayers", () => ({ default: () => null }));
 vi.mock("~/trpc/react", () => ({
   api: {
     prayers: {
@@ -43,7 +44,7 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 it("offers recovery when the member prayer status fails independently of the public list", async () => {
-  render(<PrayerWall username="alice" />);
+  render(<PrayerWall signedIn />);
   expect(screen.getByText("Pray for my family")).toBeTruthy();
   await userEvent
     .setup()

@@ -48,21 +48,14 @@ export const updateScheduleSchema = addScheduleSchema.extend({
 /** Longest prayer request, in characters (shared with the prayer form). */
 export const PRAYER_MAX_LENGTH = 280;
 
+/** The author and their name come from the session, not from input. */
 export const addPrayerSchema = z.object({
   content: z.string().min(2).max(PRAYER_MAX_LENGTH),
   isAnonymous: z.boolean(),
-  name: z.string().optional(),
-  prayerNames: z.array(z.string()),
 });
 
 export const editPrayerSchema = addPrayerSchema.extend({
   id: z.number(),
-});
-
-export const addPrayerCountSchema = z.object({
-  count: z.number(),
-  id: z.number(),
-  prayerNames: z.array(z.string()),
 });
 
 export const queryByIdSchema = z.object({
@@ -72,6 +65,7 @@ export const queryByIdSchema = z.object({
 export const prayerVisibilitySchema = queryByIdSchema.extend({
   visibility: z.enum(["private", "published"]),
 });
+/** Whether the signed-in user is praying for published prayer `id`. */
 export const prayerAcknowledgementSchema = queryByIdSchema.extend({
   pressed: z.boolean(),
 });

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  addPrayerCountSchema,
   addPrayerSchema,
   addProfileSchema,
   addScheduleBatchSchema,
   addScheduleSchema,
   addTakeawaySchema,
   editPrayerSchema,
+  prayerAcknowledgementSchema,
   queryByIdSchema,
   updateScheduleSchema,
   updateTakeawaySchema,
@@ -190,10 +190,9 @@ describe("prayer schemas", () => {
   const prayer = {
     content: "Pray for us",
     isAnonymous: false,
-    prayerNames: [],
   };
 
-  it("accepts a valid prayer with optional name omitted", () => {
+  it("accepts a valid prayer", () => {
     expect(addPrayerSchema.safeParse(prayer).success).toBe(true);
   });
 
@@ -220,14 +219,12 @@ describe("prayer schemas", () => {
     expect(editPrayerSchema.safeParse({ ...prayer, id: 1 }).success).toBe(true);
   });
 
-  it("validates prayer counts", () => {
+  it("validates praying toggles", () => {
     expect(
-      addPrayerCountSchema.safeParse({ count: 2, id: 1, prayerNames: ["a"] })
-        .success
+      prayerAcknowledgementSchema.safeParse({ id: 1, pressed: true }).success
     ).toBe(true);
     expect(
-      addPrayerCountSchema.safeParse({ count: "2", id: 1, prayerNames: [] })
-        .success
+      prayerAcknowledgementSchema.safeParse({ id: 1, pressed: "yes" }).success
     ).toBe(false);
   });
 });

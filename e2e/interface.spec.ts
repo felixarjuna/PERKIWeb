@@ -3,7 +3,8 @@ import { insertSchedule } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption } from "./helpers";
 
-const MEMBER_MENU = /E2E Member/;
+/** The admin pages are opened as the seeded admin (`adminLogin`). */
+const ADMIN_MENU = /E2E Admin/;
 const widths = [320, 1440] as const;
 const publicRoutes = [
   "/group",
@@ -106,7 +107,7 @@ for (const width of widths) {
         if (width === 320) {
           await page.getByRole("button", { name: "Toggle Sidebar" }).click();
         }
-        await page.getByRole("button", { name: MEMBER_MENU }).click();
+        await page.getByRole("button", { name: ADMIN_MENU }).click();
         const accountLink = page.getByRole("menuitem", {
           exact: true,
           name: "Account",

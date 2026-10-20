@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { AppSidebar } from "~/components/app-sidebar";
-import Loader from "~/components/loader";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,12 +17,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
-import useAuth from "~/hooks/use-auth";
 import type { adminNavigation } from "./admin-navigation";
 
 type AdminSection = (typeof adminNavigation)[number]["title"];
 
-/** Transitional UI gate; server-side role enforcement is separate work. */
+/** Layout for admin pages. Access is enforced on the server (requireAdmin). */
 export default function AdminShell({
   children,
   section,
@@ -38,22 +35,6 @@ export default function AdminShell({
   subtitle?: string;
   actions?: ReactNode;
 }) {
-  const { authorized } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  useEffect(() => {
-    if (mounted && !authorized) {
-      const query = new URLSearchParams({
-        callbackUrl: `${pathname}${window.location.search}`,
-      });
-      router.replace(`/admin?${query}`);
-    }
-  }, [authorized, mounted, pathname, router]);
-  if (!(mounted && authorized)) {
-    return <Loader message="Opening admin sign-in ..." />;
-  }
   return (
     <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>

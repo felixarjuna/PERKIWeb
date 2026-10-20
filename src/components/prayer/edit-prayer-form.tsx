@@ -1,22 +1,24 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
-import { getUsernameFromName } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import PrayerForm from "./prayer-form";
 
-type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
+/** The fields an edit needs, from the admin list or the author's own list. */
+export interface EditablePrayer {
+  content: string;
+  id: number;
+  isAnonymous: boolean | null;
+}
 
 export default function EditPrayerForm({
   prayer,
   onCloseDialog,
 }: {
-  prayer: Prayer;
+  prayer: EditablePrayer;
   onCloseDialog: () => void;
 }) {
-  const { data: session } = useSession();
   const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation();
   return (
@@ -28,11 +30,9 @@ export default function EditPrayerForm({
       onSubmit={async ({ content, isAnonymous }) => {
         try {
           await updatePrayer.mutateAsync({
-            ...prayer,
             content,
+            id: prayer.id,
             isAnonymous,
-            name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
-            prayerNames: prayer.prayerNames as string[],
           });
         } catch (error) {
           toast.error(

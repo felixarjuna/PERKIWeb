@@ -4,7 +4,7 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { accounts, profiles, users } from "~/lib/db/schema/schema";
 import { assertLocalDatabase, e2eEnv } from "./env";
-import { DASHBOARD_MEMBERS, MEMBER } from "./fixtures";
+import { ADMIN, DASHBOARD_MEMBERS, MEMBER } from "./fixtures";
 
 /** Migrates the throwaway database from scratch and seeds known accounts. */
 export default async function globalSetup() {
@@ -21,18 +21,19 @@ export default async function globalSetup() {
     await db.execute(sql`create schema public`);
     await migrate(db, { migrationsFolder: "./src/lib/db/migrations" });
 
-    await db.insert(users).values({
-      email: MEMBER.email,
-      id: MEMBER.id,
-      name: MEMBER.name,
-    });
+    await db.insert(users).values([
+      { email: MEMBER.email, id: MEMBER.id, name: MEMBER.name },
+      { email: ADMIN.email, id: ADMIN.id, name: ADMIN.name, role: "admin" },
+    ]);
 
-    await db.insert(accounts).values({
-      provider: "google",
-      providerAccountId: MEMBER.id,
-      type: "oidc",
-      userId: MEMBER.id,
-    });
+    await db.insert(accounts).values(
+      [MEMBER, ADMIN].map(({ id }) => ({
+        provider: "google",
+        providerAccountId: id,
+        type: "oidc" as const,
+        userId: id,
+      }))
+    );
 
     // Dashboard members only need a profile; they never sign in.
     await db

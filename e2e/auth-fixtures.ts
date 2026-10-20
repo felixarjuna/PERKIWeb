@@ -46,6 +46,9 @@ export const setTestSession = async (page: Page, user: TestAccount) => {
     secret: e2eEnv.NEXTAUTH_SECRET,
     token: { email: user.email, name: user.name, sub: user.id },
   });
+  // Replace any session the app issued earlier; otherwise both cookies are
+  // sent and the server may keep the previous user.
+  await page.context().clearCookies({ name: SESSION_COOKIE });
   await page.context().addCookies([
     {
       expires: Date.now() / MILLISECONDS_PER_SECOND + SESSION_DURATION_SECONDS,

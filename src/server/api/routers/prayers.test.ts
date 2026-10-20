@@ -4,14 +4,17 @@ import { PRAYER_MAX_LENGTH } from "~/server/api/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
-const validPrayer = {
-  content: "Pray for my exams",
-  isAnonymous: false,
-  name: "Alice",
-  prayerNames: [],
-};
+const validPrayer = { content: "Pray for my exams", isAnonymous: false };
 
-const signedIn = async () => callerFor((await insertUser()).id);
+/** A signed-in caller for a fresh user named `name` (a member by default). */
+const signedIn = async (name = "Alice", role: "admin" | "member" = "member") =>
+  callerFor((await insertUser({ name, role })).id);
+
+/** A signed-in caller plus the id of their new user. */
+const signedInUser = async (name: string) => {
+  const user = await insertUser({ name });
+  return { api: callerFor(user.id), id: user.id };
+};
 
 const onlyPrayer = async () => {
   const rows = await testDb.select().from(prayers);
@@ -23,134 +26,275 @@ const onlyPrayer = async () => {
   return row;
 };
 
-describe("prayers router", () => {
-  it("acknowledges a published prayer idempotently and returns only the current user's IDs", async () => {
-    const first = await signedIn();
-    const second = await signedIn();
-    await first.prayers.addPrayer(validPrayer);
-    const { id } = await onlyPrayer();
-    await expect(
-      first.prayers.acknowledgePrayer({ id, pressed: true })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    await first.prayers.setPrayerVisibility({ id, visibility: "published" });
-    await first.prayers.acknowledgePrayer({ id, pressed: true });
-    await first.prayers.acknowledgePrayer({ id, pressed: true });
-    expect((await onlyPrayer()).count).toBe(1);
-    expect(await first.prayers.getOwnPrayerAcknowledgements()).toEqual([id]);
-    expect(await second.prayers.getOwnPrayerAcknowledgements()).toEqual([]);
-    await second.prayers.acknowledgePrayer({ id, pressed: true });
-    expect((await onlyPrayer()).count).toBe(2);
-    await first.prayers.acknowledgePrayer({ id, pressed: false });
-    expect((await onlyPrayer()).count).toBe(1);
-    expect(await first.prayers.getOwnPrayerAcknowledgements()).toEqual([]);
-    await expect(
-      anonymousCaller().prayers.acknowledgePrayer({ id, pressed: true })
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-  });
-  it("keeps new prayers private and exposes only published safe fields", async () => {
-    const api = await signedIn();
-    await api.prayers.addPrayer({
-      ...validPrayer,
-      prayerNames: ["Private participant"],
-    });
-    const { id } = await onlyPrayer();
-    expect(await anonymousCaller().prayers.getPublishedPrayers()).toEqual([]);
-    await api.prayers.setPrayerVisibility({ id, visibility: "published" });
-    const publicRows = await anonymousCaller().prayers.getPublishedPrayers();
-    expect(publicRows).toHaveLength(1);
-    expect(publicRows.at(0)).not.toHaveProperty("prayerNames");
-    await api.prayers.setPrayerVisibility({ id, visibility: "private" });
-    expect(await anonymousCaller().prayers.getPublishedPrayers()).toEqual([]);
-  });
+/** Adds a prayer as a fresh author and publishes it as a fresh admin. */
+const publishedPrayer = async (prayer = validPrayer) => {
+  const author = await signedIn("Alice");
+  const admin = await signedIn("Admin", "admin");
+  await author.prayers.addPrayer(prayer);
+  const { id } = await onlyPrayer();
+  await admin.prayers.setPrayerVisibility({ id, visibility: "published" });
+  return { admin, author, id };
+};
 
-  it("masks anonymous authors and rejects anonymous publication", async () => {
-    const api = await signedIn();
-    await api.prayers.addPrayer({ ...validPrayer, isAnonymous: true });
-    const { id } = await onlyPrayer();
-    await expect(
-      anonymousCaller().prayers.setPrayerVisibility({
-        id,
-        visibility: "published",
-      })
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-    await api.prayers.setPrayerVisibility({ id, visibility: "published" });
-    expect(
-      (await anonymousCaller().prayers.getPublishedPrayers()).at(0)?.name
-    ).toBeNull();
-  });
-  it("adds a prayer with a zero count and lists it", async () => {
-    const api = await signedIn();
+describe("prayers router: authorship", () => {
+  it("credits a new private prayer to the signed-in user, with a zero count", async () => {
+    const api = await signedIn("Alice Smith");
 
     await api.prayers.addPrayer(validPrayer);
 
-    const list = await api.prayers.getPrayers();
-    expect(list).toHaveLength(1);
-    expect(list[0]).toMatchObject({ ...validPrayer, count: 0 });
+    expect(await onlyPrayer()).toMatchObject({
+      ...validPrayer,
+      count: 0,
+      name: "alicesmith",
+      prayerNames: [],
+      visibility: "private",
+    });
   });
 
-  it("stores anonymous prayers without a name", async () => {
-    const api = await signedIn();
+  it("ignores a client-supplied name, count, prayer list or visibility", async () => {
+    const api = await signedIn("Alice");
 
     await api.prayers.addPrayer({
-      content: "Pray for my family",
-      isAnonymous: true,
-      prayerNames: [],
-    });
+      ...validPrayer,
+      count: 99,
+      name: "Bob",
+      prayerNames: ["Mallory"],
+      visibility: "published",
+    } as never);
 
     expect(await onlyPrayer()).toMatchObject({
-      isAnonymous: true,
-      name: null,
+      count: 0,
+      name: "alice",
+      prayerNames: [],
+      visibility: "private",
     });
   });
 
-  it("updates a prayer's content", async () => {
-    const api = await signedIn();
+  it("lists only the author's own requests, private or published", async () => {
+    const alice = await signedIn("Alice");
+    const bob = await signedIn("Bob");
+    await alice.prayers.addPrayer(validPrayer);
+    await bob.prayers.addPrayer({ ...validPrayer, content: "Bob's request" });
+
+    const own = await alice.prayers.getOwnPrayers();
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({
+      content: validPrayer.content,
+      visibility: "private",
+    });
+    expect(own[0]).not.toHaveProperty("authorId");
+    expect(own[0]).not.toHaveProperty("prayerNames");
+  });
+
+  it("lets the author edit content and anonymity only", async () => {
+    const api = await signedIn("Alice");
     await api.prayers.addPrayer(validPrayer);
     const { id } = await onlyPrayer();
 
     await api.prayers.updatePrayer({
-      ...validPrayer,
       content: "Pray for my thesis",
       id,
-    });
-
-    expect((await onlyPrayer()).content).toBe("Pray for my thesis");
-  });
-
-  it("updates the prayer count and who prayed", async () => {
-    const api = await signedIn();
-    await api.prayers.addPrayer(validPrayer);
-    const { id } = await onlyPrayer();
-
-    await api.prayers.updatePrayerCount({
-      count: 2,
-      id,
-      prayerNames: ["Bob", "Carol"],
-    });
+      isAnonymous: true,
+      name: "Bob",
+    } as never);
 
     expect(await onlyPrayer()).toMatchObject({
-      content: validPrayer.content,
-      count: 2,
-      prayerNames: ["Bob", "Carol"],
+      content: "Pray for my thesis",
+      isAnonymous: true,
+      name: "alice",
     });
   });
 
-  it("deletes a prayer", async () => {
+  it("sends an author's edit of a published prayer back to review", async () => {
+    const { admin, author, id } = await publishedPrayer();
+
+    await author.prayers.updatePrayer({ ...validPrayer, content: "New", id });
+    expect((await onlyPrayer()).visibility).toBe("private");
+
+    await admin.prayers.setPrayerVisibility({ id, visibility: "published" });
+    await admin.prayers.updatePrayer({ ...validPrayer, content: "Fixed", id });
+    expect(await onlyPrayer()).toMatchObject({
+      content: "Fixed",
+      visibility: "published",
+    });
+  });
+
+  it("forbids other members from editing or deleting a prayer", async () => {
+    const author = await signedIn("Alice");
+    const other = await signedIn("Bob");
+    await author.prayers.addPrayer(validPrayer);
+    const { id } = await onlyPrayer();
+
+    await expect(
+      other.prayers.updatePrayer({ ...validPrayer, content: "Edited", id })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(other.prayers.deletePrayer({ id })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect((await onlyPrayer()).content).toBe(validPrayer.content);
+  });
+
+  it("lets admins edit and delete any prayer", async () => {
+    const author = await signedIn("Alice");
+    const admin = await signedIn("Admin", "admin");
+    await author.prayers.addPrayer(validPrayer);
+    const { id } = await onlyPrayer();
+
+    await admin.prayers.updatePrayer({ ...validPrayer, content: "Edited", id });
+    expect((await onlyPrayer()).content).toBe("Edited");
+
+    await admin.prayers.deletePrayer({ id });
+    expect(await testDb.select().from(prayers)).toEqual([]);
+  });
+
+  it("lets only admins manage prayers written before authorship existed", async () => {
+    await testDb
+      .insert(prayers)
+      .values({ content: "Old prayer", name: "alice", prayerNames: [] });
+    const { id } = await onlyPrayer();
+    const member = await signedIn("Alice");
+
+    await expect(member.prayers.deletePrayer({ id })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await (await signedIn("Admin", "admin")).prayers.deletePrayer({ id });
+    expect(await testDb.select().from(prayers)).toEqual([]);
+  });
+
+  it("deletes the author's own prayer", async () => {
     const api = await signedIn();
     await api.prayers.addPrayer(validPrayer);
     const { id } = await onlyPrayer();
 
     await api.prayers.deletePrayer({ id });
 
-    expect(await api.prayers.getPrayers()).toEqual([]);
+    expect(await api.prayers.getOwnPrayers()).toEqual([]);
+  });
+});
+
+describe("prayers router: review and the public wall", () => {
+  it("keeps the review list and publishing admin-only", async () => {
+    const member = await signedIn("Alice");
+    await member.prayers.addPrayer(validPrayer);
+    const { id } = await onlyPrayer();
+
+    await expect(member.prayers.getPrayers()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(
+      member.prayers.setPrayerVisibility({ id, visibility: "published" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect((await onlyPrayer()).visibility).toBe("private");
+
+    const admin = await signedIn("Admin", "admin");
+    const [listed] = await admin.prayers.getPrayers();
+    expect(listed).toMatchObject({ content: validPrayer.content, id });
+    expect(listed).not.toHaveProperty("authorId");
   });
 
+  it("shows only published prayers, with safe fields, on the public wall", async () => {
+    const { admin, id } = await publishedPrayer();
+    await testDb.update(prayers).set({ prayerNames: ["Private participant"] });
+
+    const publicRows = await anonymousCaller().prayers.getPublishedPrayers();
+    expect(publicRows).toHaveLength(1);
+    expect(publicRows.at(0)).not.toHaveProperty("prayerNames");
+    expect(publicRows.at(0)).not.toHaveProperty("authorId");
+
+    await admin.prayers.setPrayerVisibility({ id, visibility: "private" });
+    expect(await anonymousCaller().prayers.getPublishedPrayers()).toEqual([]);
+  });
+
+  it("hides an anonymous author's name on the public wall", async () => {
+    await publishedPrayer({ ...validPrayer, isAnonymous: true });
+
+    expect(
+      (await anonymousCaller().prayers.getPublishedPrayers()).at(0)?.name
+    ).toBeNull();
+    // Admins reviewing it still see who wrote it.
+    const reviewer = await signedIn("Reviewer", "admin");
+    const [reviewed] = await reviewer.prayers.getPrayers();
+    expect(reviewed?.name).toBe("alice");
+  });
+});
+
+describe("prayers router: praying together", () => {
+  it("records who prays by user id, idempotently, only on published prayers", async () => {
+    const author = await signedIn("Alice");
+    await author.prayers.addPrayer(validPrayer);
+    const { id } = await onlyPrayer();
+    const bob = await signedInUser("Bob");
+    const carol = await signedInUser("Carol");
+
+    await expect(
+      bob.api.prayers.acknowledgePrayer({ id, pressed: true })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const admin = await signedIn("Admin", "admin");
+    await admin.prayers.setPrayerVisibility({ id, visibility: "published" });
+    await bob.api.prayers.acknowledgePrayer({ id, pressed: true });
+    await carol.api.prayers.acknowledgePrayer({ id, pressed: true });
+    // Praying twice is idempotent.
+    await bob.api.prayers.acknowledgePrayer({ id, pressed: true });
+
+    const prayed = await onlyPrayer();
+    expect(prayed.count).toBe(2);
+    expect((prayed.prayerNames as string[]).sort()).toEqual(
+      [bob.id, carol.id].sort()
+    );
+    expect(await bob.api.prayers.getOwnPrayerAcknowledgements()).toEqual([id]);
+    expect(await author.prayers.getOwnPrayerAcknowledgements()).toEqual([]);
+
+    await bob.api.prayers.acknowledgePrayer({ id, pressed: false });
+    expect(await onlyPrayer()).toMatchObject({
+      count: 1,
+      prayerNames: [carol.id],
+    });
+  });
+
+  it("replaces a legacy username entry instead of counting the person twice", async () => {
+    const { id } = await publishedPrayer();
+    await testDb.update(prayers).set({ count: 1, prayerNames: ["bob"] });
+    const bob = await signedInUser("Bob");
+
+    expect(await bob.api.prayers.getOwnPrayerAcknowledgements()).toEqual([id]);
+    await bob.api.prayers.acknowledgePrayer({ id, pressed: true });
+
+    expect(await onlyPrayer()).toMatchObject({
+      count: 1,
+      prayerNames: [bob.id],
+    });
+  });
+
+  it("keeps every concurrent prayer", async () => {
+    const { id } = await publishedPrayer();
+    const callers = await Promise.all(
+      ["Bob", "Carol", "Dave", "Erin"].map((name) => signedInUser(name))
+    );
+
+    await Promise.all(
+      callers.map(({ api }) =>
+        api.prayers.acknowledgePrayer({ id, pressed: true })
+      )
+    );
+
+    const prayer = await onlyPrayer();
+    expect(prayer.count).toBe(callers.length);
+    expect((prayer.prayerNames as string[]).sort()).toEqual(
+      callers.map((caller) => caller.id).sort()
+    );
+  });
+});
+
+describe("prayers router: validation and access", () => {
   it("returns NOT_FOUND when changing or deleting a missing prayer", async () => {
     const api = await signedIn();
+    const admin = await signedIn("Admin", "admin");
     const calls = [
       api.prayers.updatePrayer({ ...validPrayer, id: 404 }),
-      api.prayers.updatePrayerCount({ count: 1, id: 404, prayerNames: [] }),
+      api.prayers.acknowledgePrayer({ id: 404, pressed: true }),
       api.prayers.deletePrayer({ id: 404 }),
+      admin.prayers.setPrayerVisibility({ id: 404, visibility: "published" }),
     ];
 
     await Promise.all(
@@ -160,22 +304,16 @@ describe("prayers router", () => {
     );
   });
 
-  it("rejects content shorter than 2 characters with BAD_REQUEST", async () => {
-    const api = await signedIn();
-
-    await expect(
-      api.prayers.addPrayer({ ...validPrayer, content: "x" })
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(await testDb.select().from(prayers)).toEqual([]);
-  });
-
-  it("accepts 280 characters and rejects 281 with BAD_REQUEST", async () => {
+  it(`accepts ${PRAYER_MAX_LENGTH} characters and rejects 1 or ${PRAYER_MAX_LENGTH + 1}`, async () => {
     const api = await signedIn();
 
     await api.prayers.addPrayer({
       ...validPrayer,
       content: "x".repeat(PRAYER_MAX_LENGTH),
     });
+    await expect(
+      api.prayers.addPrayer({ ...validPrayer, content: "x" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(
       api.prayers.addPrayer({
         ...validPrayer,
@@ -185,25 +323,16 @@ describe("prayers router", () => {
     expect(await testDb.select().from(prayers)).toHaveLength(1);
   });
 
-  it("rejects a non-numeric count with BAD_REQUEST", async () => {
-    const api = await signedIn();
-
-    await expect(
-      api.prayers.updatePrayerCount({
-        count: "1",
-        id: 1,
-        prayerNames: [],
-      } as never)
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-  });
-
-  it("rejects every procedure for signed-out visitors", async () => {
+  it("rejects every private procedure for signed-out visitors", async () => {
     const api = anonymousCaller();
     const calls = [
       api.prayers.getPrayers(),
+      api.prayers.getOwnPrayers(),
+      api.prayers.getOwnPrayerAcknowledgements(),
       api.prayers.addPrayer(validPrayer),
       api.prayers.updatePrayer({ ...validPrayer, id: 1 }),
-      api.prayers.updatePrayerCount({ count: 1, id: 1, prayerNames: [] }),
+      api.prayers.acknowledgePrayer({ id: 1, pressed: true }),
+      api.prayers.setPrayerVisibility({ id: 1, visibility: "published" }),
       api.prayers.deletePrayer({ id: 1 }),
     ];
 
@@ -212,22 +341,5 @@ describe("prayers router", () => {
         expect(call).rejects.toMatchObject({ code: "UNAUTHORIZED" })
       )
     );
-  });
-
-  // Prayers have no owner column, so ownership cannot be enforced: any
-  // signed-in account can edit or delete a prayer someone else posted. This
-  // pins the current behaviour so a future ownership check is a conscious
-  // change (see the test report for the security note).
-  it("currently lets any signed-in user edit and delete anyone's prayer", async () => {
-    const author = await signedIn();
-    const other = await signedIn();
-    await author.prayers.addPrayer(validPrayer);
-    const { id } = await onlyPrayer();
-
-    await other.prayers.updatePrayer({ ...validPrayer, content: "Edited", id });
-    expect((await onlyPrayer()).content).toBe("Edited");
-
-    await other.prayers.deletePrayer({ id });
-    expect(await testDb.select().from(prayers)).toEqual([]);
   });
 });

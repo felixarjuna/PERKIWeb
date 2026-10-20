@@ -9,10 +9,10 @@ import {
   queryByIdSchema,
   updateScheduleSchema,
 } from "../schema/schema";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 
 export const scheduleRouter = createTRPCRouter({
-  addSchedule: protectedProcedure.input(addScheduleSchema).mutation(
+  addSchedule: adminProcedure.input(addScheduleSchema).mutation(
     async ({ input }) =>
       await db.insert(schedules).values({
         accommodation: input.accommodation,
@@ -30,13 +30,13 @@ export const scheduleRouter = createTRPCRouter({
         type: input.type,
       })
   ),
-  addScheduleBatch: protectedProcedure
+  addScheduleBatch: adminProcedure
     .input(addScheduleBatchSchema)
     .mutation(
       async ({ input }) => await db.insert(schedules).values([...input])
     ),
   /** Deleting a schedule also deletes its takeaways (FK `ON DELETE CASCADE`). */
-  deleteSchedule: protectedProcedure
+  deleteSchedule: adminProcedure
     .input(queryByIdSchema)
     .mutation(async ({ input }) =>
       affectedRow(
@@ -68,7 +68,7 @@ export const scheduleRouter = createTRPCRouter({
   getSchedules: publicProcedure.query(
     async () => await db.select().from(schedules).orderBy(desc(schedules.date))
   ),
-  updateSchedule: protectedProcedure
+  updateSchedule: adminProcedure
     .input(updateScheduleSchema)
     .mutation(async ({ input }) =>
       affectedRow(

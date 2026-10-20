@@ -16,7 +16,10 @@ const validSchedule = {
   type: "bible_study" as const,
 };
 
-const signedIn = async () => callerFor((await insertUser()).id);
+/** Content writes are admin-only. */
+const signedIn = async () =>
+  callerFor((await insertUser({ role: "admin" })).id);
+const signedInMember = async () => callerFor((await insertUser()).id);
 
 const onlySchedule = async () => {
   const rows = await testDb.select().from(schedulesTable);
@@ -30,8 +33,7 @@ const onlySchedule = async () => {
 
 describe("schedules router", () => {
   it("lets anyone read schedules, newest first", async () => {
-    const user = await insertUser();
-    const api = callerFor(user.id);
+    const api = await signedIn();
     await api.schedules.addScheduleBatch([
       { ...validSchedule, date: new Date("2026-01-01"), title: "Older" },
       { ...validSchedule, date: new Date("2026-06-01"), title: "Newer" },
@@ -190,6 +192,30 @@ describe("schedules router", () => {
     await expect(
       api.schedules.deleteSchedule({ id: 404 })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("forbids members from writing schedules", async () => {
+    const admin = await signedIn();
+    await admin.schedules.addSchedule(validSchedule);
+    const { id } = await onlySchedule();
+    const member = await signedInMember();
+    const calls = [
+      member.schedules.addSchedule(validSchedule),
+      member.schedules.addScheduleBatch([validSchedule]),
+      member.schedules.updateSchedule({
+        ...validSchedule,
+        id,
+        title: "Hacked",
+      }),
+      member.schedules.deleteSchedule({ id }),
+    ];
+
+    await Promise.all(
+      calls.map((call) =>
+        expect(call).rejects.toMatchObject({ code: "FORBIDDEN" })
+      )
+    );
+    expect((await onlySchedule()).title).toBe(validSchedule.title);
   });
 
   it("rejects every write from signed-out visitors", async () => {

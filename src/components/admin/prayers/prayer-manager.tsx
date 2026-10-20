@@ -1,11 +1,12 @@
 "use client";
 
-import { EyeOff, Globe, Lock } from "lucide-react";
+import { EyeOff, Globe } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
+import PrayerStatus from "~/components/prayer/prayer-status";
 import { Button } from "~/components/ui/button";
-import { cn, timeAgo } from "~/lib/utils";
+import { timeAgo } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import {
   AdminSearch,
@@ -21,23 +22,6 @@ const ORDERS = [
   { label: "Newest first", value: "desc" },
   { label: "Oldest first", value: "asc" },
 ] as const;
-
-function StatusChip({ published }: { published: boolean }) {
-  const Icon = published ? Globe : Lock;
-  return (
-    <span
-      className={cn(
-        "type-caption inline-flex items-center gap-1 rounded-full px-2 py-1",
-        published
-          ? "bg-paper text-paper-foreground"
-          : "bg-secondary text-secondary-foreground"
-      )}
-    >
-      <Icon aria-hidden="true" className="size-3" />
-      {published ? "Published" : "Private"}
-    </span>
-  );
-}
 
 function prayerMeta(prayer: Prayer) {
   const praying = Array.isArray(prayer.prayerNames)
@@ -145,7 +129,7 @@ export default function PrayerManager() {
                     key={prayer.id}
                   >
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <StatusChip published={published} />
+                      <PrayerStatus published={published} />
                       <span className="type-caption text-muted-foreground">
                         {prayerMeta(prayer)}
                       </span>

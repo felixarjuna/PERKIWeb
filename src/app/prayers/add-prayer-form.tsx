@@ -6,12 +6,11 @@ import { toast } from "sonner";
 import PrayerForm from "~/components/prayer/prayer-form";
 import { api } from "~/trpc/react";
 
+/** The server credits the request to the signed-in person. */
 export default function AddPrayerForm({
-  username,
   onAdded,
   secondaryAction,
 }: {
-  username: string;
   /** Called after a successful submit, e.g. to close a dialog. */
   onAdded?: () => void;
   secondaryAction?: ReactNode;
@@ -22,12 +21,7 @@ export default function AddPrayerForm({
     <PrayerForm
       onSubmit={async ({ content, isAnonymous }) => {
         try {
-          await addPrayer.mutateAsync({
-            content,
-            isAnonymous,
-            name: username,
-            prayerNames: [],
-          });
+          await addPrayer.mutateAsync({ content, isAnonymous });
         } catch (error) {
           toast.error(
             error instanceof Error ? error.message : "Something went wrong."

@@ -11,12 +11,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import type { RouterOutputs } from "~/trpc/react";
-import EditPrayerForm from "./edit-prayer-form";
+import EditPrayerForm, { type EditablePrayer } from "./edit-prayer-form";
 
-type Prayer = RouterOutputs["prayers"]["getPrayers"][number];
-
-export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
+export default function EditPrayerDialog({
+  prayer,
+  note = "Publication status stays as it is.",
+}: {
+  prayer: EditablePrayer;
+  /** What happens to the request's visibility after saving. */
+  note?: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog onOpenChange={setOpen} open={open}>
@@ -30,8 +34,7 @@ export default function EditPrayerDialog({ prayer }: { prayer: Prayer }) {
         <DialogHeader>
           <DialogTitle>Edit prayer request</DialogTitle>
           <DialogDescription>
-            Change the wording or whether the name is shown. Publication status
-            stays as it is.
+            Change the wording or whether the name is shown. {note}
           </DialogDescription>
         </DialogHeader>
         <EditPrayerForm onCloseDialog={() => setOpen(false)} prayer={prayer} />

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { setTestSession } from "./auth-fixtures";
 import { insertSchedule, insertTakeaway } from "./db";
-import { ADMIN_PASSCODE, MEMBER, uniqueSuffix } from "./fixtures";
+import { ADMIN, MEMBER, uniqueSuffix } from "./fixtures";
 import { adminLogin } from "./helpers";
 
 for (const signedIn of [false, true]) {
@@ -44,23 +44,21 @@ for (const signedIn of [false, true]) {
   });
 }
 
-test("management deep links keep the existing admin gate and resume afterward", async ({
-  page,
-}) => {
-  await setTestSession(page, MEMBER);
+test("management deep links open directly for admins", async ({ page }) => {
+  await setTestSession(page, ADMIN);
   await page.goto("/admin/schedules/new");
-  await expect(page).toHaveURL("/admin?callbackUrl=%2Fadmin%2Fschedules%2Fnew");
-  await page
-    .getByLabel("Username", { exact: true })
-    .fill(ADMIN_PASSCODE.username);
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill(ADMIN_PASSCODE.password);
-  await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL("/admin/schedules/new");
   await expect(
     page.getByRole("heading", { exact: true, name: "Add schedule" })
   ).toBeVisible();
+});
+
+test("the old /admin entry forwards admins to the requested page", async ({
+  page,
+}) => {
+  await setTestSession(page, ADMIN);
+  await page.goto("/admin?callbackUrl=%2Fadmin%2Ftakeaways");
+  await expect(page).toHaveURL("/admin/takeaways");
 });
 
 test("old editor links preserve the new destination through Google sign-in", async ({

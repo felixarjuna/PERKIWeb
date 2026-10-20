@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { DEFAULT_BOT_URL } from "./bot";
 
-const signedIn = async () => callerFor((await insertUser()).id);
+const signedIn = async () =>
+  callerFor((await insertUser({ role: "admin" })).id);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -37,9 +38,13 @@ describe("bot.status", () => {
     });
   });
 
-  it("requires a session", async () => {
+  it("is for admins only", async () => {
     await expect(anonymousCaller().bot.status()).rejects.toBeInstanceOf(
       TRPCError
     );
+    const member = callerFor((await insertUser()).id);
+    await expect(member.bot.status()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_PASSCODE, MEMBER_STORAGE_STATE } from "./fixtures";
-import { adminLogin, selectOption, toast } from "./helpers";
+import { MEMBER_STORAGE_STATE } from "./fixtures";
+import { adminLogin, selectOption } from "./helpers";
 
 const SECOND_PAGE = /page=2/;
 const MEMBER_PARAM = /member=/;
@@ -8,14 +8,31 @@ const NAME_DESC = /sort=name\.desc/;
 const BIRTHDAY_PARAM = /birthday=/;
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
-test("rejects an incorrect admin passcode", async ({ page }) => {
-  await page.goto("/admin");
-  await page
-    .getByLabel("Username", { exact: true })
-    .fill(ADMIN_PASSCODE.username);
-  await page.getByLabel("Password", { exact: true }).fill("incorrect");
-  await page.getByRole("button", { name: "Login" }).click();
-  await expect(toast(page, "Invalid username or password.")).toBeVisible();
+const NOT_FOUND = 404;
+
+for (const path of [
+  "/admin/dashboard",
+  "/admin/members",
+  "/admin/prayers",
+  "/admin/schedules",
+  "/admin/takeaways/new",
+]) {
+  test(`members who are not admins get a 404 at ${path}`, async ({ page }) => {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(NOT_FOUND);
+    await expect(page.getByRole("table")).toHaveCount(0);
+  });
+}
+
+test("signed-out visitors are sent to sign-in", async ({ browser }) => {
+  // A fresh context still inherits the file's member storage state.
+  const context = await browser.newContext({
+    storageState: { cookies: [], origins: [] },
+  });
+  const page = await context.newPage();
+  await page.goto("/admin/dashboard");
+  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Fadmin%2Fdashboard");
+  await context.close();
 });
 
 test("directory supports search, sort, pagination, URL state and details", async ({

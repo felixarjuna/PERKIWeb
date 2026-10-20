@@ -90,11 +90,12 @@ describe("profiles.addUserProfile", () => {
 });
 
 describe("profiles.getUserProfiles", () => {
-  it("joins each profile with its user's public columns", async () => {
+  it("joins each profile with its user's public columns for admins", async () => {
     const member = await insertUser({ email: "member", name: "Member" });
     await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
+    const admin = await insertUser({ role: "admin" });
 
-    const rows = await callerFor(member.id).profiles.getUserProfiles();
+    const rows = await callerFor(admin.id).profiles.getUserProfiles();
 
     expect(rows).toHaveLength(1);
     expect(rows[0]?.profiles.phoneNumber).toBe("+49 123 456789");
@@ -113,9 +114,7 @@ describe("profiles.getUserProfiles", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  // SECURITY: any Google account can still access member PII. Admin-only
-  // access is tracked separately in the admin dashboard redesign.
-  it.fails("hides member PII from a freshly self-registered account", async () => {
+  it("hides member PII from a freshly self-registered account", async () => {
     const member = await insertUser();
     await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
     const stranger = await insertUser({ name: "Stranger" });

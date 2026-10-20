@@ -81,6 +81,8 @@ test("session expiry preserves the membership destination", async ({
   await createSignedInUser(page, "join-expiry");
   await page.goto("/member/join?source=footer#profile");
   await waitForSession(page);
+  // An in-flight session request would re-set the cookie after it's cleared.
+  await page.waitForLoadState("networkidle");
   await context.clearCookies();
   await page.evaluate(() =>
     document.dispatchEvent(new Event("visibilitychange"))

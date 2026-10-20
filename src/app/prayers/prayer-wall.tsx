@@ -8,12 +8,13 @@ import { Button, buttonVariants } from "~/components/ui/button";
 import { authPageUrl } from "~/lib/auth-redirect";
 import { api } from "~/trpc/react";
 import AddPrayerForm from "./add-prayer-form";
+import OwnPrayers from "./own-prayers";
 
-export default function PrayerWall({ username }: { username: string | null }) {
+export default function PrayerWall({ signedIn }: { signedIn: boolean }) {
   const utils = api.useUtils();
   const query = api.prayers.getPublishedPrayers.useQuery();
   const own = api.prayers.getOwnPrayerAcknowledgements.useQuery(undefined, {
-    enabled: username !== null,
+    enabled: signedIn,
   });
   const acknowledge = api.prayers.acknowledgePrayer.useMutation({
     onError: (error) => toast.error(error.message),
@@ -26,7 +27,7 @@ export default function PrayerWall({ username }: { username: string | null }) {
   return (
     <div className="flex flex-col gap-6">
       <p className="type-body">Let's pray together every Wednesday at 18:30.</p>
-      {username === null ? (
+      {signedIn ? null : (
         <Link
           className={buttonVariants({
             className: "self-start",
@@ -36,18 +37,24 @@ export default function PrayerWall({ username }: { username: string | null }) {
         >
           Sign in to share a prayer
         </Link>
-      ) : (
-        <section className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-6">
-          <div>
-            <h2 className="type-subheading">Share a prayer request</h2>
-            <p className="type-caption text-muted-foreground">
-              It's sent privately for review before it appears here.
-            </p>
-          </div>
-          <AddPrayerForm username={username} />
-        </section>
       )}
-      <h2 className="type-heading">Community prayers</h2>
+      {signedIn ? (
+        <>
+          <section className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-6">
+            <div>
+              <h2 className="type-subheading">Share a prayer request</h2>
+              <p className="type-caption text-muted-foreground">
+                It's sent privately for review before it appears here.
+              </p>
+            </div>
+            <AddPrayerForm />
+          </section>
+          <OwnPrayers />
+        </>
+      ) : null}
+      <h2 className="type-heading" id="community-prayers">
+        Community prayers
+      </h2>
       {own.isError ? (
         <div
           className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4"
@@ -79,7 +86,7 @@ export default function PrayerWall({ username }: { username: string | null }) {
         />
       ) : null}
       {query.data?.length ? (
-        <ul className="grid gap-3">
+        <ul aria-labelledby="community-prayers" className="grid gap-3">
           {query.data.map((prayer) => {
             const pressed = own.data?.includes(prayer.id) ?? false;
             return (
@@ -97,14 +104,15 @@ export default function PrayerWall({ username }: { username: string | null }) {
                   <span className="type-caption text-muted-foreground">
                     {prayer.count} praying
                   </span>
-                  {username === null ? (
+                  {signedIn ? null : (
                     <Link
                       className="type-caption underline underline-offset-4"
                       href={authPageUrl("signin", "/prayers")}
                     >
                       Sign in to pray
                     </Link>
-                  ) : (
+                  )}
+                  {signedIn ? (
                     <Button
                       aria-pressed={pressed}
                       disabled={acknowledgementDisabled}
@@ -123,7 +131,7 @@ export default function PrayerWall({ username }: { username: string | null }) {
                       </HandHeart>
                       {pressed ? "Praying with you" : "Pray with them"}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </li>
             );

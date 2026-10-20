@@ -53,5 +53,11 @@ request/*
 /playwright-report
 /test-results
 
+# Database dumps and data exports (member or finance data) must never be committed.
+/sql/*.sql
+*.dump
+*.csv
+*.xlsx
+
 # Agent worktrees (Claude Code); never commit them
 .claude/worktrees/

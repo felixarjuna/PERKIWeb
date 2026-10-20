@@ -1,4 +1,4 @@
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter } from "../trpc";
 
 /** Public address of perki.bot, the Discord birthday worker on Fly.io. */
 export const DEFAULT_BOT_URL = "https://perki-bot.fly.dev";
@@ -12,7 +12,7 @@ export const botRouter = createTRPCRouter({
    * Whether perki.bot answers HTTP right now. A response means the worker
    * process is up; it does not prove today's birthday job has run.
    */
-  status: protectedProcedure.query(async () => {
+  status: adminProcedure.query(async () => {
     const started = Date.now();
     try {
       const response = await fetch(botUrl(), {
