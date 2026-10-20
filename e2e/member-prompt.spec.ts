@@ -28,6 +28,14 @@ for (const viewport of viewports) {
     // the reminder first. A floating reminder used to cover this button.
     await page.getByRole("button", { name: "Sign out" }).click({ trial: true });
 
+    await page.goto("/member/join");
+    await expect(page.getByLabel("Address", { exact: true })).toBeVisible();
+    await waitForSession(page);
+    await page.waitForLoadState("networkidle");
+    await expect(reminder).toBeHidden();
+    await page.goto("/account");
+    await expect(reminder).toBeVisible();
+
     await reminder.getByRole("button", { name: "Dismiss" }).click();
     await expect(reminder).toBeHidden();
     await page.reload();

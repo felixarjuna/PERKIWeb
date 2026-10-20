@@ -18,9 +18,7 @@ function AccordionItem({
   className,
   ...props
 }: ComponentProps<typeof AccordionPrimitiveItem>) {
-  return (
-    <AccordionPrimitiveItem className={cn("border-b", className)} {...props} />
-  );
+  return <AccordionPrimitiveItem className={className} {...props} />;
 }
 
 function AccordionTrigger({
@@ -32,13 +30,16 @@ function AccordionTrigger({
     <AccordionPrimitiveHeader className="flex">
       <AccordionPrimitiveTrigger
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+          "type-subheading flex min-h-11 flex-1 items-center justify-between gap-3 rounded-md py-4 text-start hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180",
           className
         )}
         {...props}
       >
         {children}
-        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+        <ChevronDown
+          aria-hidden="true"
+          className="size-4 shrink-0 motion-safe:transition-transform motion-safe:duration-150"
+        />
       </AccordionPrimitiveTrigger>
     </AccordionPrimitiveHeader>
   );
@@ -51,7 +52,7 @@ function AccordionContent({
 }: ComponentProps<typeof AccordionPrimitiveContent>) {
   return (
     <AccordionPrimitiveContent
-      className="overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+      className="type-body overflow-hidden motion-safe:data-[state=closed]:animate-accordion-up motion-safe:data-[state=open]:animate-accordion-down"
       {...props}
     >
       <div className={cn("pt-0 pb-4", className)}>{children}</div>

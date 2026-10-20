@@ -62,7 +62,7 @@ export default function AccountForm() {
   return (
     <Form {...form}>
       {isOAuthAccount ? (
-        <div className="flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground text-sm">
+        <div className="type-body-sm flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground">
           <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           <p>
             You signed in with Google, so your email and password are managed by
@@ -105,9 +105,10 @@ export default function AccountForm() {
 
           {user?.hasPassword ? (
             <div className="space-y-2">
-              <Label>Password</Label>
+              <Label htmlFor="account-password">Password</Label>
               <Input
                 disabled
+                id="account-password"
                 readOnly
                 type="password"
                 value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}

@@ -79,7 +79,7 @@ export default function EditTakeawayForm() {
   return (
     <Form {...form}>
       <form
-        className="mt-4 space-y-8 sm:mt-8"
+        className="flex flex-col gap-8"
         onSubmit={form.handleSubmit(onSubmit, (error) => {
           toast.error("Uh oh! Something went wrong.", {
             description: JSON.stringify(error),
@@ -87,25 +87,27 @@ export default function EditTakeawayForm() {
         })}
       >
         <div className="space-y-4">
-          <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-            Fellowship Information
-          </h3>
-          <section className="grid grid-cols-2 gap-4 text-sm">
-            <div className="col-span-2 space-y-2">
-              <Label className="text-md">Schedule</Label>
-              <Input disabled value={takeaway?.schedules?.title} />
+          <h2 className="type-heading">Fellowship Information</h2>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="takeaway-schedule">Schedule</Label>
+              <Input
+                disabled
+                id="takeaway-schedule"
+                value={takeaway?.schedules?.title}
+              />
             </div>
 
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <FormField
                 control={form.control}
                 name="keypoints"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-md">Key points</FormLabel>
+                    <FormLabel>Key points</FormLabel>
                     <FormControl>
                       <Textarea
-                        className="h-48 resize-none"
+                        className="min-h-48"
                         {...field}
                         defaultValue={field.value}
                       />
@@ -118,7 +120,7 @@ export default function EditTakeawayForm() {
           </section>
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button type="submit" variant={"default"}>
             Save changes
           </Button>
@@ -126,6 +128,7 @@ export default function EditTakeawayForm() {
             className="flex gap-x-2"
             onClick={() => router.back()}
             type="button"
+            variant="secondary"
           >
             <ArrowLeft className="h-4 w-4" />
             Back

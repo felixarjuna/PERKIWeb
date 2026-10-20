@@ -93,10 +93,7 @@ function DialogTitle({
 }: ComponentProps<typeof DialogPrimitiveTitle>) {
   return (
     <DialogPrimitiveTitle
-      className={cn(
-        "font-semibold text-lg leading-none tracking-tight",
-        className
-      )}
+      className={cn("type-heading", className)}
       {...props}
     />
   );

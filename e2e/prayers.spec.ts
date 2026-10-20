@@ -28,8 +28,9 @@ test("adds, prays for, edits and deletes a prayer", async ({ page }) => {
   await expect(item.getByText("0", { exact: true })).toBeVisible();
 
   // Pray: count goes up and the toggle stays pressed for this user.
-  // The pray toggle has no accessible name; it is the item's first button.
-  const prayToggle = item.getByRole("button").first();
+  const prayToggle = item.getByRole("button", {
+    name: "Pray for this request",
+  });
   await expect(prayToggle).toHaveAttribute("aria-pressed", "false");
   await prayToggle.click();
   await expect(item.getByText("1", { exact: true })).toBeVisible();

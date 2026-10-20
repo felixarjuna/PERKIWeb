@@ -69,9 +69,10 @@
   --accent: oklch(0.42 0.035 184);
   --accent-foreground: oklch(0.92 0.028 125);
   --destructive: oklch(0.5 0.15 25);
+  --destructive-text: oklch(0.78 0.12 25);
   --destructive-foreground: oklch(0.96 0.015 90);
   --border: oklch(0.36 0.03 183);
-  --input: oklch(0.45 0.03 183);
+  --input: oklch(0.56 0.03 183);
   --ring: oklch(0.9 0.03 125);
   --radius: 0.5rem;
   --chart-1: oklch(0.62 0.09 183);
@@ -116,6 +117,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-text: var(--destructive-text);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -164,15 +166,6 @@
       height: 0;
     }
   }
-}
-
-@theme {
-  /*
-   * Raw brand values. Used ONLY by the admin dashboard live-status
-   * ping dots. Everything else uses the semantic tokens above.
-   */
-  --color-green-300: #92b6af;
-  --color-green-400: #6b968f;
 }
 
 /* ------------------------------------------------------------------ */
@@ -378,6 +371,7 @@
 
   :root {
     color-scheme: dark;
+    scroll-padding-block-start: 7rem;
   }
 
   body {
@@ -396,10 +390,12 @@
   h2,
   h3 {
     text-wrap: balance;
+    overflow-wrap: anywhere;
   }
 
   p {
     text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -30,11 +30,20 @@ export default function PrayerWall({ username }: { username: string }) {
 
   function renderPrayers() {
     if (prayers === undefined) {
-      return <Loader className="mt-4" message="Loading prayers ..." />;
+      return (
+        <li>
+          <Loader className="mt-4" message="Loading prayers ..." />
+        </li>
+      );
     }
 
     if (prayers.length === 0) {
-      return <div className="mt-4 text-center">No prayer found.</div>;
+      return (
+        <li className="type-body rounded-xl bg-card p-4 text-muted-foreground sm:p-6">
+          No prayer requests yet. Share a request above so others can pray with
+          you.
+        </li>
+      );
     }
 
     return prayers.map((prayer) => {
@@ -45,16 +54,17 @@ export default function PrayerWall({ username }: { username: string }) {
           className="relative flex flex-col gap-y-2 rounded-xl bg-card p-4 sm:p-6"
           key={prayer.id}
         >
-          <Badge className="w-fit font-thin text-xs" variant={"secondary"}>
+          <Badge className="type-caption w-fit" variant={"secondary"}>
             {prayer.isAnonymous ? "unknown" : prayer.name}
           </Badge>
 
-          <div className="flex items-center justify-between gap-x-2">
-            <p className="text-sm">{prayer.content}</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <p className="type-body min-w-0 flex-1">{prayer.content}</p>
 
-            <div className="flex gap-x-2">
+            <div className="flex shrink-0 gap-2 self-end">
               <Toggle
-                className="h-6 w-6 p-1"
+                aria-label="Pray for this request"
+                className="size-10"
                 onPressedChange={(pressed) => {
                   updatePrayerCount.mutate({
                     count: pressed ? prayer.count + 1 : prayer.count - 1,
@@ -66,7 +76,7 @@ export default function PrayerWall({ username }: { username: string }) {
                 }}
                 pressed={hasPrayed}
               >
-                <HandHeart className="size-4" />
+                <HandHeart aria-hidden="true" className="size-4" />
               </Toggle>
 
               {username === prayer.name ? (
@@ -82,7 +92,7 @@ export default function PrayerWall({ username }: { username: string }) {
           </div>
 
           <Badge
-            className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full border-accent px-0 py-0 font-thin text-[0.6rem]"
+            className="type-caption absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full px-0 py-0 tabular-nums"
             variant={"secondary"}
           >
             {prayer.count}
@@ -94,16 +104,14 @@ export default function PrayerWall({ username }: { username: string }) {
 
   return (
     <div className="flex w-full flex-col gap-y-4">
-      <p className="mb-2 text-sm sm:text-base">
-        Let&apos;s pray together every Wednesday at 18.30 a.m
+      <p className="type-body mb-2">
+        Share a prayer request and pray for one another.
       </p>
 
       <AddPrayerForm username={username} />
 
       <div className="space-y-4">
-        <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-          Prayer&apos;s list
-        </h2>
+        <h2 className="type-heading">Prayer requests</h2>
 
         <div>
           <ul className="my-4 flex flex-col justify-center gap-2 gap-y-3">

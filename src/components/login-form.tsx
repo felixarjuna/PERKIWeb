@@ -46,7 +46,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Authentication</CardTitle>
+          <CardTitle className="type-heading">Admin access</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit}>
@@ -54,6 +54,7 @@ export function LoginForm({
               <div className="grid gap-2">
                 <Label htmlFor="email">Username</Label>
                 <Input
+                  autoComplete="username"
                   className="text-foreground"
                   id="email"
                   onChange={(event) =>
@@ -68,6 +69,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                 </div>
                 <Input
+                  autoComplete="current-password"
                   className="text-foreground"
                   id="password"
                   onChange={(event) =>
@@ -77,7 +79,7 @@ export function LoginForm({
                   type="password"
                 />
               </div>
-              <Button className="w-full bg-accent" type="submit">
+              <Button className="w-full" type="submit">
                 Login
               </Button>
             </div>

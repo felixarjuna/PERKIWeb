@@ -1,9 +1,13 @@
 import { LoginForm } from "~/components/login-form";
+import Template from "~/components/template";
 
 export default function AdminPage() {
   return (
-    <div className="flex h-screen items-center justify-center">
-      <LoginForm className="w-11/12 text-foreground sm:max-w-lg" />
-    </div>
+    <Template
+      subtitle="Sign in to manage fellowship members."
+      title="Administration"
+    >
+      <LoginForm />
+    </Template>
   );
 }

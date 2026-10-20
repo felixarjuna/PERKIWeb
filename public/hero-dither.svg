@@ -1,0 +1,26 @@
+<svg
+  height="160"
+  viewBox="0 0 160 160"
+  width="160"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <title>Gradient dither texture</title>
+  <filter
+    color-interpolation-filters="sRGB"
+    height="100%"
+    id="noise"
+    width="100%"
+    x="0"
+    y="0"
+  >
+    <feTurbulence
+      baseFrequency="0.75"
+      numOctaves="3"
+      seed="7"
+      stitchTiles="stitch"
+      type="fractalNoise"
+    />
+    <feColorMatrix type="saturate" values="0" />
+  </filter>
+  <path d="M0 0h160v160H0z" fill="#fff" filter="url(#noise)" />
+</svg>
