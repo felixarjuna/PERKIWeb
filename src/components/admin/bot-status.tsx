@@ -1,5 +1,7 @@
 "use client";
 
+import { DateTime } from "luxon";
+import { useEffect, useState } from "react";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import {
   Tooltip,
@@ -10,6 +12,47 @@ import { cn, timeAgo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const REFRESH_MS = 60_000;
+
+const clock = (date: Date) =>
+  DateTime.fromJSDate(date).setLocale("en").toFormat("HH:mm");
+
+/**
+ * Sidebar label and tooltip text. Checks run every minute, so "when was it
+ * last checked" is always seconds ago; what's worth showing is the clock time
+ * and, when it's down, how long it has been silent.
+ */
+export function botStatusText({
+  status,
+  failed,
+  lastOnlineAt,
+  now = new Date(),
+}: {
+  status?: { checkedAt: Date; latencyMs: number | null; online: boolean };
+  /** The status check itself failed (not the bot). */
+  failed: boolean;
+  /** Last response seen while this page was open. */
+  lastOnlineAt: Date | null;
+  now?: Date;
+}) {
+  if (!status) {
+    return failed
+      ? { detail: "The status check itself failed.", label: "Unknown" }
+      : { detail: "Checking whether perki.bot responds.", label: "Checking…" };
+  }
+  if (status.online) {
+    return {
+      detail: `Responding in ${status.latencyMs} ms. Checked every minute, last at ${clock(status.checkedAt)}.`,
+      label: "Online",
+    };
+  }
+  const since = lastOnlineAt
+    ? `No response since ${clock(lastOnlineAt)} (${timeAgo(lastOnlineAt, now)}).`
+    : "Not responding.";
+  return {
+    detail: `${since} Birthday messages may not be sent.`,
+    label: "Offline",
+  };
+}
 
 /**
  * Live reachability of perki.bot, the Discord birthday worker. The row is a
@@ -22,19 +65,18 @@ export function BotStatus() {
     retry: false,
     staleTime: REFRESH_MS / 2,
   });
+  const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
+  useEffect(() => {
+    if (query.data?.online) {
+      setLastOnlineAt(query.data.checkedAt);
+    }
+  }, [query.data]);
   const online = query.data?.online;
-  let label = "Checking…";
-  let detail = "Checking whether perki.bot responds.";
-  if (query.data) {
-    const checked = timeAgo(query.data.checkedAt);
-    label = online ? "Online" : "Offline";
-    detail = online
-      ? `Responded in ${query.data.latencyMs} ms, checked ${checked}.`
-      : `No response, checked ${checked}. Birthday messages may not be sent.`;
-  } else if (query.isError) {
-    label = "Unknown";
-    detail = "The status check itself failed.";
-  }
+  const { label, detail } = botStatusText({
+    failed: query.isError,
+    lastOnlineAt,
+    status: query.data,
+  });
   const shown = query.isFetching ? "Checking…" : label;
   return (
     <SidebarMenuItem>
