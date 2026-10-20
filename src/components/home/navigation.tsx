@@ -1,89 +1,117 @@
 "use client";
 
 import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { useIsMobile } from "~/hooks/use-mobile";
+import { useEffect, useState } from "react";
+import { cn } from "~/lib/utils";
 
 const navigations = [
-  {
-    href: "/",
-    icon: <House className="h-4 w-4" />,
-    name: "Home",
-  },
-  {
-    href: "/schedule",
-    icon: <Calendar className="h-4 w-4" />,
-    name: "Schedule",
-  },
-  {
-    href: "/takeaway",
-    icon: <NotebookPen className="h-4 w-4" />,
-    name: "Takeaway",
-  },
-  {
-    href: "/prayers",
-    icon: <HandHeart className="h-4 w-4" />,
-    name: "Prayer",
-  },
-];
+  { href: "/", icon: House, name: "Home" },
+  { href: "/schedule", icon: Calendar, name: "Schedule" },
+  { href: "/takeaway", icon: NotebookPen, name: "Takeaway" },
+  { href: "/prayers", icon: HandHeart, name: "Prayer" },
+] as const;
 
-interface INavigationProps {
-  readonly showNav: boolean;
+const itemClass =
+  "group type-caption flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-14 sm:px-2";
+const tileClass =
+  "flex size-8 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-primary group-hover:text-primary-foreground";
+
+interface NavigationProps {
+  /**
+   * Id of the element the bar should stay hidden behind. The bar appears
+   * once that element has scrolled out of view (landing page hero).
+   * Omit to show the bar immediately.
+   */
+  readonly revealAfter?: string;
 }
 
-export default function Navigation({ showNav }: INavigationProps) {
+/**
+ * Floating pill navigation. On the landing page it slides in after the
+ * hero; on app pages it is always there. Labels are visually hidden on
+ * phones but stay in the accessible name.
+ */
+export default function Navigation({ revealAfter }: NavigationProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+  const [visible, setVisible] = useState(!revealAfter);
 
-  const isMobile = useIsMobile();
+  useEffect(() => {
+    if (!revealAfter) {
+      return;
+    }
+    const target = document.getElementById(revealAfter);
+    if (!target) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry ? !entry.isIntersecting : true),
+      { rootMargin: "-80px 0px 0px 0px", threshold: 0 }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [revealAfter]);
 
   return (
-    <AnimatePresence>
-      <div className="text-xs sm:text-lg">
-        {showNav ? (
-          <motion.div
-            animate={{
-              opacity: 1,
-              transition: {
-                y: { duration: 0.8, ease: [0.6, 0.01, -0.05, 0.95] },
-              },
-              y: [0, 20, 0],
-            }}
-            className="fixed top-10 right-0 left-0 z-20 mx-auto flex w-10/12 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-lg bg-accent/80 px-4 py-3 text-center text-foreground sm:max-w-5xl sm:space-x-4 sm:px-8 sm:py-4"
-            exit={{ opacity: 0, transition: { duration: 0.5 }, y: [0, 20, 0] }}
-            initial={{ opacity: 0 }}
-            key="navigation"
-          >
-            {navigations.map((nav) => (
-              <div key={nav.href}>
-                <Link
-                  className="flex cursor-pointer flex-col items-center gap-1 sm:gap-2"
-                  href={nav.href}
-                >
-                  <div className="flex aspect-square items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-1 sm:h-8 sm:w-8 sm:p-[2px]">
-                    {nav.icon}
-                  </div>
-                  {isMobile ? null : <p>{nav.name}</p>}
-                </Link>
-              </div>
-            ))}
-
-            <button
-              className="flex w-fit cursor-pointer flex-col items-center gap-1 sm:gap-2"
-              onClick={session ? () => router.push("/account") : () => signIn()}
-              type="button"
-            >
-              <span className="flex aspect-square items-center justify-center rounded-lg bg-gradient-to-r from-light-green-default/50 to-green-default p-1 sm:h-8 sm:w-8 sm:p-[2px] xl:h-8 xl:w-8 2xl:h-8 2xl:w-8">
-                <User className="h-4 w-4" />
-              </span>
-              {isMobile ? null : <p>{session ? "Account" : "Sign in"}</p>}
-            </button>
-          </motion.div>
-        ) : null}
-      </div>
+    <AnimatePresence initial={Boolean(revealAfter)}>
+      {visible ? (
+        <motion.nav
+          animate={{ opacity: 1, y: 0 }}
+          aria-label="Primary"
+          className="fixed top-4 left-1/2 z-40 -translate-x-1/2 sm:top-6"
+          exit={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
+          initial={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
+          key="navigation"
+          transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
+        >
+          <ul className="flex items-center gap-1 rounded-2xl bg-accent/80 px-2 py-1.5 text-foreground shadow-lg backdrop-blur sm:gap-2 sm:px-3 sm:py-2">
+            {navigations.map(({ href, icon: Icon, name }) => {
+              const current = pathname === href;
+              return (
+                <li key={href}>
+                  <Link
+                    aria-current={current ? "page" : undefined}
+                    className={itemClass}
+                    href={href}
+                  >
+                    <span
+                      className={cn(
+                        tileClass,
+                        current && "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      <Icon aria-hidden="true" className="size-4" />
+                    </span>
+                    <span className="sr-only sm:not-sr-only">{name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                className={itemClass}
+                onClick={
+                  session ? () => router.push("/account") : () => signIn()
+                }
+                type="button"
+              >
+                <span className={tileClass}>
+                  <User aria-hidden="true" className="size-4" />
+                </span>
+                <span className="sr-only sm:not-sr-only">
+                  {session ? "Account" : "Sign in"}
+                </span>
+              </button>
+            </li>
+          </ul>
+        </motion.nav>
+      ) : null}
     </AnimatePresence>
   );
 }

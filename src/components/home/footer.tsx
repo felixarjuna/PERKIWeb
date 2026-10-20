@@ -2,22 +2,93 @@ import { InstagramLogoIcon } from "@radix-ui/react-icons";
 import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
 
+const siteLinks = [
+  { href: "/schedule", label: "Schedule" },
+  { href: "/takeaway", label: "Takeaway" },
+  { href: "/prayers", label: "Weekly prayer" },
+  { href: "/member/join", label: "Become a member" },
+] as const;
+
+const legalLinks = [
+  { href: "/legal-notice", label: "Legal notice" },
+  { href: "/privacy", label: "Privacy policy" },
+] as const;
+
+const linkClass =
+  "rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 export default function Footer() {
   return (
-    <footer className="flex flex-col justify-between gap-4 bg-background px-10 py-10 text-foreground sm:flex-row sm:px-44 sm:py-20">
-      <div className="flex items-center gap-4 text-sm sm:text-2xl">
-        <Mail className="h-4 w-4 sm:h-6 sm:w-6" />
-        <a href="mailto:perkiaachen18@gmail.com">perkiaachen18@gmail.com</a>
+    <footer className="relative -mt-8 rounded-t-[2.5rem] bg-background pt-4 text-foreground">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 sm:py-20">
+        <div>
+          <p className="type-heading">Perki Aachen</p>
+          <p className="type-body-sm mt-2 max-w-xs text-muted-foreground">
+            Persekutuan Kristen Indonesia Aachen. An Indonesian Christian
+            fellowship, meeting since 1990.
+          </p>
+        </div>
+
+        <nav aria-label="Site">
+          <p className="type-eyebrow text-muted-foreground">Pages</p>
+          <ul className="type-body mt-3 space-y-2">
+            {siteLinks.map((link) => (
+              <li key={link.href}>
+                <Link className={linkClass} href={link.href}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div>
+          <p className="type-eyebrow text-muted-foreground">Contact</p>
+          <ul className="type-body mt-3 space-y-2">
+            <li className="flex items-center gap-2">
+              <Mail aria-hidden="true" className="size-4 shrink-0" />
+              <a className={linkClass} href="mailto:perkiaachen18@gmail.com">
+                perkiaachen18@gmail.com
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Phone aria-hidden="true" className="size-4 shrink-0" />
+              <a
+                className={`${linkClass} tabular-nums`}
+                href="tel:+491745277265"
+              >
+                +49 174 5277265
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <InstagramLogoIcon
+                aria-hidden="true"
+                className="size-4 shrink-0"
+              />
+              <a
+                className={linkClass}
+                href="https://www.instagram.com/perki.aachen/"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                @perki.aachen
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div className="flex items-center gap-4 text-sm sm:text-2xl">
-        <Phone className="h-4 w-4 sm:h-6 sm:w-6" />
-        <a href="tel:+49 1745277265">+49 1745277265</a>
-      </div>
-      <div className="flex items-center gap-4 text-sm sm:text-2xl">
-        <InstagramLogoIcon className="h-4 w-4 sm:h-6 sm:w-6" />
-        <Link href="https://www.instagram.com/perki.aachen/">
-          @perki.aachen
-        </Link>
+
+      <div className="type-caption mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 pb-8 text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p>© {new Date().getFullYear()} PERKI Aachen</p>
+        <ul className="flex gap-4">
+          {legalLinks.map((link) => (
+            <li key={link.href}>
+              <Link className={linkClass} href={link.href}>
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </footer>
   );

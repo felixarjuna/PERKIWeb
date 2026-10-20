@@ -20,7 +20,8 @@ export default async function SignUpPage() {
           Create your account
         </h1>
         <p className="mt-1 text-muted-foreground text-sm">
-          Join the PerkiWEB fellowship platform.
+          Create an account to see schedules, takeaways and the prayer wall.
+          Part of the fellowship? You can register as a member right after.
         </p>
 
         <SignUpForm />
