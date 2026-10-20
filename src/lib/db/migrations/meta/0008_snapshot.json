@@ -1,5 +1,5 @@
 {
-  "id": "cb3a820d-d7c5-4437-86ac-bc1d2490b6cd",
+  "id": "04c932fd-bfb9-49bb-937a-aa3af00c0d19",
   "prevId": "8b25b223-9b3e-4c5b-970b-982fa5f10906",
   "version": "7",
   "dialect": "postgresql",
@@ -200,6 +200,12 @@
       "name": "prayers",
       "schema": "",
       "columns": {
+        "authorId": {
+          "name": "authorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "content": {
           "name": "content",
           "type": "text",
@@ -251,17 +257,24 @@
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
-        },
-        "visibility": {
-          "name": "visibility",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'private'"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "prayers_authorId_user_id_fk": {
+          "name": "prayers_authorId_user_id_fk",
+          "tableFrom": "prayers",
+          "tableTo": "user",
+          "columnsFrom": [
+            "authorId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -634,6 +647,14 @@
           "primaryKey": false,
           "notNull": false
         },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
         "updatedAt": {
           "name": "updatedAt",
           "type": "timestamp with time zone",
@@ -705,6 +726,14 @@
       "values": [
         "church_service",
         "bible_study"
+      ]
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": [
+        "member",
+        "admin"
       ]
     }
   },

@@ -18,6 +18,10 @@ export const eventTypeEnum = pgEnum("event_type", [
   "bible_study",
 ]);
 const eventEnum = z.enum(eventTypeEnum.enumValues);
+
+/** `admin` can manage content and see member profiles; everyone else is `member`. */
+export const userRoleEnum = pgEnum("user_role", ["member", "admin"]);
+export type UserRole = (typeof userRoleEnum.enumValues)[number];
 export type EventTypeEnum = z.infer<typeof eventEnum>;
 
 export type NewSchedule = typeof schedules.$inferInsert;
@@ -69,6 +73,10 @@ export const takeaways = pgTable("takeaways", {
 });
 
 export const prayers = pgTable("prayers", {
+  /** Who submitted the prayer; null for prayers created before authorship. */
+  authorId: text("authorId").references(() => users.id, {
+    onDelete: "set null",
+  }),
   content: text("content").notNull(),
   count: integer("count").default(0).notNull(),
   createdAt: timestamp("createdAt", {
@@ -105,6 +113,7 @@ export const users = pgTable("user", {
     .$defaultFn(() => crypto.randomUUID()),
   image: text("image"),
   name: text("name"),
+  role: userRoleEnum("role").default("member").notNull(),
   updatedAt: timestamp("updatedAt", {
     mode: "date",
     withTimezone: true,
