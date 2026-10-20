@@ -139,6 +139,24 @@ for (const width of widths) {
         expect(editorWidth).toBeCloseTo(scheduleWidth);
         await expectUsablePage(page);
       });
+
+      test("takeaway filter shows its current value and supports keyboard selection", async ({
+        page,
+      }) => {
+        await page.goto("/takeaway");
+        const filter = page.getByRole("combobox", { name: "Fellowship type" });
+        await expect(filter).toHaveText("All fellowships");
+        await filter.focus();
+        await page.keyboard.press("Enter");
+        await expect(
+          page.getByRole("option", { name: "All fellowships" })
+        ).toHaveAttribute("aria-selected", "true");
+        await page.keyboard.press("End");
+        await page.keyboard.press("Enter");
+        await expect(filter).toHaveText("Bible study");
+        await selectOption(page, "Fellowship type", "All fellowships");
+        await expect(filter).toHaveText("All fellowships");
+      });
     });
   });
 }

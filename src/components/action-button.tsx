@@ -39,7 +39,7 @@ export function EditButton({
     <Button
       aria-label="Edit"
       onClick={onEditClick}
-      size="icon"
+      size="icon-sm"
       type="button"
       variant="secondary"
       {...props}
@@ -55,7 +55,7 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
       <AlertDialogTrigger asChild>
         <Button
           aria-label="Delete"
-          size="icon"
+          size="icon-sm"
           type="button"
           variant="destructive"
         >

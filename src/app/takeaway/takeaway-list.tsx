@@ -1,5 +1,6 @@
 "use client";
 
+import { ListFilter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import Loader from "~/components/loader";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -36,18 +38,37 @@ export default function TakeawayList() {
 
   return (
     <div className="space-y-4">
-      <Select onValueChange={(value: EventTypeEnum) => setType(value)}>
-        <SelectTrigger aria-label="Fellowship type">
-          <SelectValue placeholder="Fellowship type" />
+      <Select
+        onValueChange={(value) => {
+          if (
+            value === "all" ||
+            value === "church_service" ||
+            value === "bible_study"
+          ) {
+            setType(value);
+          }
+        }}
+        value={type}
+      >
+        <SelectTrigger
+          aria-label="Fellowship type"
+          className="sm:w-56"
+          variant="filter"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <ListFilter aria-hidden="true" className="size-3.5 shrink-0" />
+            <SelectValue className="truncate" />
+          </span>
         </SelectTrigger>
         <SelectContent>
-          {eventTypeEnum.enumValues.map((value) => (
-            <SelectItem key={value} value={value}>
-              {value === "bible_study" ? "Bible study" : "Church service"}
-            </SelectItem>
-          ))}
-
-          <SelectItem value={"all"}>All</SelectItem>
+          <SelectGroup>
+            <SelectItem value="all">All fellowships</SelectItem>
+            {eventTypeEnum.enumValues.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value === "bible_study" ? "Bible study" : "Church service"}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
 
