@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { adminNavigation } from "./admin-navigation";
+import { adminNavigation, navigationFor } from "./admin-navigation";
 
 it("separates the overview and member directory from content management", () => {
   expect(adminNavigation.map((item) => item.url)).toEqual([
@@ -9,4 +9,12 @@ it("separates the overview and member directory from content management", () => 
     "/admin/takeaways",
     "/admin/prayers",
   ]);
+});
+
+it("shows writers only the takeaways page", () => {
+  expect(navigationFor("writer").map((item) => item.url)).toEqual([
+    "/admin/takeaways",
+  ]);
+  expect(navigationFor("mita")).toEqual(adminNavigation);
+  expect(navigationFor("owner")).toEqual(adminNavigation);
 });

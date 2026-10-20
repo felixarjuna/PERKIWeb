@@ -2,12 +2,13 @@ import Link from "next/link";
 import AdminShell from "~/components/admin/admin-shell";
 import TakeawayManager from "~/components/admin/content/takeaway-manager";
 import { buttonVariants } from "~/components/ui/button";
-import { requireTakeawayAccess } from "~/server/authz";
+import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 
 export default async function ManagementPage() {
-  await requireTakeawayAccess("/admin/takeaways");
+  const { role } = await requireTakeawayAccess("/admin/takeaways");
   return (
     <AdminShell
+      {...adminShellProps(role)}
       actions={
         <Link className={buttonVariants()} href="/admin/takeaways/new">
           Add takeaway

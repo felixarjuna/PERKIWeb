@@ -1,12 +1,12 @@
 "use client";
 
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { ComponentProps } from "react";
-import { adminNavigation } from "~/components/admin/admin-navigation";
+import { navigationFor } from "~/components/admin/admin-navigation";
 import { BotStatus } from "~/components/admin/bot-status";
 import { NavUser } from "~/components/nav-user";
 import {
@@ -22,12 +22,26 @@ import {
   SidebarRail,
   useSidebar,
 } from "~/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { DISCORD_INVITE_URL } from "~/lib/data";
+import { isStaffRole, type Role } from "~/lib/roles";
 
 const GROUPS = ["Community", "Content"] as const;
 
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
-export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  viewerRole,
+  driveUrl,
+  ...props
+}: ComponentProps<typeof Sidebar> & {
+  viewerRole: Role;
+  driveUrl: string | null;
+}) {
+  const staff = isStaffRole(viewerRole);
   const { data: session } = useSession();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -61,7 +75,7 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
           <SidebarGroup key={group}>
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarMenu>
-              {adminNavigation
+              {navigationFor(viewerRole)
                 .filter((item) => item.group === group)
                 .map((item) => {
                   const active = pathname.startsWith(item.url);
@@ -89,7 +103,7 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
         ))}
         <SidebarGroup className="mt-auto">
           <SidebarMenu>
-            <BotStatus />
+            {staff ? <BotStatus /> : null}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Discord server">
                 <a
@@ -102,6 +116,35 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {staff && driveUrl ? (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Google Drive">
+                  <a href={driveUrl} rel="noopener noreferrer" target="_blank">
+                    <FolderOpen aria-hidden="true" />
+                    <span>Google Drive</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ) : null}
+            {staff ? null : (
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      aria-disabled="true"
+                      className="cursor-not-allowed opacity-50"
+                      type="button"
+                    >
+                      <FolderOpen aria-hidden="true" />
+                      <span>Google Drive</span>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Only mita can open the Google Drive.
+                  </TooltipContent>
+                </Tooltip>
+              </SidebarMenuItem>
+            )}
 
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Visit website">

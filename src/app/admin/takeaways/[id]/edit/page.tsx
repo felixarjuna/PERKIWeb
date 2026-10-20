@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 import { canManageTakeaway } from "~/server/api/routers/takeaway";
-import { requireTakeawayAccess } from "~/server/authz";
+import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import EditTakeawayForm from "./edit-takeaway-form";
 
 export default async function EditorPage({
@@ -13,7 +13,7 @@ export default async function EditorPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { session } = await requireTakeawayAccess(
+  const { role, session } = await requireTakeawayAccess(
     requestedPath(
       `/admin/takeaways/${encodeURIComponent(id)}/edit`,
       await searchParams
@@ -29,7 +29,11 @@ export default async function EditorPage({
     notFound();
   }
   return (
-    <AdminShell section="Takeaways" title="Edit takeaway">
+    <AdminShell
+      {...adminShellProps(role)}
+      section="Takeaways"
+      title="Edit takeaway"
+    >
       <EditTakeawayForm />
     </AdminShell>
   );

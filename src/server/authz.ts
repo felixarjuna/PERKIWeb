@@ -24,6 +24,15 @@ export const getRole = async (userId: string): Promise<Role> => {
   return normalizeRole(user?.role);
 };
 
+/**
+ * Props every admin page passes to `AdminShell`. Reads the environment
+ * directly so server tests can import this module without the full env.
+ */
+export const adminShellProps = (role: Role) => ({
+  driveUrl: isStaffRole(role) ? process.env.DRIVE_FOLDER_URL || null : null,
+  viewerRole: role,
+});
+
 /** Whether the user is staff (owner or mita). */
 export const isAdmin = async (userId: string): Promise<boolean> =>
   isStaffRole(await getRole(userId));
