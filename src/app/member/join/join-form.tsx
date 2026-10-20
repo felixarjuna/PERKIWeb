@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type * as z from "zod";
+import type { z } from "zod";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
 import {
@@ -20,31 +20,38 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { PhoneInput } from "~/components/ui/phone-input";
+import { authPageUrl } from "~/lib/auth-redirect";
 import { addProfileSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 
 /** Length of the `YYYY-MM-DD` prefix of an ISO timestamp. */
 const ISO_DATE_LENGTH = 10;
 
-export default function JoinForm() {
+export default function JoinForm({ userId }: { userId: string }) {
   const router = useRouter();
-  const { data: session } = useSession();
-  if (session === null) {
-    router.push("/auth/signin");
-  }
+  const { data: session, status } = useSession();
+  React.useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace(
+        authPageUrl(
+          "signin",
+          `${window.location.pathname}${window.location.search}${window.location.hash}`
+        )
+      );
+    }
+  }, [router, status]);
 
-  /** define form. */
   const form = useForm<z.infer<typeof addProfileSchema>>({
-    defaultValues: {},
+    defaultValues: {
+      address: "",
+      bio: "",
+      location: "",
+      major: "",
+      phoneNumber: "",
+      userId,
+    },
     resolver: zodResolver(addProfileSchema),
   });
-
-  /** load form data. */
-  React.useEffect(() => {
-    form.reset({
-      userId: session?.user.id,
-    });
-  }, [form, session?.user.id]);
 
   /** toast. */
 
@@ -62,24 +69,28 @@ export default function JoinForm() {
         description: "Thank you for filling out the form!",
       });
 
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+      router.push("/");
+      router.refresh();
     },
   });
 
   function onSubmit(values: z.infer<typeof addProfileSchema>) {
-    const userId = session?.user.id;
-    if (!userId) {
-      toast.success("Session expired", {
+    const currentUserId = session?.user.id;
+    if (!currentUserId) {
+      toast.error("Session expired", {
         description:
           "Your session has expired. Please sign in again to continue.",
       });
-      return router.push("/auth/signin");
+      router.replace(
+        authPageUrl(
+          "signin",
+          `${window.location.pathname}${window.location.search}${window.location.hash}`
+        )
+      );
+      return;
     }
 
-    values.userId = userId;
-    addProfile.mutate(values);
+    addProfile.mutate({ ...values, userId: currentUserId });
   }
 
   return (
@@ -95,14 +106,17 @@ export default function JoinForm() {
             <FormItem className="flex flex-col space-y-1.5">
               <FormLabel>Date of birth</FormLabel>
 
-              <FormControl className="w-full">
+              <FormControl>
                 <Input
                   className="w-full"
+                  name={field.name}
+                  onBlur={field.onBlur}
                   // The schema expects a Date; valueAsDate is UTC midnight,
                   // matching how the old z.coerce.date() parsed the string.
                   onChange={(e) =>
                     field.onChange(e.target.valueAsDate ?? undefined)
                   }
+                  ref={field.ref}
                   type="date"
                   value={
                     field.value
@@ -149,7 +163,7 @@ export default function JoinForm() {
               <FormLabel>Whatsapp Number</FormLabel>
               <FormControl className="w-full">
                 <PhoneInput
-                  placeholder="Placeholder"
+                  placeholder="+49 151 12345678"
                   {...field}
                   defaultCountry="DE"
                 />
@@ -169,7 +183,7 @@ export default function JoinForm() {
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input placeholder="Aachen" type="" {...field} />
+                <Input placeholder="Aachen" type="text" {...field} />
               </FormControl>
               <FormDescription>
                 Name of the city where you currently live
@@ -186,7 +200,7 @@ export default function JoinForm() {
             <FormItem>
               <FormLabel>Major</FormLabel>
               <FormControl>
-                <Input placeholder="Maschinenbau" type="" {...field} />
+                <Input placeholder="Maschinenbau" type="text" {...field} />
               </FormControl>
               <FormDescription>
                 The major you are currently enrolled in
@@ -203,7 +217,7 @@ export default function JoinForm() {
             <FormItem>
               <FormLabel>Bio</FormLabel>
               <FormControl>
-                <Input placeholder="" type="" {...field} />
+                <Input placeholder="" type="text" {...field} />
               </FormControl>
               <FormDescription>
                 Tell us about who you are or what you do
@@ -212,7 +226,10 @@ export default function JoinForm() {
             </FormItem>
           )}
         />
-        <Button disabled={addProfile.isPending} type="submit">
+        <Button
+          disabled={addProfile.isPending || status !== "authenticated"}
+          type="submit"
+        >
           {addProfile.isPending ? (
             <Loader className="type-caption" message="Adding profile ..." />
           ) : (

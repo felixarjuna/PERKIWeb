@@ -4,8 +4,9 @@ import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { authPageUrl } from "~/lib/auth-redirect";
 import { cn } from "~/lib/utils";
 
 const navigations = [
@@ -97,7 +98,15 @@ export default function Navigation({ revealAfter }: NavigationProps) {
               <button
                 className={itemClass}
                 onClick={
-                  session ? () => router.push("/account") : () => signIn()
+                  session
+                    ? () => router.push("/account")
+                    : () =>
+                        router.push(
+                          authPageUrl(
+                            "signin",
+                            `${window.location.pathname}${window.location.search}${window.location.hash}`
+                          )
+                        )
                 }
                 type="button"
               >

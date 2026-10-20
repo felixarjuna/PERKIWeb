@@ -22,6 +22,28 @@ const paragraphs = (story: string | React.ReactNode) =>
 const prefersReducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+const PORTRAIT_MIN_SCALE = 0.7;
+const PORTRAIT_MIN_OPACITY = 0.5;
+const SCROLL_SETTLE_DELAY = 150;
+
+const updatePortrait = (
+  element: HTMLElement,
+  proximity: number,
+  reduce: boolean
+) => {
+  const portrait = element.querySelector("img");
+  if (!portrait) {
+    return;
+  }
+  const scale = reduce
+    ? 1
+    : PORTRAIT_MIN_SCALE + (1 - PORTRAIT_MIN_SCALE) * proximity;
+  portrait.style.transform = `scale(${scale})`;
+  portrait.style.opacity = String(
+    PORTRAIT_MIN_OPACITY + (1 - PORTRAIT_MIN_OPACITY) * proximity
+  );
+};
+
 function Story({ story }: { readonly story: string | React.ReactNode }) {
   return (
     <div className="type-body max-w-prose space-y-4">
@@ -45,6 +67,9 @@ function Story({ story }: { readonly story: string | React.ReactNode }) {
 function PastorGallery() {
   const trackRef = useRef<HTMLUListElement>(null);
   const [active, setActive] = useState(0);
+  const [destination, setDestination] = useState(0);
+  const destinationRef = useRef(0);
+  const navigatingRef = useRef(false);
   const [open, setOpen] = useState(false);
   const storyId = useId();
   const current = pastors.at(active);
@@ -55,44 +80,78 @@ function PastorGallery() {
       return;
     }
     let frame = 0;
+    let settleTimer: ReturnType<typeof setTimeout>;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePortraits = (followGesture: boolean) => {
+      if (track.clientWidth === 0) {
+        return 0;
+      }
+      const center = track.scrollLeft + track.clientWidth / 2;
+      let nearest = 0;
+      let distance = Number.POSITIVE_INFINITY;
+      for (const [index, item] of Array.from(track.children).entries()) {
+        const element = item as HTMLElement;
+        const itemCenter = element.offsetLeft + element.offsetWidth / 2;
+        const gap = Math.abs(itemCenter - center);
+        const next = element.nextElementSibling as HTMLElement | null;
+        const step = next
+          ? next.offsetLeft - element.offsetLeft
+          : element.offsetWidth;
+        const proximity = Math.max(0, 1 - gap / step);
+        updatePortrait(element, proximity, motion.matches);
+        if (gap < distance) {
+          distance = gap;
+          nearest = index;
+        }
+      }
+      setActive(nearest);
+      if (followGesture) {
+        destinationRef.current = nearest;
+        setDestination(nearest);
+      }
+      return nearest;
+    };
+    const onSettle = () => {
+      navigatingRef.current = false;
+      updatePortraits(true);
+    };
     const onScroll = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const center = track.scrollLeft + track.clientWidth / 2;
-        let nearest = 0;
-        let distance = Number.POSITIVE_INFINITY;
-        for (const [index, item] of Array.from(track.children).entries()) {
-          const element = item as HTMLElement;
-          const itemCenter = element.offsetLeft + element.offsetWidth / 2;
-          const gap = Math.abs(itemCenter - center);
-          if (gap < distance) {
-            distance = gap;
-            nearest = index;
-          }
-        }
-        setActive((previous) => {
-          if (previous !== nearest) {
-            setOpen(false);
-          }
-          return nearest;
-        });
+        updatePortraits(!navigatingRef.current);
       });
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(onSettle, SCROLL_SETTLE_DELAY);
     };
+    updatePortraits(true);
+    const resize = new ResizeObserver(onSettle);
+    resize.observe(track);
+    motion.addEventListener("change", onSettle);
+    track.addEventListener("pointerdown", onSettle, { passive: true });
+    track.addEventListener("wheel", onSettle, { passive: true });
     track.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
+      clearTimeout(settleTimer);
+      resize.disconnect();
+      motion.removeEventListener("change", onSettle);
+      track.removeEventListener("pointerdown", onSettle);
+      track.removeEventListener("wheel", onSettle);
       track.removeEventListener("scroll", onScroll);
     };
   }, []);
 
-  const goTo = (index: number) => {
+  const goTo = (index: number, animate: boolean) => {
     const track = trackRef.current;
     const item = track?.children.item(index) as HTMLElement | null;
     if (!(track && item)) {
       return;
     }
+    destinationRef.current = index;
+    navigatingRef.current = true;
+    setDestination(index);
     track.scrollTo({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      behavior: animate && !prefersReducedMotion() ? "smooth" : "instant",
       left: item.offsetLeft + item.offsetWidth / 2 - track.clientWidth / 2,
     });
   };
@@ -105,7 +164,7 @@ function PastorGallery() {
     <div className="lg:hidden">
       <div className="relative">
         <ul
-          className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-[calc(50%-4.5rem)] py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="relative flex snap-x snap-mandatory gap-2 overflow-x-auto px-[calc(50%-4.5rem)] py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           ref={trackRef}
         >
           {pastors.map((pastor, index) => (
@@ -114,20 +173,19 @@ function PastorGallery() {
                 aria-label={pastor.name}
                 aria-pressed={index === active}
                 className="flex w-full justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => goTo(index)}
+                onClick={(event) => goTo(index, event.detail > 0)}
                 type="button"
               >
                 <Image
                   alt=""
-                  className={cn(
-                    "size-32 rounded-full object-cover object-top transition-[transform,opacity] duration-300 ease-out",
-                    index === active
-                      ? "scale-100 opacity-100"
-                      : "scale-[0.7] opacity-50"
-                  )}
+                  className="size-32 rounded-full object-cover object-top"
                   height={256}
                   sizes="8rem"
                   src={pastor.img}
+                  style={{
+                    opacity: index === 0 ? 1 : PORTRAIT_MIN_OPACITY,
+                    transform: `scale(${index === 0 ? 1 : PORTRAIT_MIN_SCALE})`,
+                  }}
                   width={256}
                 />
               </button>
@@ -138,8 +196,10 @@ function PastorGallery() {
         <Button
           aria-label="Previous pastor"
           className="absolute top-1/2 left-0 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur"
-          disabled={active === 0}
-          onClick={() => goTo(active - 1)}
+          disabled={destination === 0}
+          onClick={(event) =>
+            goTo(destinationRef.current - 1, event.detail > 0)
+          }
           size="icon"
           type="button"
           variant="ghost"
@@ -149,8 +209,10 @@ function PastorGallery() {
         <Button
           aria-label="Next pastor"
           className="absolute top-1/2 right-0 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur"
-          disabled={active === pastors.length - 1}
-          onClick={() => goTo(active + 1)}
+          disabled={destination === pastors.length - 1}
+          onClick={(event) =>
+            goTo(destinationRef.current + 1, event.detail > 0)
+          }
           size="icon"
           type="button"
           variant="ghost"
@@ -160,10 +222,20 @@ function PastorGallery() {
       </div>
 
       <div className="mt-4 text-center">
-        <h3 className="type-heading">{current.name}</h3>
-        <p className="type-quote mx-auto mt-2 max-w-sm text-balance text-muted-foreground">
-          “{current.favoriteVerse}”
-        </p>
+        <div className="grid">
+          {pastors.map((pastor, index) => (
+            <div
+              aria-hidden={index !== active}
+              className={cn("[grid-area:1/1]", index !== active && "invisible")}
+              key={pastor.name}
+            >
+              <h3 className="type-heading">{pastor.name}</h3>
+              <p className="type-quote mx-auto mt-2 max-w-sm text-balance text-muted-foreground">
+                “{pastor.favoriteVerse}”
+              </p>
+            </div>
+          ))}
+        </div>
         <Button
           aria-controls={storyId}
           aria-expanded={open}

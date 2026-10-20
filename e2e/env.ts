@@ -1,13 +1,14 @@
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 
 /** Base URL of the production build that Playwright drives. */
-export const BASE_URL = `http://127.0.0.1:${E2E_PORT}`;
+export const BASE_URL = `http://localhost:${E2E_PORT}`;
 
 /**
  * Environment for the e2e server. Every value is a dummy except the database,
  * which must be the throwaway container from `compose.test.yml`.
  */
 export const e2eEnv = {
+  AUTH_URL: BASE_URL,
   DATABASE_URL:
     process.env.E2E_DATABASE_URL ??
     "postgres://postgres:postgres@127.0.0.1:54329/perkiweb_test",

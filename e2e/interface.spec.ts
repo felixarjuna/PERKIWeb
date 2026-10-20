@@ -19,14 +19,7 @@ const publicRoutes = [
   "/legal-notice",
   "/privacy",
 ] as const;
-const memberRoutes = [
-  "/account",
-  "/account/change-password",
-  "/member/join",
-  "/prayers",
-  "/create-schedule",
-  "/create-takeaway",
-] as const;
+const memberRoutes = ["/account", "/member/join", "/prayers"] as const;
 
 test.afterEach(async ({ page }, testInfo) => {
   await page.screenshot({
@@ -73,6 +66,22 @@ for (const width of widths) {
         });
       }
 
+      for (const route of [
+        "/admin/schedules",
+        "/admin/takeaways",
+        "/admin/schedules/new",
+        "/admin/takeaways/new",
+      ]) {
+        test(`${route} has readable structure and fits the viewport`, async ({
+          page,
+        }) => {
+          await adminLogin(page);
+          await page.goto(route);
+          await expect(page).toHaveURL(route);
+          await expectUsablePage(page);
+        });
+      }
+
       test("member dashboard keeps overflow inside the data table", async ({
         page,
       }) => {
@@ -87,7 +96,8 @@ for (const width of widths) {
       test("schedule edit form fits the viewport", async ({ page }) => {
         const title = `Interface schedule ${uniqueSuffix()}`;
         const scheduleId = await insertSchedule(title);
-        await page.goto(`/edit-schedule/${scheduleId}`);
+        await adminLogin(page);
+        await page.goto(`/admin/schedules/${scheduleId}/edit`);
         await expect(page.getByLabel("Title", { exact: true })).toHaveValue(
           title
         );
@@ -118,11 +128,12 @@ for (const width of widths) {
         const title = `Interface takeaway ${uniqueSuffix()}`;
         const keypoints = `A shared reflection ${uniqueSuffix()}`;
         await insertSchedule(title);
-        await page.goto("/create-takeaway");
+        await adminLogin(page);
+        await page.goto("/admin/takeaways/new");
         await selectOption(page, "Schedule", title);
         await page.getByLabel("Key points", { exact: true }).fill(keypoints);
         await page.getByRole("button", { name: "Add takeaway" }).click();
-        await expect(page).toHaveURL("/takeaway");
+        await expect(page).toHaveURL("/admin/takeaways");
         await page
           .getByRole("article")
           .filter({ hasText: keypoints })
@@ -151,7 +162,13 @@ for (const width of widths) {
         await expect(
           page.getByRole("option", { name: "All fellowships" })
         ).toHaveAttribute("aria-selected", "true");
+        await expect(
+          page.getByRole("option", { name: "All fellowships" })
+        ).toBeFocused();
         await page.keyboard.press("End");
+        await expect(
+          page.getByRole("option", { name: "Bible study" })
+        ).toBeFocused();
         await page.keyboard.press("Enter");
         await expect(filter).toHaveText("Bible study");
         await selectOption(page, "Fellowship type", "All fellowships");

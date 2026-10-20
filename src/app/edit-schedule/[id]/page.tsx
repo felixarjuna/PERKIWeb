@@ -1,30 +1,17 @@
 import { redirect } from "next/navigation";
-import Template from "~/components/template";
-import { auth } from "~/server/auth";
-import EditScheduleForm from "./edit-schedule-form";
+import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 
-export default async function EditSchedulePage() {
-  const session = await auth();
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
-  return (
-    <Template
-      subtitle={
-        <div className="flex flex-col gap-y-1">
-          <p>
-            “There is a time for everything, and a season for every activity
-            under the heavens.”
-          </p>
-          <p>– Ecclesiastes 3:1</p>
-        </div>
-      }
-      title="Edit schedule"
-    >
-      <div className="w-full">
-        <EditScheduleForm />
-      </div>
-    </Template>
+export default async function LegacyEditorPage({
+  searchParams,
+  params,
+}: {
+  searchParams: Promise<PageSearchParams>;
+  params: Promise<{ id: string }>;
+}) {
+  redirect(
+    requestedPath(
+      `/admin/schedules/${encodeURIComponent((await params).id)}/edit`,
+      await searchParams
+    )
   );
 }

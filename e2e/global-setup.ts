@@ -1,9 +1,8 @@
-import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import { profiles, users } from "~/lib/db/schema/schema";
+import { accounts, profiles, users } from "~/lib/db/schema/schema";
 import { assertLocalDatabase, e2eEnv } from "./env";
 import { DASHBOARD_MEMBERS, MEMBER } from "./fixtures";
 
@@ -24,9 +23,15 @@ export default async function globalSetup() {
 
     await db.insert(users).values({
       email: MEMBER.email,
-      hashedPassword: await bcrypt.hash(MEMBER.password, 10),
       id: MEMBER.id,
       name: MEMBER.name,
+    });
+
+    await db.insert(accounts).values({
+      provider: "google",
+      providerAccountId: MEMBER.id,
+      type: "oidc",
+      userId: MEMBER.id,
     });
 
     // Dashboard members only need a profile; they never sign in.

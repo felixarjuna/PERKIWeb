@@ -1,12 +1,12 @@
 import { expect, test as setup } from "@playwright/test";
+import { setTestSession } from "./auth-fixtures";
 import { MEMBER, MEMBER_STORAGE_STATE } from "./fixtures";
 
-setup("sign in as the seeded member", async ({ page }) => {
-  await page.goto("/auth/signin");
-  await page.getByLabel("Username").fill(MEMBER.email);
-  await page.getByLabel("Password").fill(MEMBER.password);
-  await page.getByRole("button", { exact: true, name: "Sign in" }).click();
-
-  await expect(page).toHaveURL("/");
+setup("prepare the seeded Google member session", async ({ page }) => {
+  await setTestSession(page, MEMBER);
+  await page.goto("/account");
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+    MEMBER.name
+  );
   await page.context().storageState({ path: MEMBER_STORAGE_STATE });
 });

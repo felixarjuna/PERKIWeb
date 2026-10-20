@@ -1,21 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
-import { ADMIN_PASSCODE, uniqueSuffix } from "./fixtures";
-
-export interface Credentials {
-  readonly email: string;
-  readonly name: string;
-  readonly password: string;
-}
-
-/** A brand-new account that no other test knows about. */
-export const newCredentials = (label: string): Credentials => {
-  const suffix = uniqueSuffix();
-  return {
-    email: `${label}-${suffix}@e2e.test`,
-    name: `${label} ${suffix}`,
-    password: `pw-${suffix}`,
-  };
-};
+import { createTestAccount, setTestSession } from "./auth-fixtures";
+import { ADMIN_PASSCODE } from "./fixtures";
 
 const NOTIFICATIONS = /^Notifications/;
 
@@ -26,39 +11,11 @@ export const toast = (page: Page, text: string | RegExp): Locator =>
     .getByRole("listitem")
     .filter({ hasText: text });
 
-export const signUp = async (page: Page, user: Credentials) => {
-  await page.goto("/auth/signup");
-  await page.getByLabel("Name", { exact: true }).fill(user.name);
-  await page.getByLabel("Username", { exact: true }).fill(user.email);
-  await page.getByLabel("Password", { exact: true }).fill(user.password);
-  await page.getByRole("button", { name: "Create account" }).click();
-
-  await expect(toast(page, "User account created successfully!")).toBeVisible();
-  await expect(page).toHaveURL("/auth/signin");
-};
-
-/** Fills and submits the credentials form on the current page. */
-export const submitSignIn = async (
-  page: Page,
-  email: string,
-  password: string
-) => {
-  await page.getByLabel("Username", { exact: true }).fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { exact: true, name: "Sign in" }).click();
-};
-
-export const signIn = async (page: Page, email: string, password: string) => {
-  await page.goto("/auth/signin");
-  await submitSignIn(page, email, password);
-  await expect(page).toHaveURL("/");
-};
-
-/** Registers a fresh account and leaves the page signed in as it. */
-export const signUpAndSignIn = async (page: Page, label: string) => {
-  const user = newCredentials(label);
-  await signUp(page, user);
-  await signIn(page, user.email, user.password);
+/** Creates an isolated Google-linked fixture and an authenticated browser session. */
+export const createSignedInUser = async (page: Page, label: string) => {
+  const user = await createTestAccount(label);
+  await setTestSession(page, user);
+  await page.goto("/");
   return user;
 };
 

@@ -1,15 +1,18 @@
 import { expect, type Page, test } from "@playwright/test";
 import { format } from "date-fns";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { selectOption, toast } from "./helpers";
+import { adminLogin, selectOption, toast } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
+test.beforeEach(async ({ page }) => {
+  await adminLogin(page);
+});
 
 /** Two months ahead always lands in "Upcoming Schedules". */
 const MONTHS_AHEAD = 2;
 const DAY_OF_MONTH = 15;
 const REQUIRED_LABELS = ["Fellowship Type", "Title", "Bible Verse", "Liturgos"];
-const EDIT_SCHEDULE_URL = /\/edit-schedule\/\d+$/;
+const EDIT_SCHEDULE_URL = /\/admin\/schedules\/\d+\/edit$/;
 
 const scheduleDate = () => {
   const now = new Date();
@@ -24,7 +27,7 @@ const scheduleDate = () => {
 const scheduleHeader = (page: Page, title: string) =>
   page.getByRole("heading", { exact: true, name: title }).locator("..");
 
-/** Fills and submits /create-schedule; ends back on /schedule. */
+/** Fills and submits /admin/schedules/new; ends back on /admin/schedules. */
 const createSchedule = async (page: Page, title: string, date: Date) => {
   await selectOption(page, "Fellowship Type", "Bible study");
   await page.getByLabel("Title", { exact: true }).fill(title);
@@ -54,7 +57,7 @@ const createSchedule = async (page: Page, title: string, date: Date) => {
   await page.getByRole("button", { name: "Add schedule" }).click();
 
   await expect(toast(page, "New schedule added!")).toBeVisible();
-  await expect(page).toHaveURL("/schedule");
+  await expect(page).toHaveURL("/admin/schedules");
 };
 
 test("creates, edits and deletes a schedule", async ({ page }) => {
@@ -63,7 +66,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   const date = scheduleDate();
 
   // Create. Opening the form directly means /schedule has no cached list yet.
-  await page.goto("/create-schedule");
+  await page.goto("/admin/schedules/new");
   await createSchedule(page, title, date);
 
   const header = scheduleHeader(page, title);
@@ -87,7 +90,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   await page.getByRole("button", { name: "Save changes" }).click();
 
   await expect(toast(page, "Schedule updated successfully!")).toBeVisible();
-  await expect(page).toHaveURL("/schedule");
+  await expect(page).toHaveURL("/admin/schedules");
   // Reload: the list is served from a stale cache (see the test below).
   await page.reload();
   const editedHeader = scheduleHeader(page, editedTitle);
@@ -122,19 +125,19 @@ test("schedule list shows a new schedule right after adding it", async ({
   page,
 }) => {
   const title = `Fresh ${uniqueSuffix()}`;
-  await page.goto("/schedule");
+  await page.goto("/admin/schedules");
   await expect(
     page.getByRole("heading", { name: "Upcoming Schedules" })
   ).toBeVisible();
   await page.getByRole("link", { name: "Add schedule" }).click();
-  await expect(page).toHaveURL("/create-schedule");
+  await expect(page).toHaveURL("/admin/schedules/new");
   await createSchedule(page, title, scheduleDate());
 
   await expect(scheduleHeader(page, title)).toBeVisible();
 });
 
 test("validates required schedule fields", async ({ page }) => {
-  await page.goto("/create-schedule");
+  await page.goto("/admin/schedules/new");
   await page.getByRole("button", { name: "Add schedule" }).click();
 
   await expect(page.getByText("A date of service is required.")).toBeVisible();
@@ -151,5 +154,5 @@ test("validates required schedule fields", async ({ page }) => {
     "aria-invalid",
     "false"
   );
-  await expect(page).toHaveURL("/create-schedule");
+  await expect(page).toHaveURL("/admin/schedules/new");
 });

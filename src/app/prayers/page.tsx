@@ -1,13 +1,24 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import {
+  authPageUrl,
+  type PageSearchParams,
+  requestedPath,
+} from "~/lib/auth-redirect";
 import { getUsernameFromName } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import PrayerWall from "./prayer-wall";
 
-export default async function PrayersPage() {
+export default async function PrayersPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
   if (!session) {
-    redirect("/auth/signin");
+    redirect(
+      authPageUrl("signin", requestedPath("/prayers", await searchParams))
+    );
   }
 
   return (

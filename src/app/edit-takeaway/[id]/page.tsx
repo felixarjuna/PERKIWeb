@@ -1,27 +1,17 @@
 import { redirect } from "next/navigation";
-import Template from "~/components/template";
-import { auth } from "~/server/auth";
-import EditTakeawayForm from "./edit-takeaway-form";
+import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 
-export default async function EditTakeawayPage() {
-  const session = await auth();
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
-  return (
-    <Template
-      subtitle={
-        <div className="flex flex-col gap-y-1">
-          <p>“Your word is a lamp to my feet and a light to my path”</p>
-          <p>– Psalm 119:105</p>
-        </div>
-      }
-      title="Edit takeaway"
-    >
-      <div className="w-full">
-        <EditTakeawayForm />
-      </div>
-    </Template>
+export default async function LegacyEditorPage({
+  searchParams,
+  params,
+}: {
+  searchParams: Promise<PageSearchParams>;
+  params: Promise<{ id: string }>;
+}) {
+  redirect(
+    requestedPath(
+      `/admin/takeaways/${encodeURIComponent((await params).id)}/edit`,
+      await searchParams
+    )
   );
 }

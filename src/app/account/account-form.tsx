@@ -19,8 +19,6 @@ import { Label } from "~/components/ui/label";
 import { type UpdateUserParams, updateUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/trpc/react";
 
-const PASSWORD_PLACEHOLDER_LENGTH = 8;
-
 export default function AccountForm() {
   const { data: user } = api.users.getUserById.useQuery();
 
@@ -44,9 +42,7 @@ export default function AccountForm() {
     }
     form.reset({
       id: user.id,
-      image: user.image,
       name: user.name ?? "",
-      username: user.email ?? "",
     });
   }, [form, user]);
 
@@ -55,21 +51,14 @@ export default function AccountForm() {
     updateAccount.mutate(values);
   }
 
-  /** OAuth accounts have no local password and cannot edit credentials here. */
-  const isOAuthAccount =
-    user !== undefined && user !== null && !user.hasPassword;
-
   return (
     <Form {...form}>
-      {isOAuthAccount ? (
-        <div className="type-body-sm flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground">
-          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          <p>
-            You signed in with Google, so your email and password are managed by
-            your Google account.
-          </p>
-        </div>
-      ) : null}
+      <div className="type-body-sm flex items-start gap-3 rounded-lg bg-card p-4 text-muted-foreground">
+        <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        <p>
+          You sign in with Google. Your email is managed by your Google account.
+        </p>
+      </div>
 
       <form
         className="flex w-full flex-col gap-6"
@@ -89,32 +78,16 @@ export default function AccountForm() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username / Email</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isOAuthAccount} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {user?.hasPassword ? (
-            <div className="space-y-2">
-              <Label htmlFor="account-password">Password</Label>
-              <Input
-                disabled
-                id="account-password"
-                readOnly
-                type="password"
-                value={"•".repeat(PASSWORD_PLACEHOLDER_LENGTH)}
-              />
-            </div>
-          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="account-email">Email</Label>
+            <Input
+              autoComplete="email"
+              id="account-email"
+              readOnly
+              type="email"
+              value={user?.email ?? ""}
+            />
+          </div>
         </div>
 
         <Button

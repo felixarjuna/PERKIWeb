@@ -47,7 +47,7 @@ test("dashboard without the passcode sends visitors back to /admin", async ({
   page,
 }) => {
   await page.goto("/admin/dashboard");
-  await expect(page).toHaveURL("/admin");
+  await expect(page).toHaveURL("/admin?callbackUrl=%2Fadmin%2Fdashboard");
 });
 
 test("dashboard lists members sorted by name by default", async ({ page }) => {

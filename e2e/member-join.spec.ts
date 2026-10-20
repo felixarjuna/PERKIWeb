@@ -1,8 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
   adminLogin,
+  createSignedInUser,
   setDashboardPageSize,
-  signUpAndSignIn,
   toast,
   waitForSession,
 } from "./helpers";
@@ -22,10 +22,10 @@ const fillProfile = async (page: Page) => {
   await page.getByRole("button", { exact: true, name: "Submit" }).click();
 };
 
-test("submits a member profile once and rejects a second submission", async ({
+test("submits a member profile once and shows existing membership", async ({
   page,
 }) => {
-  const user = await signUpAndSignIn(page, "joiner");
+  const user = await createSignedInUser(page, "joiner");
 
   await page.goto("/member/join");
   await fillProfile(page);
@@ -34,11 +34,12 @@ test("submits a member profile once and rejects a second submission", async ({
   await expect(page).toHaveURL("/");
 
   await page.goto("/member/join");
-  await fillProfile(page);
-  await expect(toast(page, "Failed to submit the form")).toBeVisible();
   await expect(
-    toast(page, "it seems like you already submitted your profile")
+    page.getByText("You are already registered as a member.")
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Submit" })
+  ).toHaveCount(0);
 
   // The new member shows up on the admin dashboard.
   await adminLogin(page);
@@ -51,14 +52,38 @@ test("submits a member profile once and rejects a second submission", async ({
 });
 
 test("join form validates required fields", async ({ page }) => {
-  await signUpAndSignIn(page, "joinvalidate");
+  await createSignedInUser(page, "joinvalidate");
 
   await page.goto("/member/join");
   await waitForSession(page);
   await page.getByRole("button", { exact: true, name: "Submit" }).click();
 
   await expect(page).toHaveURL("/member/join");
-  await expect(
-    page.getByText("Invalid input: expected string, received undefined")
-  ).toHaveCount(4);
+  await Promise.all(
+    [
+      "Please enter your address.",
+      "Please enter your location.",
+      "Please enter your major.",
+      "Please enter your WhatsApp number.",
+      "Please enter your date of birth.",
+    ].map((message) =>
+      expect(page.getByText(message, { exact: true })).toBeVisible()
+    )
+  );
+});
+
+test("session expiry preserves the membership destination", async ({
+  page,
+  context,
+}) => {
+  await createSignedInUser(page, "join-expiry");
+  await page.goto("/member/join?source=footer#profile");
+  await waitForSession(page);
+  await context.clearCookies();
+  await page.evaluate(() =>
+    document.dispatchEvent(new Event("visibilitychange"))
+  );
+  await expect(page).toHaveURL(
+    "/auth/signin?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter%23profile"
+  );
 });

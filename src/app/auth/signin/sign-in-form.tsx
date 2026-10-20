@@ -1,27 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "~/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-
-const signInSchema = z.object({
-  password: z.string().min(1, { message: "Please enter your password." }),
-  username: z.string().min(1, { message: "Please enter your username." }),
-});
+import { getReturnPath } from "~/lib/auth-redirect";
 
 const GoogleIcon = () => (
   <svg
@@ -50,101 +34,42 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignInForm() {
-  const router = useRouter();
+export default function SignInForm({ returnPath }: { returnPath?: string }) {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = getReturnPath(
+    returnPath ?? searchParams.get("callbackUrl")
+  );
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const form = useForm<z.infer<typeof signInSchema>>({
-    defaultValues: { password: "", username: "" },
-    resolver: zodResolver(signInSchema),
-  });
-
-  const onSubmit = async (values: z.infer<typeof signInSchema>) => {
-    setIsSigningIn(true);
-    const result = await signIn("credentials", {
-      password: values.password,
-      redirect: false,
-      username: values.username,
-    });
-    setIsSigningIn(false);
-
-    if (result?.error) {
-      toast.error("Sign in failed", {
-        description: "Username or password is wrong.",
-      });
-      return;
-    }
-    router.push(callbackUrl);
-    router.refresh();
-  };
-
   const onGoogleLogin = async () => {
+    setIsSigningIn(true);
     try {
-      await signIn("google", { callbackUrl });
+      await signIn("google", { redirectTo: callbackUrl });
     } catch {
-      toast.error("Sign in with Google failed.");
+      toast.error("Sign in with Google failed.", {
+        description: "Please try again.",
+      });
+      setIsSigningIn(false);
     }
   };
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      <Form {...form}>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input autoComplete="username" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    autoComplete="current-password"
-                    type="password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button className="mt-2 w-full" disabled={isSigningIn} type="submit">
-            {isSigningIn ? "Signing in ..." : "Sign in"}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="type-caption flex items-center gap-3 text-muted-foreground">
-        <span className="h-px flex-1 bg-muted" />
-        or
-        <span className="h-px flex-1 bg-muted" />
-      </div>
-
+      {searchParams.get("error") ? (
+        <p className="type-body-sm text-destructive-text" role="alert">
+          Google sign-in could not be completed. Please try again.
+        </p>
+      ) : null}
       <Button
+        aria-busy={isSigningIn}
         className="w-full"
+        disabled={isSigningIn}
         onClick={onGoogleLogin}
         type="button"
         variant="secondary"
       >
         <GoogleIcon />
-        Continue with Google
+        {isSigningIn ? "Connecting to Google ..." : "Continue with Google"}
       </Button>
     </div>
   );

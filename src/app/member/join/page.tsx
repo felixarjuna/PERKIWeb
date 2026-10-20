@@ -1,15 +1,29 @@
 import { Heart } from "lucide-react";
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import {
+  authPageUrl,
+  type PageSearchParams,
+  requestedPath,
+} from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
+import { api } from "~/trpc/server";
 import JoinForm from "./join-form";
 
-export default async function JoinPage() {
+export default async function JoinPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
   // Membership registration links the profile to the signed-in account.
   if (!session) {
-    redirect("/auth/signin");
+    redirect(
+      authPageUrl("signin", requestedPath("/member/join", await searchParams))
+    );
   }
+
+  const hasProfile = await api.profiles.hasOwnProfile();
 
   return (
     <Template
@@ -22,7 +36,11 @@ export default async function JoinPage() {
       title="Join us"
     >
       <div className="w-full">
-        <JoinForm />
+        {hasProfile ? (
+          <p className="py-10">You are already registered as a member.</p>
+        ) : (
+          <JoinForm userId={session.user.id} />
+        )}
       </div>
     </Template>
   );

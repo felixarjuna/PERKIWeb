@@ -73,7 +73,7 @@ export default function AddScheduleForm() {
       toast.success("New schedule added!", {
         description: "Thanks for your contributions!",
       });
-      router.push("/schedule");
+      router.push("/admin/schedules");
     },
   });
   function onSubmit(values: z.infer<typeof addScheduleSchema>) {
@@ -490,7 +490,7 @@ export default function AddScheduleForm() {
               </Button>
               <Button
                 className="flex gap-x-2"
-                onClick={() => router.back()}
+                onClick={() => router.push("/admin/schedules")}
                 type="button"
                 variant="secondary"
               >
@@ -608,7 +608,7 @@ function AddScheduleGoogleSpreadsheet() {
       toast.success("New schedules added!", {
         description: "Thanks for your contributions!",
       });
-      router.push("/schedule");
+      router.push("/admin/schedules");
     },
   });
 
@@ -694,7 +694,7 @@ function AddScheduleGoogleSpreadsheet() {
               </Button>
               <Button
                 className="flex gap-x-2"
-                onClick={() => router.back()}
+                onClick={() => router.push("/admin/schedules")}
                 type="button"
                 variant="secondary"
               >

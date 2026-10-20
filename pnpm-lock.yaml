@@ -104,9 +104,6 @@ importers:
       axios:
         specifier: ^1.20.0
         version: 1.20.0
-      bcryptjs:
-        specifier: ^3.0.2
-        version: 3.0.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2374,10 +2371,6 @@ packages:
   baseline-browser-mapping@2.11.27:
     resolution: {integrity: sha512-ElY12DaROGuan+lMmZ8Cvo/ZUbXPe7Enc/9VU/b1T3Kp4dwytRcNdR8DoSJN5SNJT/CuvcCA0DHDVmMOCePdRQ==}
     engines: {node: '>=6.0.0'}
-    hasBin: true
-
-  bcryptjs@3.0.3:
-    resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
     hasBin: true
 
   bidi-js@1.1.0:
@@ -5400,8 +5393,6 @@ snapshots:
       - supports-color
 
   baseline-browser-mapping@2.11.27: {}
-
-  bcryptjs@3.0.3: {}
 
   bidi-js@1.1.0:
     dependencies:

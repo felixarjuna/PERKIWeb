@@ -3,7 +3,6 @@ export const MEMBER = {
   email: "member@e2e.test",
   id: "e2e-member",
   name: "E2E Member",
-  password: "e2e-password-123",
 } as const;
 
 /** Signed-in browser state written by `auth.setup.ts`. */
