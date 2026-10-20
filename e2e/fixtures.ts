@@ -8,10 +8,11 @@ export const MEMBER = {
 /** Signed-in browser state written by `auth.setup.ts`. */
 export const MEMBER_STORAGE_STATE = "e2e/.auth/member.json";
 
-/** Passcode hardcoded in `src/components/login-form.tsx`. */
-export const ADMIN_PASSCODE = {
-  password: "gongxifacai2025",
-  username: "mita",
+/** Seeded with `role: "admin"`; the only account that can open /admin. */
+export const ADMIN = {
+  email: "admin@e2e.test",
+  id: "e2e-admin",
+  name: "E2E Admin",
 } as const;
 
 /** Prefix shared by every seeded dashboard member; sorts before test users. */

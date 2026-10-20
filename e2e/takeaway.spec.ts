@@ -4,7 +4,8 @@ import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption, toast } from "./helpers";
 
 /** Usernames are derived from the display name ("E2E Member"). */
-const MEMBER_USERNAME = "e2emember";
+/** Takeaways are written in the admin area, so they credit the seeded admin. */
+const ADMIN_USERNAME = "e2eadmin";
 const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
@@ -58,7 +59,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   ).toBeVisible();
   await expect(article).toContainText("bible study");
   await expect(article).toContainText("John 3:16");
-  await expect(article).toContainText(MEMBER_USERNAME);
+  await expect(article).toContainText(ADMIN_USERNAME);
 
   // Edit
   await article.getByRole("button", { exact: true, name: "Edit" }).click();
@@ -115,5 +116,5 @@ test("a takeaway created from a direct link credits its author", async ({
 
   const article = takeawayArticle(page, keypoints);
   await expect(article).toHaveCount(1);
-  await expect(article).toContainText(MEMBER_USERNAME);
+  await expect(article).toContainText(ADMIN_USERNAME);
 });

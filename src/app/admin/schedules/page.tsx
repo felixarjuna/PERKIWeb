@@ -1,16 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import ScheduleList from "~/app/schedule/schedule-list";
 import AdminShell from "~/components/admin/admin-shell";
 import { buttonVariants } from "~/components/ui/button";
-import { authPageUrl } from "~/lib/auth-redirect";
-import { auth } from "~/server/auth";
+import { requireAdmin } from "~/server/authz";
 
 export default async function ManagementPage() {
-  const session = await auth();
-  if (!session) {
-    redirect(authPageUrl("signin", "/admin/schedules"));
-  }
+  await requireAdmin("/admin/schedules");
   return (
     <AdminShell section="Schedules">
       <div className="mb-4 flex justify-end">

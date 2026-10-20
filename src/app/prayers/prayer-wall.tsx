@@ -10,12 +10,11 @@ import { Toggle } from "~/components/ui/toggle";
 import { api } from "~/trpc/react";
 import AddPrayerForm from "./add-prayer-form";
 
-/** `username` comes from the server session, so it is never empty mid-load. */
-export default function PrayerWall({ username }: { username: string }) {
+export default function PrayerWall() {
   const utils = api.useUtils();
   const { data: prayers } = api.prayers.getPrayers.useQuery();
 
-  const updatePrayerCount = api.prayers.updatePrayerCount.useMutation({
+  const setPrayed = api.prayers.setPrayed.useMutation({
     onSuccess: () => utils.prayers.invalidate(),
   });
 
@@ -46,60 +45,50 @@ export default function PrayerWall({ username }: { username: string }) {
       );
     }
 
-    return prayers.map((prayer) => {
-      const names = prayer.prayerNames as string[];
-      const hasPrayed = names.includes(username);
-      return (
-        <li
-          className="relative flex flex-col gap-y-2 rounded-xl bg-card p-4 sm:p-6"
-          key={prayer.id}
-        >
-          <Badge className="type-caption w-fit" variant={"secondary"}>
-            {prayer.isAnonymous ? "unknown" : prayer.name}
-          </Badge>
+    return prayers.map((prayer) => (
+      <li
+        className="relative flex flex-col gap-y-2 rounded-xl bg-card p-4 sm:p-6"
+        key={prayer.id}
+      >
+        <Badge className="type-caption w-fit" variant={"secondary"}>
+          {prayer.isAnonymous ? "unknown" : prayer.name}
+        </Badge>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <p className="type-body min-w-0 flex-1">{prayer.content}</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <p className="type-body min-w-0 flex-1">{prayer.content}</p>
 
-            <div className="flex shrink-0 gap-2 self-end">
-              <Toggle
-                aria-label="Pray for this request"
-                className="size-10"
-                onPressedChange={(pressed) => {
-                  updatePrayerCount.mutate({
-                    count: pressed ? prayer.count + 1 : prayer.count - 1,
-                    id: prayer.id,
-                    prayerNames: pressed
-                      ? [...names, username]
-                      : names.filter((name) => !name.includes(username)),
-                  });
-                }}
-                pressed={hasPrayed}
-              >
-                <HandHeart aria-hidden="true" className="size-4" />
-              </Toggle>
+          <div className="flex shrink-0 gap-2 self-end">
+            <Toggle
+              aria-label="Pray for this request"
+              className="size-10"
+              onPressedChange={(pressed) =>
+                setPrayed.mutate({ id: prayer.id, prayed: pressed })
+              }
+              pressed={prayer.prayedByMe}
+            >
+              <HandHeart aria-hidden="true" className="size-4" />
+            </Toggle>
 
-              {username === prayer.name ? (
-                <div className="flex gap-x-2">
-                  <EditPrayerDialog prayer={prayer} />
+            {prayer.canManage ? (
+              <div className="flex gap-x-2">
+                <EditPrayerDialog prayer={prayer} />
 
-                  <DeleteButton
-                    onDeleteClick={() => deletePrayer.mutate({ id: prayer.id })}
-                  />
-                </div>
-              ) : null}
-            </div>
+                <DeleteButton
+                  onDeleteClick={() => deletePrayer.mutate({ id: prayer.id })}
+                />
+              </div>
+            ) : null}
           </div>
+        </div>
 
-          <Badge
-            className="type-caption absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full px-0 py-0 tabular-nums"
-            variant={"secondary"}
-          >
-            {prayer.count}
-          </Badge>
-        </li>
-      );
-    });
+        <Badge
+          className="type-caption absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full px-0 py-0 tabular-nums"
+          variant={"secondary"}
+        >
+          {prayer.count}
+        </Badge>
+      </li>
+    ));
   }
 
   return (
@@ -108,7 +97,7 @@ export default function PrayerWall({ username }: { username: string }) {
         Share a prayer request and pray for one another.
       </p>
 
-      <AddPrayerForm username={username} />
+      <AddPrayerForm />
 
       <div className="space-y-4">
         <h2 className="type-heading">Prayer requests</h2>

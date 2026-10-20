@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
+import { isAdmin } from "~/server/authz";
 
 /**
  * 1. CONTEXT
@@ -101,4 +102,17 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
       session: { ...ctx.session, user: ctx.session.user },
     },
   });
+});
+
+/**
+ * Admin procedure
+ *
+ * For content management and member data. The role is read from the database
+ * on every call, so a revoked admin loses access immediately.
+ */
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (!(await isAdmin(ctx.session.user.id))) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next();
 });

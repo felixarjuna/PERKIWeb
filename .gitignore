@@ -52,3 +52,9 @@ request/*
 /e2e/.auth
 /playwright-report
 /test-results
+
+# Database dumps and data exports (member or finance data) must never be committed.
+/sql/*.sql
+*.dump
+*.csv
+*.xlsx

@@ -24,7 +24,7 @@ const AddPrayerFormSchema = z.object({
   isAnonymous: z.boolean(),
 });
 
-export default function AddPrayerForm({ username }: { username: string }) {
+export default function AddPrayerForm() {
   const utils = api.useUtils();
   const addPrayer = api.prayers.addPrayer.useMutation({
     onSuccess: async () => {
@@ -46,8 +46,6 @@ export default function AddPrayerForm({ username }: { username: string }) {
     const request: z.infer<typeof addPrayerSchema> = {
       content: data.content,
       isAnonymous: data.isAnonymous,
-      name: username,
-      prayerNames: [],
     };
     addPrayer.mutate(request);
   }

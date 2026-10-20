@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { profiles, users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  adminProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "~/server/api/trpc";
 import { isPgError, PG_UNIQUE_VIOLATION } from "../errors";
 import { addProfileSchema } from "../schema/schema";
 
@@ -52,7 +56,8 @@ export const profileRouter = createTRPCRouter({
           throw error;
         });
     }),
-  getUserProfiles: protectedProcedure.query(
+  /** Member directory with contact details: admins only. */
+  getUserProfiles: adminProcedure.query(
     async () =>
       await db
         .select({

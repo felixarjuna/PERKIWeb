@@ -8,7 +8,7 @@ import {
   queryByIdSchema,
   updateTakeawaySchema,
 } from "../schema/schema";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 
 /** Maps a write that references a missing schedule to NOT_FOUND. */
 const rethrowMissingSchedule = (error: unknown): never => {
@@ -23,7 +23,7 @@ const rethrowMissingSchedule = (error: unknown): never => {
 };
 
 export const takeawayRouter = createTRPCRouter({
-  addTakeaway: protectedProcedure.input(addTakeawaySchema).mutation(
+  addTakeaway: adminProcedure.input(addTakeawaySchema).mutation(
     async ({ input }) =>
       await db
         .insert(takeaways)
@@ -34,7 +34,7 @@ export const takeawayRouter = createTRPCRouter({
         })
         .catch(rethrowMissingSchedule)
   ),
-  deleteTakeaway: protectedProcedure
+  deleteTakeaway: adminProcedure
     .input(queryByIdSchema)
     .mutation(async ({ input }) =>
       affectedRow(
@@ -72,7 +72,7 @@ export const takeawayRouter = createTRPCRouter({
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
         .orderBy(desc(schedules.date))
   ),
-  updateTakeaway: protectedProcedure
+  updateTakeaway: adminProcedure
     .input(updateTakeawaySchema)
     .mutation(async ({ input }) =>
       affectedRow(

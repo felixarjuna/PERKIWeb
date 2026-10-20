@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -16,7 +15,6 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
-import { getUsernameFromName } from "~/lib/utils";
 import type { editPrayerSchema } from "~/server/api/schema/schema";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -34,7 +32,6 @@ export default function EditPrayerForm({
   prayer: Prayer;
   onCloseDialog: () => void;
 }) {
-  const { data: session } = useSession();
   const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
     onSuccess: async () => {
@@ -55,11 +52,9 @@ export default function EditPrayerForm({
 
   function onSubmit(data: z.infer<typeof EditPrayerFormSchema>) {
     const request: z.infer<typeof editPrayerSchema> = {
-      ...prayer,
       content: data.content,
+      id: prayer.id,
       isAnonymous: data.isAnonymous,
-      name: prayer.name ?? getUsernameFromName(session?.user.name ?? ""),
-      prayerNames: prayer.prayerNames as string[],
     };
     updatePrayer.mutate(request);
     onCloseDialog();

@@ -39,7 +39,7 @@ Path alias: `~/*` → `src/*`.
 
 **Routing (App Router):** every route lives in `src/app/<route>/page.tsx`. Pattern used throughout: `page.tsx` is a server component that handles the `auth()` guard (redirect to `/auth/signin`) and static shell, and renders a co-located client component (`*-form.tsx`, `*-list.tsx`, `*-view.tsx`) for interactive parts. Shared page chrome is `src/components/template.tsx`.
 
-**API layer (tRPC 11):** `src/server/api/root.ts` composes `appRouter` from routers in `src/server/api/routers/` — new routers must be registered there manually. `src/server/api/trpc.ts` defines `publicProcedure` and `protectedProcedure` (session-enforcing). **All mutations and sensitive queries must use `protectedProcedure`**; never select `users.hashedPassword` into a client-facing response (use the `safeUserColumns` pattern in `users.ts`). Zod input schemas live in `src/server/api/schema/schema.ts` (user schemas in `src/lib/db/schema/auth.ts`). HTTP handler: `src/app/api/trpc/[trpc]/route.ts` (fetch adapter).
+**API layer (tRPC 11):** `src/server/api/root.ts` composes `appRouter` from routers in `src/server/api/routers/` — new routers must be registered there manually. `src/server/api/trpc.ts` defines `publicProcedure` and `protectedProcedure` (session-enforcing). **All mutations and sensitive queries must use `protectedProcedure`** (or `adminProcedure` for content management and member data); never select `users.hashedPassword` into a client-facing response (use the `safeUserColumns` pattern in `users.ts`). Zod input schemas live in `src/server/api/schema/schema.ts` (user schemas in `src/lib/db/schema/auth.ts`). HTTP handler: `src/app/api/trpc/[trpc]/route.ts` (fetch adapter).
 
 **tRPC clients:** client components import `api` (and `RouterOutputs`) from `~/trpc/react` (provider mounted in `src/app/layout.tsx`); server components can use the RSC caller from `~/trpc/server`. The old `~/utils/api` (createTRPCNext) is gone.
 
@@ -74,4 +74,5 @@ General app pages, including the admin login, render inside `src/components/temp
 ## Gotchas
 
 - `xs:` responsive classes were never a defined breakpoint and are inert; don't add new ones.
-- The admin dashboard has a client-side passcode gate (zustand) *plus* a NextAuth session requirement.
+- Admin access is the `role` column on `user` (`member` default, `admin`). Admin pages call `requireAdmin()` (`src/server/authz.ts`: sign-in redirect, 404 for members); admin-only tRPC procedures use `adminProcedure`. Both read the role from the database on every request, so a JWT never carries stale admin rights. Grant admin with `update "user" set role = 'admin' where email = '…';` (never in a migration). e2e seeds `ADMIN` (`e2e/fixtures.ts`); `adminLogin()` signs in as it.
+- Prayers belong to their author (`prayers.authorId`); only the author or an admin can edit/delete one. Names come from the session, never from input, and `setPrayed` locks the row.
