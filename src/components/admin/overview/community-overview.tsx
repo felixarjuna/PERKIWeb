@@ -166,7 +166,11 @@ export default function CommunityOverview() {
           range={range}
           unit={data.unit}
         />
-        <BirthdayList members={data.birthdays} month={data.monthLabel} />
+        <BirthdayList
+          members={data.birthdays}
+          month={data.monthLabel}
+          monthNumber={DateTime.fromFormat(month, MONTH_FORMAT).month}
+        />
       </div>
       <RegistrationSheet
         bucket={data.buckets.find((bucket) => bucket.key === openBucket)}

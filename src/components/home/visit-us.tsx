@@ -69,10 +69,10 @@ export default function VisitUs() {
               className="mt-1 size-5 shrink-0"
             />
             <div>
-              <dt className="type-subheading">Say hello first</dt>
+              <dt className="type-subheading">Hang out online</dt>
               <dd className="mt-1">
-                Our Discord is where we share news and plan the week. You're
-                welcome to join before your first visit.
+                Our Discord is where we study and game together. Drop by and
+                hang out, even before your first visit.
                 <span className="mt-3 block">
                   <a
                     className={buttonVariants({

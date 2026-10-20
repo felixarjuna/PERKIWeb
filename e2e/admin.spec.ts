@@ -5,6 +5,7 @@ import { adminLogin, selectOption, toast } from "./helpers";
 const SECOND_PAGE = /page=2/;
 const MEMBER_PARAM = /member=/;
 const NAME_DESC = /sort=name\.desc/;
+const BIRTHDAY_PARAM = /birthday=/;
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
 test("rejects an incorrect admin passcode", async ({ page }) => {
@@ -96,4 +97,19 @@ test("directory handles a failed query and retry", async ({ page }) => {
   await page.unroute("**/api/trpc/*profiles.getUserProfiles*");
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("table")).toBeVisible();
+});
+
+test("birthday month filter comes from the URL and can be cleared", async ({
+  page,
+}) => {
+  await adminLogin(page);
+  await page.goto("/admin/members?birthday=10&sort=birthday.asc");
+  const birthday = page.getByRole("button", { name: "Birthday October" });
+  await expect(birthday).toBeVisible();
+  const rows = page.getByRole("table").getByRole("row");
+  await expect(rows.filter({ hasText: "Dash Seed 06" })).toHaveCount(1);
+  await expect(rows.filter({ hasText: "Dash Seed 01" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page).not.toHaveURL(BIRTHDAY_PARAM);
+  await expect(rows.filter({ hasText: "Dash Seed 01" })).toHaveCount(1);
 });

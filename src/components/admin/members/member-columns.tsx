@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
 import {
+  birthdayMonth,
   birthdayOrder,
   type Member,
   memberDate,
@@ -36,6 +37,14 @@ export function createMemberColumns(
       enableSorting: false,
       filterFn: "includesString",
       id: "search",
+    },
+    {
+      // Hidden column behind the birthday-month facet filter.
+      accessorFn: birthdayMonth,
+      enableHiding: false,
+      enableSorting: false,
+      filterFn: "arrHas",
+      id: "birthdayMonth",
     },
     {
       accessorFn: memberName,

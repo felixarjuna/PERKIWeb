@@ -24,6 +24,7 @@ import { AdminSearch, QueryMessage } from "../admin-controls";
 import { createMemberColumns } from "./member-columns";
 import MemberDetails from "./member-details";
 import {
+  birthdayMonthOptions,
   getMemberLocations,
   type Member,
   type MemberFilters,
@@ -71,6 +72,7 @@ export default function MemberDirectory() {
   const records = query.data ?? EMPTY;
   const [columnVisibility, setColumnVisibility] =
     useState<ColumnVisibilityState>({
+      birthdayMonth: false,
       search: false,
     });
   const columns = useMemo(
@@ -93,8 +95,11 @@ export default function MemberDirectory() {
     if (filters.locations.length) {
       active.push({ id: "location", value: filters.locations });
     }
+    if (filters.birthdayMonths.length) {
+      active.push({ id: "birthdayMonth", value: filters.birthdayMonths });
+    }
     return active;
-  }, [filters.q, filters.locations]);
+  }, [filters.q, filters.locations, filters.birthdayMonths]);
   const pagination = useMemo<PaginationState>(
     () => ({ pageIndex: filters.page - 1, pageSize: filters.pageSize }),
     [filters.page, filters.pageSize]
@@ -108,11 +113,13 @@ export default function MemberDirectory() {
     getRowId: (member) => member.profiles.id,
     onColumnFiltersChange: (updater: Updater<ColumnFiltersState>) => {
       const next = functionalUpdate(updater, columnFilters);
-      const location = next.find((filter) => filter.id === "location");
+      const values = (id: string) => {
+        const value = next.find((filter) => filter.id === id)?.value;
+        return Array.isArray(value) ? value.map(String) : [];
+      };
       setFilters({
-        locations: Array.isArray(location?.value)
-          ? location.value.map(String)
-          : [],
+        birthdayMonths: values("birthdayMonth"),
+        locations: values("location"),
       });
     },
     onColumnVisibilityChange: setColumnVisibility,
@@ -136,7 +143,11 @@ export default function MemberDirectory() {
     state: {
       columnFilters,
       columnPinning: PINNING,
-      columnVisibility: { ...columnVisibility, search: false },
+      columnVisibility: {
+        ...columnVisibility,
+        birthdayMonth: false,
+        search: false,
+      },
       pagination,
       sorting,
     },
@@ -153,8 +164,11 @@ export default function MemberDirectory() {
   const memberId = params.get("member");
   const selected = records.find((member) => member.profiles.id === memberId);
   const filtered = table.getFilteredRowModel().rows.length;
-  const isFiltered = Boolean(filters.q || filters.locations.length);
+  const isFiltered = Boolean(
+    filters.q || filters.locations.length || filters.birthdayMonths.length
+  );
   const locationColumn = table.getColumn("location");
+  const birthdayColumn = table.getColumn("birthdayMonth");
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -173,10 +187,19 @@ export default function MemberDirectory() {
           title="Location"
         />
       ) : null}
+      {birthdayColumn ? (
+        <DataTableFacetedFilter
+          column={birthdayColumn}
+          options={birthdayMonthOptions}
+          title="Birthday"
+        />
+      ) : null}
       {isFiltered ? (
         <Button
           className="h-10"
-          onClick={() => setFilters({ locations: [], q: "" })}
+          onClick={() =>
+            setFilters({ birthdayMonths: [], locations: [], q: "" })
+          }
           size="sm"
           type="button"
           variant="ghost"

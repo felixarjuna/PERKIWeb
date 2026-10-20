@@ -9,9 +9,13 @@ const VISIBLE_BIRTHDAYS = 5;
 export default function BirthdayList({
   members,
   month,
+  monthNumber,
 }: {
   members: Member[];
+  /** "October 2026". */
   month: string;
+  /** 1–12, used to open the directory filtered to this month. */
+  monthNumber: number;
 }) {
   return (
     <section className="flex min-h-0 min-w-0 flex-col gap-3 rounded-xl bg-card p-4 sm:p-5">
@@ -65,7 +69,7 @@ export default function BirthdayList({
       {members.length > VISIBLE_BIRTHDAYS ? (
         <Link
           className="type-caption -mt-1 self-start rounded-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-          href="/admin/members?sort=birthday.asc"
+          href={`/admin/members?birthday=${monthNumber}&sort=birthday.asc`}
         >
           +{members.length - VISIBLE_BIRTHDAYS} more in {month.split(" ")[0]}
         </Link>

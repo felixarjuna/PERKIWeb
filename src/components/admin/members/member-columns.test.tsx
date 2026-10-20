@@ -83,6 +83,13 @@ describe("member table", () => {
     expect(
       rowIds(byName, [{ id: "location", value: ["aachen", "missing"] }])
     ).toEqual(["a", "b", "c"]);
+    // Birthday month: Ben is October, Anna January, Cara has none.
+    expect(rowIds(byName, [{ id: "birthdayMonth", value: ["10"] }])).toEqual([
+      "b",
+    ]);
+    expect(
+      rowIds(byName, [{ id: "birthdayMonth", value: ["1", "10"] }])
+    ).toEqual(["a", "b"]);
   });
 
   it("sorts birthdays in calendar order and keeps missing dates last", () => {

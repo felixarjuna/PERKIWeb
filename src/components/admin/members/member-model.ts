@@ -12,6 +12,8 @@ export const memberSortColumns = [
 ] as const;
 export type MemberSortColumn = (typeof memberSortColumns)[number];
 export interface MemberFilters {
+  /** Calendar months "1"–"12" (URL `birthday=10,11`). */
+  birthdayMonths: string[];
   /** Normalised location keys (see `normalizeLocation`). */
   locations: string[];
   page: number;
@@ -20,6 +22,14 @@ export interface MemberFilters {
   sort: { desc: boolean; id: MemberSortColumn };
 }
 export const PAGE_SIZES = [10, 25, 50, 100] as const;
+/** Filter options for the birthday-month facet, January first. */
+export const birthdayMonthOptions = Array.from({ length: 12 }, (_, index) => ({
+  label: DateTime.fromObject({ month: index + 1 }, { locale: "en" }).toFormat(
+    "LLLL"
+  ),
+  value: String(index + 1),
+}));
+const BIRTHDAY_MONTHS = new Set(birthdayMonthOptions.map((m) => m.value));
 export const DEFAULT_PAGE_SIZE = 10;
 export const normalizeLocation = (location: string | null) =>
   location?.trim().toLowerCase() || "missing";
@@ -43,6 +53,16 @@ export const memberDate = (date: Date | null, birthday = false) => {
   }).toFormat(birthday ? "d LLL" : "d LLL yyyy");
 };
 
+/** Comma-separated URL list without blanks or duplicates. */
+const readList = (value: string | null) => [
+  ...new Set(
+    (value ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  ),
+];
+
 const DEFAULT_SORT: MemberFilters["sort"] = { desc: false, id: "name" };
 const SORT_DIRECTIONS = new Set(["asc", "desc"]);
 
@@ -59,14 +79,10 @@ export function readMemberFilters(params: URLSearchParams): MemberFilters {
   const page = Number(params.get("page") ?? 1);
   const size = Number(params.get("pageSize") ?? DEFAULT_PAGE_SIZE);
   return {
-    locations: [
-      ...new Set(
-        (params.get("location") ?? "")
-          .split(",")
-          .map((location) => location.trim())
-          .filter(Boolean)
-      ),
-    ],
+    birthdayMonths: readList(params.get("birthday")).filter((month) =>
+      BIRTHDAY_MONTHS.has(month)
+    ),
+    locations: readList(params.get("location")),
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
     pageSize: PAGE_SIZES.find((item) => item === size) ?? DEFAULT_PAGE_SIZE,
     q: params.get("q") ?? "",
@@ -81,6 +97,9 @@ export function memberFilterParams(
   const values: Record<string, string> = {};
   if (filters.q !== undefined) {
     values.q = filters.q;
+  }
+  if (filters.birthdayMonths) {
+    values.birthday = filters.birthdayMonths.join(",");
   }
   if (filters.locations) {
     values.location = filters.locations.join(",");
@@ -108,6 +127,12 @@ export const memberSearchText = (member: Member) =>
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+
+/** Birthday month "1"–"12" for the facet filter, or undefined. */
+export const birthdayMonth = (member: Member) => {
+  const birthday = calendarBirthday(member.profiles.birthday);
+  return birthday ? String(birthday.month) : undefined;
+};
 
 /** Calendar position (MMDD) so birthdays sort Jan→Dec regardless of year. */
 export const birthdayOrder = (member: Member) => {

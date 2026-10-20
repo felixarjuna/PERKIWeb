@@ -48,10 +48,11 @@ describe("member directory URL state", () => {
     expect(
       readMemberFilters(
         new URLSearchParams(
-          "q=ben&location=aachen,,missing,aachen&sort=birthday.desc&page=3&pageSize=25"
+          "q=ben&location=aachen,,missing,aachen&birthday=10,13,x,10,1&sort=birthday.desc&page=3&pageSize=25"
         )
       )
     ).toEqual({
+      birthdayMonths: ["10", "1"],
       locations: ["aachen", "missing"],
       page: 3,
       pageSize: 25,
@@ -75,20 +76,30 @@ describe("member directory URL state", () => {
   it("drops defaults from the URL", () => {
     expect(
       memberFilterParams({
+        birthdayMonths: [],
         locations: [],
         page: 1,
         pageSize: 10,
         q: "",
         sort: { desc: false, id: "name" },
       })
-    ).toEqual({ location: "", page: "", pageSize: "", q: "", sort: "" });
+    ).toEqual({
+      birthday: "",
+      location: "",
+      page: "",
+      pageSize: "",
+      q: "",
+      sort: "",
+    });
     expect(
       memberFilterParams({
+        birthdayMonths: ["10"],
         locations: ["aachen", "missing"],
         page: 2,
         sort: { desc: true, id: "registered" },
       })
     ).toEqual({
+      birthday: "10",
       location: "aachen,missing",
       page: "2",
       sort: "registered.desc",
