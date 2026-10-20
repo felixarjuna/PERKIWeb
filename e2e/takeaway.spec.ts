@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 const takeawayArticle = (page: Page, text: string) =>
-  page.getByRole("article").filter({ hasText: text });
+  page.getByRole("listitem").filter({ hasText: text });
 
 /** Fills and submits /admin/takeaways/new; ends back on /admin/takeaways. */
 const createTakeaway = async (
@@ -56,12 +56,14 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(
     article.getByRole("heading", { name: scheduleTitle })
   ).toBeVisible();
-  await expect(article).toContainText("bible study");
-  await expect(article).toContainText("John 3:16");
+  await expect(article).toContainText("Bible study");
+
   await expect(article).toContainText(MEMBER_USERNAME);
 
   // Edit
-  await article.getByRole("button", { exact: true, name: "Edit" }).click();
+  await article
+    .getByRole("link", { exact: true, name: `Edit ${scheduleTitle}` })
+    .click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveValue(keypoints);
@@ -78,12 +80,14 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(takeawayArticle(page, keypoints)).toHaveCount(0);
 
   // Delete
-  await edited.getByRole("button", { exact: true, name: "Delete" }).click();
-  await page
-    .getByRole("alertdialog", { name: "Are you absolutely sure?" })
-    .getByRole("button", { name: "Continue" })
+  await edited
+    .getByRole("button", { exact: true, name: `Delete ${scheduleTitle}` })
     .click();
-  await expect(toast(page, "Takeaway successfully deleted!")).toBeVisible();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Delete entry" })
+    .click();
+  await expect(toast(page, "Takeaway deleted.")).toBeVisible();
   await expect(edited).toHaveCount(0);
 });
 

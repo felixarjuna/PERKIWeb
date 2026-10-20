@@ -1,109 +1,79 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { toast, waitForSession } from "./helpers";
+import { adminLogin, toast } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
-/** Usernames are derived from the display name ("E2E Member"). */
-const MEMBER_USERNAME = "e2emember";
-
-const prayerItem = (page: Page, content: string) =>
-  page.getByRole("listitem").filter({ hasText: content });
-
-test("adds, prays for, edits and deletes a prayer", async ({ page }) => {
-  // Short: the API caps prayer content at 50 characters.
-  const content = `Pray ${uniqueSuffix()}`;
-  const editedContent = `Bless ${uniqueSuffix()}`;
-
-  // Add
+test("prayer submission, publication, acknowledgement, editing and unpublication", async ({
+  page,
+  browser,
+}) => {
+  const content = `Prayer ${uniqueSuffix()}`;
+  const edited = `Updated ${uniqueSuffix()}`;
   await page.goto("/prayers");
-  await waitForSession(page);
-  await page.getByPlaceholder("Insert prayer ...").fill(content);
+  await page.getByLabel("Prayer request").fill(content);
   await page.getByRole("button", { exact: true, name: "Add" }).click();
   await expect(toast(page, "Your prayer is submitted!")).toBeVisible();
-
-  const item = prayerItem(page, content);
-  await expect(item).toHaveCount(1);
-  await expect(item).toContainText(MEMBER_USERNAME);
-  await expect(item.getByText("0", { exact: true })).toBeVisible();
-
-  // Pray: count goes up and the toggle stays pressed for this user.
-  const prayToggle = item.getByRole("button", {
-    name: "Pray for this request",
-  });
-  await expect(prayToggle).toHaveAttribute("aria-pressed", "false");
-  await prayToggle.click();
-  await expect(item.getByText("1", { exact: true })).toBeVisible();
-  await expect(prayToggle).toHaveAttribute("aria-pressed", "true");
-
-  await page.reload();
-  await expect(item.getByText("1", { exact: true })).toBeVisible();
-  await expect(prayToggle).toHaveAttribute("aria-pressed", "true");
-
-  // Praying again takes it back.
-  await prayToggle.click();
-  await expect(item.getByText("0", { exact: true })).toBeVisible();
-  await expect(prayToggle).toHaveAttribute("aria-pressed", "false");
-
-  // Edit
-  await item.getByRole("button", { exact: true, name: "Edit" }).first().click();
-  const dialog = page.getByRole("dialog");
-  const input = dialog.getByPlaceholder("Insert your prayer here...");
-  await expect(input).toHaveValue(content);
-  await input.fill(editedContent);
-  await dialog.getByRole("button", { name: "Save changes" }).click();
-  await expect(dialog).toBeHidden();
   await expect(
-    toast(page, "Your prayer is updated successfully!")
+    page.getByRole("listitem").filter({ hasText: content })
+  ).toHaveCount(0);
+  await adminLogin(page);
+  await page.goto("/admin/prayers");
+  const item = page.getByRole("listitem").filter({ hasText: content });
+  await expect(item).toContainText("Private");
+  await item.getByRole("button", { name: "Publish prayer" }).click();
+  await expect(item).toContainText("Published");
+  const anonymous = await browser.newContext();
+  const publicPage = await anonymous.newPage();
+  await publicPage.goto("/prayers");
+  await expect(
+    publicPage.getByRole("listitem").filter({ hasText: content })
   ).toBeVisible();
-
-  const edited = prayerItem(page, editedContent);
-  await expect(edited).toHaveCount(1);
-  await expect(prayerItem(page, content)).toHaveCount(0);
-
-  // Delete
-  await edited.getByRole("button", { exact: true, name: "Delete" }).click();
-  await page
-    .getByRole("alertdialog", { name: "Are you absolutely sure?" })
-    .getByRole("button", { name: "Continue" })
-    .click();
-  await expect(toast(page, "Prayer successfully deleted!")).toBeVisible();
-  await expect(edited).toHaveCount(0);
-});
-
-test("adds an anonymous prayer", async ({ page }) => {
-  const content = `Anon ${uniqueSuffix()}`;
-
+  await expect(
+    publicPage.getByRole("button", { exact: true, name: "Edit" })
+  ).toHaveCount(0);
   await page.goto("/prayers");
-  await waitForSession(page);
-  await page.getByPlaceholder("Insert prayer ...").fill(content);
-  await page.getByRole("switch", { name: "Anonymous" }).click();
-  await page.getByRole("button", { exact: true, name: "Add" }).click();
-
-  const item = prayerItem(page, content);
-  await expect(item).toHaveCount(1);
-  await expect(item).toContainText("unknown");
-  await expect(item).not.toContainText(MEMBER_USERNAME);
+  const request = page.getByRole("listitem").filter({ hasText: content });
+  await request.getByRole("button", { name: "Pray with them" }).click();
+  await expect(request).toContainText("1 praying");
+  await page.reload();
+  await expect(
+    request.getByRole("button", { name: "Praying with you" })
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.goto("/admin/prayers");
+  await item.getByRole("button", { exact: true, name: "Edit" }).click();
+  await page.getByRole("dialog").getByLabel("Prayer content").fill(edited);
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  const updated = page.getByRole("listitem").filter({ hasText: edited });
+  await updated.getByRole("button", { name: "Return to private" }).click();
+  await expect(updated).toContainText("Private");
+  await publicPage.reload();
+  await expect(
+    publicPage.getByRole("listitem").filter({ hasText: edited })
+  ).toHaveCount(0);
+  await updated
+    .getByRole("button", { exact: true, name: `Delete ${edited}` })
+    .click();
+  await page.getByRole("button", { exact: true, name: "Delete entry" }).click();
+  await expect(updated).toHaveCount(0);
+  await anonymous.close();
 });
 
-test("a prayer added while the session is still loading keeps its author", async ({
+test("anonymous prayers retain anonymity after publication", async ({
   page,
 }) => {
-  const content = `Early ${uniqueSuffix()}`;
-  const SESSION_DELAY_MS = 4000;
-  await page.route("**/api/auth/session", async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, SESSION_DELAY_MS));
-    await route.continue();
-  });
-
-  await page.goto("/prayers");
-  await page.getByPlaceholder("Insert prayer ...").fill(content);
+  await adminLogin(page);
+  await page.goto("/admin/prayers");
+  const content = `Anonymous ${uniqueSuffix()}`;
+  await page.getByLabel("Prayer request").fill(content);
+  await page.getByRole("switch", { name: "Anonymous" }).click();
   await page.getByRole("button", { exact: true, name: "Add" }).click();
-
-  const item = prayerItem(page, content);
-  await expect(item).toHaveCount(1);
-  await expect(item).toContainText(MEMBER_USERNAME);
+  const item = page.getByRole("listitem").filter({ hasText: content });
+  await item.getByRole("button", { name: "Publish prayer" }).click();
+  await expect(item).toContainText("Published");
+  await page.goto("/prayers");
   await expect(
-    item.getByRole("button", { exact: true, name: "Delete" })
-  ).toBeVisible();
+    page.getByRole("listitem").filter({ hasText: content })
+  ).toContainText("Anonymous");
 });

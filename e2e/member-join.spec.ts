@@ -47,7 +47,11 @@ test("submits a member profile once and shows existing membership", async ({
   await setDashboardPageSize(page, 50);
   const row = page.getByRole("row").filter({ hasText: user.name });
   await expect(row).toHaveCount(1);
-  await expect(row).toContainText("Maschinenbau");
+  await row
+    .getByRole("button", { exact: true, name: `View details for ${user.name}` })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText("Maschinenbau");
+  await page.keyboard.press("Escape");
   await expect(row).toContainText("Aachen");
 });
 

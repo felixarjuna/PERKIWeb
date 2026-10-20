@@ -50,7 +50,7 @@ Path alias: `~/*` → `src/*`.
 
 ## Design system
 
-General app pages, including the admin login and Christmas pages, render inside `src/components/template.tsx`, which owns the page rhythm: one `max-w-2xl` centered column, `px-4`, `pt-28 sm:pt-36 pb-24`, centered serif title + muted subtitle, `mt-8 sm:mt-10` gap to content. Pages must not re-introduce their own max-widths, horizontal padding, or top margins. Sign-in and sign-up use a compact card with the same typography and colors. The member dashboard keeps its sidebar, with a page title and a wide table that scrolls inside its container. Every route has one main landmark linked by the shared skip link.
+General app pages, including the admin login and Christmas pages, render inside `src/components/template.tsx`, which owns the page rhythm: one `max-w-2xl` centered column, `px-4`, `pt-28 sm:pt-36 pb-24`, centered serif title + muted subtitle, `mt-8 sm:mt-10` gap to content. Pages must not re-introduce their own max-widths, horizontal padding, or top margins. Sign-in and sign-up use a compact card with the same typography and colors. The admin workspace uses its own AdminShell: grouped desktop sidebar, mobile navigation sheet, page heading and action slot. Overview lives at /admin/dashboard; the searchable member directory lives at /admin/members and uses a compact desktop table, mobile cards, and a read-only details sheet. Every route has one main landmark linked by the shared skip link.
 
 **Type scale:** `src/styles/globals.css` section 4 defines ten fluid `type-*` roles (`type-display`, `type-title`, `type-heading`, `type-subheading`, `type-quote`, `type-lead`, `type-body`, `type-body-sm`, `type-caption`, `type-eyebrow`). Use the role utility for anything a reader reads, never a raw `text-*` size plus breakpoints. Reimbrandt is display-only (never below `type-subheading`); body text is 16px on phones; captions never below 12px. Satoshi ships one weight (500) and synthesis is off, so `font-bold`/`font-light` have no effect on Satoshi text.
 
@@ -73,3 +73,12 @@ General app pages, including the admin login and Christmas pages, render inside 
 - `xs:` responsive classes were never a defined breakpoint and are inert; don't add new ones.
 - The christmas routes are a past-event feature kept for reference/reuse; the external RSVP API (`rsvp-perkiaachen.fly.dev`) may be offline.
 - The admin dashboard has a client-side passcode gate (zustand) *plus* a NextAuth session requirement.
+
+## Admin workspace
+
+- `src/components/admin/` owns navigation, shell, controls, member directory, registration/birthday overview, and dedicated schedule/takeaway/prayer management lists. Public reading components contain no management mutations.
+- `/admin/members` URL parameters: `q`, `location`, `sort`, `page`, `pageSize`, `member`. Native History API updates integrate with Next.js search parameters; filters reset pagination. Details restore focus to the originating button or search on direct entry.
+- Metrics count profile registrations, with `Europe/Berlin` month boundaries. Date-only birthdays use UTC calendar fields. Cumulative registrations include retained profiles only; missing dates are disclosed.
+- Prayer migration `0007` adds `visibility`, private by default for existing and new rows. `/admin/prayers` handles review/edit/delete/publication. `/prayers` reads the explicit safe public projection; participant names are never sent by that endpoint. Signed-in acknowledgement uses a locked, idempotent server mutation plus a lookup returning only the current person's acknowledged IDs.
+- Run the migration as part of deployment before serving the new prayer pages. Development/testing must use the isolated test database. No production migration is performed by UI verification.
+- The existing NextAuth session plus client passcode gate remain transitional. RBAC, role assignment, member journeys, and testimonies are separate projects.

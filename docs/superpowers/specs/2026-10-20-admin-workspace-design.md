@@ -1,6 +1,6 @@
 # PERKI central admin workspace
 
-Status: proposed specification for review. The visual direction and expanded scope were approved in conversation; this written specification is the next review artifact.
+Status: approved for implementation. Schedule/takeaway route relocation landed separately in PR #22 before this branch; this implementation builds on that merged baseline. The implementation plan records the remaining redesign and publication work.
 
 ## Purpose
 

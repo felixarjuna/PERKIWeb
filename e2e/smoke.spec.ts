@@ -1,12 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway", "/christmas"];
-const PROTECTED_PAGES = [
+const PUBLIC_PAGES = [
+  "/",
+  "/group",
+  "/schedule",
+  "/takeaway",
   "/prayers",
-  "/account",
-  "/member/join",
-  "/admin/dashboard",
+  "/christmas",
 ];
+const PROTECTED_PAGES = ["/account", "/member/join", "/admin/dashboard"];
 
 for (const path of PUBLIC_PAGES) {
   test(`public page ${path} renders without client errors`, async ({
