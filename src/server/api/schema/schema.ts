@@ -66,6 +66,13 @@ export const queryByIdSchema = z.object({
   id: z.number(),
 });
 
+export const prayerVisibilitySchema = queryByIdSchema.extend({
+  visibility: z.enum(["private", "published"]),
+});
+export const prayerAcknowledgementSchema = queryByIdSchema.extend({
+  pressed: z.boolean(),
+});
+
 export const addProfileSchema = z.object({
   address: z.string().trim().min(1, "Please enter your address."),
   bio: z.string().optional(),

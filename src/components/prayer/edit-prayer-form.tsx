@@ -37,11 +37,13 @@ export default function EditPrayerForm({
   const { data: session } = useSession();
   const utils = api.useUtils();
   const updatePrayer = api.prayers.updatePrayer.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await utils.prayers.invalidate();
       toast.success("Your prayer is updated successfully!", {
         description: "God bless you!",
       });
+      onCloseDialog();
     },
   });
 
@@ -62,7 +64,6 @@ export default function EditPrayerForm({
       prayerNames: prayer.prayerNames as string[],
     };
     updatePrayer.mutate(request);
-    onCloseDialog();
   }
 
   return (
@@ -94,6 +95,8 @@ export default function EditPrayerForm({
                     <FormItem>
                       <FormControl>
                         <Input
+                          aria-label="Prayer content"
+                          maxLength={50}
                           placeholder="Insert your prayer here..."
                           {...field}
                         />
@@ -105,7 +108,11 @@ export default function EditPrayerForm({
               </div>
 
               <div className="flex">
-                <Button className="w-fit" type="submit">
+                <Button
+                  className="w-fit"
+                  disabled={updatePrayer.isPending}
+                  type="submit"
+                >
                   Save changes
                 </Button>
               </div>

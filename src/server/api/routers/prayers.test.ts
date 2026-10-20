@@ -23,6 +23,60 @@ const onlyPrayer = async () => {
 };
 
 describe("prayers router", () => {
+  it("acknowledges a published prayer idempotently and returns only the current user's IDs", async () => {
+    const first = await signedIn();
+    const second = await signedIn();
+    await first.prayers.addPrayer(validPrayer);
+    const { id } = await onlyPrayer();
+    await expect(
+      first.prayers.acknowledgePrayer({ id, pressed: true })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await first.prayers.setPrayerVisibility({ id, visibility: "published" });
+    await first.prayers.acknowledgePrayer({ id, pressed: true });
+    await first.prayers.acknowledgePrayer({ id, pressed: true });
+    expect((await onlyPrayer()).count).toBe(1);
+    expect(await first.prayers.getOwnPrayerAcknowledgements()).toEqual([id]);
+    expect(await second.prayers.getOwnPrayerAcknowledgements()).toEqual([]);
+    await second.prayers.acknowledgePrayer({ id, pressed: true });
+    expect((await onlyPrayer()).count).toBe(2);
+    await first.prayers.acknowledgePrayer({ id, pressed: false });
+    expect((await onlyPrayer()).count).toBe(1);
+    expect(await first.prayers.getOwnPrayerAcknowledgements()).toEqual([]);
+    await expect(
+      anonymousCaller().prayers.acknowledgePrayer({ id, pressed: true })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+  it("keeps new prayers private and exposes only published safe fields", async () => {
+    const api = await signedIn();
+    await api.prayers.addPrayer({
+      ...validPrayer,
+      prayerNames: ["Private participant"],
+    });
+    const { id } = await onlyPrayer();
+    expect(await anonymousCaller().prayers.getPublishedPrayers()).toEqual([]);
+    await api.prayers.setPrayerVisibility({ id, visibility: "published" });
+    const publicRows = await anonymousCaller().prayers.getPublishedPrayers();
+    expect(publicRows).toHaveLength(1);
+    expect(publicRows.at(0)).not.toHaveProperty("prayerNames");
+    await api.prayers.setPrayerVisibility({ id, visibility: "private" });
+    expect(await anonymousCaller().prayers.getPublishedPrayers()).toEqual([]);
+  });
+
+  it("masks anonymous authors and rejects anonymous publication", async () => {
+    const api = await signedIn();
+    await api.prayers.addPrayer({ ...validPrayer, isAnonymous: true });
+    const { id } = await onlyPrayer();
+    await expect(
+      anonymousCaller().prayers.setPrayerVisibility({
+        id,
+        visibility: "published",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await api.prayers.setPrayerVisibility({ id, visibility: "published" });
+    expect(
+      (await anonymousCaller().prayers.getPublishedPrayers()).at(0)?.name
+    ).toBeNull();
+  });
   it("adds a prayer with a zero count and lists it", async () => {
     const api = await signedIn();
 

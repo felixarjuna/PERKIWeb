@@ -27,11 +27,13 @@ const AddPrayerFormSchema = z.object({
 export default function AddPrayerForm({ username }: { username: string }) {
   const utils = api.useUtils();
   const addPrayer = api.prayers.addPrayer.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await utils.prayers.invalidate();
       toast.success("Your prayer is submitted!", {
-        description: "Feel free to add another prayer!",
+        description: "Your request is private until reviewed and published.",
       });
+      form.reset({ content: "", isAnonymous: false });
     },
   });
 
@@ -65,14 +67,22 @@ export default function AddPrayerForm({ username }: { username: string }) {
                   <FormItem>
                     <FormLabel>Prayer request</FormLabel>
                     <FormControl>
-                      <Input placeholder="Insert prayer ..." {...field} />
+                      <Input
+                        maxLength={50}
+                        placeholder="Insert prayer ..."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <Button className="mt-7 gap-x-1" type="submit">
+            <Button
+              className="mt-7 gap-x-1"
+              disabled={addPrayer.isPending}
+              type="submit"
+            >
               <Plus className="h-5 w-5" />
               Add
             </Button>

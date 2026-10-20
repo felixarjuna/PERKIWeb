@@ -83,6 +83,9 @@ export const prayers = pgTable("prayers", {
   })
     .defaultNow()
     .$onUpdate(() => new Date()),
+  visibility: text("visibility", { enum: ["private", "published"] })
+    .default("private")
+    .notNull(),
 });
 
 export const users = pgTable("user", {
