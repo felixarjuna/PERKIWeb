@@ -1,9 +1,7 @@
 "use client";
 
 import { ListFilter } from "lucide-react";
-import { useRouter } from "next/navigation";
 import React from "react";
-import { toast } from "sonner";
 import Loader from "~/components/loader";
 import {
   Select,
@@ -16,13 +14,8 @@ import {
 import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { dateTimeFormatter } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import ActionButton from "../../components/action-button";
 
-export default function TakeawayList({
-  management = false,
-}: {
-  management?: boolean;
-}) {
+export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
   const [type, setType] = React.useState<
     "church_service" | "bible_study" | "all"
@@ -92,10 +85,8 @@ export default function TakeawayList({
             date={dateTimeFormatter(item.schedules.date.toString())}
             eventType={item.schedules.type}
             key={item.takeaways.id}
-            management={management}
             speaker={item.schedules.leader}
             summary={item.takeaways.keypoints}
-            takeawayId={item.takeaways.id}
             title={item.schedules.title}
           />
         );
@@ -109,10 +100,8 @@ interface TakeawayItemProps {
   readonly contributors: string[];
   readonly date: string;
   readonly eventType: EventTypeEnum;
-  readonly management: boolean;
   readonly speaker: string;
   readonly summary: string;
-  readonly takeawayId: number;
   readonly title: string;
 }
 
@@ -124,12 +113,6 @@ function TakeawayItem(props: TakeawayItemProps) {
           {props.title}
         </h2>
         <div className="flex shrink-0 items-center gap-x-2">
-          {props.management ? (
-            <TakeawayActions
-              className="hidden items-center gap-x-2 sm:flex"
-              takeawayId={props.takeawayId}
-            />
-          ) : null}
           <span className="type-caption whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
             {props.eventType === "bible_study"
               ? "bible study"
@@ -148,39 +131,6 @@ function TakeawayItem(props: TakeawayItemProps) {
       <p className="type-caption mt-4 text-muted-foreground">
         {props.contributors.join(" ")}
       </p>
-
-      {props.management ? (
-        <TakeawayActions
-          className="mt-3 flex w-full place-content-end gap-x-2 sm:hidden"
-          takeawayId={props.takeawayId}
-        />
-      ) : null}
     </article>
-  );
-}
-
-function TakeawayActions({
-  takeawayId,
-  className,
-}: {
-  takeawayId: number;
-  className: string;
-}) {
-  const router = useRouter();
-  const utils = api.useUtils();
-  const deletion = api.takeaways.deleteTakeaway.useMutation({
-    onError: () =>
-      toast.error("Could not delete the takeaway. Please try again."),
-    onSuccess: async () => {
-      await utils.takeaways.invalidate();
-      toast.success("Takeaway successfully deleted!");
-    },
-  });
-  return (
-    <ActionButton
-      className={className}
-      onDeleteClick={() => deletion.mutate({ id: takeawayId })}
-      onEditClick={() => router.push(`/admin/takeaways/${takeawayId}/edit`)}
-    />
   );
 }

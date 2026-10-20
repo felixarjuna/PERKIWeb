@@ -1,27 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import ScheduleList from "~/app/schedule/schedule-list";
 import AdminShell from "~/components/admin/admin-shell";
+import ScheduleManager from "~/components/admin/content/schedule-manager";
 import { buttonVariants } from "~/components/ui/button";
 import { authPageUrl } from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 
 export default async function ManagementPage() {
-  const session = await auth();
-  if (!session) {
+  if (!(await auth())) {
     redirect(authPageUrl("signin", "/admin/schedules"));
   }
   return (
-    <AdminShell section="Schedules">
-      <div className="mb-4 flex justify-end">
-        <Link
-          className={buttonVariants({ variant: "secondary" })}
-          href="/admin/schedules/new"
-        >
+    <AdminShell
+      actions={
+        <Link className={buttonVariants()} href="/admin/schedules/new">
           Add schedule
         </Link>
-      </div>
-      <ScheduleList management />
+      }
+      section="Schedules"
+      subtitle="Plan gatherings and keep the fellowship informed."
+    >
+      <ScheduleManager />
     </AdminShell>
   );
 }

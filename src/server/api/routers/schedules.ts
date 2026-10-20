@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
-import { schedules } from "~/lib/db/schema/schema";
+import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { db } from "~/server";
 import {
   addScheduleBatchSchema,
@@ -36,10 +36,20 @@ export const scheduleRouter = createTRPCRouter({
     ),
   deleteSchedule: protectedProcedure
     .input(queryByIdSchema)
-    .mutation(
-      async ({ input }) =>
-        await db.delete(schedules).where(eq(schedules.id, input.id))
-    ),
+    .mutation(async ({ input }) => {
+      const linked = await db
+        .select({ id: takeaways.id })
+        .from(takeaways)
+        .where(eq(takeaways.scheduleId, input.id))
+        .limit(1);
+      if (linked.length) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Remove the linked takeaways before deleting this schedule.",
+        });
+      }
+      return await db.delete(schedules).where(eq(schedules.id, input.id));
+    }),
   getScheduleById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {

@@ -10,8 +10,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { toast } from "sonner";
-import ActionButton from "~/components/action-button";
 import Loader from "~/components/loader";
 import { Button } from "~/components/ui/button";
 import {
@@ -44,11 +42,7 @@ const verses = [
   'Ecclesiastes 4:9 — "Two are better than one, because they have a good return for their labor."',
 ];
 
-export default function ScheduleList({
-  management = false,
-}: {
-  management?: boolean;
-}) {
+export default function ScheduleList() {
   const { data: schedules } = api.schedules.getSchedules.useQuery();
 
   const router = useRouter();
@@ -248,12 +242,6 @@ export default function ScheduleList({
             <h3 className="type-subheading min-w-0 flex-1 break-words">
               {schedule.title}
             </h3>
-            {management ? (
-              <ScheduleActions
-                className="hidden gap-x-2 sm:flex"
-                scheduleId={schedule.id}
-              />
-            ) : null}
           </div>
           {renderScheduleDetails(schedule)}
           {renderScheduleSummary(schedule)}
@@ -265,12 +253,6 @@ export default function ScheduleList({
         />
 
         {renderScheduleServants(schedule)}
-        {management ? (
-          <ScheduleActions
-            className="flex w-full place-content-end gap-x-2 px-4 pb-4 sm:hidden"
-            scheduleId={schedule.id}
-          />
-        ) : null}
       </div>
     );
   }
@@ -365,31 +347,5 @@ export default function ScheduleList({
       {renderUpcomingSchedule()}
       {renderPreviousSchedule()}
     </section>
-  );
-}
-
-function ScheduleActions({
-  scheduleId,
-  className,
-}: {
-  scheduleId: number;
-  className: string;
-}) {
-  const router = useRouter();
-  const utils = api.useUtils();
-  const deletion = api.schedules.deleteSchedule.useMutation({
-    onError: () =>
-      toast.error("Could not delete the schedule. Please try again."),
-    onSuccess: async () => {
-      await utils.schedules.invalidate();
-      toast.success("Schedule successfully deleted!");
-    },
-  });
-  return (
-    <ActionButton
-      className={className}
-      onDeleteClick={() => deletion.mutate({ id: scheduleId })}
-      onEditClick={() => router.push(`/admin/schedules/${scheduleId}/edit`)}
-    />
   );
 }

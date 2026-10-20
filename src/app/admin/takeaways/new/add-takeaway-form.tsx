@@ -51,6 +51,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
   /** add takeaway action. */
   const utils = api.useUtils();
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
+    onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await Promise.all([utils.takeaways.invalidate()]);
       toast.success("Your takeaway has been submitted!", {
@@ -135,7 +136,11 @@ export default function AddTakeawayForm({ username }: { username: string }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="submit" variant={"default"}>
+          <Button
+            disabled={addTakeaway.isPending}
+            type="submit"
+            variant={"default"}
+          >
             Add takeaway
           </Button>
           <Button

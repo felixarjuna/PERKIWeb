@@ -29,6 +29,21 @@ const onlySchedule = async () => {
 };
 
 describe("schedules router", () => {
+  it("blocks deleting a schedule while a takeaway references it", async () => {
+    const api = await signedIn();
+    await api.schedules.addSchedule(validSchedule);
+    const { id } = await onlySchedule();
+    await api.takeaways.addTakeaway({
+      contributors: [],
+      keypoints: "Notes",
+      scheduleId: id,
+    });
+    await expect(api.schedules.deleteSchedule({ id })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(await api.takeaways.getTakeaways()).toHaveLength(1);
+    expect(await api.schedules.getSchedules()).toHaveLength(1);
+  });
   it("lets anyone read schedules, newest first", async () => {
     const user = await insertUser();
     const api = callerFor(user.id);
