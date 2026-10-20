@@ -42,6 +42,7 @@ export function AppSidebar({
   driveUrl: string | null;
 }) {
   const staff = isStaffRole(viewerRole);
+  const home = navigationFor(viewerRole)[0].url;
   const { data: session } = useSession();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -53,7 +54,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" tooltip="PERKI Aachen">
-              <Link href="/admin/dashboard" onClick={close}>
+              <Link href={home} onClick={close}>
                 <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary font-reimbrandt text-lg text-sidebar-primary-foreground">
                   P
                 </span>

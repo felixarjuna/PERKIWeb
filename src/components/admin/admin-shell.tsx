@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import type { Role } from "~/lib/roles";
-import type { adminNavigation } from "./admin-navigation";
+import { type adminNavigation, navigationFor } from "./admin-navigation";
 
 type AdminSection = (typeof adminNavigation)[number]["title"];
 
@@ -52,7 +52,9 @@ export default function AdminShell({
               <BreadcrumbList className="type-body-sm flex-nowrap gap-1.5 sm:gap-2">
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href="/admin/dashboard">Workspace</Link>
+                    <Link href={navigationFor(viewerRole)[0].url}>
+                      Workspace
+                    </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
