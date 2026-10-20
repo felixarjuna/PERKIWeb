@@ -31,7 +31,13 @@ const member = (
     userId: id,
     ...extra,
   },
-  user: { email: `${name.toLowerCase()}@test.local`, id, image: null, name },
+  user: {
+    email: `${name.toLowerCase()}@test.local`,
+    id,
+    image: null,
+    name,
+    role: "member" as const,
+  },
 });
 const list = [
   member("b", "Ben", {

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { profiles, users } from "~/lib/db/schema/schema";
+import { normalizeRole } from "~/lib/roles";
 import { db } from "~/server";
 import {
   adminProcedure,
@@ -57,21 +58,27 @@ export const profileRouter = createTRPCRouter({
         });
     }),
   /** Member directory with contact details: admins only. */
-  getUserProfiles: adminProcedure.query(
-    async () =>
-      await db
-        .select({
-          profiles,
-          user: {
-            email: users.email,
-            id: users.id,
-            image: users.image,
-            name: users.name,
-          },
-        })
-        .from(profiles)
-        .leftJoin(users, eq(profiles.userId, users.id))
-  ),
+  getUserProfiles: adminProcedure.query(async () => {
+    const rows = await db
+      .select({
+        profiles,
+        user: {
+          email: users.email,
+          id: users.id,
+          image: users.image,
+          name: users.name,
+          role: users.role,
+        },
+      })
+      .from(profiles)
+      .leftJoin(users, eq(profiles.userId, users.id));
+    return rows.map((row) => ({
+      ...row,
+      user: row.user
+        ? { ...row.user, role: normalizeRole(row.user.role) }
+        : null,
+    }));
+  }),
   /** Whether the signed-in user has already registered as a member. */
   hasOwnProfile: protectedProcedure.query(async ({ ctx }) => {
     const rows = await db

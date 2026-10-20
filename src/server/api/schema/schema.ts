@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ASSIGNABLE_ROLES } from "~/lib/roles";
 
 export const addTakeawaySchema = z.object({
   contributors: z.array(z.string()),
@@ -77,5 +78,10 @@ export const addProfileSchema = z.object({
   location: z.string().trim().min(1, "Please enter your location."),
   major: z.string().trim().min(1, "Please enter your major."),
   phoneNumber: z.string().trim().min(1, "Please enter your WhatsApp number."),
+  userId: z.string().min(1),
+});
+
+export const setRoleSchema = z.object({
+  role: z.enum(ASSIGNABLE_ROLES),
   userId: z.string().min(1),
 });

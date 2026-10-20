@@ -104,6 +104,7 @@ describe("profiles.getUserProfiles", () => {
       id: member.id,
       image: null,
       name: "Member",
+      role: "member",
     });
     expect(rows[0]?.user).not.toHaveProperty("hashedPassword");
   });
