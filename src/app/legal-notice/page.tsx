@@ -2,33 +2,36 @@ import type { Metadata } from "next";
 import Template from "~/components/template";
 
 export const metadata: Metadata = {
-  description: "Anbieterkennzeichnung der PERKI Aachen Website.",
-  title: "Impressum",
+  description: "Provider identification for the PERKI Aachen website.",
+  title: "Legal notice",
 };
 
-export default function ImpressumPage() {
+export default function LegalNoticePage() {
   return (
-    <Template subtitle="Angaben gemäß § 5 DDG" title="Impressum">
+    <Template
+      subtitle="Information under § 5 DDG (German Digital Services Act)"
+      title="Legal notice"
+    >
       <div className="space-y-8 text-sm sm:text-base">
         <section className="space-y-2">
           <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Anbieter
+            Provider
           </h2>
           <address className="not-italic">
             PERKI Aachen (Persekutuan Kristen Indonesia Aachen)
             <br />
             Roermonderstraße 110
             <br />
-            52072 Aachen
+            52072 Aachen, Germany
           </address>
         </section>
 
         <section className="space-y-2">
           <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Kontakt
+            Contact
           </h2>
           <p>
-            Telefon:{" "}
+            Phone:{" "}
             <a
               className="underline underline-offset-4"
               href="tel:+491745277265"
@@ -36,7 +39,7 @@ export default function ImpressumPage() {
               +49 174 5277265
             </a>
             <br />
-            E-Mail:{" "}
+            Email:{" "}
             <a
               className="underline underline-offset-4"
               href="mailto:perkiaachen18@gmail.com"
@@ -48,10 +51,10 @@ export default function ImpressumPage() {
 
         <section className="space-y-2">
           <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Verantwortlich für den Inhalt
+            Responsible for the content
           </h2>
           <p className="text-muted-foreground">
-            Vorname Nachname, Anschrift wie oben.
+            First name Last name, address as above.
           </p>
         </section>
       </div>

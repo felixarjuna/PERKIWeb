@@ -10,8 +10,8 @@ const siteLinks = [
 ] as const;
 
 const legalLinks = [
-  { href: "/impressum", label: "Impressum" },
-  { href: "/datenschutz", label: "Datenschutz" },
+  { href: "/legal-notice", label: "Legal notice" },
+  { href: "/privacy", label: "Privacy policy" },
 ] as const;
 
 const linkClass =

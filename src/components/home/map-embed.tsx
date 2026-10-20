@@ -1,12 +1,13 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { ExternalLink, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 
 const PLACE = "Roermonderstraße 110, 52072 Aachen";
+const MAPS_URL = "https://maps.app.goo.gl/R7QCeJGbNyHqiCZKA";
 const LAT = 50.7859;
 const LON = 6.072_92;
 const SPAN_LAT = 0.004;
@@ -16,7 +17,7 @@ const EMBED_URL = `https://www.openstreetmap.org/export/embed.html?bbox=${LON - 
 /**
  * Two-click map: a static preview with the venue pinned, and the live
  * OpenStreetMap only after the visitor asks for it, so no third party
- * loads before they choose to (see /datenschutz).
+ * loads before they choose to (see /privacy).
  */
 export default function MapEmbed() {
   const [live, setLive] = useState(false);
@@ -55,22 +56,38 @@ export default function MapEmbed() {
         <MapPin className="mt-1 size-8 fill-background text-foreground drop-shadow" />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-paper/90 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-paper/90 p-3 backdrop-blur">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            className="text-foreground"
+            onClick={() => setLive(true)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <MapPin aria-hidden="true" className="size-4" />
+            Open interactive map
+          </Button>
+          <a
+            className={buttonVariants({
+              className: "text-foreground",
+              size: "sm",
+              variant: "outline",
+            })}
+            href={MAPS_URL}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <ExternalLink aria-hidden="true" className="size-4" />
+            Open in Google Maps
+          </a>
+        </div>
         <p className="text-paper-foreground text-xs">
-          The live map is loaded from OpenStreetMap when you open it.{" "}
-          <Link className="underline underline-offset-4" href="/datenschutz">
-            Datenschutz
+          The interactive map is loaded from OpenStreetMap when you open it.{" "}
+          <Link className="underline underline-offset-4" href="/privacy">
+            Privacy policy
           </Link>
         </p>
-        <Button
-          className="shrink-0 text-foreground"
-          onClick={() => setLive(true)}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Open interactive map
-        </Button>
       </div>
     </div>
   );

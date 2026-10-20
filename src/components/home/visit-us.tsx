@@ -1,9 +1,7 @@
-import { BusFront, Clock3, ExternalLink, MapPin } from "lucide-react";
-import { buttonVariants } from "../ui/button";
+import { BusFront, Clock3, MapPin } from "lucide-react";
 import MapEmbed from "./map-embed";
 import Section from "./section";
 
-const MAPS_URL = "https://maps.app.goo.gl/R7QCeJGbNyHqiCZKA";
 const busLines = ["7", "27", "37", "47", "147"] as const;
 
 export default function VisitUs() {
@@ -66,21 +64,6 @@ export default function VisitUs() {
                 </ul>
               </dd>
             </div>
-          </div>
-
-          <div className="pt-2">
-            <a
-              className={buttonVariants({
-                className: "text-foreground",
-                variant: "outline",
-              })}
-              href={MAPS_URL}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <ExternalLink aria-hidden="true" className="size-4" />
-              Open in Google Maps
-            </a>
           </div>
         </dl>
 

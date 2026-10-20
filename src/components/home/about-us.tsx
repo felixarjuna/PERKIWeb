@@ -38,6 +38,7 @@ export default function AboutUs() {
             Through regular gatherings, prayer meetings and outreach we grow in
             community and in faith lived out authentically, and we share the
             message of God&apos;s love and salvation with the people around us.
+            And still, we are just sinners who want to grow together.
           </p>
         </div>
 
@@ -50,8 +51,8 @@ export default function AboutUs() {
             src="/images/perki-aachen.jpg"
             width={2000}
           />
-          <figcaption className="text-balance font-reimbrandt text-xl tracking-wide sm:text-2xl">
-            And still, we are just sinners who want to grow together.
+          <figcaption className="text-muted-foreground text-xs">
+            The fellowship after a Saturday service in Aachen.
           </figcaption>
         </figure>
       </div>
