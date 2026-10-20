@@ -32,7 +32,7 @@ export default function Hero() {
         study the Word and share a meal. Come as you are.
       </p>
 
-      <p className="enter type-body mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+      <p className="enter type-body-sm sm:type-body mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
         <span className="inline-flex items-center gap-2">
           <Clock3 aria-hidden="true" className="size-4 text-muted-foreground" />
           Saturdays from 15:30

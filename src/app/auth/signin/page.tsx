@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { env } from "~/env.mjs";
 import {
-  authPageUrl,
   getReturnPath,
   getSameOriginReturnPath,
   type PageSearchParams,
@@ -43,20 +42,25 @@ export default async function SignInPage({
     >
       <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg sm:p-10">
         <p className="type-eyebrow text-muted-foreground">Perki Aachen</p>
-        <h1 className="type-title mt-2">Welcome back</h1>
+        <h1 className="mt-2 font-reimbrandt text-2xl leading-tight sm:text-3xl">
+          Sign in
+        </h1>
         <p className="type-body-sm mt-1 text-muted-foreground">
-          Sign in to your PERKI Aachen account.
+          Use Google to create or manage your member profile.
         </p>
 
         <SignInForm returnPath={callbackUrl} />
 
         <p className="type-body-sm mt-8 text-center text-muted-foreground">
-          New here?{" "}
+          Your account is created automatically on your first visit. You can
+          register as a fellowship member after signing in.
+        </p>
+        <p className="mt-4 text-center text-sm">
           <Link
             className="text-foreground underline underline-offset-4"
-            href={authPageUrl("signup", callbackUrl)}
+            href="/"
           >
-            Create an account
+            Back to home
           </Link>
         </p>
       </div>

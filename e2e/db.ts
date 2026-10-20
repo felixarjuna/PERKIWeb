@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { schedules } from "~/lib/db/schema/schema";
-import { e2eEnv } from "./env";
+import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { assertLocalDatabase, e2eEnv } from "./env";
 
 const DAYS_AHEAD = 30;
 const DAY_MS = 86_400_000;
@@ -11,6 +11,7 @@ const DAY_MS = 86_400_000;
  * one to exist (e.g. takeaways) don't depend on the schedule form.
  */
 export const insertSchedule = async (title: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
   const client = postgres(e2eEnv.DATABASE_URL, {
     max: 1,
     onnotice: () => null,
@@ -32,6 +33,23 @@ export const insertSchedule = async (title: string) => {
       .returning({ id: schedules.id });
     if (!row) {
       throw new Error(`Failed to insert schedule "${title}".`);
+    }
+    return row.id;
+  } finally {
+    await client.end();
+  }
+};
+
+export const insertTakeaway = async (scheduleId: number, keypoints: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    const [row] = await drizzle(client)
+      .insert(takeaways)
+      .values({ contributors: ["Test Author"], keypoints, scheduleId })
+      .returning({ id: takeaways.id });
+    if (!row) {
+      throw new Error("Failed to insert test takeaway");
     }
     return row.id;
   } finally {

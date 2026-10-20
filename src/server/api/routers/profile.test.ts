@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { profiles, users } from "~/lib/db/schema/schema";
+import { profiles } from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -94,23 +94,12 @@ describe("profiles.getUserProfiles", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
-  // SECURITY: getUserProfiles returns every member's phone number, address
-  // and birthday but is only a protectedProcedure. Signup (users.createUser)
-  // is public, so anyone on the internet can self-register and then dump the
-  // whole member directory. It should be restricted to admins/approved
-  // members; a plain freshly created account must get FORBIDDEN.
+  // SECURITY: any Google account can still access member PII. Admin-only
+  // access is tracked separately in the admin dashboard redesign.
   it.fails("hides member PII from a freshly self-registered account", async () => {
     const member = await insertUser();
     await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
-    await anonymousCaller().users.createUser({
-      name: "Stranger",
-      password: "stranger-password",
-      username: "stranger",
-    });
-    const [stranger] = await testDb
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, "stranger"));
+    const stranger = await insertUser({ name: "Stranger" });
 
     await expect(
       callerFor(stranger?.id ?? "").profiles.getUserProfiles()

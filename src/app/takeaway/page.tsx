@@ -1,8 +1,5 @@
-import { Flame, Plus } from "lucide-react";
-import Link from "next/link";
+import { Flame } from "lucide-react";
 import Template from "~/components/template";
-import { buttonVariants } from "~/components/ui/button";
-import { cn } from "~/lib/utils";
 import TakeawayList from "./takeaway-list";
 
 export default function TakeawayPage() {
@@ -20,17 +17,6 @@ export default function TakeawayPage() {
         Let&apos;s share what you have learned, keep burning each other and grow
         together <Flame className="inline size-4" />
       </p>
-
-      <Link
-        className={cn(
-          buttonVariants({ size: "sm", variant: "secondary" }),
-          "mt-6 gap-1 self-end"
-        )}
-        href={"/create-takeaway"}
-      >
-        <Plus className="size-4" />
-        Add takeaway
-      </Link>
 
       <div className="mt-4">
         <TakeawayList />

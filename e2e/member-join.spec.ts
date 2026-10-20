@@ -1,8 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
   adminLogin,
+  createSignedInUser,
   setDashboardPageSize,
-  signUpAndSignIn,
   toast,
   waitForSession,
 } from "./helpers";
@@ -25,7 +25,7 @@ const fillProfile = async (page: Page) => {
 test("submits a member profile once and shows existing membership", async ({
   page,
 }) => {
-  const user = await signUpAndSignIn(page, "joiner");
+  const user = await createSignedInUser(page, "joiner");
 
   await page.goto("/member/join");
   await fillProfile(page);
@@ -52,7 +52,7 @@ test("submits a member profile once and shows existing membership", async ({
 });
 
 test("join form validates required fields", async ({ page }) => {
-  await signUpAndSignIn(page, "joinvalidate");
+  await createSignedInUser(page, "joinvalidate");
 
   await page.goto("/member/join");
   await waitForSession(page);
@@ -76,7 +76,7 @@ test("session expiry preserves the membership destination", async ({
   page,
   context,
 }) => {
-  await signUpAndSignIn(page, "join-expiry");
+  await createSignedInUser(page, "join-expiry");
   await page.goto("/member/join?source=footer#profile");
   await waitForSession(page);
   await context.clearCookies();

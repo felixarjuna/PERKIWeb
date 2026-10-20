@@ -1,31 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Button } from "~/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
 import { getReturnPath } from "~/lib/auth-redirect";
-
-const signInSchema = z.object({
-  password: z.string().min(1, { message: "Please enter your password." }),
-  username: z
-    .string()
-    .trim()
-    .min(1, { message: "Please enter your username." }),
-});
 
 const GoogleIcon = () => (
   <svg
@@ -55,50 +35,20 @@ const GoogleIcon = () => (
 );
 
 export default function SignInForm({ returnPath }: { returnPath?: string }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = getReturnPath(
     returnPath ?? searchParams.get("callbackUrl")
   );
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const form = useForm<z.infer<typeof signInSchema>>({
-    defaultValues: { password: "", username: "" },
-    resolver: zodResolver(signInSchema),
-  });
-
-  const onSubmit = async (values: z.infer<typeof signInSchema>) => {
-    setIsSigningIn(true);
-    try {
-      const result = await signIn("credentials", {
-        password: values.password,
-        redirect: false,
-        redirectTo: callbackUrl,
-        username: values.username,
-      });
-      if (!result?.ok || result.error) {
-        toast.error("Sign in failed", {
-          description: "Username or password is wrong.",
-        });
-        return;
-      }
-      router.push(callbackUrl);
-      router.refresh();
-    } catch {
-      toast.error("Sign in failed", {
-        description: "Unable to connect. Please try again.",
-      });
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
-
   const onGoogleLogin = async () => {
     setIsSigningIn(true);
     try {
       await signIn("google", { redirectTo: callbackUrl });
     } catch {
-      toast.error("Sign in with Google failed.");
+      toast.error("Sign in with Google failed.", {
+        description: "Please try again.",
+      });
       setIsSigningIn(false);
     }
   };
@@ -107,58 +57,11 @@ export default function SignInForm({ returnPath }: { returnPath?: string }) {
     <div className="mt-8 flex flex-col gap-6">
       {searchParams.get("error") ? (
         <p className="text-destructive text-sm" role="alert">
-          Sign in could not be completed. Please try again or use your original
-          sign-in method.
+          Google sign-in could not be completed. Please try again.
         </p>
       ) : null}
-      <Form {...form}>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input autoComplete="username" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    autoComplete="current-password"
-                    type="password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button className="mt-2 w-full" disabled={isSigningIn} type="submit">
-            {isSigningIn ? "Signing in ..." : "Sign in"}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="type-caption flex items-center gap-3 text-muted-foreground">
-        <span className="h-px flex-1 bg-muted" />
-        or
-        <span className="h-px flex-1 bg-muted" />
-      </div>
-
       <Button
+        aria-busy={isSigningIn}
         className="w-full"
         disabled={isSigningIn}
         onClick={onGoogleLogin}
@@ -166,7 +69,7 @@ export default function SignInForm({ returnPath }: { returnPath?: string }) {
         variant="secondary"
       >
         <GoogleIcon />
-        Continue with Google
+        {isSigningIn ? "Connecting to Google ..." : "Continue with Google"}
       </Button>
     </div>
   );

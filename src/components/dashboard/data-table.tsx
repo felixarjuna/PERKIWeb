@@ -58,9 +58,9 @@ export default function DataTable<TData extends RowData>({
     <div className="space-y-4 p-4 text-foreground">
       <div className="flex justify-between gap-x-4">
         <div className="relative w-fit rounded-md border bg-accent/50 px-4 py-4 font-normal">
-          <h1 className="font-reimbrandt tracking-wide sm:text-lg">
+          <h2 className="font-reimbrandt tracking-wide sm:text-lg">
             Birthday this month <Cake className="inline size-4" />
-          </h1>
+          </h2>
           <p className="font-satoshi text-lg sm:text-xl">{count}</p>
 
           <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
