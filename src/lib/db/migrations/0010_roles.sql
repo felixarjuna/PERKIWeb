@@ -1,6 +1,6 @@
 CREATE TABLE "role_changes" (
 	"changedById" text,
-	"createdAt" timestamp with time zone DEFAULT now(),
+	"createdAt" timestamp with time zone DEFAULT now() NOT NULL,
 	"fromRole" text NOT NULL,
 	"id" serial PRIMARY KEY NOT NULL,
 	"toRole" text NOT NULL,

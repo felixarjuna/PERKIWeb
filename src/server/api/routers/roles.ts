@@ -30,7 +30,7 @@ export const rolesRouter = createTRPCRouter({
         .orderBy(desc(roleChanges.createdAt), desc(roleChanges.id));
       return rows.map((row) => ({
         changedByName: row.changedByName,
-        createdAt: row.createdAt ?? new Date(0),
+        createdAt: row.createdAt,
         fromRole: normalizeRole(row.fromRole),
         toRole: normalizeRole(row.toRole),
       }));

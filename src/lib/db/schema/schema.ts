@@ -144,7 +144,9 @@ export const roleChanges = pgTable("role_changes", {
   createdAt: timestamp("createdAt", {
     mode: "date",
     withTimezone: true,
-  }).defaultNow(),
+  })
+    .defaultNow()
+    .notNull(),
   fromRole: text("fromRole").notNull(),
   id: serial("id").primaryKey().notNull(),
   toRole: text("toRole").notNull(),

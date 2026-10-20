@@ -1,9 +1,30 @@
-import { asc } from "drizzle-orm";
+import { asc, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { profiles, roleChanges } from "~/lib/db/schema/schema";
 import { getRole } from "~/server/authz";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
+
+describe("role_changes", () => {
+  it("always has a createdAt: defaulted, and NOT NULL in the migration", async () => {
+    const mita = await insertUser({ role: "mita" });
+    const member = await insertUser();
+    await testDb
+      .insert(roleChanges)
+      .values({ fromRole: "member", toRole: "writer", userId: member.id });
+    const [history] = await callerFor(mita.id).roles.getHistory({
+      userId: member.id,
+    });
+    expect(history?.createdAt).toBeInstanceOf(Date);
+    expect(history?.createdAt.getTime()).toBeGreaterThan(0);
+
+    await expect(
+      testDb.execute(
+        sql`insert into role_changes ("createdAt", "fromRole", "toRole", "userId") values (null, 'member', 'writer', ${member.id})`
+      )
+    ).rejects.toThrow();
+  });
+});
 
 describe("roles.setRole", () => {
   it("lets a mita make a member a writer and records who did it", async () => {
