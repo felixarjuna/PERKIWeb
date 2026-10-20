@@ -5,6 +5,8 @@ import { type Schedule, schedules } from "./schema/schema";
 
 config();
 
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
+
 const scheduleList: Schedule[] = [
   {
     accommodation: "Danny Kurniawan",
@@ -49,12 +51,17 @@ const main = async () => {
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is not set");
   }
+  // Seed data is for the local dev database (compose.dev.yml) only.
+  const { hostname } = new URL(databaseUrl);
+  if (!LOCAL_HOSTS.has(hostname)) {
+    throw new Error(`Refusing to seed non-local database host "${hostname}".`);
+  }
 
   const connection = postgres(databaseUrl);
   const db = drizzle(connection);
 
   console.log("Seed start");
-  await db.insert(schedules).values(scheduleList);
+  await db.insert(schedules).values(scheduleList).onConflictDoNothing();
   console.log("Seed done");
   await connection.end();
 };
