@@ -10,6 +10,7 @@ export default function WhatWeDo() {
     <Section
       eyebrow="Every week"
       id="what-we-do"
+      overlap
       title="What we do"
       tone="paper"
     >

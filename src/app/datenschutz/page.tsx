@@ -17,6 +17,7 @@ const sections = [
     body: [
       "Diese Website wird bei Vercel Inc. gehostet. Beim Aufruf werden technisch notwendige Daten (IP-Adresse, Zeitpunkt, aufgerufene Seite, Browser) in Server-Logs verarbeitet, um die Website sicher auszuliefern (Art. 6 Abs. 1 lit. f DSGVO).",
       "Zur Reichweitenmessung nutzen wir Vercel Web Analytics. Es werden keine Cookies gesetzt und keine personenbezogenen Profile erstellt.",
+      "Auf der Startseite kann eine interaktive Karte von OpenStreetMap (OpenStreetMap Foundation, St John’s Innovation Centre, Cambridge, UK) geladen werden. Sie wird erst nach einem Klick auf „Open interactive map“ eingebunden; dabei erhält die OpenStreetMap Foundation Ihre IP-Adresse (Art. 6 Abs. 1 lit. a DSGVO).",
     ],
     title: "Hosting und Reichweitenmessung",
   },

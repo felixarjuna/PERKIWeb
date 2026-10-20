@@ -11,8 +11,18 @@ export default function Home() {
     <>
       <Navigation revealAfter="hero" />
       <main>
-        <Hero />
-        <AboutUs />
+        {/* Hero and About share one dark canvas so the orbs drift across both. */}
+        <div className="relative isolate overflow-hidden bg-background">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10"
+          >
+            <div className="hero-orb hero-orb-a" />
+            <div className="hero-orb hero-orb-b" />
+          </div>
+          <Hero />
+          <AboutUs />
+        </div>
         <WhatWeDo />
         <OurPastors />
         <VisitUs />

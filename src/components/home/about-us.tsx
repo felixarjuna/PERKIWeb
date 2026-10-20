@@ -14,7 +14,12 @@ const pillars = [
 
 export default function AboutUs() {
   return (
-    <Section eyebrow="Who we are" id="about" title="About us">
+    <Section
+      eyebrow="Who we are"
+      id="about"
+      title="About us"
+      tone="transparent"
+    >
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
         <div className="space-y-5 text-base sm:text-lg">
           <p>
@@ -34,9 +39,6 @@ export default function AboutUs() {
             community and in faith lived out authentically, and we share the
             message of God&apos;s love and salvation with the people around us.
           </p>
-          <p className="text-balance font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            And still, we are just sinners who want to grow together.
-          </p>
         </div>
 
         <figure className="space-y-3">
@@ -48,8 +50,8 @@ export default function AboutUs() {
             src="/images/perki-aachen.jpg"
             width={2000}
           />
-          <figcaption className="text-muted-foreground text-xs">
-            The fellowship after a Saturday service in Aachen.
+          <figcaption className="text-balance font-reimbrandt text-xl tracking-wide sm:text-2xl">
+            And still, we are just sinners who want to grow together.
           </figcaption>
         </figure>
       </div>

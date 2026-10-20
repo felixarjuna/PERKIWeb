@@ -19,7 +19,7 @@ const linkClass =
 
 export default function Footer() {
   return (
-    <footer className="bg-background text-foreground">
+    <footer className="relative -mt-8 rounded-t-[2.5rem] bg-background pt-4 text-foreground">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 sm:py-20">
         <div>
           <p className="font-reimbrandt text-2xl tracking-wide">Perki Aachen</p>

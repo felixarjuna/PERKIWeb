@@ -1,6 +1,6 @@
 import { BusFront, Clock3, ExternalLink, MapPin } from "lucide-react";
-import Image from "next/image";
 import { buttonVariants } from "../ui/button";
+import MapEmbed from "./map-embed";
 import Section from "./section";
 
 const MAPS_URL = "https://maps.app.goo.gl/R7QCeJGbNyHqiCZKA";
@@ -8,7 +8,13 @@ const busLines = ["7", "27", "37", "47", "147"] as const;
 
 export default function VisitUs() {
   return (
-    <Section eyebrow="Come and see" id="visit" title="Visit us" tone="paper">
+    <Section
+      eyebrow="Come and see"
+      id="visit"
+      overlap
+      title="Visit us"
+      tone="paper"
+    >
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
         <dl className="space-y-6 text-sm sm:text-base">
           <div className="flex gap-3">
@@ -78,22 +84,7 @@ export default function VisitUs() {
           </div>
         </dl>
 
-        <a
-          aria-label="Open the location in Google Maps"
-          className="block overflow-hidden rounded-xl ring-offset-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-paper-foreground focus-visible:ring-offset-2"
-          href={MAPS_URL}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <Image
-            alt="Street map of the area around Roermonderstraße 110 in Aachen"
-            className="aspect-[4/3] w-full object-cover transition-transform duration-500 motion-safe:hover:scale-[1.02]"
-            height={700}
-            sizes="(min-width: 1024px) 40rem, 100vw"
-            src="/images/mapsicleMap.png"
-            width={1440}
-          />
-        </a>
+        <MapEmbed />
       </div>
     </Section>
   );
