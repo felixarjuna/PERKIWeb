@@ -137,7 +137,7 @@ function PastorGallery() {
 
         <Button
           aria-label="Previous pastor"
-          className="absolute top-1/2 left-0 -translate-y-1/2"
+          className="absolute top-1/2 left-0 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur"
           disabled={active === 0}
           onClick={() => goTo(active - 1)}
           size="icon"
@@ -148,7 +148,7 @@ function PastorGallery() {
         </Button>
         <Button
           aria-label="Next pastor"
-          className="absolute top-1/2 right-0 -translate-y-1/2"
+          className="absolute top-1/2 right-0 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur"
           disabled={active === pastors.length - 1}
           onClick={() => goTo(active + 1)}
           size="icon"
