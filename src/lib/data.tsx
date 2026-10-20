@@ -10,10 +10,9 @@ export const events: Event[] = [
     description: (
       <div className="space-y-4">
         <p>
-          Church services are held twice a month, on the second Saturday with
-          Pastor Titus Christianto and on the fourth Saturday with Pastor John
-          Kusuma. The service begins with a private quiet time, followed by
-          hymns sung together to the piano. In the main part the serving pastor
+          Church services are held twice a month, on the second and fourth
+          Saturday. The service begins with a private quiet time, followed by
+          hymns sung together to the piano. The pastor leading the service
           expounds the Word of God. After the sermon everyone is given time to
           pray privately and respond to the Word. The service ends with the
           offering, intercessory prayer, the sending out, a quiet time and
