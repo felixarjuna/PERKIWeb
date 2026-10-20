@@ -28,3 +28,10 @@ for (const path of PROTECTED_PAGES) {
     );
   });
 }
+
+test("the footer invites visitors to the Discord server", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("link", { exact: true, name: "Join our Discord" })
+  ).toHaveAttribute("href", "https://discord.gg/4hf5yWFfVP");
+});

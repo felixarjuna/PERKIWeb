@@ -22,7 +22,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "~/components/ui/sidebar";
-import { env } from "~/env.mjs";
+import { DISCORD_INVITE_URL } from "~/lib/data";
 
 const GROUPS = ["Community", "Content"] as const;
 
@@ -32,7 +32,6 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const close = () => setOpenMobile(false);
-  const discord = env.NEXT_PUBLIC_DISCORD_INVITE_URL;
   return (
     <Sidebar collapsible="icon" {...props}>
       {/* Mobile sheets add a close button in the top-right corner. */}
@@ -91,16 +90,19 @@ export function AppSidebar(props: ComponentProps<typeof Sidebar>) {
         <SidebarGroup className="mt-auto">
           <SidebarMenu>
             <BotStatus />
-            {discord ? (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Discord server">
-                  <a href={discord} rel="noopener noreferrer" target="_blank">
-                    <DiscordLogoIcon aria-hidden="true" />
-                    <span>Discord server</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ) : null}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Discord server">
+                <a
+                  href={DISCORD_INVITE_URL}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <DiscordLogoIcon aria-hidden="true" />
+                  <span>Discord server</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Visit website">
                 <Link href="/">

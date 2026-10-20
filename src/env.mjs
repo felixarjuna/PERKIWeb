@@ -8,8 +8,6 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    /** Discord server invite; the "Join our Discord" links hide without it. */
-    NEXT_PUBLIC_DISCORD_INVITE_URL: z.string().url().optional(),
     NEXT_PUBLIC_GOOGLE_API_KEY: z.string(),
     // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
   },
@@ -22,7 +20,6 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    NEXT_PUBLIC_DISCORD_INVITE_URL: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL,
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
