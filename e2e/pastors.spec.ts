@@ -2,6 +2,34 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { height: 844, width: 390 } });
 
+test("opening a story keeps it open while browsing pastors until explicitly hidden", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const section = page.locator("#pastors");
+  const toggle = section.getByRole("button", { name: "Read story" });
+  const storyId = await toggle.getAttribute("aria-controls");
+  if (!storyId) {
+    throw new Error("Missing story panel association");
+  }
+  await toggle.click();
+  const story = page.locator(`[id="${storyId}"]`);
+  await expect(story).toContainText("John Kusuma was born");
+  await section.getByRole("button", { name: "Next pastor" }).click();
+  await expect(story).toContainText("Titus Christianto serves");
+  await expect(
+    section.getByRole("button", { name: "Hide story" })
+  ).toHaveAttribute("aria-expanded", "true");
+  await section.getByRole("button", { name: "Previous pastor" }).click();
+  await expect(story).toContainText("John Kusuma was born");
+  await section.getByRole("button", { name: "Hide story" }).click();
+  await section.getByRole("button", { name: "Next pastor" }).click();
+  await expect(story).toHaveCount(0);
+  await expect(
+    section.getByRole("button", { name: "Read story" })
+  ).toHaveAttribute("aria-expanded", "false");
+});
+
 test("rapid gallery navigation reaches the requested pastor without changing the caption height", async ({
   page,
 }) => {

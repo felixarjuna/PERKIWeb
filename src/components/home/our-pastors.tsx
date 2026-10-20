@@ -122,7 +122,6 @@ function PastorGallery() {
       });
       clearTimeout(settleTimer);
       settleTimer = setTimeout(onSettle, SCROLL_SETTLE_DELAY);
-      setOpen(() => false);
     };
     updatePortraits(true);
     const resize = new ResizeObserver(onSettle);

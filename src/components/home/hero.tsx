@@ -16,15 +16,17 @@ export default function Hero() {
       className="relative flex min-h-dvh flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-foreground sm:px-6"
       id="hero"
     >
-      <p className="enter type-eyebrow text-muted-foreground">Since 1990</p>
+      <p className="enter type-eyebrow lg:type-body text-muted-foreground">
+        Since 1990
+      </p>
 
       <h1 className="enter type-display mt-3" id="hero-title">
         Perki Aachen
       </h1>
 
-      <p className="enter type-lead mt-5 max-w-md text-balance text-muted-foreground sm:max-w-xl">
-        We’re an Indonesian Christian fellowship in Aachen. Every Saturday, we
-        gather to worship, study the Word and share a meal. Come as you are.
+      <p className="enter type-lead mt-5 max-w-md text-pretty text-muted-foreground sm:max-w-xl">
+        A non-denominational Indonesian Christian fellowship that gathers every
+        week to worship, study the Word and share a meal. Come as you are.
       </p>
 
       <p className="enter type-body-sm sm:type-body mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
