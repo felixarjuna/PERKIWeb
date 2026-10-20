@@ -324,17 +324,18 @@
     }
   }
 
-  /** edit scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
+  /**
+   * The document scrollbar is replaced by the tick ruler on pointer
+   * devices (components/scroll-ruler.tsx). Inner scroll areas keep
+   * their native bars.
+   */
+  @media (pointer: fine) and (min-width: 48rem) {
+    html {
+      scrollbar-width: none;
+    }
 
-  ::-webkit-scrollbar-track {
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-foreground);
-    border-radius: 8px;
+    html::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
