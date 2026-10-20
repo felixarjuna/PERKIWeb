@@ -5,7 +5,7 @@ import Link from "next/link";
 const siteLinks = [
   { href: "/schedule", label: "Schedule" },
   { href: "/takeaway", label: "Takeaway" },
-  { href: "/prayers", label: "Prayer wall" },
+  { href: "/prayers", label: "Weekly prayer" },
   { href: "/member/join", label: "Become a member" },
 ] as const;
 
