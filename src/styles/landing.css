@@ -1,0 +1,69 @@
+/*
+ * Landing page only (imported by src/app/page.tsx).
+ * Two large blurred orbs of the brand green drift across the dark
+ * canvas shared by the hero and About. They sit still unless the
+ * visitor allows motion.
+ */
+.hero-orb {
+  position: absolute;
+  border-radius: 9999px;
+  opacity: 0.6;
+  filter: blur(48px);
+}
+
+.hero-orb-a {
+  top: 0;
+  left: -5%;
+  width: 70vw;
+  max-width: 56rem;
+  height: 70vw;
+  max-height: 56rem;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--color-primary) 10%, var(--color-accent)) 0%,
+    transparent 62%
+  );
+}
+
+.hero-orb-b {
+  top: 55vh;
+  right: -15%;
+  width: 60vw;
+  max-width: 48rem;
+  height: 60vw;
+  max-height: 48rem;
+  background: radial-gradient(circle, var(--color-accent) 0%, transparent 62%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-orb-a {
+    animation: hero-orb-a 16s ease-in-out infinite alternate;
+  }
+  .hero-orb-b {
+    animation: hero-orb-b 20s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes hero-orb-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(22vw, 12vh, 0) scale(1.15);
+  }
+  to {
+    transform: translate3d(8vw, 70vh, 0) scale(0.95);
+  }
+}
+
+@keyframes hero-orb-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-24vw, 30vh, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-10vw, -20vh, 0) scale(1.2);
+  }
+}

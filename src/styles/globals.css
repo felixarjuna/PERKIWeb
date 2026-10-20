@@ -1,18 +1,61 @@
+/*
+ * PERKI design system
+ * ===================
+ *
+ * This file IS the design system. Copy it into another Tailwind 4 +
+ * shadcn/ui project and the look comes with it. It contains tokens,
+ * type roles and motion recipes only; nothing in here knows about a
+ * specific page or component. Page-specific CSS lives next to the page
+ * (see src/styles/landing.css).
+ *
+ * Sections
+ *   1. Fonts         two faces, loaded in src/app/layout.tsx via next/font
+ *   2. Color         one OKLCH ramp, semantic tokens (shadcn preset shape)
+ *   3. Theme map     exposes the tokens to Tailwind utilities
+ *   4. Type scale    fluid sizes + the `type-*` role utilities
+ *   5. Controls      how buttons, chips and inputs are sized (documented)
+ *   6. Motion        easing token, reveal/enter recipes, reduced motion
+ *   7. Base          element defaults and the document scrollbar
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------ */
+/* 1. Fonts                                                            */
+/* ------------------------------------------------------------------ */
+/*
+ * Reimbrandt (display) and Satoshi Medium (text). `--font-satoshi` and
+ * `--font-reimbrandt` are set on <body> by next/font/local.
+ *
+ * Satoshi ships ONE weight, 500. Do not use font-light/semibold/bold
+ * for Satoshi text: synthesis is disabled in Base, so they render at
+ * 500. Hierarchy comes from size and face, not weight. To add real
+ * bold, load Satoshi-Bold.woff2 in layout.tsx and drop the rule.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 2. Color                                                            */
+/* ------------------------------------------------------------------ */
 :root {
   /*
-   * PerkiWEB theme: ONE OKLCH ramp. Hue is locked to the brand green
-   * (~183), chroma stays ~0.03, only lightness steps between rungs:
-   * background .22 -> card .27 -> popover .30 -> secondary .35 ->
-   * accent .42 (hover/highlight). Primary is the brand cream so
-   * primary actions pop against the green world.
+   * ONE OKLCH ramp. Hue locked to the brand green (~183), chroma ~0.03,
+   * only lightness steps between rungs:
+   *   background .22 -> card .27 -> popover .30 -> secondary .35
+   *   -> accent .42 (hover / highlight).
+   * `primary` is the brand cream so primary actions pop.
+   * `paper` is the inverted cream surface for alternating sections and
+   * chips; `paper-foreground` is the green that sits on it.
+   *
+   * Measured contrast (WCAG): foreground/background 12.8:1,
+   * muted-foreground/background 7.5:1, paper-foreground/paper 6.8:1,
+   * primary-foreground/primary 11.8:1. Never put paper-foreground at
+   * reduced alpha on paper: /70 drops to 2.5:1.
    */
-  --background: oklch(0.22 0.035 183); /* brand deep green #031f1c */
-  --foreground: oklch(0.9 0.03 125); /* brand cream #d7dfcb */
+  --background: oklch(0.22 0.035 183);
+  --foreground: oklch(0.9 0.03 125);
   --card: oklch(0.27 0.033 183);
   --card-foreground: oklch(0.9 0.03 125);
   --popover: oklch(0.3 0.033 183);
@@ -44,20 +87,19 @@
   --sidebar-accent-foreground: oklch(0.9 0.03 125);
   --sidebar-border: oklch(0.36 0.03 183);
   --sidebar-ring: oklch(0.9 0.03 125);
-  /* Inverted "cream paper" sections (landing page) and chips. */
   --paper: oklch(0.9 0.03 125);
   --paper-foreground: oklch(0.4 0.035 185);
 }
 
-/**
- * The site ships a single dark-green brand theme; `.dark` inherits
- * `:root` (no overrides needed - one theme, one ramp).
- */
+/* One theme only. `.dark` mirrors `:root` so shadcn components work. */
 .dark {
   --background: oklch(0.22 0.035 183);
   --foreground: oklch(0.9 0.03 125);
 }
 
+/* ------------------------------------------------------------------ */
+/* 3. Theme map                                                        */
+/* ------------------------------------------------------------------ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -102,21 +144,8 @@
   --font-satoshi: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
   --font-reimbrandt: var(--font-reimbrandt), ui-serif, Georgia, serif;
 
-  --animate-gradient-x: gradient-x 10s ease infinite;
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes gradient-x {
-    0%,
-    100% {
-      background-size: 200% 200%;
-      background-position: left center;
-    }
-    50% {
-      background-size: 200% 200%;
-      background-position: right center;
-    }
-  }
 
   @keyframes accordion-down {
     from {
@@ -139,43 +168,263 @@
 
 @theme {
   /*
-   * Brand accents used ONLY by decorative gradients (landing page,
-   * nav icon tiles, hero blobs) and the live-status ping dots.
-   * All UI surfaces/text use the semantic tokens above instead.
+   * Raw brand values. Used ONLY by the admin dashboard live-status
+   * ping dots. Everything else uses the semantic tokens above.
    */
-  --color-green-100: #dee9e7;
   --color-green-300: #92b6af;
   --color-green-400: #6b968f;
-  --color-green-default: #37524f;
-  --color-light-green-100: #e6ebdc;
-  --color-light-green-default: #d9e1cc;
-  --color-dark-green-default: #031f1c;
 }
 
+/* ------------------------------------------------------------------ */
+/* 4. Type scale                                                       */
+/* ------------------------------------------------------------------ */
+/*
+ * Ten roles. Sizes are fluid (clamp) so a role is one class with no
+ * breakpoints in markup. Use the `type-*` utility, never a raw
+ * `text-*` size, for anything a reader reads.
+ *
+ *   type-display     wordmark only                   Reimbrandt  52-160px  lh 1
+ *   type-title       page title, landing section     Reimbrandt  36-60px   lh 1.1
+ *   type-heading     h3, card-group heading           Reimbrandt  20-24px   lh 1.25
+ *   type-subheading  card title, dt, list name        Reimbrandt  18-20px   lh 1.3
+ *   type-quote       verse, pull line                 Reimbrandt  18-20px   lh 1.35
+ *   type-lead        intro paragraph under a title    Satoshi     16-20px   lh 1.5
+ *   type-body        all reading text                 Satoshi     16px      lh 1.6
+ *   type-body-sm     short secondary copy, meta rows  Satoshi     14px      lh 1.5
+ *   type-caption     captions, chips, footnotes, nav  Satoshi     12px      lh 1.4
+ *   type-eyebrow     uppercase section label          Satoshi     12px      tracking .12em
+ *
+ * Reimbrandt is display-only: never below type-subheading.
+ * Body text never goes below 16px on phones; captions never below 12px.
+ * Headings get text-wrap: balance, paragraphs text-wrap: pretty (Base).
+ * Changing values (times, counts, prices) add `tabular-nums`.
+ */
+:root {
+  --type-size-display: clamp(3.25rem, 14vw, 10rem);
+  --type-size-title: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
+  --type-size-heading: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --type-size-subheading: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --type-size-lead: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  --type-size-body: 1rem;
+  --type-size-body-sm: 0.875rem;
+  --type-size-caption: 0.75rem;
+  --type-tracking-display: 0.025em;
+  --type-tracking-eyebrow: 0.12em;
+}
+
+@utility type-display {
+  font-family: var(--font-reimbrandt);
+  font-size: var(--type-size-display);
+  line-height: 1;
+  letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-title {
+  font-family: var(--font-reimbrandt);
+  font-size: var(--type-size-title);
+  line-height: 1.1;
+  letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-heading {
+  font-family: var(--font-reimbrandt);
+  font-size: var(--type-size-heading);
+  line-height: 1.25;
+  letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-subheading {
+  font-family: var(--font-reimbrandt);
+  font-size: var(--type-size-subheading);
+  line-height: 1.3;
+  letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-quote {
+  font-family: var(--font-reimbrandt);
+  font-size: var(--type-size-subheading);
+  line-height: 1.35;
+  letter-spacing: var(--type-tracking-display);
+}
+
+@utility type-lead {
+  font-size: var(--type-size-lead);
+  line-height: 1.5;
+}
+
+@utility type-body {
+  font-size: var(--type-size-body);
+  line-height: 1.6;
+}
+
+@utility type-body-sm {
+  font-size: var(--type-size-body-sm);
+  line-height: 1.5;
+}
+
+@utility type-caption {
+  font-size: var(--type-size-caption);
+  line-height: 1.4;
+}
+
+@utility type-eyebrow {
+  font-size: var(--type-size-caption);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: var(--type-tracking-eyebrow);
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Controls (documented; implemented by src/components/ui)          */
+/* ------------------------------------------------------------------ */
+/*
+ * Buttons: shadcn `Button` / `buttonVariants()` only.
+ *   label   14px / 500, icons 16px (`size-4`), radius `--radius`
+ *   sizes   sm 36px (inline actions)  default 40px  lg 44px (the one
+ *           primary call to action on a page)  icon 40x40
+ *   width   buttons size to their label and are never stretched;
+ *           full-width only for a form submit on phones.
+ *   On a `paper` surface use variant `outline` + `text-foreground`;
+ *   `default` is cream and vanishes on cream.
+ * Chips:    `rounded-full px-2 py-1 type-caption`; bg-paper on dark
+ *           surfaces, bg-paper-foreground text-paper on paper surfaces.
+ * Inputs:   16px on phones (`text-base md:text-sm`) so iOS does not zoom.
+ * Surfaces: card = `rounded-xl bg-card p-4 sm:p-6`; overlays are
+ *           borderless; elevation is lightness, never a border.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 6. Motion                                                           */
+/* ------------------------------------------------------------------ */
+/*
+ * One easing for everything that enters. Movement is opt-in through
+ * prefers-reduced-motion; the opacity fade always stays.
+ *   .reveal   scroll reveal, fired once by an IntersectionObserver that
+ *             sets `data-visible` (see components/home/reveal.tsx)
+ *   .enter    staged entrance on first paint; siblings stagger 80ms
+ */
+:root {
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-enter: 500ms;
+  --stagger: 80ms;
+}
+
+@layer components {
+  .reveal {
+    opacity: 0;
+    transition: opacity var(--duration-enter) var(--ease-out-strong);
+  }
+
+  .reveal[data-visible] {
+    opacity: 1;
+  }
+
+  .enter {
+    animation: enter var(--duration-enter) var(--ease-out-strong) both;
+  }
+
+  .enter:nth-child(2) {
+    animation-delay: calc(var(--stagger) * 1);
+  }
+  .enter:nth-child(3) {
+    animation-delay: calc(var(--stagger) * 2);
+  }
+  .enter:nth-child(4) {
+    animation-delay: calc(var(--stagger) * 3);
+  }
+  .enter:nth-child(5) {
+    animation-delay: calc(var(--stagger) * 4);
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      transform: translateY(16px);
+      transition-property: opacity, transform;
+    }
+
+    .reveal[data-visible] {
+      transform: translateY(0);
+    }
+
+    @keyframes enter {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Base                                                             */
+/* ------------------------------------------------------------------ */
 @layer base {
   * {
     border-color: var(--color-border);
   }
 
+  :root {
+    color-scheme: dark;
+  }
+
   body {
+    font-family: var(--font-satoshi);
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis-weight: none;
     color: var(--color-foreground);
     background-color: var(--color-background);
   }
 
-  /** edit scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 
-  ::-webkit-scrollbar-track {
-    border-radius: 10px;
+  p {
+    text-wrap: pretty;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-foreground);
-    border-radius: 8px;
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /*
+   * The document scrollbar is replaced by the tick ruler on pointer
+   * devices (components/scroll-ruler.tsx). Inner scroll areas keep
+   * their native bars.
+   */
+  @media (pointer: fine) and (min-width: 48rem) {
+    html {
+      scrollbar-width: none;
+    }
+
+    html::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
