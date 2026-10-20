@@ -145,7 +145,7 @@ jobs:
         test-e2e,
       ]
     runs-on: ubuntu-latest
-    environment: production-database
+    environment: Production
     concurrency:
       group: deploy-migrate-production
       cancel-in-progress: false
