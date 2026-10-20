@@ -12,11 +12,9 @@ export default function LegalNoticePage() {
       subtitle="Information under § 5 DDG (German Digital Services Act)"
       title="Legal notice"
     >
-      <div className="space-y-8 text-sm sm:text-base">
+      <div className="type-body space-y-8">
         <section className="space-y-2">
-          <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Provider
-          </h2>
+          <h2 className="type-heading">Provider</h2>
           <address className="not-italic">
             PERKI Aachen (Persekutuan Kristen Indonesia Aachen)
             <br />
@@ -27,9 +25,7 @@ export default function LegalNoticePage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Contact
-          </h2>
+          <h2 className="type-heading">Contact</h2>
           <p>
             Phone:{" "}
             <a
@@ -50,9 +46,7 @@ export default function LegalNoticePage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-            Responsible for the content
-          </h2>
+          <h2 className="type-heading">Responsible for the content</h2>
           <p className="text-muted-foreground">
             First name Last name, address as above.
           </p>

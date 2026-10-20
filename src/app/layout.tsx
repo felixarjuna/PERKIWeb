@@ -54,9 +54,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={cn(reimbrandt.variable, satoshi.variable, "font-satoshi")}
-      >
+      <body className={cn(reimbrandt.variable, satoshi.variable)}>
         <SessionProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </SessionProvider>

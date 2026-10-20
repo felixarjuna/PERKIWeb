@@ -46,12 +46,10 @@ const sections = [
 export default function PrivacyPage() {
   return (
     <Template subtitle="How we handle your data" title="Privacy policy">
-      <div className="space-y-8 text-sm sm:text-base">
+      <div className="type-body space-y-8">
         {sections.map((section) => (
           <section className="space-y-2" key={section.title}>
-            <h2 className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-              {section.title}
-            </h2>
+            <h2 className="type-heading">{section.title}</h2>
             {section.body.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}

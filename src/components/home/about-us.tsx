@@ -21,14 +21,12 @@ export default function AboutUs() {
       tone="transparent"
     >
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
-        <div className="space-y-5 text-base sm:text-lg">
+        <div className="type-body space-y-5">
           <p>
-            <span className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
-              Perki
-            </span>{" "}
-            stands for Persekutuan Kristen Indonesia. We are a Christian
-            fellowship that bases its beliefs, teaching and life on the whole
-            Bible, Old and New Testament, as the inspired Word of God.
+            <span className="type-heading">Perki</span> stands for Persekutuan
+            Kristen Indonesia. We are a Christian fellowship that bases its
+            beliefs, teaching and life on the whole Bible, Old and New
+            Testament, as the inspired Word of God.
           </p>
           <p>
             We are not affiliated with any particular church group. Everything
@@ -51,23 +49,21 @@ export default function AboutUs() {
             src="/images/perki-aachen.jpg"
             width={2000}
           />
-          <figcaption className="text-muted-foreground text-xs">
+          <figcaption className="type-caption text-muted-foreground">
             The fellowship after a Saturday service in Aachen.
           </figcaption>
         </figure>
       </div>
 
       <div className="mt-14 sm:mt-20">
-        <h3 className="text-balance text-center font-reimbrandt text-2xl tracking-wide sm:text-3xl">
+        <h3 className="type-heading text-center">
           Make disciples of all nations
         </h3>
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
           {pillars.map((pillar) => (
             <div className="rounded-xl bg-card p-4 sm:p-6" key={pillar.title}>
-              <dt className="font-reimbrandt text-lg tracking-wide sm:text-xl">
-                {pillar.title}
-              </dt>
-              <dd className="mt-2 text-sm sm:text-base">{pillar.body}</dd>
+              <dt className="type-subheading">{pillar.title}</dt>
+              <dd className="type-body mt-2">{pillar.body}</dd>
             </div>
           ))}
         </dl>

@@ -16,7 +16,7 @@ const navigations = [
 ] as const;
 
 const itemClass =
-  "group flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-14 sm:px-2";
+  "group type-caption flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-14 sm:px-2";
 const tileClass =
   "flex size-8 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-primary group-hover:text-primary-foreground";
 

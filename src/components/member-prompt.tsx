@@ -49,10 +49,8 @@ export default function MemberPrompt() {
       className="fixed inset-x-4 bottom-4 z-30 flex items-start gap-3 rounded-xl bg-popover p-4 text-popover-foreground shadow-lg sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm"
     >
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm sm:text-base">
-          You are not registered as a member yet
-        </p>
-        <p className="mt-1 text-muted-foreground text-xs sm:text-sm">
+        <p className="type-body">You are not registered as a member yet</p>
+        <p className="type-body-sm mt-1 text-muted-foreground">
           Fill in the member form once so the fellowship can reach you about
           services and events.
         </p>

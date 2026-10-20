@@ -16,26 +16,23 @@ export default function Hero() {
       className="relative flex min-h-dvh flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-foreground sm:px-6"
       id="hero"
     >
-      <p className="enter text-muted-foreground text-xs uppercase tracking-[0.12em] sm:text-sm">
+      <p className="enter type-eyebrow text-muted-foreground">
         <span>Indonesian Christian fellowship</span>
         <br className="sm:hidden" />
         <span className="hidden sm:inline"> · </span>
         <span>Aachen · since 1990</span>
       </p>
 
-      <h1
-        className="enter mt-3 font-reimbrandt text-[clamp(3.25rem,14vw,10rem)] leading-[0.95] tracking-wide"
-        id="hero-title"
-      >
+      <h1 className="enter type-display mt-3" id="hero-title">
         Perki Aachen
       </h1>
 
-      <p className="enter mt-5 max-w-md text-balance text-base text-muted-foreground sm:max-w-xl sm:text-xl">
+      <p className="enter type-lead mt-5 max-w-md text-balance text-muted-foreground sm:max-w-xl">
         A non-denominational fellowship that gathers every week to worship,
         study the Word and share a meal. Come as you are.
       </p>
 
-      <p className="enter mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm sm:text-base">
+      <p className="enter type-body mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
         <span className="inline-flex items-center gap-2">
           <Clock3 aria-hidden="true" className="size-4 text-muted-foreground" />
           Saturdays from 15:30
@@ -53,10 +50,7 @@ export default function Hero() {
       </p>
 
       <Link
-        className={cn(
-          buttonVariants({ size: "lg" }),
-          "enter mt-8 w-full sm:w-auto"
-        )}
+        className={cn(buttonVariants({ size: "lg" }), "enter mt-8")}
         href="#visit"
       >
         Plan your visit

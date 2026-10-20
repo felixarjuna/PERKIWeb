@@ -22,18 +22,16 @@ export default function Footer() {
     <footer className="relative -mt-8 rounded-t-[2.5rem] bg-background pt-4 text-foreground">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 sm:py-20">
         <div>
-          <p className="font-reimbrandt text-2xl tracking-wide">Perki Aachen</p>
-          <p className="mt-2 max-w-xs text-muted-foreground text-sm">
+          <p className="type-heading">Perki Aachen</p>
+          <p className="type-body-sm mt-2 max-w-xs text-muted-foreground">
             Persekutuan Kristen Indonesia Aachen. An Indonesian Christian
             fellowship, meeting since 1990.
           </p>
         </div>
 
         <nav aria-label="Site">
-          <p className="text-muted-foreground text-xs uppercase tracking-[0.2em]">
-            Pages
-          </p>
-          <ul className="mt-3 space-y-2 text-sm sm:text-base">
+          <p className="type-eyebrow text-muted-foreground">Pages</p>
+          <ul className="type-body mt-3 space-y-2">
             {siteLinks.map((link) => (
               <li key={link.href}>
                 <Link className={linkClass} href={link.href}>
@@ -45,10 +43,8 @@ export default function Footer() {
         </nav>
 
         <div>
-          <p className="text-muted-foreground text-xs uppercase tracking-[0.2em]">
-            Contact
-          </p>
-          <ul className="mt-3 space-y-2 text-sm sm:text-base">
+          <p className="type-eyebrow text-muted-foreground">Contact</p>
+          <ul className="type-body mt-3 space-y-2">
             <li className="flex items-center gap-2">
               <Mail aria-hidden="true" className="size-4 shrink-0" />
               <a className={linkClass} href="mailto:perkiaachen18@gmail.com">
@@ -82,7 +78,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 pb-8 text-muted-foreground text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="type-caption mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 pb-8 text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p>© {new Date().getFullYear()} PERKI Aachen</p>
         <ul className="flex gap-4">
           {legalLinks.map((link) => (

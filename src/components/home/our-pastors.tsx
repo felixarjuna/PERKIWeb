@@ -24,7 +24,7 @@ const prefersReducedMotion = () =>
 
 function Story({ story }: { readonly story: string | React.ReactNode }) {
   return (
-    <div className="max-w-prose space-y-4 text-sm sm:text-base">
+    <div className="type-body max-w-prose space-y-4">
       {paragraphs(story).map((part, index) =>
         typeof part === "string" ? (
           <p key={part}>{part}</p>
@@ -160,10 +160,8 @@ function PastorGallery() {
       </div>
 
       <div className="mt-4 text-center">
-        <h3 className="font-reimbrandt text-xl tracking-wide sm:text-2xl">
-          {current.name}
-        </h3>
-        <p className="mx-auto mt-2 max-w-sm text-balance font-reimbrandt text-lg text-muted-foreground tracking-wide">
+        <h3 className="type-heading">{current.name}</h3>
+        <p className="type-quote mx-auto mt-2 max-w-sm text-balance text-muted-foreground">
           “{current.favoriteVerse}”
         </p>
         <Button
@@ -184,10 +182,7 @@ function PastorGallery() {
       </div>
 
       {open ? (
-        <div
-          className="mt-4 rounded-xl bg-card p-4 text-left leading-relaxed"
-          id={storyId}
-        >
+        <div className="mt-4 rounded-xl bg-card p-4 text-left" id={storyId}>
           <Story story={current.story} />
         </div>
       ) : null}
@@ -218,7 +213,7 @@ function PastorTabs() {
       >
         {pastors.map((pastor) => (
           <TabsTrigger
-            className="flex items-center justify-start gap-3 whitespace-normal rounded-xl px-4 py-3 text-left font-normal text-base transition-colors hover:bg-card data-[state=active]:bg-card data-[state=active]:shadow-none"
+            className="flex items-center justify-start gap-3 whitespace-normal rounded-xl px-4 py-3 text-left transition-colors hover:bg-card data-[state=active]:bg-card data-[state=active]:shadow-none"
             key={pastor.name}
             value={slug(pastor.name)}
           >
@@ -230,9 +225,7 @@ function PastorTabs() {
               src={pastor.img}
               width={112}
             />
-            <span className="text-balance font-reimbrandt text-lg tracking-wide">
-              {pastor.name}
-            </span>
+            <span className="type-subheading text-balance">{pastor.name}</span>
           </TabsTrigger>
         ))}
       </TabsList>
@@ -255,10 +248,8 @@ function PastorTabs() {
                 width={224}
               />
               <div className="min-w-0">
-                <h3 className="font-reimbrandt text-2xl tracking-wide">
-                  {pastor.name}
-                </h3>
-                <p className="mt-1 text-balance font-reimbrandt text-muted-foreground text-xl tracking-wide">
+                <h3 className="type-heading">{pastor.name}</h3>
+                <p className="type-quote mt-1 text-balance text-muted-foreground">
                   “{pastor.favoriteVerse}”
                 </p>
               </div>

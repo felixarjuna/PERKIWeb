@@ -18,16 +18,12 @@ export default function WhatWeDo() {
         <ul className="divide-y divide-paper-foreground/15">
           {events.map((event) => (
             <li className="py-6 first:pt-0 last:pb-0" key={event.name}>
-              <h3 className="text-balance font-reimbrandt text-xl tracking-wide sm:text-2xl">
-                {event.name}
-              </h3>
-              <p className="mt-2 flex items-center gap-2 text-sm">
+              <h3 className="type-heading">{event.name}</h3>
+              <p className="type-body-sm mt-2 flex items-center gap-2">
                 <Clock3 aria-hidden="true" className="size-4" />
                 <span className="tabular-nums">{event.time}</span>
               </p>
-              <p className="mt-3 max-w-prose text-sm sm:text-base">
-                {event.notes}
-              </p>
+              <p className="type-body mt-3 max-w-prose">{event.notes}</p>
 
               <details className="group mt-4">
                 <summary
@@ -42,7 +38,7 @@ export default function WhatWeDo() {
                     className="size-4 transition-transform group-open:rotate-180"
                   />
                 </summary>
-                <div className="mt-4 max-w-prose space-y-4 text-sm sm:text-base">
+                <div className="type-body mt-4 max-w-prose space-y-4">
                   {event.description}
                 </div>
               </details>
@@ -59,7 +55,7 @@ export default function WhatWeDo() {
             src="/images/learn.jpg"
             width={1280}
           />
-          <figcaption className="text-paper-foreground text-xs">
+          <figcaption className="type-caption text-paper-foreground">
             Big group Bible study around one table.
           </figcaption>
         </figure>

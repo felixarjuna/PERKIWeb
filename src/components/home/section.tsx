@@ -47,7 +47,7 @@ export default function Section({
           {eyebrow ? (
             <p
               className={cn(
-                "text-xs uppercase tracking-[0.2em] lg:mb-4 lg:rotate-180 lg:[writing-mode:vertical-rl]",
+                "type-eyebrow lg:mb-4 lg:rotate-180 lg:[writing-mode:vertical-rl]",
                 onPaper ? "text-paper-foreground" : "text-muted-foreground"
               )}
             >
@@ -55,7 +55,7 @@ export default function Section({
             </p>
           ) : null}
           <h2
-            className="font-reimbrandt text-3xl tracking-wide sm:text-4xl lg:rotate-180 lg:whitespace-nowrap lg:text-6xl lg:[writing-mode:vertical-rl]"
+            className="type-title lg:rotate-180 lg:whitespace-nowrap lg:[writing-mode:vertical-rl]"
             id={headingId}
           >
             {title}

@@ -50,7 +50,7 @@ export default function MapEmbed() {
         aria-hidden="true"
         className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-full flex-col items-center"
       >
-        <span className="rounded-full bg-background px-3 py-1 text-foreground text-xs shadow-lg">
+        <span className="type-caption rounded-full bg-background px-3 py-1 text-foreground shadow-lg">
           Roermonderstraße 110
         </span>
         <MapPin className="mt-1 size-8 fill-background text-foreground drop-shadow" />
@@ -82,7 +82,7 @@ export default function MapEmbed() {
             Open in Google Maps
           </a>
         </div>
-        <p className="text-paper-foreground text-xs">
+        <p className="type-caption text-paper-foreground">
           The interactive map is loaded from OpenStreetMap when you open it.{" "}
           <Link className="underline underline-offset-4" href="/privacy">
             Privacy policy

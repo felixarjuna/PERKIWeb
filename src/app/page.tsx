@@ -1,3 +1,5 @@
+import "~/styles/landing.css";
+
 import AboutUs from "~/components/home/about-us";
 import Footer from "~/components/home/footer";
 import Hero from "~/components/home/hero";

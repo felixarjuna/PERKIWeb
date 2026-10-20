@@ -14,13 +14,11 @@ export default function VisitUs() {
       tone="paper"
     >
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
-        <dl className="space-y-6 text-sm sm:text-base">
+        <dl className="type-body space-y-6">
           <div className="flex gap-3">
             <Clock3 aria-hidden="true" className="mt-1 size-5 shrink-0" />
             <div>
-              <dt className="font-reimbrandt text-lg tracking-wide sm:text-xl">
-                When
-              </dt>
+              <dt className="type-subheading">When</dt>
               <dd className="mt-1">
                 Saturdays from 15:30, with a shared meal after the service.
                 Small group Bible study starts at 13:00.
@@ -31,9 +29,7 @@ export default function VisitUs() {
           <div className="flex gap-3">
             <MapPin aria-hidden="true" className="mt-1 size-5 shrink-0" />
             <div>
-              <dt className="font-reimbrandt text-lg tracking-wide sm:text-xl">
-                Where
-              </dt>
+              <dt className="type-subheading">Where</dt>
               <dd className="mt-1">
                 <address className="not-italic">
                   Roermonderstraße 110
@@ -47,15 +43,13 @@ export default function VisitUs() {
           <div className="flex gap-3">
             <BusFront aria-hidden="true" className="mt-1 size-5 shrink-0" />
             <div>
-              <dt className="font-reimbrandt text-lg tracking-wide sm:text-xl">
-                By bus
-              </dt>
+              <dt className="type-subheading">By bus</dt>
               <dd className="mt-1">
                 Stop Bendplatz / Jupp-Müller-Straße
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {busLines.map((line) => (
                     <li
-                      className="rounded-full bg-paper-foreground px-2 py-1 text-paper text-xs tabular-nums"
+                      className="type-caption rounded-full bg-paper-foreground px-2 py-1 text-paper tabular-nums"
                       key={line}
                     >
                       Line {line}
