@@ -2,8 +2,6 @@ import { Settings } from "luxon";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RouterOutputs } from "~/trpc/react";
 import {
-  calculateXAxes,
-  calculateYAxes,
   cn,
   countBirthdaysThisMonth,
   dateTimeFormatter,
@@ -18,8 +16,6 @@ import {
 type ProfileRow = RouterOutputs["profiles"]["getUserProfiles"][number];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const STEP = 0.5;
-const MULTIPLIER = 10;
 
 /** Builds a minimal getUserProfiles row; only `birthday` matters here. */
 const row = (birthday: Date | null): ProfileRow => ({
@@ -52,52 +48,6 @@ describe("cn", () => {
 
   it("returns an empty string without input", () => {
     expect(cn()).toBe("");
-  });
-});
-
-describe("calculateXAxes / calculateYAxes", () => {
-  it("produces floor((end - start) / step) + 1 points", () => {
-    const xs = calculateXAxes(STEP, MULTIPLIER, -Math.PI, Math.PI);
-    const ys = calculateYAxes(STEP, MULTIPLIER, -Math.PI, Math.PI);
-    const expected = Math.floor((2 * Math.PI) / STEP) + 1;
-    expect(xs).toHaveLength(expected);
-    expect(ys).toHaveLength(expected);
-  });
-
-  it("starts the lemniscate at (multiplier, 0)", () => {
-    expect(calculateXAxes(STEP, MULTIPLIER, 0, 1)[0]).toBeCloseTo(MULTIPLIER);
-    expect(calculateYAxes(STEP, MULTIPLIER, 0, 1)[0]).toBeCloseTo(0);
-  });
-
-  it("matches the Bernoulli lemniscate formula for each index", () => {
-    const xs = calculateXAxes(STEP, MULTIPLIER, -Math.PI, Math.PI);
-    const ys = calculateYAxes(STEP, MULTIPLIER, -Math.PI, Math.PI);
-    for (const [index, x] of xs.entries()) {
-      const t = index * STEP;
-      const scale = 2 / (3 - Math.cos(2 * t));
-      expect(x).toBeCloseTo(scale * Math.cos(t) * MULTIPLIER);
-      expect(ys[index]).toBeCloseTo(
-        ((scale * Math.sin(2 * t)) / 2) * MULTIPLIER
-      );
-    }
-  });
-
-  it("stays within [-multiplier, multiplier]", () => {
-    const xs = calculateXAxes(0.01, MULTIPLIER, -Math.PI, Math.PI);
-    const ys = calculateYAxes(0.01, MULTIPLIER, -Math.PI, Math.PI);
-    for (const value of [...xs, ...ys]) {
-      expect(Math.abs(value)).toBeLessThanOrEqual(MULTIPLIER + 1e-9);
-    }
-  });
-
-  it("returns no points when end is before start", () => {
-    expect(calculateXAxes(STEP, MULTIPLIER, Math.PI, -Math.PI)).toEqual([]);
-  });
-
-  it("returns no points with calculateYAxes' default range (start=PI, end=-PI)", () => {
-    // The defaults are reversed, so callers must always pass the range
-    // explicitly (circle-background.tsx does).
-    expect(calculateYAxes(STEP, MULTIPLIER)).toEqual([]);
   });
 });
 

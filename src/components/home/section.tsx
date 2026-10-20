@@ -1,0 +1,62 @@
+import type React from "react";
+import { cn } from "~/lib/utils";
+
+interface SectionProps {
+  readonly children: React.ReactNode;
+  readonly eyebrow?: string;
+  readonly id: string;
+  readonly title: string;
+  readonly tone?: "background" | "paper";
+}
+
+/**
+ * Landing-page section shell. The signature of the page is the vertical
+ * section title: on large screens it runs bottom-to-top in a sticky
+ * column, clipped to its own section so it never bleeds into the next.
+ */
+export default function Section({
+  children,
+  eyebrow,
+  id,
+  title,
+  tone = "background",
+}: SectionProps) {
+  const headingId = `${id}-title`;
+  const onPaper = tone === "paper";
+
+  return (
+    <section
+      aria-labelledby={headingId}
+      className={cn(
+        "scroll-mt-20 py-16 sm:py-24",
+        onPaper
+          ? "bg-paper text-paper-foreground"
+          : "bg-background text-foreground"
+      )}
+      id={id}
+    >
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[7rem_1fr] lg:gap-12">
+        <div className="lg:sticky lg:top-24 lg:flex lg:flex-col lg:items-start lg:self-start">
+          {eyebrow ? (
+            <p
+              className={cn(
+                "text-xs uppercase tracking-[0.2em] lg:mb-4 lg:rotate-180 lg:[writing-mode:vertical-rl]",
+                onPaper ? "text-paper-foreground/70" : "text-muted-foreground"
+              )}
+            >
+              {eyebrow}
+            </p>
+          ) : null}
+          <h2
+            className="font-reimbrandt text-3xl tracking-wide sm:text-4xl lg:rotate-180 lg:whitespace-nowrap lg:text-6xl lg:[writing-mode:vertical-rl]"
+            id={headingId}
+          >
+            {title}
+          </h2>
+        </div>
+
+        <div className="min-w-0">{children}</div>
+      </div>
+    </section>
+  );
+}

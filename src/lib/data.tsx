@@ -10,7 +10,9 @@ export const events: Event[] = [
     description: (
       <div className="space-y-4">
         <div className="space-y-2">
-          <h2 className="text-lg">Church service</h2>
+          <h3 className="font-reimbrandt text-lg tracking-wide">
+            Church service
+          </h3>
           <div className="space-y-2">
             <p>
               Perki church services are held twice a month - on Saturday of the
@@ -34,7 +36,9 @@ export const events: Event[] = [
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-lg">Big group bible study</h2>
+          <h3 className="font-reimbrandt text-lg tracking-wide">
+            Big group Bible study
+          </h3>
           <p>
             Our Big Group Bible Study is a joint Bible Study activity held on
             the first, third and fifth week (if applicable) of each month. The
@@ -61,8 +65,8 @@ export const events: Event[] = [
     ),
     name: "Church Service / Big Group Bible Study",
     notes:
-      "Spending moments to listening to God words from another God's children.",
-    time: "Saturday, 15.30 - 17.00",
+      "Worship, a sermon and time to respond to the Word, followed by a meal together.",
+    time: "Saturday, 15:30–17:00",
   },
   {
     description:
@@ -70,15 +74,15 @@ export const events: Event[] = [
     name: "Small Group Bible Study",
     notes:
       "Focusing our attention deeply on the truth that the Word of God has for us.",
-    time: "Saturday, 13.00 - 15.00",
+    time: "Saturday, 13:00–15:00",
   },
   {
     description:
       "In the midst of our busy schedules, we take time together to share what happened during the week and pray together, exchange advice, and provide support for those in need.",
     name: "Prayer Fellowship (Aachen)",
     notes:
-      "Having the moments in the middle of our busy live to meditate about the Word of God together.",
-    time: "Thursday, 18:00 - 21.00",
+      "A pause in a busy week to share, pray for one another and sit with the Word together.",
+    time: "Thursday, 18:00–21:00",
   },
 ];
 

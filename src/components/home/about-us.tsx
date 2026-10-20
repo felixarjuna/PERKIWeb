@@ -1,149 +1,74 @@
 import Image from "next/image";
-import React from "react";
-import { useIntersection } from "~/utils/hooks/use-intersection";
-import Navigation from "./navigation";
+import Section from "./section";
 
-import ParallaxImage from "./parallax-image";
+const pillars = [
+  {
+    body: "Become a church based on the Full Gospel that takes root, grows and bears fruit for Christ.",
+    title: "Vision",
+  },
+  {
+    body: "Build a Christian family that loves and serves God and people.",
+    title: "Mission",
+  },
+] as const;
 
 export default function AboutUs() {
-  const [showNav, setShowNav] = React.useState<boolean>(false);
-  const intersectionRef = React.useRef<HTMLDivElement>(null);
-  const intersection = useIntersection(intersectionRef, {
-    root: null,
-    rootMargin: "0px",
-    threshold: 1,
-  });
-
-  React.useEffect(() => {
-    if (intersection && intersection.boundingClientRect.y < 0) {
-      setShowNav(true);
-      return;
-    }
-
-    if (intersection && intersection.intersectionRatio < 1) {
-      setShowNav(false);
-    } else if (intersection && intersection?.intersectionRatio === 1) {
-      setShowNav(true);
-    }
-  }, [intersection, intersection?.boundingClientRect]);
-
   return (
-    <div className="relative bg-background pt-20 text-foreground">
-      <Navigation showNav={showNav} />
-
-      <div className="px-24">
-        <div className="flex items-center justify-center gap-8">
-          <h1 className="font-reimbrandt text-4xl tracking-wide sm:text-5xl md:text-6xl lg:text-7xl xl:text-9xl">
-            About Us
-          </h1>
-        </div>
-      </div>
-
-      <div className="mt-20 flex flex-col gap-y-44 overflow-hidden px-8 sm:gap-y-48 sm:px-12 md:gap-y-52 md:px-16 lg:gap-y-56 lg:px-20 xl:gap-y-64 xl:px-24 2xl:gap-y-72 2xl:px-28">
-        <div className="relative flex flex-row" ref={intersectionRef}>
-          <p className="z-10 max-w-[90%] text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
-            <span className="font-reimbrandt text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl">
+    <Section eyebrow="Who we are" id="about" title="About us">
+      <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
+        <div className="space-y-5 text-base sm:text-lg">
+          <p>
+            <span className="font-reimbrandt text-2xl tracking-wide sm:text-3xl">
               Perki
             </span>{" "}
-            stands for Persekutuan Kristen Indonesia and is a Christian
-            fellowship that bases its beliefs, teachings and life on the entire
-            content of the Old and New Testament Bibles which it recognizes as
-            the inspired Words of God.
+            stands for Persekutuan Kristen Indonesia. We are a Christian
+            fellowship that bases its beliefs, teaching and life on the whole
+            Bible, Old and New Testament, as the inspired Word of God.
           </p>
-          <ParallaxImage
-            alt="Photo of Chen"
-            height={400}
-            img={"/images/chen.png"}
-            width={400}
-          />
-        </div>
-
-        <div className="relative flex flex-row justify-end">
-          <p className="z-10 max-w-[90%] text-right text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
-            Our fellowship is not affiliated with any particular church group.
-            All activities are aimed at supporting the Realization of the Great
-            Commission of the Lord Jesus Christ.
+          <p>
+            We are not affiliated with any particular church group. Everything
+            we do serves the Great Commission of the Lord Jesus Christ.
           </p>
-          <ParallaxImage
-            alt="Photo of Steffen"
-            className="left-0"
-            height={400}
-            img={"/images/steffen.png"}
-            width={400}
-          />
-        </div>
-
-        <div className="relative flex flex-row">
-          <p className="z-10 max-w-[90%] text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
-            We seek to foster a strong sense of community and spiritual growth
-            among our members, encouraging ourselves to live out their faith
-            authentically and share the message of God&apos;s love and salvation
-            with others.
+          <p>
+            Through regular gatherings, prayer meetings and outreach we grow in
+            community and in faith lived out authentically, and we share the
+            message of God&apos;s love and salvation with the people around us.
           </p>
-          <ParallaxImage
-            alt="Photo of Pandya"
-            height={400}
-            img={"/images/pandya.png"}
-            width={400}
-          />
-        </div>
-
-        <div className="relative flex flex-row justify-end pb-24 2xl:pb-60">
-          <p className="z-10 max-w-[90%] text-right text-xl leading-[2rem] sm:text-2xl sm:leading-[2.5rem] md:text-3xl md:leading-[3rem] lg:text-4xl lg:leading-[3.5rem] xl:text-5xl xl:leading-[4rem] 2xl:text-6xl 2xl:leading-[4.5rem]">
-            Through regular gatherings, prayer meetings, and outreach programs,
-            our members are equipped to serve as ambassadors of Christ in their
-            local communities and beyond. But still, we are just sinners who
-            want to grow together :)
+          <p className="text-balance font-reimbrandt text-2xl tracking-wide sm:text-3xl">
+            And still, we are just sinners who want to grow together.
           </p>
-          <ParallaxImage
-            alt="Photo of people learning together"
-            className="bottom-20 left-0 w-[900px] 2xl:left-16"
-            height={600}
-            img={"/images/learn.jpg"}
-            width={600}
-          />
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full flex-col gap-16 bg-gradient-to-b from-dark-green-default to-light-green-default py-4 sm:py-20">
-        <div className="flex flex-row items-center justify-center gap-2">
-          <h1 className="px-8 text-center font-reimbrandt text-3xl sm:text-7xl">
-            Make Disciples of All Nations
-          </h1>
         </div>
 
-        <div className="mx-auto flex flex-col items-center justify-center gap-4 text-center sm:w-8/12 sm:flex-row sm:gap-10">
-          <div className="w-10/12 rounded-lg bg-background/30 sm:h-60 sm:w-1/2">
-            <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
-              <h1 className="font-reimbrandt text-2xl sm:text-5xl">Vision</h1>
-              <p className="text-base sm:text-2xl">
-                Become a church based on the Full Gospel to take root, grow and
-                bear fruit for Christ.
-              </p>
-            </div>
-          </div>
-
-          <div className="w-10/12 rounded-lg bg-background/30 sm:h-60 sm:w-1/2">
-            <div className="flex flex-col items-center justify-center gap-2 p-6 sm:gap-5 sm:p-12">
-              <h1 className="font-reimbrandt text-2xl sm:text-5xl">Mission</h1>
-              <p className="text-base sm:text-2xl">
-                Building a Christian family that loves and serves God and
-                people.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto flex h-full w-10/12 items-center justify-center sm:w-8/12">
+        <figure className="space-y-3">
           <Image
-            alt="perki"
-            className="rounded-lg object-contain"
-            height={0}
-            src={"/images/perki-aachen.jpg"}
-            width={3000}
+            alt="Members of PERKI Aachen gathered for a group photo after a service"
+            className="aspect-[3/2] w-full rounded-xl object-cover"
+            height={1333}
+            sizes="(min-width: 1024px) 40rem, 100vw"
+            src="/images/perki-aachen.jpg"
+            width={2000}
           />
-        </div>
+          <figcaption className="text-muted-foreground text-xs">
+            The fellowship after a Saturday service in Aachen.
+          </figcaption>
+        </figure>
       </div>
-    </div>
+
+      <div className="mt-14 sm:mt-20">
+        <h3 className="text-balance text-center font-reimbrandt text-2xl tracking-wide sm:text-3xl">
+          Make disciples of all nations
+        </h3>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+          {pillars.map((pillar) => (
+            <div className="rounded-xl bg-card p-4 sm:p-6" key={pillar.title}>
+              <dt className="font-reimbrandt text-lg tracking-wide sm:text-xl">
+                {pillar.title}
+              </dt>
+              <dd className="mt-2 text-sm sm:text-base">{pillar.body}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Section>
   );
 }

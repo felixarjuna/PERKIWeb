@@ -1,5 +1,6 @@
-import { cn } from "~/lib/utils";
-import { events } from "../../lib/data";
+import { Clock3 } from "lucide-react";
+import Image from "next/image";
+import { events } from "~/lib/data";
 import { buttonVariants } from "../ui/button";
 import {
   Dialog,
@@ -9,58 +10,73 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import Section from "./section";
 
 export default function WhatWeDo() {
   return (
-    <div className="grid gap-y-8 bg-paper py-16 text-paper-foreground">
-      <div className="grid grid-cols-4">
-        <div className="col-span-4 my-auto mb-4 h-fit rotate-0 whitespace-nowrap sm:col-span-1 sm:-rotate-90">
-          <h1 className="text-center font-reimbrandt text-4xl text-paper-foreground sm:text-8xl">
-            What We Do
-          </h1>
-        </div>
-
-        <div className="col-span-4 flex flex-col gap-y-8 pr-0 text-paper-foreground sm:col-span-3 sm:gap-y-8 sm:pr-40">
+    <Section
+      eyebrow="Every week"
+      id="what-we-do"
+      title="What we do"
+      tone="paper"
+    >
+      <div className="grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-12">
+        <ul className="divide-y divide-paper-foreground/15">
           {events.map((event) => (
-            <div
-              className="col-span-2 mx-8 flex max-w-lg flex-col"
-              key={event.name}
-            >
-              <h1 className="font-reimbrandt text-2xl sm:text-3xl">
+            <li className="py-6 first:pt-0 last:pb-0" key={event.name}>
+              <h3 className="text-balance font-reimbrandt text-xl tracking-wide sm:text-2xl">
                 {event.name}
-              </h1>
+              </h3>
+              <p className="mt-2 flex items-center gap-2 text-sm">
+                <Clock3 aria-hidden="true" className="size-4" />
+                <span className="tabular-nums">{event.time}</span>
+              </p>
+              <p className="mt-3 max-w-prose text-sm sm:text-base">
+                {event.notes}
+              </p>
 
-              <div className="mt-1 flex w-fit items-center rounded-lg bg-accent px-3 py-2 text-foreground text-sm sm:mt-2 sm:px-4 sm:text-xl">
-                <p>{event.time} </p>
-              </div>
-              <p className="mt-2 text-base sm:mt-4 sm:text-xl">{event.notes}</p>
-
-              <div className="mt-4 self-end text-sm underline underline-offset-2">
-                <Dialog>
-                  <DialogTrigger
-                    className={cn(
-                      buttonVariants({
-                        size: "sm",
-                        variant: "default",
-                      })
-                    )}
-                  >
-                    see more ...
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="text-xl">
-                        {event.name}
-                      </DialogTitle>
-                      <DialogDescription>{event.description}</DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
+              <Dialog>
+                <DialogTrigger
+                  className={buttonVariants({
+                    className: "mt-4 text-foreground",
+                    size: "sm",
+                    variant: "outline",
+                  })}
+                >
+                  About this gathering
+                </DialogTrigger>
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="font-reimbrandt text-xl tracking-wide">
+                      {event.name}
+                    </DialogTitle>
+                    <DialogDescription className="text-left text-muted-foreground text-sm sm:text-base">
+                      {event.time}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 text-sm sm:text-base">
+                    {event.description}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </li>
           ))}
-        </div>
+        </ul>
+
+        <figure className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          <Image
+            alt="A member speaking in front of the group during a Bible study"
+            className="aspect-[4/5] w-full rounded-xl object-cover"
+            height={1600}
+            sizes="(min-width: 1024px) 20rem, 100vw"
+            src="/images/learn.jpg"
+            width={1280}
+          />
+          <figcaption className="text-paper-foreground/70 text-xs">
+            Big group Bible study around one table.
+          </figcaption>
+        </figure>
       </div>
-    </div>
+    </Section>
   );
 }

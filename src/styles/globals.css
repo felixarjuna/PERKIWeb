@@ -139,22 +139,20 @@
 
 @theme {
   /*
-   * Brand accents used ONLY by decorative gradients (landing page,
-   * nav icon tiles, hero blobs) and the live-status ping dots.
-   * All UI surfaces/text use the semantic tokens above instead.
+   * Brand accents used ONLY by the live-status ping dots in the admin
+   * dashboard. All UI surfaces/text use the semantic tokens above.
    */
-  --color-green-100: #dee9e7;
   --color-green-300: #92b6af;
   --color-green-400: #6b968f;
-  --color-green-default: #37524f;
-  --color-light-green-100: #e6ebdc;
-  --color-light-green-default: #d9e1cc;
-  --color-dark-green-default: #031f1c;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  :root {
+    color-scheme: dark;
   }
 
   body {
@@ -163,6 +161,55 @@
       "calt" 1;
     color: var(--color-foreground);
     background-color: var(--color-background);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /**
+   * Landing hero backdrop: two soft radial pools of the brand green that
+   * drift slowly. Pure CSS, so reduced-motion freezes it for free.
+   */
+  .hero-glow {
+    background:
+      radial-gradient(
+        40rem 28rem at 30% 35%,
+        color-mix(in oklch, var(--color-accent) 55%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        36rem 30rem at 72% 65%,
+        color-mix(in oklch, var(--color-secondary) 70%, transparent),
+        transparent 70%
+      );
+    animation: hero-drift 24s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-drift {
+    from {
+      transform: translate3d(-3%, -2%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(3%, 2%, 0) scale(1.08);
+    }
   }
 
   /** edit scrollbar */

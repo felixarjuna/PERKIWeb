@@ -7,28 +7,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const calculateXAxes = (
-  step: number,
-  multiplier: number,
-  start: number,
-  end: number
-) =>
-  Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, index) => {
-    const scale = 2 / (3 - Math.cos(2 * index * step));
-    return scale * Math.cos(index * step) * multiplier;
-  });
-
-export const calculateYAxes = (
-  step: number,
-  multiplier: number,
-  start: number = Math.PI,
-  end = -Math.PI
-) =>
-  Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, index) => {
-    const scale = 2 / (3 - Math.cos(2 * index * step));
-    return ((scale * Math.sin(2 * step * index)) / 2) * multiplier;
-  });
-
 export const dateTimeFormatter = (date: string) => {
   const datetime = DateTime.fromJSDate(new Date(date));
   return datetime.toFormat("LLL dd, yyyy");
