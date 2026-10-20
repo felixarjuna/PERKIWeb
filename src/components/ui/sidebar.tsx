@@ -202,7 +202,7 @@ function Sidebar({
     return (
       <Sheet onOpenChange={setOpenMobile} open={openMobile} {...props}>
         <SheetContent
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          className="w-(--sidebar-width) max-w-[calc(100vw-2rem)] bg-sidebar p-0 text-sidebar-foreground"
           data-mobile="true"
           data-sidebar="sidebar"
           side={side}
@@ -276,7 +276,7 @@ function SidebarTrigger({
 
   return (
     <Button
-      className={cn("h-7 w-7", className)}
+      className={cn("size-11", className)}
       data-sidebar="trigger"
       onClick={(event) => {
         onClick?.(event);
@@ -286,7 +286,9 @@ function SidebarTrigger({
       variant="ghost"
       {...props}
     >
-      <PanelLeft />
+      <PanelLeft>
+        <title>Toggle sidebar</title>
+      </PanelLeft>
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
