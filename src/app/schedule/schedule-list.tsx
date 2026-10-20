@@ -388,6 +388,7 @@ function ScheduleActions({
   return (
     <ActionButton
       className={className}
+      deleteDescription="This will permanently delete the schedule and every takeaway written for it. This cannot be undone."
       onDeleteClick={() => deletion.mutate({ id: scheduleId })}
       onEditClick={() => router.push(`/admin/schedules/${scheduleId}/edit`)}
     />
