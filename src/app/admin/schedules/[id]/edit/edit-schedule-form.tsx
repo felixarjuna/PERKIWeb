@@ -80,7 +80,7 @@ export default function EditScheduleForm() {
       toast.success("Schedule updated successfully!", {
         description: "Thanks for your contributions!",
       });
-      router.push("/schedule");
+      router.push("/admin/schedules");
     },
   });
 
@@ -439,7 +439,7 @@ export default function EditScheduleForm() {
           </Button>
           <Button
             className="flex gap-x-2"
-            onClick={() => router.back()}
+            onClick={() => router.push("/admin/schedules")}
             type="button"
           >
             <ArrowLeft className="h-4 w-4" />

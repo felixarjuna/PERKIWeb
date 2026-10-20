@@ -1,18 +1,21 @@
 import { expect, type Page, test } from "@playwright/test";
 import { insertSchedule } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { selectOption, toast, waitForSession } from "./helpers";
+import { adminLogin, selectOption, toast } from "./helpers";
 
 /** Usernames are derived from the display name ("E2E Member"). */
 const MEMBER_USERNAME = "e2emember";
-const EDIT_TAKEAWAY_URL = /\/edit-takeaway\/\d+$/;
+const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
+test.beforeEach(async ({ page }) => {
+  await adminLogin(page);
+});
 
 const takeawayArticle = (page: Page, text: string) =>
   page.getByRole("article").filter({ hasText: text });
 
-/** Fills and submits /create-takeaway; ends back on /takeaway. */
+/** Fills and submits /admin/takeaways/new; ends back on /admin/takeaways. */
 const createTakeaway = async (
   page: Page,
   scheduleTitle: string,
@@ -23,15 +26,14 @@ const createTakeaway = async (
   await page.getByRole("button", { name: "Add takeaway" }).click();
 
   await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
-  await expect(page).toHaveURL("/takeaway");
+  await expect(page).toHaveURL("/admin/takeaways");
 };
 
-/** Opens /create-takeaway through the list page's "Add takeaway" link. */
+/** Opens /admin/takeaways/new through the list page's "Add takeaway" link. */
 const openCreateFromList = async (page: Page) => {
-  await page.goto("/takeaway");
-  await waitForSession(page);
+  await page.goto("/admin/takeaways");
   await page.getByRole("link", { name: "Add takeaway" }).click();
-  await expect(page).toHaveURL("/create-takeaway");
+  await expect(page).toHaveURL("/admin/takeaways/new");
 };
 
 test("creates, edits and deletes a takeaway for a schedule", async ({
@@ -69,7 +71,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(
     toast(page, "Your changes has been saved successfully!")
   ).toBeVisible();
-  await expect(page).toHaveURL("/takeaway");
+  await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
   const edited = takeawayArticle(page, editedKeypoints);
   await expect(edited).toHaveCount(1);
@@ -107,8 +109,7 @@ test("a takeaway created from a direct link credits its author", async ({
   const keypoints = `Direct insight ${suffix}`;
   await insertSchedule(scheduleTitle);
 
-  await page.goto("/create-takeaway");
-  await waitForSession(page);
+  await page.goto("/admin/takeaways/new");
   await createTakeaway(page, scheduleTitle, keypoints);
   await page.reload();
 

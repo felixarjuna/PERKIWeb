@@ -1,8 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
 import NextAuth, { type DefaultSession } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { env } from "~/env.mjs";
 import {
@@ -45,53 +42,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   debug: env.NODE_ENV === "development",
   pages: {
-    newUser: "/auth/signup",
+    error: "/auth/signin",
     signIn: "/auth/signin",
   },
   providers: [
     Google({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }),
-    Credentials({
-      authorize: async (credentials) => {
-        const username = credentials?.username;
-        const password = credentials?.password;
-        if (typeof username !== "string" || typeof password !== "string") {
-          return null;
-        }
-
-        const user = (
-          await db
-            .select()
-            .from(users)
-            .where(eq(users.email, username))
-            .limit(1)
-        ).at(0);
-        if (!user?.hashedPassword) {
-          return null;
-        }
-
-        const isPasswordMatch = await bcrypt.compare(
-          password,
-          user.hashedPassword
-        );
-        if (!isPasswordMatch) {
-          return null;
-        }
-
-        return {
-          email: user.email,
-          id: user.id,
-          image: user.image,
-          name: user.name,
-        };
-      },
-      credentials: {
-        password: { label: "Password", type: "password" },
-        username: { label: "Username", type: "text" },
-      },
-      name: "credentials",
     }),
   ],
   secret: env.NEXTAUTH_SECRET,

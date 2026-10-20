@@ -1,13 +1,38 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { env } from "~/env.mjs";
+import {
+  getReturnPath,
+  getSameOriginReturnPath,
+  type PageSearchParams,
+} from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 import SignInForm from "./sign-in-form";
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
+  const query = await searchParams;
+  const cookieStore = await cookies();
+  const savedCallback =
+    cookieStore.get("__Secure-authjs.callback-url")?.value ??
+    cookieStore.get("authjs.callback-url")?.value;
+  let callbackUrl = getReturnPath(
+    typeof query.callbackUrl === "string" ? query.callbackUrl : null
+  );
+  if (
+    typeof query.callbackUrl !== "string" &&
+    typeof query.error === "string"
+  ) {
+    callbackUrl = getSameOriginReturnPath(savedCallback, env.NEXTAUTH_URL);
+  }
   const session = await auth();
-  // If the user is already logged in, redirect home.
+  // Signed-in users continue to their intended destination.
   if (session) {
-    redirect("/");
+    redirect(callbackUrl);
   }
 
   return (
@@ -17,20 +42,25 @@ export default async function SignInPage() {
     >
       <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg sm:p-10">
         <p className="type-eyebrow text-muted-foreground">Perki Aachen</p>
-        <h1 className="type-title mt-2">Welcome back</h1>
+        <h1 className="mt-2 font-reimbrandt text-2xl leading-tight sm:text-3xl">
+          Sign in
+        </h1>
         <p className="type-body-sm mt-1 text-muted-foreground">
-          Sign in to your PERKI Aachen account.
+          Use Google to create or manage your member profile.
         </p>
 
-        <SignInForm />
+        <SignInForm returnPath={callbackUrl} />
 
         <p className="type-body-sm mt-8 text-center text-muted-foreground">
-          New here?{" "}
+          Your account is created automatically on your first visit. You can
+          register as a fellowship member after signing in.
+        </p>
+        <p className="type-body-sm mt-4 text-center">
           <Link
             className="text-foreground underline underline-offset-4"
-            href="/auth/signup"
+            href="/"
           >
-            Create an account
+            Back to home
           </Link>
         </p>
       </div>

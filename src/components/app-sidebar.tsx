@@ -1,7 +1,8 @@
 "use client";
 
-import { Command, Users } from "lucide-react";
+import { Calendar, Command, NotebookPen, Users } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type * as React from "react";
 
@@ -17,17 +18,19 @@ import {
   SidebarMenuItem,
 } from "~/components/ui/sidebar";
 
-const navMain = [
-  {
-    icon: Users,
-    isActive: true,
-    title: "Members",
-    url: "/admin/dashboard",
-  },
+const navigation = [
+  { icon: Users, title: "Members", url: "/admin/dashboard" },
+  { icon: Calendar, title: "Schedules", url: "/admin/schedules" },
+  { icon: NotebookPen, title: "Takeaways", url: "/admin/takeaways" },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const navMain = navigation.map((item) => ({
+    ...item,
+    isActive: pathname.startsWith(item.url),
+  }));
   const user = {
     avatar: session?.user.image ?? "",
     email: session?.user.email ?? "",

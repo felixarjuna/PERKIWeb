@@ -15,8 +15,9 @@ const password = "gongxifacai2025";
 
 export function LoginForm({
   className,
+  returnPath = "/admin/dashboard",
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { returnPath?: string }) {
   const { setAuthorized } = useAuth();
 
   const router = useRouter();
@@ -27,7 +28,7 @@ export function LoginForm({
       toast.success("Login successful!", {
         description: "Welcome back, MitA!",
       });
-      router.push("/admin/dashboard");
+      router.push(returnPath);
     } else {
       setAuthorized(false);
       toast.error("Login failed!", {

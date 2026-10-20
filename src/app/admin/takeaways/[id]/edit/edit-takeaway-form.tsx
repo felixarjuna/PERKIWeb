@@ -68,7 +68,7 @@ export default function EditTakeawayForm() {
       toast.success("Your changes has been saved successfully!", {
         description: "Thanks for your contribution!",
       });
-      router.push("/takeaway");
+      router.push("/admin/takeaways");
     },
   });
 
@@ -126,7 +126,7 @@ export default function EditTakeawayForm() {
           </Button>
           <Button
             className="flex gap-x-2"
-            onClick={() => router.back()}
+            onClick={() => router.push("/admin/takeaways")}
             type="button"
             variant="secondary"
           >

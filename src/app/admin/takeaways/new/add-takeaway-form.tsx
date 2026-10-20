@@ -56,7 +56,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
       toast.success("Your takeaway has been submitted!", {
         description: "Thanks for sharing!",
       });
-      router.push("/takeaway");
+      router.push("/admin/takeaways");
     },
   });
 
@@ -140,7 +140,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
           </Button>
           <Button
             className="flex gap-x-2"
-            onClick={() => router.back()}
+            onClick={() => router.push("/admin/takeaways")}
             type="button"
             variant="secondary"
           >
