@@ -16,7 +16,7 @@ export default function Hero() {
       className="relative flex min-h-dvh flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-foreground sm:px-6"
       id="hero"
     >
-      <p className="enter type-eyebrow lg:type-body text-muted-foreground">
+      <p className="enter type-lead text-muted-foreground uppercase tracking-(--type-tracking-eyebrow)">
         Since 1990
       </p>
 
