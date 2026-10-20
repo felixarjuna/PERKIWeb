@@ -55,7 +55,7 @@ export default function MemberRole({ member }: { member: Member }) {
           <p className="type-caption text-muted-foreground">Role</p>
           <RoleBadge value="owner" />
           <p className="type-caption text-muted-foreground">
-            The owner's role can't be changed.
+            The dev role can't be changed.
           </p>
         </div>
       ) : null}

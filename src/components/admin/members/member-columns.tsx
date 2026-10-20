@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
 import { ROLES, type Role } from "~/lib/roles";
+import { cn } from "~/lib/utils";
 import { RoleBadge } from "../role-badge";
 import {
   birthdayMonth,
@@ -23,6 +24,26 @@ export type MemberColumn = ColumnDef<DataTableFeatures, Member>;
 
 function Missing() {
   return <span className="text-muted-foreground">Not provided</span>;
+}
+
+/**
+ * Long free text stays on one line at a capped width (unpinned columns would
+ * otherwise grow to fit it); hovering shows all of it.
+ */
+function Truncated({
+  className,
+  value,
+}: {
+  className: string;
+  value: string | undefined;
+}) {
+  return value ? (
+    <span className={cn("block truncate", className)} title={value}>
+      {value}
+    </span>
+  ) : (
+    <Missing />
+  );
 }
 
 /**
@@ -88,12 +109,7 @@ export function createMemberColumns(
       cell: ({ getValue }) => <RoleBadge value={getValue<Role>()} />,
       filterFn: "arrHas",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          ascLabel="Owner first"
-          column={column}
-          descLabel="Member first"
-          label="Role"
-        />
+        <DataTableColumnHeader column={column} label="Role" />
       ),
       id: "role",
       meta: { label: "Role" },
@@ -200,6 +216,38 @@ export function createMemberColumns(
       size: 200,
       sortFn: "text",
       sortUndefined: "last",
+    },
+    {
+      accessorFn: (member) => member.profiles.address?.trim() || undefined,
+      cell: ({ getValue }) => (
+        <Truncated
+          className="max-w-56"
+          value={getValue<string | undefined>()}
+        />
+      ),
+      enableSorting: false,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} label="Address" />
+      ),
+      id: "address",
+      meta: { label: "Address" },
+      size: 240,
+    },
+    {
+      accessorFn: (member) => member.profiles.bio?.trim() || undefined,
+      cell: ({ getValue }) => (
+        <Truncated
+          className="max-w-64"
+          value={getValue<string | undefined>()}
+        />
+      ),
+      enableSorting: false,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} label="Bio" />
+      ),
+      id: "bio",
+      meta: { label: "Bio" },
+      size: 280,
     },
   ];
 }

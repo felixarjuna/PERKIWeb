@@ -40,7 +40,7 @@ test("a mita makes a member a writer from the member sheet, and the history show
 test("the owner's role is read-only for a mita", async ({ page }) => {
   await adminLogin(page);
   const sheet = await openMemberSheet(page, OWNER.name);
-  await expect(sheet).toContainText("The owner's role can't be changed.");
+  await expect(sheet).toContainText("The dev role can't be changed.");
   await expect(sheet.getByLabel("Role", { exact: true })).toHaveCount(0);
 });
 

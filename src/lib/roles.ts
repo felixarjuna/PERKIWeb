@@ -7,7 +7,7 @@ export const ASSIGNABLE_ROLES = ["mita", "writer", "member"] as const;
 export const roleLabels: Record<Role, string> = {
   member: "Member",
   mita: "Mita",
-  owner: "Owner",
+  owner: "Dev",
   writer: "Writer",
 };
 

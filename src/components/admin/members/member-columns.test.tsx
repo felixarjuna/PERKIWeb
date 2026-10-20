@@ -13,6 +13,7 @@ import { createMemberColumns } from "./member-columns";
 import type { Member } from "./member-model";
 
 const VIEW_DETAILS = /view details/i;
+const EMIL = /Emil/;
 
 const member = (
   id: string,
@@ -159,5 +160,37 @@ describe("member table", () => {
       list[1],
       within(table).getByRole("button", { name: "Anna" })
     );
+  });
+
+  it("shows address and bio, truncated with the full text on hover", () => {
+    const bio = "Loves music, hiking and long Sunday lunches with friends.";
+    const people = [
+      member("d", "Dora", { address: "Musterstraße 1, Aachen", bio }),
+      member("e", "Emil"),
+    ];
+    function Harness() {
+      const table = useTable({
+        columns: createMemberColumns(vi.fn()),
+        data: people,
+        features: dataTableFeatures,
+        getRowId: (row) => row.profiles.id,
+        state: { columnVisibility: { search: false } },
+      });
+      return <DataTable empty="None" label="Members" table={table} />;
+    }
+    render(<Harness />);
+    const table = screen.getByRole("table", { name: "Members" });
+    expect(
+      within(table).getByRole("columnheader", { name: "Address" })
+    ).toBeTruthy();
+    expect(
+      within(table).getByRole("columnheader", { name: "Bio" })
+    ).toBeTruthy();
+    expect(within(table).getByText("Musterstraße 1, Aachen")).toBeTruthy();
+    expect(within(table).getByTitle(bio).textContent).toBe(bio);
+    const emil = within(table).getByRole("row", { name: EMIL });
+    expect(
+      within(emil).getAllByText("Not provided").length
+    ).toBeGreaterThanOrEqual(2);
   });
 });
