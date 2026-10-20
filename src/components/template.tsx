@@ -20,7 +20,6 @@ export default function Template(props: ITemplateProps) {
   return (
     <div className="min-h-screen bg-background pb-24 text-foreground">
       <Navigation />
-      <MemberPrompt />
       <main className="mx-auto flex w-full max-w-2xl flex-col px-4 pt-28 sm:px-6 sm:pt-36">
         <header className="flex flex-col items-center gap-3 text-center">
           <h1 className="type-title">{props.title}</h1>
@@ -31,6 +30,7 @@ export default function Template(props: ITemplateProps) {
           ) : null}
         </header>
 
+        <MemberPrompt />
         <div className="mt-8 flex w-full flex-col sm:mt-10">
           {props.children}
         </div>
