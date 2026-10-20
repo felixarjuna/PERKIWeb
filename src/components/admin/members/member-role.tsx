@@ -10,6 +10,7 @@ import {
 import { timeAgo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { AdminSelect } from "../admin-controls";
+import { RoleBadge } from "../role-badge";
 import { type Member, memberName, memberRole } from "./member-model";
 
 const HISTORY_LIMIT = 5;
@@ -52,7 +53,7 @@ export default function MemberRole({ member }: { member: Member }) {
       {target === "owner" ? (
         <div className="flex flex-col gap-1">
           <p className="type-caption text-muted-foreground">Role</p>
-          <p className="type-body-sm">{roleLabels.owner}</p>
+          <RoleBadge value="owner" />
           <p className="type-caption text-muted-foreground">
             The owner's role can't be changed.
           </p>

@@ -3,7 +3,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
-import { ROLES, type Role, roleLabels } from "~/lib/roles";
+import { ROLES, type Role } from "~/lib/roles";
+import { RoleBadge } from "../role-badge";
 import {
   birthdayMonth,
   birthdayOrder,
@@ -84,7 +85,7 @@ export function createMemberColumns(
     },
     {
       accessorFn: memberRole,
-      cell: ({ getValue }) => roleLabels[getValue<Role>()],
+      cell: ({ getValue }) => <RoleBadge value={getValue<Role>()} />,
       filterFn: "arrHas",
       header: ({ column }) => (
         <DataTableColumnHeader
