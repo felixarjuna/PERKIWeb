@@ -5,18 +5,12 @@ import {
   cn,
   countBirthdaysThisMonth,
   dateTimeFormatter,
-  delta,
-  getNextDayOfWeek,
   getUsernameFromName,
-  isMoreThanOneWeekApart,
+  getWeekdayInCurrentWeek,
   timeAgo,
-  toIdDate,
-  toIdTime,
 } from "./utils";
 
 type ProfileRow = RouterOutputs["profiles"]["getUserProfiles"][number];
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Builds a minimal getUserProfiles row; only `birthday` matters here. */
 const row = (birthday: Date | null): ProfileRow => ({
@@ -95,36 +89,38 @@ describe("getUsernameFromName", () => {
   });
 });
 
-describe("getNextDayOfWeek", () => {
+describe("getWeekdayInCurrentWeek", () => {
   // 2025-10-08 is a Wednesday (getDay() === 3).
   const wednesday = new Date(2025, 9, 8, 15, 30);
 
   it("returns the Sunday that starts the current week (in the past)", () => {
-    const result = getNextDayOfWeek(wednesday, 0);
+    const result = getWeekdayInCurrentWeek(wednesday, 0);
     expect(result.getDay()).toBe(0);
     expect(result.getDate()).toBe(5);
     expect(result.getHours()).toBe(15);
   });
 
   it("returns the Saturday that ends the current week", () => {
-    const result = getNextDayOfWeek(wednesday, 6);
+    const result = getWeekdayInCurrentWeek(wednesday, 6);
     expect(result.getDay()).toBe(6);
     expect(result.getDate()).toBe(11);
   });
 
   it("returns the same day when asked for today's weekday", () => {
-    expect(getNextDayOfWeek(wednesday, 3).getTime()).toBe(wednesday.getTime());
+    expect(getWeekdayInCurrentWeek(wednesday, 3).getTime()).toBe(
+      wednesday.getTime()
+    );
   });
 
   it("crosses month boundaries", () => {
     // 2025-10-01 is a Wednesday; its Sunday is 2025-09-28.
-    const result = getNextDayOfWeek(new Date(2025, 9, 1), 0);
+    const result = getWeekdayInCurrentWeek(new Date(2025, 9, 1), 0);
     expect([result.getMonth(), result.getDate()]).toEqual([8, 28]);
   });
 
   it("does not mutate the input date", () => {
     const input = new Date(wednesday);
-    getNextDayOfWeek(input, 6);
+    getWeekdayInCurrentWeek(input, 6);
     expect(input.getTime()).toBe(wednesday.getTime());
   });
 });
@@ -171,65 +167,6 @@ describe("date-relative helpers", () => {
       vi.setSystemTime(new Date("2025-05-15T12:00:00Z"));
       expect(countBirthdaysThisMonth(profiles)).toBe(0);
     });
-  });
-
-  describe("isMoreThanOneWeekApart", () => {
-    // NOTE: despite its name this returns true when the date is LESS than a
-    // week away (or already past); christmas/page.tsx relies on that to show
-    // "Registration closed!".
-    it("is true for dates less than a week ahead", () => {
-      expect(isMoreThanOneWeekApart(new Date(now.getTime() + DAY_MS))).toBe(
-        true
-      );
-    });
-
-    it("is true for dates in the past", () => {
-      expect(isMoreThanOneWeekApart(new Date(now.getTime() - DAY_MS))).toBe(
-        true
-      );
-    });
-
-    it("is false for dates exactly a week or more ahead", () => {
-      expect(isMoreThanOneWeekApart(new Date(now.getTime() + 7 * DAY_MS))).toBe(
-        false
-      );
-      expect(
-        isMoreThanOneWeekApart(new Date(now.getTime() + 30 * DAY_MS))
-      ).toBe(false);
-    });
-  });
-
-  describe("delta", () => {
-    it("returns whole days remaining, rounded up", () => {
-      expect(delta(new Date(now.getTime() + 3 * DAY_MS))).toBe(3);
-      expect(delta(new Date(now.getTime() + 2.1 * DAY_MS))).toBe(3);
-      expect(delta(new Date(now.getTime() + 1))).toBe(1);
-    });
-
-    it("returns 0 for now and for past dates", () => {
-      expect(delta(now)).toBe(0);
-      expect(delta(new Date(now.getTime() - 5 * DAY_MS))).toBe(0);
-    });
-  });
-});
-
-describe("toIdDate / toIdTime (Europe/Berlin)", () => {
-  it("formats winter time (UTC+1)", () => {
-    const date = new Date("2025-12-20T17:30:00Z");
-    expect(toIdDate(date)).toBe("20.12.2025");
-    expect(toIdTime(date)).toBe("18:30");
-  });
-
-  it("formats summer time (UTC+2)", () => {
-    const date = new Date("2025-07-01T10:05:00Z");
-    expect(toIdDate(date)).toBe("01.07.2025");
-    expect(toIdTime(date)).toBe("12:05");
-  });
-
-  it("rolls over to the Berlin calendar day", () => {
-    const date = new Date("2025-12-31T23:30:00Z");
-    expect(toIdDate(date)).toBe("01.01.2026");
-    expect(toIdTime(date)).toBe("00:30");
   });
 });
 

@@ -15,11 +15,14 @@ Package manager is **pnpm**.
 - `pnpm lint` / `pnpm format` — Biome check / check --write (ultracite presets, config in `biome.jsonc`; DB migrations are excluded)
 - `pnpm typecheck` — `tsc --noEmit` (TypeScript 7)
 - `pnpm check` — lint + typecheck + unit/integration tests; run before calling work done
-- Database (Drizzle Kit, PostgreSQL): `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:push`, `pnpm db:studio`, `pnpm db:seed`
+- Database (Drizzle Kit, PostgreSQL): `pnpm db:dev` / `pnpm db:dev:down` (local dev Postgres, `compose.dev.yml`, port 54320, persistent volume), `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:push`, `pnpm db:studio`, `pnpm db:seed`
+- Local development uses the Docker dev database (`.env.example` points there): `pnpm db:dev && pnpm db:migrate && pnpm db:seed`. Never point `.env` at production.
+- **Production schema changes only through migrations, applied by CI.** `deploy:migrate` runs `pnpm db:migrate` against prod after every check passes on `main`. Never `db:push` to prod: an unrecorded change breaks later migrations (`drizzle.config.ts` and `seed.ts` refuse non-local hosts). Vercel deploys the same commit in parallel, so a migration must work with the previous release too: add columns/tables first, drop or rename in a later PR.
+- drizzle applies only migrations newer than the last one recorded, so a migration generated on a branch before another migration landed on `main` is silently skipped. After rebasing onto a new migration, delete yours and re-run `pnpm db:generate`. `src/lib/db/migrations.test.ts` fails on out-of-order timestamps; `check:migrations` fails if `schema.ts` changed without a migration.
 
 ## Testing
 
-Tests never touch the real database (`.env` points at production Supabase).
+Tests never touch a real database: integration tests use PGlite and e2e uses its own throwaway container.
 
 - `pnpm test` (Vitest, `vitest.config.ts`) runs three projects; `pnpm test:unit` runs `unit` + `dom`, `pnpm test:integration` runs `server`:
   - `unit`: node, `src/**/*.test.ts` outside `src/server`.
@@ -28,7 +31,7 @@ Tests never touch the real database (`.env` points at production Supabase).
 - `pnpm test:e2e:db` then `pnpm test:e2e` (Playwright, `e2e/`): builds and starts the app on :3100 against a throwaway Docker Postgres (`compose.test.yml`, port 54329, tmpfs). `e2e/global-setup.ts` recreates the schema from the migrations and seeds the `MEMBER` account; `auth.setup.ts` saves its signed-in state. `playwright.config.ts` refuses any non-local `DATABASE_URL`. Set `E2E_SKIP_BUILD=1` to reuse an existing build. Specs share one DB and run in parallel, so create data with `uniqueSuffix()`.
 - Known gaps are pinned with `it.fails` / `test.fail()` and a `// BUG:` or `// SECURITY:` comment. Fixing the gap makes that test fail, so remove the marker when you fix it.
 - Hand-written SQL in a migration must end each statement with `--> statement-breakpoint`, or fresh databases (tests, CI) can't apply it.
-- CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`) and run in parallel. The only ordering is `test:e2e` → `build`, which reuses the uploaded `.next` output (`E2E_SKIP_BUILD=1`). Shared setup lives in `.github/actions/setup`. There is no deploy job because Vercel's GitHub integration deploys.
+- CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:migrations`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`, `deploy:migrate`) and run in parallel. Ordering: `test:e2e` needs `build` (reuses the uploaded `.next` output, `E2E_SKIP_BUILD=1`); `deploy:migrate` runs only on pushes to `main`, after every check, in the `Production` GitHub environment (restricted to `main`, secret `DATABASE_URL`), and is never cancelled mid-run. Shared setup lives in `.github/actions/setup`. Vercel's GitHub integration deploys the app itself.
 
 ## Architecture
 
@@ -50,7 +53,7 @@ Path alias: `~/*` → `src/*`.
 
 ## Design system
 
-General app pages, including the admin login and Christmas pages, render inside `src/components/template.tsx`, which owns the page rhythm: one `max-w-2xl` centered column, `px-4`, `pt-28 sm:pt-36 pb-24`, centered serif title + muted subtitle, `mt-8 sm:mt-10` gap to content. Pages must not re-introduce their own max-widths, horizontal padding, or top margins. Sign-in and sign-up use a compact card with the same typography and colors. The admin workspace uses its own AdminShell: a stock shadcn sidebar in the sidebar-07 layout (icon-collapsible; keep the primitive's default spacing), with the perki.bot status in its footer, mobile navigation sheet, page heading and action slot. Overview lives at /admin/dashboard; the searchable member directory lives at /admin/members and uses one horizontally scrollable data table (member name pinned, on every screen size) and a read-only details sheet opened from the name. Every route has one main landmark linked by the shared skip link.
+General app pages, including the admin login, render inside `src/components/template.tsx`, which owns the page rhythm: one `max-w-2xl` centered column, `px-4`, `pt-28 sm:pt-36 pb-24`, centered serif title + muted subtitle, `mt-8 sm:mt-10` gap to content. Pages must not re-introduce their own max-widths, horizontal padding, or top margins. Sign-in and sign-up use a compact card with the same typography and colors. The admin workspace uses its own AdminShell: a stock shadcn sidebar in the sidebar-07 layout (icon-collapsible; keep the primitive's default spacing), with the perki.bot status in its footer, mobile navigation sheet, page heading and action slot. Overview lives at /admin/dashboard; the searchable member directory lives at /admin/members and uses one horizontally scrollable data table (member name pinned, on every screen size) and a read-only details sheet opened from the name. Every route has one main landmark linked by the shared skip link.
 
 **Type scale:** `src/styles/globals.css` section 4 defines eleven fluid `type-*` roles (`type-display`, `type-title`, `type-heading`, `type-subheading`, `type-quote`, `type-figure` (sans stat values), `type-lead`, `type-body`, `type-body-sm`, `type-caption`, `type-eyebrow`). Use the role utility for anything a reader reads, never a raw `text-*` size plus breakpoints. Reimbrandt is display-only (never below `type-subheading`); body text is 16px on phones; captions never below 12px. Satoshi ships one weight (500) and synthesis is off, so `font-bold`/`font-light` have no effect on Satoshi text.
 
@@ -71,7 +74,6 @@ General app pages, including the admin login and Christmas pages, render inside 
 ## Gotchas
 
 - `xs:` responsive classes were never a defined breakpoint and are inert; don't add new ones.
-- The christmas routes are a past-event feature kept for reference/reuse; the external RSVP API (`rsvp-perkiaachen.fly.dev`) may be offline.
 - The admin dashboard has a client-side passcode gate (zustand) *plus* a NextAuth session requirement.
 
 ## Admin workspace
@@ -80,6 +82,6 @@ General app pages, including the admin login and Christmas pages, render inside 
 - `/admin/members` URL parameters: `q`, `location` (comma-separated normalised keys), `sort` (`<column>.<asc|desc>`, default `name.asc`), `page`, `pageSize`, `member`.
 - Data tables use `src/components/data-table/` — a tablecn/Dice UI data table ported to TanStack Table v9 and our Radix primitives (the upstream registry ships Base UI only, so don't `shadcn add` it). Column defs set `meta.label`; pinned columns stay opaque. Admin toolbars use `AdminSearch`/`AdminSelect`/`AdminSegmented` from `admin-controls.tsx` (filled `bg-secondary`, no outlines), never native `<select>`. Native History API updates integrate with Next.js search parameters; filters reset pagination. Details restore focus to the originating button or search on direct entry.
 - Metrics count profile registrations, with `Europe/Berlin` month boundaries. Date-only birthdays use UTC calendar fields. Cumulative registrations include retained profiles only; missing dates are disclosed.
-- Prayer migration `0007` adds `visibility`, private by default for existing and new rows. `/admin/prayers` handles review/edit/delete/publication. `/prayers` reads the explicit safe public projection; participant names are never sent by that endpoint. Signed-in acknowledgement uses a locked, idempotent server mutation plus a lookup returning only the current person's acknowledged IDs.
-- Run the migration as part of deployment before serving the new prayer pages. Development/testing must use the isolated test database. No production migration is performed by UI verification.
+- Prayer migration `0008` adds `visibility`, private by default for existing and new rows. `/admin/prayers` handles review/edit/delete/publication. `/prayers` reads the explicit safe public projection; participant names are never sent by that endpoint. Signed-in acknowledgement uses a locked, idempotent server mutation plus a lookup returning only the current person's acknowledged IDs.
+- `deploy:migrate` applies `0008` after merge; until it finishes, the new prayer pages can fail on the missing column (the previous release is unaffected). Development/testing must use the local dev or test database.
 - The existing NextAuth session plus client passcode gate remain transitional. RBAC, role assignment, member journeys, and testimonies are separate projects.

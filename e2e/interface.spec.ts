@@ -3,7 +3,6 @@ import { insertSchedule } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption } from "./helpers";
 
-const RSVP_API = "https://rsvp-perkiaachen.fly.dev/**";
 const MEMBER_MENU = /E2E Member/;
 const widths = [320, 1440] as const;
 const publicRoutes = [
@@ -13,9 +12,6 @@ const publicRoutes = [
   "/auth/signin",
   "/auth/signup",
   "/admin",
-  "/christmas",
-  "/christmas/gift",
-  "/christmas/thankyou",
   "/legal-notice",
   "/privacy",
 ] as const;
@@ -47,7 +43,6 @@ for (const width of widths) {
       test(`${route} has readable structure and fits the viewport`, async ({
         page,
       }) => {
-        await page.route(RSVP_API, (request) => request.abort());
         await page.goto(route);
         await expectUsablePage(page);
       });

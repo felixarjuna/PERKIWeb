@@ -1,5 +1,5 @@
 {
-  "id": "a0b6e50e-f306-444c-aff2-04c487b1c1a5",
+  "id": "8b25b223-9b3e-4c5b-970b-982fa5f10906",
   "prevId": "1872efae-e2d7-4bb4-a2c0-7afd1256a283",
   "version": "7",
   "dialect": "postgresql",
@@ -200,13 +200,6 @@
       "name": "prayers",
       "schema": "",
       "columns": {
-        "visibility": {
-          "name": "visibility",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'private'"
-        },
         "content": {
           "name": "content",
           "type": "text",
@@ -352,7 +345,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "profiles_userId_unique": {
+          "name": "profiles_userId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "userId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -558,7 +559,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "takeaways_scheduleId_schedules_id_fk": {
+          "name": "takeaways_scheduleId_schedules_id_fk",
+          "tableFrom": "takeaways",
+          "tableTo": "schedules",
+          "columnsFrom": [
+            "scheduleId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

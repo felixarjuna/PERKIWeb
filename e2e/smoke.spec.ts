@@ -1,13 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const PUBLIC_PAGES = [
-  "/",
-  "/group",
-  "/schedule",
-  "/takeaway",
-  "/prayers",
-  "/christmas",
-];
+const PUBLIC_PAGES = ["/", "/group", "/schedule", "/takeaway", "/prayers"];
 const PROTECTED_PAGES = ["/account", "/member/join", "/admin/dashboard"];
 
 for (const path of PUBLIC_PAGES) {

@@ -108,6 +108,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   const dialog = page.getByRole("alertdialog", {
     name: `Delete “${editedTitle}”?`,
   });
+  await expect(dialog).toContainText("every takeaway written for it");
   await dialog.getByRole("button", { name: "Keep entry" }).click();
   await expect(dialog).toBeHidden();
   await expect(editedHeader).toBeVisible();

@@ -1,7 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
-import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { schedules } from "~/lib/db/schema/schema";
 import { db } from "~/server";
+import { affectedRow } from "../errors";
 import {
   addScheduleBatchSchema,
   addScheduleSchema,
@@ -34,22 +35,18 @@ export const scheduleRouter = createTRPCRouter({
     .mutation(
       async ({ input }) => await db.insert(schedules).values([...input])
     ),
+  /** Deleting a schedule also deletes its takeaways (FK `ON DELETE CASCADE`). */
   deleteSchedule: protectedProcedure
     .input(queryByIdSchema)
-    .mutation(async ({ input }) => {
-      const linked = await db
-        .select({ id: takeaways.id })
-        .from(takeaways)
-        .where(eq(takeaways.scheduleId, input.id))
-        .limit(1);
-      if (linked.length) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Remove the linked takeaways before deleting this schedule.",
-        });
-      }
-      return await db.delete(schedules).where(eq(schedules.id, input.id));
-    }),
+    .mutation(async ({ input }) =>
+      affectedRow(
+        await db
+          .delete(schedules)
+          .where(eq(schedules.id, input.id))
+          .returning({ id: schedules.id }),
+        "Schedule"
+      )
+    ),
   getScheduleById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
@@ -71,11 +68,16 @@ export const scheduleRouter = createTRPCRouter({
   getSchedules: publicProcedure.query(
     async () => await db.select().from(schedules).orderBy(desc(schedules.date))
   ),
-  updateSchedule: protectedProcedure.input(updateScheduleSchema).mutation(
-    async ({ input }) =>
-      await db
-        .update(schedules)
-        .set({ ...input })
-        .where(eq(schedules.id, input.id))
-  ),
+  updateSchedule: protectedProcedure
+    .input(updateScheduleSchema)
+    .mutation(async ({ input }) =>
+      affectedRow(
+        await db
+          .update(schedules)
+          .set({ ...input })
+          .where(eq(schedules.id, input.id))
+          .returning({ id: schedules.id }),
+        "Schedule"
+      )
+    ),
 });

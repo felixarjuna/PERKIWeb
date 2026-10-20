@@ -7,15 +7,17 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; runs on main are not, so a production
+  # migration is never interrupted.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
-# Stages are expressed through job names (check:*, build, test:*). Jobs run in
-# parallel; the only ordering is a real data dependency: test:e2e runs against
-# the production build produced by the build job. Deployment is handled by
-# Vercel's GitHub integration, so there is no deploy job.
+# Stages are expressed through job names (check:*, build, test:*, deploy:*).
+# Jobs run in parallel except for real dependencies: test:e2e runs against the
+# build job's output, and deploy:migrate waits for every check on main. The app
+# itself is deployed by Vercel's GitHub integration.
 jobs:
   check-lint:
     name: check:lint
@@ -25,6 +27,25 @@ jobs:
       - uses: ./.github/actions/setup
       # Biome check covers formatting, linting and import sorting.
       - run: pnpm lint
+
+  check-migrations:
+    name: check:migrations
+    runs-on: ubuntu-latest
+    env:
+      SKIP_ENV_VALIDATION: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      # Schema changes must ship with a committed migration. Journal ordering is
+      # checked by src/lib/db/migrations.test.ts (test:unit).
+      - run: pnpm db:generate
+      - name: Fail if schema.ts has changes without a migration
+        run: |
+          if [ -n "$(git status --porcelain -- src/lib/db/migrations)" ]; then
+            git status --short -- src/lib/db/migrations
+            echo "::error::schema.ts changed without a migration. Run pnpm db:generate and commit the result."
+            exit 1
+          fi
 
   check-types:
     name: check:types
@@ -107,3 +128,31 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
+
+  # Applies pending migrations to production once everything on main is green.
+  # Vercel deploys the same commit in parallel, so migrations must stay
+  # compatible with the previous release (add first, remove in a later PR).
+  deploy-migrate:
+    name: deploy:migrate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      [
+        check-lint,
+        check-migrations,
+        check-types,
+        test-unit,
+        test-integration,
+        test-e2e,
+      ]
+    runs-on: ubuntu-latest
+    environment: Production
+    concurrency:
+      group: deploy-migrate-production
+      cancel-in-progress: false
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SKIP_ENV_VALIDATION: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm db:migrate

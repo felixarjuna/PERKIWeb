@@ -84,7 +84,7 @@ export default function ScheduleManager() {
                     </p>
                   </div>
                   <RecordActions
-                    description="Schedules linked to takeaways must have those takeaways removed first. Other schedules are permanently deleted."
+                    description="This permanently deletes the schedule and every takeaway written for it. This cannot be undone."
                     editUrl={`/admin/schedules/${record.id}/edit`}
                     name={record.title}
                     onDelete={() => remove.mutate({ id: record.id })}

@@ -26,7 +26,11 @@ export const dateTimeFormatter = (date: string) => {
 export const getUsernameFromName = (name: string) =>
   name.replace(/\s/g, "").toLowerCase();
 
-export function getNextDayOfWeek(date: Date, dayOfWeek: number) {
+/**
+ * The given weekday (0 = Sunday … 6 = Saturday) within `date`'s Sunday–Saturday
+ * week, keeping `date`'s time of day. The result can be in the past.
+ */
+export function getWeekdayInCurrentWeek(date: Date, dayOfWeek: number) {
   const resultDate = new Date(date.getTime());
   resultDate.setDate(date.getDate() + ((dayOfWeek - date.getDay()) % 7));
 
@@ -53,29 +57,3 @@ export const countBirthdaysThisMonth = (
     return birthdayDt.month === currentMonth ? count + 1 : count;
   }, 0);
 };
-
-/** method to calculate if the delta is more than one week. */
-export function isMoreThanOneWeekApart(date: Date): boolean {
-  const currentDate = new Date();
-  const milliseconds = 7 * 24 * 60 * 60 * 1000;
-
-  return date.getTime() - currentDate.getTime() < milliseconds;
-}
-
-/** method to calculate if the delta is more than two weeks. */
-export function delta(date: Date): number {
-  const currentDate = new Date();
-  const timeDifference = date.getTime() - currentDate.getTime();
-  const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-  return Math.max(daysDifference, 0);
-}
-
-export function toIdDate(date: Date): string {
-  const datetime = DateTime.fromJSDate(date).setZone("Europe/Berlin");
-  return datetime.toFormat("dd.MM.yyyy");
-}
-
-export function toIdTime(date: Date): string {
-  const datetime = DateTime.fromJSDate(date).setZone("Europe/Berlin");
-  return datetime.toFormat("HH:mm");
-}

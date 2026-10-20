@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
-import { schedules as schedulesTable } from "~/lib/db/schema/schema";
+import { schedules as schedulesTable, takeaways } from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -29,21 +29,6 @@ const onlySchedule = async () => {
 };
 
 describe("schedules router", () => {
-  it("blocks deleting a schedule while a takeaway references it", async () => {
-    const api = await signedIn();
-    await api.schedules.addSchedule(validSchedule);
-    const { id } = await onlySchedule();
-    await api.takeaways.addTakeaway({
-      contributors: [],
-      keypoints: "Notes",
-      scheduleId: id,
-    });
-    await expect(api.schedules.deleteSchedule({ id })).rejects.toMatchObject({
-      code: "CONFLICT",
-    });
-    expect(await api.takeaways.getTakeaways()).toHaveLength(1);
-    expect(await api.schedules.getSchedules()).toHaveLength(1);
-  });
   it("lets anyone read schedules, newest first", async () => {
     const user = await insertUser();
     const api = callerFor(user.id);
@@ -179,6 +164,32 @@ describe("schedules router", () => {
     await api.schedules.deleteSchedule({ id });
 
     expect(await anonymousCaller().schedules.getSchedules()).toEqual([]);
+  });
+
+  it("deletes a schedule's takeaways along with it", async () => {
+    const api = await signedIn();
+    await api.schedules.addSchedule(validSchedule);
+    const { id } = await onlySchedule();
+    await api.takeaways.addTakeaway({
+      contributors: [],
+      keypoints: "Notes",
+      scheduleId: id,
+    });
+
+    await api.schedules.deleteSchedule({ id });
+
+    expect(await testDb.select().from(takeaways)).toEqual([]);
+  });
+
+  it("returns NOT_FOUND when updating or deleting a missing schedule", async () => {
+    const api = await signedIn();
+
+    await expect(
+      api.schedules.updateSchedule({ ...validSchedule, id: 404 })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      api.schedules.deleteSchedule({ id: 404 })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
   it("rejects every write from signed-out visitors", async () => {
