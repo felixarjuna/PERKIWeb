@@ -366,6 +366,24 @@ describe("takeaways router", () => {
       expect(await rows()).toEqual([]);
     });
 
+    it("never sends authorId from the public queries", async () => {
+      const writer = await insertUser({ role: "writer" });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
+      const { id } = await onlyTakeaway();
+      const visitor = anonymousCaller();
+
+      const list = await visitor.takeaways.getTakeaways();
+      const single = await visitor.takeaways.getTakeawayById({ id });
+
+      expect(list).toHaveLength(1);
+      for (const row of [...list, single]) {
+        expect(row.takeaways).not.toHaveProperty("authorId");
+        expect(row.takeaways).toMatchObject({ id, keypoints: "Notes" });
+        expect(row.schedules.title).toBe("Faith");
+      }
+    });
+
     it("marks canManage per viewer and never sends authorId", async () => {
       const mine = await insertUser({ role: "writer" });
       const other = await insertUser({ role: "writer" });

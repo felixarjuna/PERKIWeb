@@ -124,6 +124,16 @@ describe("profiles.getUserProfiles", () => {
       callerFor(stranger?.id ?? "").profiles.getUserProfiles()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+
+  it("keeps the member directory from writers", async () => {
+    const member = await insertUser();
+    await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
+    const writer = await insertUser({ role: "writer" });
+
+    await expect(
+      callerFor(writer.id).profiles.getUserProfiles()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
 });
 
 describe("profiles.hasOwnProfile", () => {

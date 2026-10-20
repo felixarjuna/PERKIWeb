@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, getTableColumns } from "drizzle-orm";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { db } from "~/server";
 import { isAdmin } from "~/server/authz";
@@ -21,6 +21,24 @@ const rethrowMissingSchedule = (error: unknown): never => {
     });
   }
   throw error;
+};
+
+/**
+ * Public takeaway columns: everything except `authorId`, so anonymous
+ * visitors never see author ids (and these pages work before migration 0010).
+ */
+const publicTakeawayColumns = {
+  contributors: takeaways.contributors,
+  createdAt: takeaways.createdAt,
+  id: takeaways.id,
+  keypoints: takeaways.keypoints,
+  scheduleId: takeaways.scheduleId,
+  updatedAt: takeaways.updatedAt,
+};
+
+const publicSelection = {
+  schedules: getTableColumns(schedules),
+  takeaways: publicTakeawayColumns,
 };
 
 /** The one rule: staff manage every takeaway, writers only their own. */
@@ -110,7 +128,7 @@ export const takeawayRouter = createTRPCRouter({
     .input(queryByIdSchema)
     .query(async ({ input }) => {
       const takeaway = await db
-        .select()
+        .select(publicSelection)
         .from(takeaways)
         .where(eq(takeaways.id, input.id))
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
@@ -128,7 +146,7 @@ export const takeawayRouter = createTRPCRouter({
   getTakeaways: publicProcedure.query(
     async () =>
       await db
-        .select()
+        .select(publicSelection)
         .from(takeaways)
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
         .orderBy(desc(schedules.date))
