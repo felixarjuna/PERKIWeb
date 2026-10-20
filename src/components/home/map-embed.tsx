@@ -36,27 +36,29 @@ export default function MapEmbed() {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
-      <Image
-        alt={`Street map of the area around ${PLACE}`}
-        className="aspect-[4/3] w-full object-cover"
-        height={700}
-        sizes="(min-width: 1024px) 40rem, 100vw"
-        src="/images/mapsicleMap.png"
-        width={1440}
-      />
+    <div className="space-y-3">
+      <div className="relative overflow-hidden rounded-xl">
+        <Image
+          alt={`Street map of the area around ${PLACE}`}
+          className="aspect-[4/3] w-full object-cover"
+          height={700}
+          sizes="(min-width: 1024px) 40rem, 100vw"
+          src="/images/mapsicleMap.png"
+          width={1440}
+        />
 
-      <div
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-full flex-col items-center"
-      >
-        <span className="type-caption rounded-full bg-background px-3 py-1 text-foreground shadow-lg">
-          Roermonderstraße 110
-        </span>
-        <MapPin className="mt-1 size-8 fill-background text-foreground drop-shadow" />
+        <div
+          aria-hidden="true"
+          className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-full flex-col items-center"
+        >
+          <span className="type-caption rounded-full bg-background px-3 py-1 text-foreground shadow-lg">
+            Roermonderstraße 110
+          </span>
+          <MapPin className="mt-1 size-8 fill-background text-foreground drop-shadow" />
+        </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-paper/90 p-3 backdrop-blur">
+      <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             className="text-foreground"
