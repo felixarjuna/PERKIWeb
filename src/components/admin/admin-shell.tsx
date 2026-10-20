@@ -30,6 +30,7 @@ export default function AdminShell({
   subtitle,
   actions,
   viewerRole,
+  driveConfigured,
   driveUrl,
 }: {
   children: ReactNode;
@@ -38,12 +39,17 @@ export default function AdminShell({
   subtitle?: string;
   actions?: ReactNode;
   viewerRole: Role;
+  driveConfigured: boolean;
   driveUrl: string | null;
 }) {
   return (
     <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>
-        <AppSidebar driveUrl={driveUrl} viewerRole={viewerRole} />
+        <AppSidebar
+          driveConfigured={driveConfigured}
+          driveUrl={driveUrl}
+          viewerRole={viewerRole}
+        />
         <SidebarInset className="min-w-0 bg-background" id="main-content">
           <header className="flex h-14 shrink-0 items-center gap-2 border-border/40 border-b px-3 sm:h-16 sm:px-6">
             <SidebarTrigger className="size-10" />

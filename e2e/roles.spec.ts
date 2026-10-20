@@ -78,9 +78,12 @@ test("a writer sees only Takeaways in the sidebar, a disabled Drive link with th
       sidebar.getByRole("link", { exact: true, name: hidden })
     ).toHaveCount(0);
   }
+  // Writers have no Community pages, so that group has no label either.
+  await expect(sidebar.getByText("Community", { exact: true })).toHaveCount(0);
+  await expect(sidebar.getByText("Content", { exact: true })).toBeVisible();
   const drive = sidebar.getByRole("button", { name: "Google Drive" });
   await expect(drive).toHaveAttribute("aria-disabled", "true");
-  await drive.focus();
+  await drive.hover();
   await expect(page.getByRole("tooltip", { name: DRIVE_TIP })).toBeVisible();
 
   for (const path of ["/admin/dashboard", "/admin/members"]) {

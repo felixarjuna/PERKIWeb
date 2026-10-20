@@ -13,6 +13,8 @@ import { AdminSelect } from "../admin-controls";
 import { type Member, memberName, memberRole } from "./member-model";
 
 const HISTORY_LIMIT = 5;
+/** Rows written by `pnpm roles` have no `changedById`, so no name. */
+const SCRIPT_CHANGER = "setup script";
 type Assignable = (typeof ASSIGNABLE_ROLES)[number];
 const roleOptions = ASSIGNABLE_ROLES.map((role) => ({
   label: roleLabels[role],
@@ -76,7 +78,7 @@ export default function MemberRole({ member }: { member: Member }) {
             {rows.map((row) => (
               <li key={`${row.createdAt.getTime()}-${row.toRole}`}>
                 {roleLabels[row.toRole as Role] ?? row.toRole} · changed by{" "}
-                {row.changedByName ?? "Unknown"} · {timeAgo(row.createdAt)}
+                {row.changedByName ?? SCRIPT_CHANGER} · {timeAgo(row.createdAt)}
               </li>
             ))}
           </ul>

@@ -4,7 +4,10 @@ import AdminShell from "~/components/admin/admin-shell";
 import CommunityOverview from "~/components/admin/overview/community-overview";
 
 export default function DashboardView(
-  props: Pick<ComponentProps<typeof AdminShell>, "driveUrl" | "viewerRole">
+  props: Pick<
+    ComponentProps<typeof AdminShell>,
+    "driveConfigured" | "driveUrl" | "viewerRole"
+  >
 ) {
   return (
     <AdminShell

@@ -35,14 +35,22 @@ const GROUPS = ["Community", "Content"] as const;
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
 export function AppSidebar({
   viewerRole,
+  driveConfigured,
   driveUrl,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   viewerRole: Role;
+  /** Whether a Drive folder is set; writers get no URL, only this flag. */
+  driveConfigured: boolean;
   driveUrl: string | null;
 }) {
   const staff = isStaffRole(viewerRole);
-  const home = navigationFor(viewerRole)[0].url;
+  const navigation = navigationFor(viewerRole);
+  const home = navigation[0].url;
+  const groups = GROUPS.map((group) => ({
+    group,
+    items: navigation.filter((item) => item.group === group),
+  })).filter(({ items }) => items.length > 0);
   const { data: session } = useSession();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -72,33 +80,31 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {GROUPS.map((group) => (
+        {groups.map(({ group, items }) => (
           <SidebarGroup key={group}>
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarMenu>
-              {navigationFor(viewerRole)
-                .filter((item) => item.group === group)
-                .map((item) => {
-                  const active = pathname.startsWith(item.url);
-                  return (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={active}
-                        tooltip={item.title}
+              {items.map((item) => {
+                const active = pathname.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                    >
+                      <Link
+                        aria-current={active ? "page" : undefined}
+                        href={item.url}
+                        onClick={close}
                       >
-                        <Link
-                          aria-current={active ? "page" : undefined}
-                          href={item.url}
-                          onClick={close}
-                        >
-                          <item.icon aria-hidden="true" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                        <item.icon aria-hidden="true" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroup>
         ))}
@@ -127,13 +133,13 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ) : null}
-            {staff ? null : (
+            {!staff && driveConfigured ? (
               <SidebarMenuItem>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SidebarMenuButton
                       aria-disabled="true"
-                      className="cursor-not-allowed opacity-50"
+                      className="cursor-not-allowed opacity-50 aria-disabled:pointer-events-auto"
                       type="button"
                     >
                       <FolderOpen aria-hidden="true" />
@@ -145,7 +151,7 @@ export function AppSidebar({
                   </TooltipContent>
                 </Tooltip>
               </SidebarMenuItem>
-            )}
+            ) : null}
 
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Visit website">

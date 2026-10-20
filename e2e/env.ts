@@ -12,6 +12,8 @@ export const e2eEnv = {
   DATABASE_URL:
     process.env.E2E_DATABASE_URL ??
     "postgres://postgres:postgres@127.0.0.1:54329/perkiweb_test",
+  // A dummy folder so the sidebar renders its Drive items (hidden when unset).
+  DRIVE_FOLDER_URL: "https://drive.example.test/e2e-folder",
   GOOGLE_CLIENT_ID: "e2e-google-client-id",
   GOOGLE_CLIENT_SECRET: "e2e-google-client-secret",
   NEXT_PUBLIC_GOOGLE_API_KEY: "e2e-google-api-key",

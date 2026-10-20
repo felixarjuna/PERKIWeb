@@ -19,6 +19,12 @@ vi.mock("~/trpc/react", () => ({
               fromRole: "member",
               toRole: "mita",
             },
+            {
+              changedByName: null,
+              createdAt: new Date(Date.now() - 3 * 86_400_000),
+              fromRole: "member",
+              toRole: "writer",
+            },
           ],
           isLoading: false,
         }),
@@ -87,4 +93,11 @@ it("offers a role select to staff for a non-owner and lists history", () => {
   render(<DetailHarness member={target("member")} />);
   expect(screen.getByRole("combobox", { name: "Role" })).toBeTruthy();
   expect(screen.getByText("Mita · changed by Mia · 2 days ago")).toBeTruthy();
+});
+
+it("credits history rows without a changer to the setup script", () => {
+  render(<DetailHarness member={target("member")} />);
+  expect(
+    screen.getByText("Writer · changed by setup script · 3 days ago")
+  ).toBeTruthy();
 });

@@ -25,13 +25,19 @@ export const getRole = async (userId: string): Promise<Role> => {
 };
 
 /**
- * Props every admin page passes to `AdminShell`. Reads the environment
- * directly so server tests can import this module without the full env.
+ * Props every admin page passes to `AdminShell`. Only staff get the Drive
+ * URL; `driveConfigured` lets the shell hide the Drive item when no folder
+ * is set. Reads the environment directly so server tests can import this
+ * module without the full env.
  */
-export const adminShellProps = (role: Role) => ({
-  driveUrl: isStaffRole(role) ? process.env.DRIVE_FOLDER_URL || null : null,
-  viewerRole: role,
-});
+export const adminShellProps = (role: Role) => {
+  const driveFolderUrl = process.env.DRIVE_FOLDER_URL || null;
+  return {
+    driveConfigured: driveFolderUrl !== null,
+    driveUrl: isStaffRole(role) ? driveFolderUrl : null,
+    viewerRole: role,
+  };
+};
 
 /** Whether the user is staff (owner or mita). */
 export const isAdmin = async (userId: string): Promise<boolean> =>
