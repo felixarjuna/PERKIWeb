@@ -15,7 +15,7 @@ test("overview shows real registration and birthday controls", async ({
   const shown = await month.textContent();
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(month).not.toHaveText(shown ?? "");
-  await page.getByRole("button", { name: "This month" }).click();
+  await page.getByRole("button", { exact: true, name: "This month" }).click();
   await expect(month).toHaveText(shown ?? "");
   await expect(
     page.getByRole("heading", { name: "Time to celebrate" })

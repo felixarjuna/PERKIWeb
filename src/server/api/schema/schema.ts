@@ -45,8 +45,11 @@ export const updateScheduleSchema = addScheduleSchema.extend({
   id: z.number(),
 });
 
+/** Longest prayer request, in characters (shared with the prayer form). */
+export const PRAYER_MAX_LENGTH = 280;
+
 export const addPrayerSchema = z.object({
-  content: z.string().min(2).max(50),
+  content: z.string().min(2).max(PRAYER_MAX_LENGTH),
   isAnonymous: z.boolean(),
   name: z.string().optional(),
   prayerNames: z.array(z.string()),

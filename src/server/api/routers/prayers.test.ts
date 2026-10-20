@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prayers } from "~/lib/db/schema/schema";
+import { PRAYER_MAX_LENGTH } from "~/server/api/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -153,12 +154,20 @@ describe("prayers router", () => {
     expect(await testDb.select().from(prayers)).toEqual([]);
   });
 
-  it("rejects content longer than 50 characters with BAD_REQUEST", async () => {
+  it("accepts 280 characters and rejects 281 with BAD_REQUEST", async () => {
     const api = await signedIn();
 
+    await api.prayers.addPrayer({
+      ...validPrayer,
+      content: "x".repeat(PRAYER_MAX_LENGTH),
+    });
     await expect(
-      api.prayers.addPrayer({ ...validPrayer, content: "x".repeat(51) })
+      api.prayers.addPrayer({
+        ...validPrayer,
+        content: "x".repeat(PRAYER_MAX_LENGTH + 1),
+      })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(await testDb.select().from(prayers)).toHaveLength(1);
   });
 
   it("rejects a non-numeric count with BAD_REQUEST", async () => {

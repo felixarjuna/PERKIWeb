@@ -17,9 +17,7 @@ import {
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { cn } from "~/lib/utils";
-
-/** Mirrors `addPrayerSchema` on the server. */
-export const PRAYER_MAX_LENGTH = 50;
+import { PRAYER_MAX_LENGTH } from "~/server/api/schema/schema";
 
 const prayerFormSchema = z.object({
   content: z
@@ -88,9 +86,9 @@ export default function PrayerForm({
               </div>
               <FormControl>
                 <Textarea
-                  className="min-h-20 resize-none"
+                  className="min-h-24 resize-y"
                   placeholder="What can we pray for?"
-                  rows={2}
+                  rows={3}
                   {...field}
                 />
               </FormControl>

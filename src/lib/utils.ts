@@ -7,6 +7,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const JUST_NOW_SECONDS = 45;
+
+/** Relative time ("just now", "5 minutes ago"), in English like the UI copy. */
+export const timeAgo = (date: Date, now = new Date()) => {
+  const then = DateTime.fromJSDate(date).setLocale("en");
+  const base = DateTime.fromJSDate(now);
+  return Math.abs(base.diff(then, "seconds").seconds) < JUST_NOW_SECONDS
+    ? "just now"
+    : (then.toRelative({ base }) ?? "just now");
+};
+
 export const dateTimeFormatter = (date: string) => {
   const datetime = DateTime.fromJSDate(new Date(date));
   return datetime.toFormat("LLL dd, yyyy");

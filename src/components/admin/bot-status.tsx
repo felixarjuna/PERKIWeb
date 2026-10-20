@@ -1,25 +1,15 @@
 "use client";
 
-import { DateTime } from "luxon";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { cn } from "~/lib/utils";
+import { cn, timeAgo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const REFRESH_MS = 60_000;
-const JUST_NOW_SECONDS = 45;
-
-/** "just now", "2 minutes ago" … (re-rendered by each minutely refetch). */
-const checkedAgo = (date: Date) => {
-  const checked = DateTime.fromJSDate(date);
-  return DateTime.now().diff(checked, "seconds").seconds < JUST_NOW_SECONDS
-    ? "just now"
-    : (checked.toRelative() ?? "just now");
-};
 
 /**
  * Live reachability of perki.bot, the Discord birthday worker. The row is a
@@ -36,7 +26,7 @@ export function BotStatus() {
   let label = "Checking…";
   let detail = "Checking whether perki.bot responds.";
   if (query.data) {
-    const checked = checkedAgo(query.data.checkedAt);
+    const checked = timeAgo(query.data.checkedAt);
     label = online ? "Online" : "Offline";
     detail = online
       ? `Responded in ${query.data.latencyMs} ms, checked ${checked}.`

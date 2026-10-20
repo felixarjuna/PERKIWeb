@@ -197,12 +197,15 @@ describe("prayer schemas", () => {
     expect(addPrayerSchema.safeParse(prayer).success).toBe(true);
   });
 
-  it("enforces 2-50 characters on content", () => {
+  it("enforces 2-280 characters on content", () => {
     expect(addPrayerSchema.safeParse({ ...prayer, content: "x" }).success).toBe(
       false
     );
     expect(
-      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(51) }).success
+      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(280) }).success
+    ).toBe(true);
+    expect(
+      addPrayerSchema.safeParse({ ...prayer, content: "x".repeat(281) }).success
     ).toBe(false);
   });
 

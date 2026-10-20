@@ -9,6 +9,7 @@ import {
   getNextDayOfWeek,
   getUsernameFromName,
   isMoreThanOneWeekApart,
+  timeAgo,
   toIdDate,
   toIdTime,
 } from "./utils";
@@ -229,5 +230,16 @@ describe("toIdDate / toIdTime (Europe/Berlin)", () => {
     const date = new Date("2025-12-31T23:30:00Z");
     expect(toIdDate(date)).toBe("01.01.2026");
     expect(toIdTime(date)).toBe("00:30");
+  });
+});
+
+describe("timeAgo", () => {
+  const now = new Date("2026-10-20T12:00:00Z");
+  it("says just now for the last few seconds, then relative time", () => {
+    expect(timeAgo(new Date("2026-10-20T11:59:50Z"), now)).toBe("just now");
+    expect(timeAgo(new Date("2026-10-20T11:55:00Z"), now)).toBe(
+      "5 minutes ago"
+    );
+    expect(timeAgo(new Date("2026-10-18T12:00:00Z"), now)).toBe("2 days ago");
   });
 });

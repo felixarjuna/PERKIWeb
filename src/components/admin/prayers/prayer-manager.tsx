@@ -1,12 +1,11 @@
 "use client";
 
 import { EyeOff, Globe, Lock } from "lucide-react";
-import { DateTime } from "luxon";
 import { useState } from "react";
 import { toast } from "sonner";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
 import { Button } from "~/components/ui/button";
-import { cn } from "~/lib/utils";
+import { cn, timeAgo } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import {
   AdminSearch,
@@ -46,7 +45,7 @@ function prayerMeta(prayer: Prayer) {
     : 0;
   return [
     prayer.isAnonymous ? "Anonymous" : prayer.name || "Unnamed",
-    prayer.createdAt ? DateTime.fromJSDate(prayer.createdAt).toRelative() : "",
+    prayer.createdAt ? timeAgo(prayer.createdAt) : "",
     praying ? `${praying} praying` : "",
   ]
     .filter(Boolean)
