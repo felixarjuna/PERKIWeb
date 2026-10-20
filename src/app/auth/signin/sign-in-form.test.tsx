@@ -73,6 +73,7 @@ describe("SignInForm", () => {
     expect(signIn).toHaveBeenCalledWith("credentials", {
       password: "secret123",
       redirect: false,
+      redirectTo: "/account",
       username: "felix",
     });
     expect(router.refresh).toHaveBeenCalled();
@@ -124,6 +125,37 @@ describe("SignInForm", () => {
 
     await user.click(screen.getByRole("button", { name: GOOGLE_BUTTON }));
 
-    expect(signIn).toHaveBeenCalledWith("google", { callbackUrl: "/prayers" });
+    expect(signIn).toHaveBeenCalledWith("google", { redirectTo: "/prayers" });
+  });
+  it.each([
+    "https://example.com",
+    "//example.com",
+    "javascript:alert(1)",
+    "/auth/signin",
+    "/api/auth/signout",
+  ])("rejects unsafe return destination %s", async (callbackUrl) => {
+    vi.mocked(signIn).mockResolvedValue({
+      code: undefined,
+      error: undefined,
+      ok: true,
+      status: 200,
+      url: null,
+    });
+    searchParams = new URLSearchParams({ callbackUrl });
+    render(<SignInForm />);
+    await fillAndSubmit("felix", "secret123");
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/"));
+  });
+
+  it("recovers after a network failure and allows retry", async () => {
+    vi.mocked(signIn).mockRejectedValueOnce(new Error("Network unavailable"));
+    render(<SignInForm />);
+    await fillAndSubmit("felix", "secret123");
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(
+      (screen.getByRole("button", { name: "Sign in" }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+    expect(router.push).not.toHaveBeenCalled();
   });
 });

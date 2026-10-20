@@ -30,7 +30,7 @@ test("signs up a new account, signs in with it and signs out", async ({
 
   // Protected pages are closed again once signed out.
   await page.goto("/account");
-  await expect(page).toHaveURL("/auth/signin");
+  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Faccount");
 });
 
 test("rejects a sign up with an already registered username", async ({
@@ -70,7 +70,7 @@ test("shows an error and stays on sign in for a wrong password", async ({
 
   // Still signed out: protected pages keep redirecting.
   await page.goto("/prayers");
-  await expect(page).toHaveURL("/auth/signin");
+  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Fprayers");
 });
 
 test("requires both username and password", async ({ page }) => {
@@ -79,4 +79,80 @@ test("requires both username and password", async ({ page }) => {
 
   await expect(page.getByText("Please enter your username.")).toBeVisible();
   await expect(page.getByText("Please enter your password.")).toBeVisible();
+});
+
+test("keeps the requested member page through signup and login", async ({
+  page,
+}) => {
+  const user = newCredentials("return-member");
+  await page.goto("/member/join?source=footer");
+  await expect(page).toHaveURL(
+    "/auth/signin?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter"
+  );
+  await page.getByRole("link", { name: "Create an account" }).click();
+  await page.getByLabel("Name", { exact: true }).fill(user.name);
+  await page.getByLabel("Username", { exact: true }).fill(user.email);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(
+    "/auth/signin?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter"
+  );
+  await submitSignIn(page, user.email, user.password);
+  await expect(page).toHaveURL("/member/join?source=footer");
+  await expect(page.getByLabel("Date of birth", { exact: true })).toBeVisible();
+});
+
+test("returns to the requested prayer page after login", async ({ page }) => {
+  await page.goto("/prayers");
+  await submitSignIn(page, MEMBER.email, MEMBER.password);
+  await expect(page).toHaveURL("/prayers");
+});
+
+test("navigation sign in returns to the last page including query and fragment", async ({
+  page,
+}) => {
+  await page.goto("/schedule?month=10#services");
+  await page.getByRole("button", { exact: true, name: "Sign in" }).click();
+  await expect(page).toHaveURL(
+    "/auth/signin?callbackUrl=%2Fschedule%3Fmonth%3D10%23services"
+  );
+  await submitSignIn(page, MEMBER.email, MEMBER.password);
+  await expect(page).toHaveURL("/schedule?month=10#services");
+});
+
+test("signed-in users follow a safe callback without a second login", async ({
+  page,
+}) => {
+  await signIn(page, MEMBER.email, MEMBER.password);
+  await page.goto("/auth/signin?callbackUrl=%2Faccount");
+  await expect(page).toHaveURL("/account");
+  await page.goto("/auth/signup?callbackUrl=%2Fmember%2Fjoin");
+  await expect(page).toHaveURL("/member/join");
+});
+
+test("an unsafe callback cannot navigate away after login", async ({
+  page,
+}) => {
+  await page.goto("/auth/signin?callbackUrl=javascript%3Aalert(1)");
+  await submitSignIn(page, MEMBER.email, MEMBER.password);
+  await expect(page).toHaveURL("/");
+});
+
+test("OAuth error retries retain the saved destination", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([
+    {
+      name: "authjs.callback-url",
+      url: "http://127.0.0.1:3100",
+      value: "http://127.0.0.1:3100/prayers",
+    },
+  ]);
+  await page.goto("/auth/signin?error=OAuthAccountNotLinked");
+  await expect(page.getByRole("alert")).toContainText(
+    "Sign in could not be completed"
+  );
+  await submitSignIn(page, MEMBER.email, MEMBER.password);
+  await expect(page).toHaveURL("/prayers");
 });

@@ -45,7 +45,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   debug: env.NODE_ENV === "development",
   pages: {
-    newUser: "/auth/signup",
     signIn: "/auth/signin",
   },
   providers: [
@@ -65,7 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await db
             .select()
             .from(users)
-            .where(eq(users.email, username))
+            .where(eq(users.email, username.trim()))
             .limit(1)
         ).at(0);
         if (!user?.hashedPassword) {

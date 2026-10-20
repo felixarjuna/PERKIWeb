@@ -17,10 +17,14 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { getReturnPath } from "~/lib/auth-redirect";
 
 const signInSchema = z.object({
   password: z.string().min(1, { message: "Please enter your password." }),
-  username: z.string().min(1, { message: "Please enter your username." }),
+  username: z
+    .string()
+    .trim()
+    .min(1, { message: "Please enter your username." }),
 });
 
 const GoogleIcon = () => (
@@ -50,10 +54,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignInForm() {
+export default function SignInForm({ returnPath }: { returnPath?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = getReturnPath(
+    returnPath ?? searchParams.get("callbackUrl")
+  );
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const form = useForm<z.infer<typeof signInSchema>>({
@@ -63,33 +69,48 @@ export default function SignInForm() {
 
   const onSubmit = async (values: z.infer<typeof signInSchema>) => {
     setIsSigningIn(true);
-    const result = await signIn("credentials", {
-      password: values.password,
-      redirect: false,
-      username: values.username,
-    });
-    setIsSigningIn(false);
-
-    if (result?.error) {
-      toast.error("Sign in failed", {
-        description: "Username or password is wrong.",
+    try {
+      const result = await signIn("credentials", {
+        password: values.password,
+        redirect: false,
+        redirectTo: callbackUrl,
+        username: values.username,
       });
-      return;
+      if (!result?.ok || result.error) {
+        toast.error("Sign in failed", {
+          description: "Username or password is wrong.",
+        });
+        return;
+      }
+      router.push(callbackUrl);
+      router.refresh();
+    } catch {
+      toast.error("Sign in failed", {
+        description: "Unable to connect. Please try again.",
+      });
+    } finally {
+      setIsSigningIn(false);
     }
-    router.push(callbackUrl);
-    router.refresh();
   };
 
   const onGoogleLogin = async () => {
+    setIsSigningIn(true);
     try {
-      await signIn("google", { callbackUrl });
+      await signIn("google", { redirectTo: callbackUrl });
     } catch {
       toast.error("Sign in with Google failed.");
+      setIsSigningIn(false);
     }
   };
 
   return (
     <div className="mt-8 flex flex-col gap-6">
+      {searchParams.get("error") ? (
+        <p className="text-destructive text-sm" role="alert">
+          Sign in could not be completed. Please try again or use your original
+          sign-in method.
+        </p>
+      ) : null}
       <Form {...form}>
         <form
           className="flex flex-col gap-4"
@@ -131,20 +152,22 @@ export default function SignInForm() {
         </form>
       </Form>
 
-      <div className="flex items-center gap-3 text-muted-foreground text-xs">
+      <div className="type-caption flex items-center gap-3 text-muted-foreground">
         <span className="h-px flex-1 bg-muted" />
         or
         <span className="h-px flex-1 bg-muted" />
       </div>
 
-      <button
-        className="flex w-full items-center justify-center gap-x-2 rounded-md bg-paper p-2 font-medium text-paper-foreground text-sm transition-opacity hover:opacity-90"
+      <Button
+        className="w-full"
+        disabled={isSigningIn}
         onClick={onGoogleLogin}
         type="button"
+        variant="secondary"
       >
         <GoogleIcon />
         Continue with Google
-      </button>
+      </Button>
     </div>
   );
 }

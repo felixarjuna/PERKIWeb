@@ -10,11 +10,11 @@ export const insertUserSchema = createInsertSchema(users);
 
 /** Payload accepted from the signup form. */
 export const insertUserParams = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Please enter your name."),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
-  username: z.string(),
+  username: z.string().trim().min(1, "Please enter your username."),
 });
 
 /**
@@ -24,15 +24,15 @@ export const insertUserParams = z.object({
 export const updateUserSchema = z.object({
   email: z.string(),
   image: z.string().nullish(),
-  name: z.string(),
+  name: z.string().trim().min(1, "Please enter your name."),
 });
 
 /** Payload accepted from the account form. */
 export const updateUserParams = z.object({
   id: z.string(),
   image: z.string().nullish(),
-  name: z.string(),
-  username: z.string(),
+  name: z.string().trim().min(1, "Please enter your name."),
+  username: z.string().trim().min(1, "Please enter your username."),
 });
 
 /** Payload accepted from the change-password form. */

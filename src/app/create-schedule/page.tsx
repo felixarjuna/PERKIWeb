@@ -1,12 +1,26 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import {
+  authPageUrl,
+  type PageSearchParams,
+  requestedPath,
+} from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 import AddScheduleForm from "./add-schedule-form";
 
-export default async function AddSchedulePage() {
+export default async function AddSchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
   if (!session) {
-    redirect("/auth/signin");
+    redirect(
+      authPageUrl(
+        "signin",
+        requestedPath("/create-schedule", await searchParams)
+      )
+    );
   }
 
   return (

@@ -28,6 +28,8 @@ for (const path of PROTECTED_PAGES) {
     page,
   }) => {
     await page.goto(path);
-    await expect(page).toHaveURL("/auth/signin");
+    await expect(page).toHaveURL(
+      `/auth/signin?callbackUrl=${encodeURIComponent(path)}`
+    );
   });
 }

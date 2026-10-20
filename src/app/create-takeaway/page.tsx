@@ -1,13 +1,27 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import {
+  authPageUrl,
+  type PageSearchParams,
+  requestedPath,
+} from "~/lib/auth-redirect";
 import { getUsernameFromName } from "~/lib/utils";
 import { auth } from "~/server/auth";
 import AddTakeawayForm from "./add-takeaway-form";
 
-export default async function AddTakeawayPage() {
+export default async function AddTakeawayPage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
   const session = await auth();
   if (!session) {
-    redirect("/auth/signin");
+    redirect(
+      authPageUrl(
+        "signin",
+        requestedPath("/create-takeaway", await searchParams)
+      )
+    );
   }
 
   return (

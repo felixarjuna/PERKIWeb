@@ -251,6 +251,15 @@ describe("addProfileSchema", () => {
     expect(addProfileSchema.safeParse(profile).success).toBe(true);
   });
 
+  it.each(["address", "location", "major", "phoneNumber"])(
+    "rejects blank %s",
+    (field) => {
+      expect(
+        addProfileSchema.safeParse({ ...profile, [field]: "   " }).success
+      ).toBe(false);
+    }
+  );
+
   it("requires birthday to be a Date", () => {
     expect(
       addProfileSchema.safeParse({ ...profile, birthday: "2000-01-01" }).success

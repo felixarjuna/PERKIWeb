@@ -1,12 +1,31 @@
 import { redirect } from "next/navigation";
 import Template from "~/components/template";
+import {
+  authPageUrl,
+  type PageSearchParams,
+  requestedPath,
+} from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 import EditTakeawayForm from "./edit-takeaway-form";
 
-export default async function EditTakeawayPage() {
+export default async function EditTakeawayPage({
+  searchParams,
+  params,
+}: {
+  searchParams: Promise<PageSearchParams>;
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth();
   if (!session) {
-    redirect("/auth/signin");
+    redirect(
+      authPageUrl(
+        "signin",
+        requestedPath(
+          `/edit-takeaway/${encodeURIComponent((await params).id)}`,
+          await searchParams
+        )
+      )
+    );
   }
 
   return (

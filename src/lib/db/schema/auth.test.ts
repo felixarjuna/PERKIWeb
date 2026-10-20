@@ -35,6 +35,12 @@ describe("insertUserParams (signup form)", () => {
     expect(paths).toEqual(["name", "password", "username"]);
   });
 
+  it.each(["name", "username"])("rejects whitespace-only %s", (field) => {
+    expect(
+      insertUserParams.safeParse({ ...valid, [field]: "   " }).success
+    ).toBe(false);
+  });
+
   it("strips unknown keys such as hashedPassword", () => {
     const parsed = insertUserParams.parse({ ...valid, hashedPassword: "x" });
     expect(parsed).toEqual(valid);

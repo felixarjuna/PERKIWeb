@@ -15,10 +15,15 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { authPageUrl } from "~/lib/auth-redirect";
 import { insertUserParams } from "~/lib/db/schema/auth";
 import { api } from "~/trpc/react";
 
-export default function SignUpForm() {
+export default function SignUpForm({
+  callbackUrl = "/",
+}: {
+  callbackUrl?: string;
+}) {
   const router = useRouter();
 
   const signUpUser = api.users.createUser.useMutation({
@@ -31,7 +36,7 @@ export default function SignUpForm() {
       });
 
       // Redirect to login page after registration
-      router.push("/auth/signin");
+      router.push(authPageUrl("signin", callbackUrl));
     },
   });
 
