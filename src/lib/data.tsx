@@ -9,63 +9,56 @@ export const events: Event[] = [
   {
     description: (
       <div className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="font-reimbrandt text-lg tracking-wide">
-            Church service
-          </h3>
-          <div className="space-y-2">
-            <p>
-              Perki church services are held twice a month - on Saturday of the
-              second week by Pastor Titus Christianto and on the fourth week by
-              Pastor John Kusuma. The service begins with a private quiet time,
-              followed by singing hymns together accompanied by a piano. In the
-              main part of the service, the serving pastor will expound on the
-              Word of God. After the sermon, the congregation is given the
-              opportunity to pray privately and respond to the Word. The service
-              ends with the giving of offerings, intercessory prayer, sending
-              out, quiet time and announcements.{" "}
-            </p>
-
-            <p>
-              Every three months we hold Holy Communion at the end of the
-              service. Everyone who has received the Lord Jesus as Savior and
-              awaits His second coming by faith is welcome to partake. (1
-              Corinthians 11:28).
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="font-reimbrandt text-lg tracking-wide">
-            Big group Bible study
-          </h3>
-          <p>
-            Our Big Group Bible Study is a joint Bible Study activity held on
-            the first, third and fifth week (if applicable) of each month. The
-            service is led by the Fellowship Committee and the seating position
-            is made around a large table. At the beginning of the service, the
-            congregation is given the opportunity to choose a hymn to sing
-            together or share their life experiences with God. Through this
-            activity, fellowship members are expected to learn to witness, get
-            to know each other more deeply and also love. After the word prayer,
-            the caretaker on duty will lead the exposition of God&apos;s Word
-            and the congregation is allowed to discuss or ask questions at the
-            end of the reflection. The service then ends with prayer, offerings
-            and announcements.
-          </p>
-        </div>
-        <div>
-          <p>
-            After the worship service is over Perki organizes a meal together.
-            The food is served by the group in charge of serving in cooking. And
-            besides enjoying the meal, we also spend time together chatting.
-          </p>
-        </div>
+        <p>
+          Church services are held twice a month, on the second Saturday with
+          Pastor Titus Christianto and on the fourth Saturday with Pastor John
+          Kusuma. The service begins with a private quiet time, followed by
+          hymns sung together to the piano. In the main part the serving pastor
+          expounds the Word of God. After the sermon everyone is given time to
+          pray privately and respond to the Word. The service ends with the
+          offering, intercessory prayer, the sending out, a quiet time and
+          announcements.
+        </p>
+        <p>
+          Every three months we celebrate Holy Communion at the end of the
+          service. Everyone who has received the Lord Jesus as Saviour and
+          awaits His second coming by faith is welcome to partake (1 Corinthians
+          11:28).
+        </p>
+        <p>
+          After the service we eat together. The food is prepared by the group
+          on cooking duty, and the meal is where most of the catching up
+          happens.
+        </p>
       </div>
     ),
-    name: "Church Service / Big Group Bible Study",
+    name: "Church Service",
     notes:
-      "Worship, a sermon and time to respond to the Word, followed by a meal together.",
+      "Second and fourth Saturday of the month. Worship, a sermon and time to respond to the Word, followed by a meal together.",
+    time: "Saturday, 15:30–17:00",
+  },
+  {
+    description: (
+      <div className="space-y-4">
+        <p>
+          On the first, third and, where there is one, fifth Saturday of the
+          month we study the Bible together as one big group, led by the
+          fellowship committee and seated around a large table. We open by
+          choosing hymns to sing together or sharing what God has been doing in
+          our lives. Through this we learn to witness, to know each other more
+          deeply and to love one another.
+        </p>
+        <p>
+          After the opening prayer the member on duty leads the exposition of
+          the Word, and everyone is welcome to discuss or ask questions at the
+          end. We close with prayer, the offering and announcements, then eat
+          together.
+        </p>
+      </div>
+    ),
+    name: "Big Group Bible Study",
+    notes:
+      "First, third and fifth Saturday of the month. One big table, hymns, a shared reading of the Word and open discussion.",
     time: "Saturday, 15:30–17:00",
   },
   {
