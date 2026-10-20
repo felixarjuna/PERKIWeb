@@ -57,6 +57,13 @@
       "when": 1792497324278,
       "tag": "0007_wide_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792505468020,
+      "tag": "0008_illegal_nekra",
+      "breakpoints": true
     }
   ]
 }
