@@ -3,12 +3,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
+import { ROLES, type Role } from "~/lib/roles";
+import { RoleBadge } from "../role-badge";
 import {
   birthdayMonth,
   birthdayOrder,
   type Member,
   memberDate,
   memberName,
+  memberRole,
   memberSearchText,
   normalizeLocation,
   registeredTime,
@@ -79,6 +82,25 @@ export function createMemberColumns(
       meta: { label: "Member" },
       size: 200,
       sortFn: "text",
+    },
+    {
+      accessorFn: memberRole,
+      cell: ({ getValue }) => <RoleBadge value={getValue<Role>()} />,
+      filterFn: "arrHas",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          ascLabel="Owner first"
+          column={column}
+          descLabel="Member first"
+          label="Role"
+        />
+      ),
+      id: "role",
+      meta: { label: "Role" },
+      size: 110,
+      sortFn: (left, right, id) =>
+        ROLES.indexOf(left.getValue<Role>(id)) -
+        ROLES.indexOf(right.getValue<Role>(id)),
     },
     {
       accessorFn: (member) => member.profiles.phoneNumber?.trim() || undefined,

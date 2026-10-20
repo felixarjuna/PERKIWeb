@@ -16,6 +16,7 @@
     "dev": "next dev",
     "format": "biome check --write .",
     "lint": "biome check .",
+    "roles": "npx tsx scripts/roles.ts",
     "start": "next start",
     "test": "vitest run",
     "test:e2e": "playwright test",

@@ -8,11 +8,31 @@ export const MEMBER = {
 /** Signed-in browser state written by `auth.setup.ts`. */
 export const MEMBER_STORAGE_STATE = "e2e/.auth/member.json";
 
-/** Seeded with `role: "admin"`; the only account that can open /admin. */
+/** Seeded with role `mita` (staff); can open every admin page. */
 export const ADMIN = {
   email: "admin@e2e.test",
   id: "e2e-admin",
   name: "E2E Admin",
+} as const;
+
+/** The single seeded owner; has a profile so the directory lists it. */
+export const OWNER = {
+  email: "owner@e2e.test",
+  id: "e2e-owner",
+  name: "E2E Owner",
+} as const;
+
+/** Seeded writers; they only reach the takeaways pages. */
+export const WRITER = {
+  email: "writer@e2e.test",
+  id: "e2e-writer",
+  name: "E2E Writer",
+} as const;
+
+export const WRITER_2 = {
+  email: "writer2@e2e.test",
+  id: "e2e-writer-2",
+  name: "E2E Writerb",
 } as const;
 
 /** Prefix shared by every seeded dashboard member; sorts before test users. */

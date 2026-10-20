@@ -65,13 +65,21 @@ export const selectOption = async (
   await expect(page.getByRole("listbox")).toBeHidden();
 };
 
-/** Signs the browser in as the seeded admin and opens the dashboard. */
-export const adminLogin = async (page: Page) => {
+/** Signs the browser in as `account` and opens /admin (it forwards by role). */
+export const loginAs = async (
+  page: Page,
+  account: { email: string; id: string; name: string }
+) => {
   // A session request still in flight from the previous page would re-set
   // that user's cookie after the switch.
   await page.waitForLoadState("networkidle");
-  await setTestSession(page, ADMIN);
+  await setTestSession(page, account);
   await page.goto("/admin");
+};
+
+/** Signs the browser in as the seeded admin and opens the dashboard. */
+export const adminLogin = async (page: Page) => {
+  await loginAs(page, ADMIN);
   await expect(page).toHaveURL("/admin/dashboard");
 };
 

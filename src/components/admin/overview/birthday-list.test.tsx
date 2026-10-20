@@ -16,7 +16,13 @@ const member = (index: number): Member => ({
     updatedAt: null,
     userId: `u${index}`,
   },
-  user: { email: null, id: `u${index}`, image: null, name: `Member ${index}` },
+  user: {
+    email: null,
+    id: `u${index}`,
+    image: null,
+    name: `Member ${index}`,
+    role: "member" as const,
+  },
 });
 
 it("shows five birthdays and links the rest to the filtered directory", () => {

@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   integer,
   json,
   pgEnum,
@@ -8,6 +10,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
@@ -19,9 +22,6 @@ export const eventTypeEnum = pgEnum("event_type", [
 ]);
 const eventEnum = z.enum(eventTypeEnum.enumValues);
 
-/** `admin` can manage content and see member profiles; everyone else is `member`. */
-export const userRoleEnum = pgEnum("user_role", ["member", "admin"]);
-export type UserRole = (typeof userRoleEnum.enumValues)[number];
 export type EventTypeEnum = z.infer<typeof eventEnum>;
 
 export type NewSchedule = typeof schedules.$inferInsert;
@@ -54,6 +54,10 @@ export const schedules = pgTable("schedules", {
 });
 
 export const takeaways = pgTable("takeaways", {
+  /** Who wrote the takeaway; null for takeaways created before authorship. */
+  authorId: text("authorId").references(() => users.id, {
+    onDelete: "set null",
+  }),
   contributors: json("contributors").notNull(),
   createdAt: timestamp("createdAt", {
     mode: "date",
@@ -98,28 +102,57 @@ export const prayers = pgTable("prayers", {
     .notNull(),
 });
 
-export const users = pgTable("user", {
-  createdAt: timestamp("createdAt", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  email: text("email").unique(),
-  emailVerified: timestamp("emailVerified", {
-    mode: "date",
+export const users = pgTable(
+  "user",
+  {
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    email: text("email").unique(),
+    emailVerified: timestamp("emailVerified", {
+      mode: "date",
+    }),
+    hashedPassword: text("hashedPassword"),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    image: text("image"),
+    name: text("name"),
+    /** owner | mita | writer | member; legacy `admin` is read as mita. */
+    role: text("role").default("member").notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    check(
+      "user_role_check",
+      sql`${t.role} in ('owner', 'mita', 'writer', 'member', 'admin')`
+    ),
+    uniqueIndex("user_single_owner").on(t.role).where(sql`${t.role} = 'owner'`),
+  ]
+);
+
+export const roleChanges = pgTable("role_changes", {
+  changedById: text("changedById").references(() => users.id, {
+    onDelete: "set null",
   }),
-  hashedPassword: text("hashedPassword"),
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  image: text("image"),
-  name: text("name"),
-  role: userRoleEnum("role").default("member").notNull(),
-  updatedAt: timestamp("updatedAt", {
+  createdAt: timestamp("createdAt", {
     mode: "date",
     withTimezone: true,
   })
     .defaultNow()
-    .$onUpdate(() => new Date()),
+    .notNull(),
+  fromRole: text("fromRole").notNull(),
+  id: serial("id").primaryKey().notNull(),
+  toRole: text("toRole").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const profiles = pgTable("profiles", {

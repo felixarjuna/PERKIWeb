@@ -5,6 +5,7 @@ import {
   NotebookPen,
   UsersRound,
 } from "lucide-react";
+import { isStaffRole, type Role } from "~/lib/roles";
 
 export const adminNavigation = [
   {
@@ -38,3 +39,9 @@ export const adminNavigation = [
     url: "/admin/prayers",
   },
 ] as const;
+
+/** The navigation entries a role may see: staff all, writers only takeaways. */
+export const navigationFor = (role: Role) =>
+  isStaffRole(role)
+    ? adminNavigation
+    : adminNavigation.filter((item) => item.url === "/admin/takeaways");

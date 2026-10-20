@@ -11,7 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
-import { isAdmin } from "~/server/authz";
+import { canManageTakeaways, isAdmin } from "~/server/authz";
 
 /**
  * 1. CONTEXT
@@ -116,3 +116,13 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   }
   return next();
 });
+
+/** For takeaway writing: staff and writers. Role is read on every call. */
+export const takeawayProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    if (!(await canManageTakeaways(ctx.session.user.id))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next();
+  }
+);

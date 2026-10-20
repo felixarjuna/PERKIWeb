@@ -1,5 +1,5 @@
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
-import { requireAdmin } from "~/server/authz";
+import { adminShellProps, requireAdmin } from "~/server/authz";
 import DashboardView from "./dashboard-view";
 
 export default async function AdminDashboardPage({
@@ -7,7 +7,9 @@ export default async function AdminDashboardPage({
 }: {
   searchParams: Promise<PageSearchParams>;
 }) {
-  await requireAdmin(requestedPath("/admin/dashboard", await searchParams));
+  const { role } = await requireAdmin(
+    requestedPath("/admin/dashboard", await searchParams)
+  );
 
-  return <DashboardView />;
+  return <DashboardView {...adminShellProps(role)} />;
 }

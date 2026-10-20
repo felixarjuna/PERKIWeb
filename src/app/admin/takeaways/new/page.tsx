@@ -1,7 +1,7 @@
 import AdminShell from "~/components/admin/admin-shell";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 import { getUsernameFromName } from "~/lib/utils";
-import { requireAdmin } from "~/server/authz";
+import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import AddTakeawayForm from "./add-takeaway-form";
 
 export default async function EditorPage({
@@ -9,11 +9,15 @@ export default async function EditorPage({
 }: {
   searchParams: Promise<PageSearchParams>;
 }) {
-  const session = await requireAdmin(
+  const { role, session } = await requireTakeawayAccess(
     requestedPath("/admin/takeaways/new", await searchParams)
   );
   return (
-    <AdminShell section="Takeaways" title="Add takeaway">
+    <AdminShell
+      {...adminShellProps(role)}
+      section="Takeaways"
+      title="Add takeaway"
+    >
       <AddTakeawayForm
         username={getUsernameFromName(session.user.name ?? "")}
       />

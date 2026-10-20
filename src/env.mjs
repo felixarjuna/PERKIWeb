@@ -18,6 +18,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DRIVE_FOLDER_URL: process.env.DRIVE_FOLDER_URL,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
@@ -33,6 +34,8 @@ export const env = createEnv({
    */
   server: {
     DATABASE_URL: z.string().url(),
+    /** Shared Google Drive folder shown to staff in the admin sidebar. */
+    DRIVE_FOLDER_URL: z.string().url().optional(),
     // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),

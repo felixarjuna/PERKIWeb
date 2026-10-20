@@ -104,6 +104,7 @@ describe("profiles.getUserProfiles", () => {
       id: member.id,
       image: null,
       name: "Member",
+      role: "member",
     });
     expect(rows[0]?.user).not.toHaveProperty("hashedPassword");
   });
@@ -121,6 +122,16 @@ describe("profiles.getUserProfiles", () => {
 
     await expect(
       callerFor(stranger?.id ?? "").profiles.getUserProfiles()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("keeps the member directory from writers", async () => {
+    const member = await insertUser();
+    await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
+    const writer = await insertUser({ role: "writer" });
+
+    await expect(
+      callerFor(writer.id).profiles.getUserProfiles()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
