@@ -81,7 +81,7 @@ export default function EditPrayerForm({
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="text-sm">Anonymous</FormLabel>
+                  <FormLabel className="type-body-sm">Anonymous</FormLabel>
                 </FormItem>
               )}
             />

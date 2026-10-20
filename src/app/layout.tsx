@@ -55,6 +55,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn(reimbrandt.variable, satoshi.variable)}>
+        <a
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
+          href="#main-content"
+        >
+          Skip to content
+        </a>
         <SessionProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </SessionProvider>

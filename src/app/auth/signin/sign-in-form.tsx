@@ -131,20 +131,21 @@ export default function SignInForm() {
         </form>
       </Form>
 
-      <div className="flex items-center gap-3 text-muted-foreground text-xs">
+      <div className="type-caption flex items-center gap-3 text-muted-foreground">
         <span className="h-px flex-1 bg-muted" />
         or
         <span className="h-px flex-1 bg-muted" />
       </div>
 
-      <button
-        className="flex w-full items-center justify-center gap-x-2 rounded-md bg-paper p-2 font-medium text-paper-foreground text-sm transition-opacity hover:opacity-90"
+      <Button
+        className="w-full"
         onClick={onGoogleLogin}
         type="button"
+        variant="secondary"
       >
         <GoogleIcon />
         Continue with Google
-      </button>
+      </Button>
     </div>
   );
 }

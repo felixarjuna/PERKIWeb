@@ -45,7 +45,7 @@ function DrawerContent({
       <DrawerOverlay />
       <DrawerPrimitive.Content
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[85dvh] flex-col overflow-y-auto overscroll-contain rounded-t-xl bg-card text-card-foreground",
           className
         )}
         {...props}
@@ -81,10 +81,7 @@ function DrawerTitle({
 }: ComponentProps<typeof DrawerPrimitive.Title>) {
   return (
     <DrawerPrimitive.Title
-      className={cn(
-        "font-semibold text-lg leading-none tracking-tight",
-        className
-      )}
+      className={cn("type-heading", className)}
       {...props}
     />
   );

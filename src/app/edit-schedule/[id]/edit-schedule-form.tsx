@@ -91,17 +91,15 @@ export default function EditScheduleForm() {
   function renderFellowshipForm() {
     return (
       <div className="space-y-4">
-        <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-          Fellowship Information
-        </h3>
-        <section className="grid grid-cols-2 gap-4 text-sm">
-          <div className="col-span-2">
+        <h2 className="type-heading">Fellowship Information</h2>
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Title</FormLabel>
+                  <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -110,23 +108,24 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="text-md">Date</FormLabel>
+                  <FormLabel>Date</FormLabel>
                   <FormControl>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             className={cn(
-                              "!text-foreground pl-3 text-left font-normal",
+                              "w-full justify-start pl-3 text-left",
                               !field.value && "text-muted-foreground"
                             )}
-                            variant={"default"}
+                            type="button"
+                            variant="outline"
                           >
                             {field.value ? (
                               format(field.value, "PPP")
@@ -153,13 +152,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="preacher"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Preacher</FormLabel>
+                  <FormLabel>Preacher</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -181,13 +180,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="bibleVerse"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Bible Verse</FormLabel>
+                  <FormLabel>Bible Verse</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -196,15 +195,15 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea className="h-48 resize-none" {...field} />
+                    <Textarea className="min-h-48" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,17 +218,15 @@ export default function EditScheduleForm() {
   function renderServantsForm() {
     return (
       <div className="space-y-4">
-        <h3 className="font-reimbrandt text-2xl sm:text-3xl">
-          Servant Information
-        </h3>
-        <section className="grid grid-cols-2 gap-4 text-sm">
-          <div className="col-span-2">
+        <h2 className="type-heading">Servant Information</h2>
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="leader"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Liturgos/PA Leader</FormLabel>
+                  <FormLabel>Liturgos/PA Leader</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -251,13 +248,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="noteWriter"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Note writer</FormLabel>
+                  <FormLabel>Note writer</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -279,13 +276,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="musician"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Musician</FormLabel>
+                  <FormLabel>Musician</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -307,13 +304,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="multimedia"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Multimedia</FormLabel>
+                  <FormLabel>Multimedia</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -335,13 +332,13 @@ export default function EditScheduleForm() {
               )}
             />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <FormField
               control={form.control}
               name="accommodation"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Accommodation</FormLabel>
+                  <FormLabel>Accommodation</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -369,7 +366,7 @@ export default function EditScheduleForm() {
               name="cookingGroup"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Cooking Group</FormLabel>
+                  <FormLabel>Cooking Group</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -397,7 +394,7 @@ export default function EditScheduleForm() {
               name="cleaningGroup"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-md">Cleaning Group</FormLabel>
+                  <FormLabel>Cleaning Group</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -427,7 +424,7 @@ export default function EditScheduleForm() {
   return (
     <Form {...form}>
       <form
-        className="mt-4 space-y-8 sm:mt-8"
+        className="flex flex-col gap-8"
         onSubmit={form.handleSubmit(onSubmit, (error) => {
           toast.success("Something went wrong.", {
             description: JSON.stringify(error),
@@ -436,7 +433,7 @@ export default function EditScheduleForm() {
       >
         {renderFellowshipForm()}
         {renderServantsForm()}
-        <div className="flex justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button type="submit" variant={"default"}>
             Save changes
           </Button>

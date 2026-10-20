@@ -40,8 +40,15 @@ export function NavMain({
         {items.map((item) => (
           <Collapsible asChild defaultOpen={item.isActive} key={item.title}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url}>
+              <SidebarMenuButton
+                asChild
+                isActive={item.isActive}
+                tooltip={item.title}
+              >
+                <a
+                  aria-current={item.isActive ? "page" : undefined}
+                  href={item.url}
+                >
                   <item.icon />
                   <span>{item.title}</span>
                 </a>

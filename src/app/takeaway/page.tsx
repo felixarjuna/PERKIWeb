@@ -16,7 +16,7 @@ export default function TakeawayPage() {
       }
       title="Takeaways"
     >
-      <p className="text-sm sm:text-base">
+      <p className="type-body">
         Let&apos;s share what you have learned, keep burning each other and grow
         together <Flame className="inline size-4" />
       </p>

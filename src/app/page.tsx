@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <>
       <Navigation revealAfter="hero" />
-      <main>
+      <main id="main-content">
         {/* Hero and About share one dark canvas so the orbs drift across both. */}
         <div className="relative isolate overflow-hidden bg-background">
           <div

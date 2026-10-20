@@ -35,10 +35,10 @@ export default function DashboardView() {
   const { data, isLoading } = api.profiles.getUserProfiles.useQuery();
 
   return (
-    <div className="dark overflow-x-scroll">
+    <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="min-w-0" id="main-content">
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -46,15 +46,24 @@ export default function DashboardView() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">Members</BreadcrumbLink>
+                    <BreadcrumbLink href="/admin/dashboard">
+                      Members
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
           </header>
 
+          <div className="flex flex-col gap-2 px-4 py-6 sm:px-6">
+            <h1 className="type-title">Members</h1>
+            <p className="type-body text-muted-foreground">
+              Fellowship contact details and birthdays.
+            </p>
+          </div>
+
           {isLoading ? (
-            <div className="absolute inset-0 flex h-full items-center justify-center">
+            <div className="flex min-h-48 items-center justify-center">
               <Loader message="Loading user profiles ..." />
             </div>
           ) : (
