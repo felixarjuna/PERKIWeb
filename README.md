@@ -7,6 +7,18 @@ sneak peak to our schedule, and share what we learn from the service.
 
 The current tech stack for this project is [T3 Stack](https://create.t3.gg/) created with the `create-t3-app` command. We are using [Next.js](https://nextjs.org) (App Router) as React Framework, [Auth.js / NextAuth v5](https://authjs.dev) for Authentication, [Drizzle](https://orm.drizzle.team/) as ORM (Object Relational Mapping), [Tailwind CSS](https://tailwindcss.com) v4 for styling, and [tRPC](https://trpc.io) v11 for end-to-end type safe APIs. Package manager is [pnpm](https://pnpm.io).
 
+## Local development
+
+```bash
+cp .env.example .env  # then fill in the auth secrets
+pnpm db:dev           # start the local dev Postgres in Docker (data persists)
+pnpm db:migrate       # apply migrations
+pnpm db:seed          # optional sample schedules
+pnpm dev
+```
+
+Schema changes: edit `src/lib/db/schema/schema.ts`, run `pnpm db:generate`, and commit the migration. CI applies it to production after the PR is merged into `main`.
+
 ## Testing
 
 ```bash

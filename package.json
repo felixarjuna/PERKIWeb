@@ -6,6 +6,8 @@
   "scripts": {
     "build": "next build",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "db:dev": "docker compose -f compose.dev.yml up -d --wait",
+    "db:dev:down": "docker compose -f compose.dev.yml down",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

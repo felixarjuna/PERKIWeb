@@ -15,11 +15,14 @@ Package manager is **pnpm**.
 - `pnpm lint` / `pnpm format` — Biome check / check --write (ultracite presets, config in `biome.jsonc`; DB migrations are excluded)
 - `pnpm typecheck` — `tsc --noEmit` (TypeScript 7)
 - `pnpm check` — lint + typecheck + unit/integration tests; run before calling work done
-- Database (Drizzle Kit, PostgreSQL): `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:push`, `pnpm db:studio`, `pnpm db:seed`
+- Database (Drizzle Kit, PostgreSQL): `pnpm db:dev` / `pnpm db:dev:down` (local dev Postgres, `compose.dev.yml`, port 54320, persistent volume), `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:push`, `pnpm db:studio`, `pnpm db:seed`
+- Local development uses the Docker dev database (`.env.example` points there): `pnpm db:dev && pnpm db:migrate && pnpm db:seed`. Never point `.env` at production.
+- **Production schema changes only through migrations, applied by CI.** `deploy:migrate` runs `pnpm db:migrate` against prod after every check passes on `main`. Never `db:push` to prod: an unrecorded change breaks later migrations (`drizzle.config.ts` and `seed.ts` refuse non-local hosts). Vercel deploys the same commit in parallel, so a migration must work with the previous release too: add columns/tables first, drop or rename in a later PR.
+- drizzle applies only migrations newer than the last one recorded, so a migration generated on a branch before another migration landed on `main` is silently skipped. After rebasing onto a new migration, delete yours and re-run `pnpm db:generate`. `src/lib/db/migrations.test.ts` fails on out-of-order timestamps; `check:migrations` fails if `schema.ts` changed without a migration.
 
 ## Testing
 
-Tests never touch the real database (`.env` points at production Supabase).
+Tests never touch a real database: integration tests use PGlite and e2e uses its own throwaway container.
 
 - `pnpm test` (Vitest, `vitest.config.ts`) runs three projects; `pnpm test:unit` runs `unit` + `dom`, `pnpm test:integration` runs `server`:
   - `unit`: node, `src/**/*.test.ts` outside `src/server`.
@@ -28,7 +31,7 @@ Tests never touch the real database (`.env` points at production Supabase).
 - `pnpm test:e2e:db` then `pnpm test:e2e` (Playwright, `e2e/`): builds and starts the app on :3100 against a throwaway Docker Postgres (`compose.test.yml`, port 54329, tmpfs). `e2e/global-setup.ts` recreates the schema from the migrations and seeds the `MEMBER` account; `auth.setup.ts` saves its signed-in state. `playwright.config.ts` refuses any non-local `DATABASE_URL`. Set `E2E_SKIP_BUILD=1` to reuse an existing build. Specs share one DB and run in parallel, so create data with `uniqueSuffix()`.
 - Known gaps are pinned with `it.fails` / `test.fail()` and a `// BUG:` or `// SECURITY:` comment. Fixing the gap makes that test fail, so remove the marker when you fix it.
 - Hand-written SQL in a migration must end each statement with `--> statement-breakpoint`, or fresh databases (tests, CI) can't apply it.
-- CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`) and run in parallel. The only ordering is `test:e2e` → `build`, which reuses the uploaded `.next` output (`E2E_SKIP_BUILD=1`). Shared setup lives in `.github/actions/setup`. There is no deploy job because Vercel's GitHub integration deploys.
+- CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:migrations`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`, `deploy:migrate`) and run in parallel. Ordering: `test:e2e` needs `build` (reuses the uploaded `.next` output, `E2E_SKIP_BUILD=1`); `deploy:migrate` runs only on pushes to `main`, after every check, in the `production-database` GitHub environment (secret `DATABASE_URL`), and is never cancelled mid-run. Shared setup lives in `.github/actions/setup`. Vercel's GitHub integration deploys the app itself.
 
 ## Architecture
 
