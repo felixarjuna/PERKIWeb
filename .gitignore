@@ -52,3 +52,6 @@ request/*
 /e2e/.auth
 /playwright-report
 /test-results
+
+# Agent worktrees (Claude Code); never commit them
+.claude/worktrees/
