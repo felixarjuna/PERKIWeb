@@ -59,7 +59,7 @@ export default function Navigation({ revealAfter }: NavigationProps) {
   }, [revealAfter]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={Boolean(revealAfter)}>
       {visible ? (
         <motion.nav
           animate={{ opacity: 1, y: 0 }}

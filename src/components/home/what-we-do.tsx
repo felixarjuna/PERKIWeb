@@ -1,15 +1,8 @@
-import { Clock3 } from "lucide-react";
+import { ChevronDown, Clock3 } from "lucide-react";
 import Image from "next/image";
 import { events } from "~/lib/data";
+import { cn } from "~/lib/utils";
 import { buttonVariants } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import Section from "./section";
 
 export default function WhatWeDo() {
@@ -35,30 +28,23 @@ export default function WhatWeDo() {
                 {event.notes}
               </p>
 
-              <Dialog>
-                <DialogTrigger
-                  className={buttonVariants({
-                    className: "mt-4 text-foreground",
-                    size: "sm",
-                    variant: "outline",
-                  })}
+              <details className="group mt-4">
+                <summary
+                  className={cn(
+                    buttonVariants({ size: "sm", variant: "outline" }),
+                    "cursor-pointer list-none text-foreground [&::-webkit-details-marker]:hidden"
+                  )}
                 >
                   About this gathering
-                </DialogTrigger>
-                <DialogContent className="max-h-[85dvh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="font-reimbrandt text-xl tracking-wide">
-                      {event.name}
-                    </DialogTitle>
-                    <DialogDescription className="text-left text-muted-foreground text-sm sm:text-base">
-                      {event.time}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 text-sm sm:text-base">
-                    {event.description}
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="size-4 transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <div className="mt-4 max-w-prose space-y-4 text-sm sm:text-base">
+                  {event.description}
+                </div>
+              </details>
             </li>
           ))}
         </ul>
@@ -72,7 +58,7 @@ export default function WhatWeDo() {
             src="/images/learn.jpg"
             width={1280}
           />
-          <figcaption className="text-paper-foreground/70 text-xs">
+          <figcaption className="text-paper-foreground text-xs">
             Big group Bible study around one table.
           </figcaption>
         </figure>

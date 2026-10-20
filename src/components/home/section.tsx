@@ -41,7 +41,7 @@ export default function Section({
             <p
               className={cn(
                 "text-xs uppercase tracking-[0.2em] lg:mb-4 lg:rotate-180 lg:[writing-mode:vertical-rl]",
-                onPaper ? "text-paper-foreground/70" : "text-muted-foreground"
+                onPaper ? "text-paper-foreground" : "text-muted-foreground"
               )}
             >
               {eyebrow}
