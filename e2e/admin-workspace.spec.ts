@@ -20,20 +20,28 @@ test("overview shows real registration and birthday controls", async ({
   await expect(
     page.getByRole("heading", { name: "Time to celebrate" })
   ).toBeVisible();
-  await page.getByRole("radio", { name: "12M" }).click();
-  await expect(
-    page
-      .getByRole("list", { name: "Registration history" })
-      .getByRole("listitem")
-  ).toHaveCount(12);
-  await page.getByRole("radio", { name: "Total" }).click();
-  // Clicking a column moves the overview to that month.
-  await page
+  const history = page
     .getByRole("list", { name: "Registration history" })
-    .getByRole("button")
-    .first()
-    .click();
-  await expect(month).not.toHaveText(shown ?? "");
+    .getByRole("listitem");
+  for (const [range, count] of [
+    ["1Y", 12],
+    ["2Y", 8],
+    ["5Y", 5],
+    ["6M", 6],
+  ] as const) {
+    // biome-ignore lint/performance/noAwaitInLoops: one range at a time.
+    await page.getByRole("radio", { exact: true, name: range }).click();
+    await expect(history).toHaveCount(count);
+  }
+  await page.getByRole("radio", { name: "Total" }).click();
+  // A column lists who registered then; the overview month stays put.
+  await history.last().getByRole("button").click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toContainText("Registered in");
+  await expect(sheet.getByRole("link").first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  await expect(month).toHaveText(shown ?? "");
   await selectOption(page, "Location", "Aachen");
   await expect(
     page.getByRole("term").filter({ hasText: "Members" })

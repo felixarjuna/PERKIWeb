@@ -3,21 +3,26 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import RegistrationChart, { axisTicks } from "./registration-chart";
 
+const bucket = (
+  key: string,
+  label: string,
+  fullLabel: string,
+  count: number,
+  cumulative: number
+) => ({
+  count,
+  cumulative,
+  end: new Date(),
+  fullLabel,
+  key,
+  label,
+  members: [],
+  shortLabel: label.slice(0, 1),
+  start: new Date(),
+});
 const months = [
-  {
-    count: 2,
-    cumulative: 5,
-    fullLabel: "September 2026",
-    key: "2026-09",
-    label: "Sep",
-  },
-  {
-    count: 1,
-    cumulative: 6,
-    fullLabel: "October 2026",
-    key: "2026-10",
-    label: "Oct",
-  },
+  bucket("2026-09", "Sep", "September 2026", 2, 5),
+  bucket("2026-10", "Oct", "October 2026", 1, 6),
 ];
 
 describe("registration chart", () => {
@@ -28,35 +33,39 @@ describe("registration chart", () => {
     expect(axisTicks(44)).toEqual([0, 20, 40, 60]);
   });
 
-  it("marks the selected month and selects another on click", async () => {
-    const onSelectMonth = vi.fn();
+  it("opens a period's registrations and switches ranges", async () => {
+    const onSelectBucket = vi.fn();
+    const onRangeChange = vi.fn();
     render(
       <RegistrationChart
+        buckets={months}
         missingDates={0}
-        months={months}
-        onRangeChange={vi.fn()}
-        onSelectMonth={onSelectMonth}
-        range={6}
+        onRangeChange={onRangeChange}
+        onSelectBucket={onSelectBucket}
+        range="6m"
+        unit="month"
       />
     );
-    expect(
-      screen
-        .getByRole("button", {
-          name: "October 2026: 1 registration. Show this month",
-        })
-        .getAttribute("aria-pressed")
-    ).toBe("true");
     await userEvent.click(
       screen.getByRole("button", {
-        name: "September 2026: 2 registrations. Show this month",
+        name: "September 2026: 2 registrations. See who registered",
       })
     );
-    expect(onSelectMonth).toHaveBeenCalledWith("2026-09");
+    expect(onSelectBucket).toHaveBeenCalledWith("2026-09");
     await userEvent.click(screen.getByRole("radio", { name: "Total" }));
     expect(
       screen.getByRole("button", {
-        name: "October 2026: 6 members in total. Show this month",
+        name: "October 2026: 6 members in total. See who registered",
       })
     ).toBeTruthy();
+    for (const label of ["1Y", "2Y", "5Y"]) {
+      // biome-ignore lint/performance/noAwaitInLoops: clicks run in order.
+      await userEvent.click(screen.getByRole("radio", { name: label }));
+    }
+    expect(onRangeChange.mock.calls.map(([range]) => range)).toEqual([
+      "1y",
+      "2y",
+      "5y",
+    ]);
   });
 });

@@ -3,18 +3,23 @@
 import { useState } from "react";
 import { cn } from "~/lib/utils";
 import { AdminSegmented } from "../admin-controls";
-import type { getCommunityOverview } from "./overview-model";
+import type { OverviewRange, RegistrationBucket } from "./overview-model";
 
-type Month = ReturnType<typeof getCommunityOverview>["months"][number];
+type Month = RegistrationBucket;
 
 const METRICS = [
   { label: "Monthly", value: "count" },
   { label: "Total", value: "cumulative" },
 ] as const;
 const RANGES = [
-  { label: "6M", value: "6" },
-  { label: "12M", value: "12" },
-] as const;
+  { label: "6M", value: "6m" },
+  { label: "1Y", value: "1y" },
+  { label: "2Y", value: "2y" },
+  { label: "5Y", value: "5y" },
+] as const satisfies readonly { label: string; value: OverviewRange }[];
+const UNIT_NOUN = { month: "month", quarter: "quarter", year: "year" } as const;
+const isRange = (value: string): value is OverviewRange =>
+  RANGES.some((range) => range.value === value);
 const NICE_STEPS = [1, 2, 5] as const;
 const TARGET_TICKS = 3;
 const DECADE = 10;
@@ -33,17 +38,20 @@ export function axisTicks(maximum: number) {
 const percent = (value: number, top: number) => `${(value / top) * 100}%`;
 
 export default function RegistrationChart({
-  months,
+  buckets: months,
+  unit,
   range,
   missingDates,
   onRangeChange,
-  onSelectMonth,
+  onSelectBucket,
 }: {
-  months: Month[];
-  range: 6 | 12;
+  buckets: Month[];
+  unit: keyof typeof UNIT_NOUN;
+  range: OverviewRange;
   missingDates: number;
-  onRangeChange: (range: 6 | 12) => void;
-  onSelectMonth: (month: string) => void;
+  onRangeChange: (range: OverviewRange) => void;
+  /** Opens the list of members who registered in that bucket. */
+  onSelectBucket: (key: string) => void;
 }) {
   const [metric, setMetric] = useState("count");
   const cumulative = metric === "cumulative";
@@ -71,11 +79,11 @@ export default function RegistrationChart({
           <h2 className="type-subheading">Registrations</h2>
           <p className="type-caption text-muted-foreground">
             {cumulative
-              ? "Member profiles in total, by month"
-              : "New member profiles per month"}
+              ? `Member profiles in total, by ${UNIT_NOUN[unit]}`
+              : `New member profiles per ${UNIT_NOUN[unit]}`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <AdminSegmented
             label="Chart values"
             onChange={setMetric}
@@ -84,9 +92,13 @@ export default function RegistrationChart({
           />
           <AdminSegmented
             label="Chart range"
-            onChange={(value) => onRangeChange(value === "12" ? 12 : 6)}
+            onChange={(value) => {
+              if (isRange(value)) {
+                onRangeChange(value);
+              }
+            }}
             options={RANGES}
-            value={String(range)}
+            value={range}
           />
         </div>
       </div>
@@ -146,10 +158,10 @@ export default function RegistrationChart({
               return (
                 <li className="flex min-w-0 flex-1" key={month.key}>
                   <button
-                    aria-label={`${month.fullLabel}: ${value} ${unitOf(value)}. Show this month`}
-                    aria-pressed={isSelected}
+                    aria-haspopup="dialog"
+                    aria-label={`${month.fullLabel}: ${value} ${unitOf(value)}. See who registered`}
                     className="group relative flex h-full w-full justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => onSelectMonth(month.key)}
+                    onClick={() => onSelectBucket(month.key)}
                     type="button"
                   >
                     {cumulative ? (
@@ -207,7 +219,7 @@ export default function RegistrationChart({
               {month.label}
             </span>
             {months.length > 6 ? (
-              <span className="sm:hidden">{month.label.slice(0, 1)}</span>
+              <span className="sm:hidden">{month.shortLabel}</span>
             ) : null}
           </span>
         ))}

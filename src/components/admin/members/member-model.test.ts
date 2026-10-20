@@ -111,14 +111,22 @@ describe("community metrics", () => {
       location: "",
       month: "2026-10",
       now: new Date("2026-10-20T12:00:00Z"),
-      range: 6,
+      range: "6m",
     });
     expect(overview.total).toBe(3);
     expect(overview.current).toBe(1);
     expect(overview.previous).toBe(1);
     expect(overview.missingDates).toBe(1);
     expect(overview.birthdays.map((m) => m.profiles.id)).toEqual(["b"]);
-    expect(overview.months.at(-1)).toMatchObject({ count: 1, cumulative: 2 });
+    expect(overview.buckets.at(-1)).toMatchObject({
+      count: 1,
+      cumulative: 2,
+      fullLabel: "October 2026",
+    });
+    // The bucket lists who registered: Ben, on 1 Oct in Berlin time.
+    expect(overview.buckets.at(-1)?.members.map((m) => m.profiles.id)).toEqual([
+      "b",
+    ]);
   });
   it("handles year rollover, missing dates and leap-day birthdays", () => {
     const data = [
@@ -136,7 +144,7 @@ describe("community metrics", () => {
         location: "",
         month: "2026-01",
         now: new Date("2026-01-20"),
-        range: 12,
+        range: "1y",
       })
     ).toMatchObject({ current: 1, missingDates: 1, previous: 0 });
     expect(
@@ -144,8 +152,44 @@ describe("community metrics", () => {
         location: "",
         month: "2026-02",
         now: new Date("2026-02-20"),
-        range: 6,
+        range: "6m",
       }).birthdays
     ).toHaveLength(1);
+  });
+  it("groups 2Y by quarter and 5Y by year, ending at the selected month", () => {
+    const quarters = getCommunityOverview(list, {
+      location: "",
+      month: "2026-10",
+      now: new Date("2026-10-20T12:00:00Z"),
+      range: "2y",
+    });
+    expect(quarters.unit).toBe("quarter");
+    expect(quarters.buckets.map((bucket) => bucket.key)).toEqual([
+      "2025-Q1",
+      "2025-Q2",
+      "2025-Q3",
+      "2025-Q4",
+      "2026-Q1",
+      "2026-Q2",
+      "2026-Q3",
+      "2026-Q4",
+    ]);
+    // Anna (1 Sep) is Q3; Ben (00:30 Berlin on 1 Oct) is Q4.
+    expect(quarters.buckets.at(-2)?.count).toBe(1);
+    expect(quarters.buckets.at(-1)).toMatchObject({ count: 1, cumulative: 2 });
+    const years = getCommunityOverview(list, {
+      location: "",
+      month: "2026-10",
+      now: new Date("2026-10-20T12:00:00Z"),
+      range: "5y",
+    });
+    expect(years.buckets.map((bucket) => bucket.label)).toEqual([
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026",
+    ]);
+    expect(years.buckets.at(-1)?.count).toBe(2);
   });
 });

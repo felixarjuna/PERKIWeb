@@ -29,9 +29,15 @@ for (const path of PROTECTED_PAGES) {
   });
 }
 
-test("the footer invites visitors to the Discord server", async ({ page }) => {
+test("Visit us and the footer invite visitors to Discord", async ({ page }) => {
   await page.goto("/");
-  await expect(
-    page.getByRole("link", { exact: true, name: "Join our Discord" })
-  ).toHaveAttribute("href", "https://discord.gg/4hf5yWFfVP");
+  const links = page.getByRole("link", {
+    exact: true,
+    name: "Join our Discord",
+  });
+  await expect(links).toHaveCount(2);
+  for (const link of await links.all()) {
+    // biome-ignore lint/performance/noAwaitInLoops: two links, checked in order.
+    await expect(link).toHaveAttribute("href", "https://discord.gg/4hf5yWFfVP");
+  }
 });

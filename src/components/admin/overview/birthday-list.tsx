@@ -3,6 +3,9 @@ import Link from "next/link";
 import { buttonVariants } from "~/components/ui/button";
 import { type Member, memberDate, memberName } from "../members/member-model";
 
+/** Fits the overview's fixed-height row without an inner scrollbar. */
+const VISIBLE_BIRTHDAYS = 5;
+
 export default function BirthdayList({
   members,
   month,
@@ -32,8 +35,8 @@ export default function BirthdayList({
         </Link>
       </div>
       {members.length ? (
-        <ul className="-mx-2 flex max-h-80 min-h-0 flex-1 flex-col divide-y divide-border/40 overflow-y-auto px-2 lg:max-h-none">
-          {members.map((member) => (
+        <ul className="flex flex-col divide-y divide-border/40">
+          {members.slice(0, VISIBLE_BIRTHDAYS).map((member) => (
             <li
               className="flex items-center gap-3 py-2"
               key={member.profiles.id}
@@ -58,7 +61,16 @@ export default function BirthdayList({
             </li>
           ))}
         </ul>
-      ) : (
+      ) : null}
+      {members.length > VISIBLE_BIRTHDAYS ? (
+        <Link
+          className="type-caption -mt-1 self-start rounded-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+          href="/admin/members?sort=birthday.asc"
+        >
+          +{members.length - VISIBLE_BIRTHDAYS} more in {month.split(" ")[0]}
+        </Link>
+      ) : null}
+      {members.length ? null : (
         <p className="type-body-sm flex flex-1 items-center justify-center text-center text-muted-foreground">
           No recorded birthdays for this month and location.
         </p>

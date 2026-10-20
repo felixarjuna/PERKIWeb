@@ -1,4 +1,7 @@
+import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { BusFront, Clock3, MapPin } from "lucide-react";
+import { buttonVariants } from "~/components/ui/button";
+import { DISCORD_INVITE_URL } from "~/lib/data";
 import MapEmbed from "./map-embed";
 import Section from "./section";
 
@@ -56,6 +59,35 @@ export default function VisitUs() {
                     </li>
                   ))}
                 </ul>
+              </dd>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <DiscordLogoIcon
+              aria-hidden="true"
+              className="mt-1 size-5 shrink-0"
+            />
+            <div>
+              <dt className="type-subheading">Say hello first</dt>
+              <dd className="mt-1">
+                Our Discord is where we share news and plan the week. You're
+                welcome to join before your first visit.
+                <span className="mt-3 block">
+                  <a
+                    className={buttonVariants({
+                      className: "text-foreground",
+                      size: "sm",
+                      variant: "outline",
+                    })}
+                    href={DISCORD_INVITE_URL}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <DiscordLogoIcon aria-hidden="true" className="size-4" />
+                    Join our Discord
+                  </a>
+                </span>
               </dd>
             </div>
           </div>

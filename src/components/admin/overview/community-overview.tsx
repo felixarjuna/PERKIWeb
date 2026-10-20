@@ -8,8 +8,9 @@ import { api } from "~/trpc/react";
 import { AdminSelect, QueryMessage } from "../admin-controls";
 import { getMemberLocations } from "../members/member-model";
 import BirthdayList from "./birthday-list";
-import { getCommunityOverview } from "./overview-model";
+import { getCommunityOverview, type OverviewRange } from "./overview-model";
 import RegistrationChart from "./registration-chart";
+import RegistrationSheet from "./registration-sheet";
 
 const MONTH_FORMAT = "yyyy-MM";
 
@@ -63,8 +64,10 @@ export default function CommunityOverview() {
     .toFormat(MONTH_FORMAT);
   const [month, setMonth] = useState(currentMonth);
   const [location, setLocation] = useState("");
-  const [range, setRange] = useState<6 | 12>(6);
+  const [range, setRange] = useState<OverviewRange>("6m");
+  const [openBucket, setOpenBucket] = useState<string | null>(null);
   const records = query.data ?? [];
+  const locations = getMemberLocations(records);
   const controls = (
     <div className="flex flex-wrap items-center gap-2">
       <MonthStepper month={month} onChange={setMonth} />
@@ -74,10 +77,7 @@ export default function CommunityOverview() {
         id="overview-location"
         label="Location"
         onChange={setLocation}
-        options={[
-          { label: "All locations", value: "" },
-          ...getMemberLocations(records),
-        ]}
+        options={[{ label: "All locations", value: "" }, ...locations]}
         value={location}
       />
       {month === currentMonth ? null : (
@@ -159,14 +159,20 @@ export default function CommunityOverview() {
       </dl>
       <div className="grid gap-4 lg:h-96 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)]">
         <RegistrationChart
+          buckets={data.buckets}
           missingDates={data.missingDates}
-          months={data.months}
           onRangeChange={setRange}
-          onSelectMonth={setMonth}
+          onSelectBucket={setOpenBucket}
           range={range}
+          unit={data.unit}
         />
         <BirthdayList members={data.birthdays} month={data.monthLabel} />
       </div>
+      <RegistrationSheet
+        bucket={data.buckets.find((bucket) => bucket.key === openBucket)}
+        locationLabel={locations.find((item) => item.value === location)?.label}
+        onClose={() => setOpenBucket(null)}
+      />
     </div>
   );
 }
