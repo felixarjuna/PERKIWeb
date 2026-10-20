@@ -26,7 +26,7 @@ import {
 } from "~/components/ui/drawer";
 import { Separator } from "~/components/ui/separator";
 import { groups } from "~/lib/data";
-import { dateTimeFormatter, getNextDayOfWeek } from "~/lib/utils";
+import { dateTimeFormatter, getWeekdayInCurrentWeek } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
 
@@ -295,12 +295,12 @@ export default function ScheduleList({
   }
 
   const thisWeekSchedule = React.useMemo(() => {
-    const mondayDate = getNextDayOfWeek(new Date(), 0);
-    const saturdayDate = getNextDayOfWeek(new Date(), 6);
+    const sundayDate = getWeekdayInCurrentWeek(new Date(), 0);
+    const saturdayDate = getWeekdayInCurrentWeek(new Date(), 6);
 
     return schedules
       ?.filter(
-        (schedule) => schedule.date > mondayDate && schedule.date < saturdayDate
+        (schedule) => schedule.date > sundayDate && schedule.date < saturdayDate
       )
       .sort((a, b) => {
         if (a.date > b.date) {
@@ -323,7 +323,7 @@ export default function ScheduleList({
   }
 
   const upcomingSchedules = React.useMemo(() => {
-    const saturdayDate = getNextDayOfWeek(new Date(), 6);
+    const saturdayDate = getWeekdayInCurrentWeek(new Date(), 6);
     return schedules
       ?.filter((schedule) => schedule.date > saturdayDate)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -343,7 +343,7 @@ export default function ScheduleList({
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const previousSchedules = React.useMemo(() => {
-    const sundayDate = getNextDayOfWeek(new Date(), 0);
+    const sundayDate = getWeekdayInCurrentWeek(new Date(), 0);
     return schedules?.filter((schedule) => schedule.date < sundayDate);
   }, [schedules]);
 
