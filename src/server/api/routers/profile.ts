@@ -3,7 +3,11 @@ import { eq } from "drizzle-orm";
 import { profiles, users } from "~/lib/db/schema/schema";
 import { db } from "~/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { isPgError, PG_UNIQUE_VIOLATION } from "../errors";
 import { addProfileSchema } from "../schema/schema";
+
+const ALREADY_REGISTERED =
+  "Sorry, it seems like you already submitted your profile. Please contact the administrator if it is not the case.";
 
 export const profileRouter = createTRPCRouter({
   addUserProfile: protectedProcedure
@@ -28,12 +32,25 @@ export const profileRouter = createTRPCRouter({
       if (isExists) {
         throw new TRPCError({
           code: "CONFLICT",
-          message:
-            "Sorry, it seems like you already submitted your profile. Please contact the administrator if it is not the case.",
+          message: ALREADY_REGISTERED,
         });
       }
 
-      return await db.insert(profiles).values({ ...input });
+      // The check above handles the common case; the unique index on
+      // `profiles.userId` catches two simultaneous submits.
+      return await db
+        .insert(profiles)
+        .values({ ...input })
+        .catch((error: unknown) => {
+          if (isPgError(error, PG_UNIQUE_VIOLATION)) {
+            throw new TRPCError({
+              cause: error,
+              code: "CONFLICT",
+              message: ALREADY_REGISTERED,
+            });
+          }
+          throw error;
+        });
     }),
   getUserProfiles: protectedProcedure.query(
     async () =>

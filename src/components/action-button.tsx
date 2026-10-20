@@ -12,8 +12,13 @@ import {
 } from "./ui/alert-dialog";
 import { Button, type ButtonProps } from "./ui/button";
 
+const DEFAULT_DELETE_DESCRIPTION =
+  "This will permanently delete your entry and cannot be undone.";
+
 interface ActionButtonProps {
   className?: string;
+  /** What the delete confirmation says will be lost. */
+  deleteDescription?: string;
   onDeleteClick: () => void;
   onEditClick?: () => void;
 }
@@ -22,11 +27,15 @@ export default function ActionButton({
   onEditClick,
   onDeleteClick,
   className,
+  deleteDescription,
 }: ActionButtonProps) {
   return (
     <div className={className}>
       <EditButton onEditClick={onEditClick} />
-      <DeleteButton onDeleteClick={onDeleteClick} />
+      <DeleteButton
+        description={deleteDescription}
+        onDeleteClick={onDeleteClick}
+      />
     </div>
   );
 }
@@ -49,7 +58,13 @@ export function EditButton({
   );
 }
 
-export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
+export function DeleteButton({
+  onDeleteClick,
+  description = DEFAULT_DELETE_DESCRIPTION,
+}: {
+  onDeleteClick: () => void;
+  description?: string;
+}) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -65,9 +80,7 @@ export function DeleteButton({ onDeleteClick }: { onDeleteClick: () => void }) {
       <AlertDialogContent className="w-10/12">
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete your entry and cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>

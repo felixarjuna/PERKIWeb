@@ -57,7 +57,9 @@ export const takeaways = pgTable("takeaways", {
   }).defaultNow(),
   id: serial("id").primaryKey().notNull(),
   keypoints: text("keypoints").notNull(),
-  scheduleId: integer("scheduleId").notNull(),
+  scheduleId: integer("scheduleId")
+    .notNull()
+    .references(() => schedules.id, { onDelete: "cascade" }),
   updatedAt: timestamp("updatedAt", {
     mode: "date",
     withTimezone: true,
@@ -130,6 +132,7 @@ export const profiles = pgTable("profiles", {
     .$onUpdate(() => new Date()),
   userId: text("userId")
     .notNull()
+    .unique()
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
