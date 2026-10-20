@@ -44,6 +44,25 @@ describe("profiles.addUserProfile", () => {
     expect(rows[0]?.major).toBe("Informatics");
   });
 
+  it("stores one profile when the same user submits twice at once", async () => {
+    const user = await insertUser();
+    const api = callerFor(user.id);
+
+    const results = await Promise.allSettled([
+      api.profiles.addUserProfile(profileFor(user.id)),
+      api.profiles.addUserProfile(profileFor(user.id)),
+    ]);
+
+    expect(results.map((r) => r.status).sort()).toEqual([
+      "fulfilled",
+      "rejected",
+    ]);
+    expect(results.find((r) => r.status === "rejected")).toMatchObject({
+      reason: { code: "CONFLICT" },
+    });
+    expect(await profilesOf(user.id)).toHaveLength(1);
+  });
+
   it("rejects submitting a profile for another user with FORBIDDEN", async () => {
     const victim = await insertUser();
     const attacker = await insertUser();

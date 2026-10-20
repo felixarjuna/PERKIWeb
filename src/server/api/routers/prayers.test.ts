@@ -90,6 +90,21 @@ describe("prayers router", () => {
     expect(await api.prayers.getPrayers()).toEqual([]);
   });
 
+  it("returns NOT_FOUND when changing or deleting a missing prayer", async () => {
+    const api = await signedIn();
+    const calls = [
+      api.prayers.updatePrayer({ ...validPrayer, id: 404 }),
+      api.prayers.updatePrayerCount({ count: 1, id: 404, prayerNames: [] }),
+      api.prayers.deletePrayer({ id: 404 }),
+    ];
+
+    await Promise.all(
+      calls.map((call) =>
+        expect(call).rejects.toMatchObject({ code: "NOT_FOUND" })
+      )
+    );
+  });
+
   it("rejects content shorter than 2 characters with BAD_REQUEST", async () => {
     const api = await signedIn();
 
