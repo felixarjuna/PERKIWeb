@@ -19,6 +19,7 @@ import { dataTableFeatures } from "~/components/data-table/data-table-features";
 import { DataTablePagination } from "~/components/data-table/data-table-pagination";
 import { DataTableViewOptions } from "~/components/data-table/data-table-view-options";
 import { Button } from "~/components/ui/button";
+import { ROLES, roleLabels } from "~/lib/roles";
 import { api } from "~/trpc/react";
 import { AdminSearch, QueryMessage } from "../admin-controls";
 import { createMemberColumns } from "./member-columns";
@@ -35,6 +36,10 @@ import {
 } from "./member-model";
 
 const EMPTY: Member[] = [];
+const roleOptions = ROLES.map((role) => ({
+  label: roleLabels[role],
+  value: role,
+}));
 const PINNING: ColumnPinningState = { end: [], start: ["name"] };
 
 function updateUrl(values: Record<string, string>, replace = false) {
@@ -98,8 +103,11 @@ export default function MemberDirectory() {
     if (filters.birthdayMonths.length) {
       active.push({ id: "birthdayMonth", value: filters.birthdayMonths });
     }
+    if (filters.roles.length) {
+      active.push({ id: "role", value: filters.roles });
+    }
     return active;
-  }, [filters.q, filters.locations, filters.birthdayMonths]);
+  }, [filters.q, filters.locations, filters.birthdayMonths, filters.roles]);
   const pagination = useMemo<PaginationState>(
     () => ({ pageIndex: filters.page - 1, pageSize: filters.pageSize }),
     [filters.page, filters.pageSize]
@@ -120,6 +128,7 @@ export default function MemberDirectory() {
       setFilters({
         birthdayMonths: values("birthdayMonth"),
         locations: values("location"),
+        roles: values("role"),
       });
     },
     onColumnVisibilityChange: setColumnVisibility,
@@ -165,10 +174,14 @@ export default function MemberDirectory() {
   const selected = records.find((member) => member.profiles.id === memberId);
   const filtered = table.getFilteredRowModel().rows.length;
   const isFiltered = Boolean(
-    filters.q || filters.locations.length || filters.birthdayMonths.length
+    filters.q ||
+      filters.locations.length ||
+      filters.birthdayMonths.length ||
+      filters.roles.length
   );
   const locationColumn = table.getColumn("location");
   const birthdayColumn = table.getColumn("birthdayMonth");
+  const roleColumn = table.getColumn("role");
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -194,11 +207,18 @@ export default function MemberDirectory() {
           title="Birthday"
         />
       ) : null}
+      {roleColumn ? (
+        <DataTableFacetedFilter
+          column={roleColumn}
+          options={roleOptions}
+          title="Role"
+        />
+      ) : null}
       {isFiltered ? (
         <Button
           className="h-10"
           onClick={() =>
-            setFilters({ birthdayMonths: [], locations: [], q: "" })
+            setFilters({ birthdayMonths: [], locations: [], q: "", roles: [] })
           }
           size="sm"
           type="button"

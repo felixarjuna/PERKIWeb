@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { type Member, memberDate, memberName } from "./member-model";
+import MemberRole from "./member-role";
 
 const PHONE_FORMATTING = /[^\d+]/g;
 function MemberValue({
@@ -100,6 +101,7 @@ export default function MemberDetails({
             </div>
           ))}
         </dl>
+        {member ? <MemberRole member={member} /> : null}
       </SheetContent>
     </Sheet>
   );

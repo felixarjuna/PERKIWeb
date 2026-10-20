@@ -63,8 +63,15 @@ describe("member directory URL state", () => {
       page: 3,
       pageSize: 25,
       q: "ben",
+      roles: [],
       sort: { desc: true, id: "birthday" },
     });
+  });
+  it("reads role filters and drops unknown roles", () => {
+    expect(
+      readMemberFilters(new URLSearchParams("role=mita,writer,bogus")).roles
+    ).toEqual(["mita", "writer"]);
+    expect(memberFilterParams({ roles: [] }).role).toBe("");
   });
   it("falls back from malformed URL filters", () => {
     for (const sort of ["bad", "name.sideways", "phone.asc"]) {

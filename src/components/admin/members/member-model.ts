@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { ROLES } from "~/lib/roles";
 import type { RouterOutputs } from "~/trpc/react";
 
 export type Member = RouterOutputs["profiles"]["getUserProfiles"][number];
@@ -9,6 +10,7 @@ export const memberSortColumns = [
   "birthday",
   "registered",
   "major",
+  "role",
 ] as const;
 export type MemberSortColumn = (typeof memberSortColumns)[number];
 export interface MemberFilters {
@@ -19,6 +21,8 @@ export interface MemberFilters {
   page: number;
   pageSize: number;
   q: string;
+  /** Role keys from `ROLES` (URL `role=mita,writer`). */
+  roles: string[];
   sort: { desc: boolean; id: MemberSortColumn };
 }
 export const PAGE_SIZES = [10, 25, 50, 100] as const;
@@ -29,6 +33,9 @@ export const birthdayMonthOptions = Array.from({ length: 12 }, (_, index) => ({
   ),
   value: String(index + 1),
 }));
+/** Role of a member; profiles without a user count as plain members. */
+export const memberRole = (member: Member) => member.user?.role ?? "member";
+const ROLE_KEYS = new Set<string>(ROLES);
 const BIRTHDAY_MONTHS = new Set(birthdayMonthOptions.map((m) => m.value));
 export const DEFAULT_PAGE_SIZE = 10;
 export const normalizeLocation = (location: string | null) =>
@@ -86,6 +93,7 @@ export function readMemberFilters(params: URLSearchParams): MemberFilters {
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
     pageSize: PAGE_SIZES.find((item) => item === size) ?? DEFAULT_PAGE_SIZE,
     q: params.get("q") ?? "",
+    roles: readList(params.get("role")).filter((role) => ROLE_KEYS.has(role)),
     sort: readSort(params.get("sort")),
   };
 }
@@ -103,6 +111,9 @@ export function memberFilterParams(
   }
   if (filters.locations) {
     values.location = filters.locations.join(",");
+  }
+  if (filters.roles) {
+    values.role = filters.roles.join(",");
   }
   if (filters.sort) {
     const { desc, id } = filters.sort;

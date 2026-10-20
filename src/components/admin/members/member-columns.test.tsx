@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "~/components/data-table/data-table";
 import { dataTableFeatures } from "~/components/data-table/data-table-features";
+import type { Role } from "~/lib/roles";
 import { createMemberColumns } from "./member-columns";
 import type { Member } from "./member-model";
 
@@ -53,14 +54,25 @@ const list = [
   }),
   member("c", "Cara"),
 ];
+const withRole = (base: Member, role: Role): Member => ({
+  ...base,
+  user: base.user ? { ...base.user, role } : base.user,
+});
+const roleList = [
+  withRole(member("m", "Mo"), "member"),
+  withRole(member("w", "Wes"), "writer"),
+  withRole(member("o", "Olga"), "owner"),
+  withRole(member("t", "Tim"), "mita"),
+];
 
 function useMemberRows(
   sorting: SortingState,
-  columnFilters: ColumnFiltersState = []
+  columnFilters: ColumnFiltersState = [],
+  data: Member[] = list
 ) {
   const table = useTable({
     columns: createMemberColumns(vi.fn()),
-    data: list,
+    data,
     features: dataTableFeatures,
     getRowId: (row) => row.profiles.id,
     state: { columnFilters, sorting },
@@ -68,8 +80,12 @@ function useMemberRows(
   return table.getRowModel().rows.map((row) => row.id);
 }
 
-const rowIds = (sorting: SortingState, columnFilters?: ColumnFiltersState) =>
-  renderHook(() => useMemberRows(sorting, columnFilters)).result.current;
+const rowIds = (
+  sorting: SortingState,
+  columnFilters?: ColumnFiltersState,
+  data?: Member[]
+) =>
+  renderHook(() => useMemberRows(sorting, columnFilters, data)).result.current;
 
 describe("member table", () => {
   it("searches name, email and phone and filters by location", () => {
@@ -103,6 +119,19 @@ describe("member table", () => {
     expect(rowIds([{ desc: true, id: "birthday" }])).toEqual(["b", "a", "c"]);
     expect(rowIds([{ desc: true, id: "registered" }])).toEqual(["b", "a", "c"]);
     expect(rowIds([{ desc: false, id: "location" }])).toEqual(["b", "a", "c"]);
+  });
+
+  it("filters by role and sorts owner, mita, writer, member", () => {
+    const byName = [{ desc: false, id: "name" }];
+    expect(
+      rowIds(byName, [{ id: "role", value: ["writer"] }], roleList)
+    ).toEqual(["w"]);
+    expect(rowIds([{ desc: false, id: "role" }], [], roleList)).toEqual([
+      "o",
+      "t",
+      "w",
+      "m",
+    ]);
   });
 
   it("opens a profile from the pinned member name", async () => {
