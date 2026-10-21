@@ -2,8 +2,10 @@
 
 import { ChevronRight, CircleCheck, Lock } from "lucide-react";
 import { DateTime } from "luxon";
+import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { PersonAvatar } from "~/components/person-avatar";
 import ProfileFieldInput, {
   draftOf,
   type EditableField,
@@ -90,16 +92,26 @@ function LockHint({ label }: { label: string }) {
 }
 
 /** Name or email from Google: shown with a lock, never edited here. */
-function LockedRow({ label, value }: { label: string; value?: string | null }) {
+function LockedRow({
+  children,
+  label,
+  value,
+}: {
+  children?: React.ReactNode;
+  label: string;
+  value?: string | null;
+}) {
   return (
     <li className={rowClass}>
       <span className="flex flex-1 items-center gap-1">
         <span className="type-body-sm">{label}</span>
         <LockHint label={label} />
       </span>
-      <span className="type-body-sm min-w-0 truncate text-muted-foreground">
-        {value || "Not set"}
-      </span>
+      {children ?? (
+        <span className="type-body-sm min-w-0 truncate text-muted-foreground">
+          {value || "Not set"}
+        </span>
+      )}
     </li>
   );
 }
@@ -206,6 +218,15 @@ export default function ProfileSummary() {
   return (
     <div className="flex flex-col gap-4">
       <ul className="flex flex-col rounded-xl bg-card p-2 sm:p-3">
+        <LockedRow label="Photo">
+          <PersonAvatar
+            person={{
+              image: account?.image ?? null,
+              name: account?.name ?? "",
+            }}
+            size="lg"
+          />
+        </LockedRow>
         <LockedRow label="Name" value={account?.name} />
         <LockedRow label="Email" value={account?.email} />
       </ul>

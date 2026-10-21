@@ -35,7 +35,11 @@ vi.mock("~/trpc/react", () => ({
     users: {
       getUserById: {
         useQuery: () => ({
-          data: { email: "maria@gmail.com", name: "Maria Santoso" },
+          data: {
+            email: "maria@gmail.com",
+            image: "https://lh3.googleusercontent.com/a/photo",
+            name: "Maria Santoso",
+          },
         }),
       },
     },
@@ -102,6 +106,17 @@ describe("profile summary", () => {
         )
       ).length
     ).toBeGreaterThan(0);
+  });
+
+  it("shows the Google photo first, locked like the name", () => {
+    render(<ProfileSummary />);
+    const row = screen.getByText("Photo").closest("li") as HTMLElement;
+    expect(screen.getAllByRole("listitem")[0]).toBe(row);
+    expect(
+      within(row).getByRole("button", { name: "Photo comes from Google" })
+    ).toBeTruthy();
+    // Initials stand in until (or unless) the photo loads.
+    expect(within(row).getByText("MS")).toBeTruthy();
   });
 
   it("keeps the optional nickname at the bottom of the details", async () => {
