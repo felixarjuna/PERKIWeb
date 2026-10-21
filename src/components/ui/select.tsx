@@ -42,7 +42,7 @@ function SelectTrigger({
         "type-body-sm flex h-10 w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-start ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground [&>span]:min-w-0 [&>span]:truncate",
         variant === "filter"
           ? "border-transparent bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80"
-          : "border-input bg-background",
+          : "border-transparent bg-secondary",
         className
       )}
       {...props}

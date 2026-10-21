@@ -123,11 +123,11 @@ export default function EditScheduleForm() {
                         <FormControl>
                           <Button
                             className={cn(
-                              "w-full justify-start pl-3 text-left",
+                              "w-full justify-start bg-secondary pl-3 text-left font-normal hover:bg-secondary",
                               !field.value && "text-muted-foreground"
                             )}
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                           >
                             {field.value ? (
                               format(field.value, "PPP")
