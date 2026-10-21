@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "welcomeSeenAt" timestamp with time zone;

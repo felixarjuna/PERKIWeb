@@ -71,15 +71,17 @@ export const prayerAcknowledgementSchema = queryByIdSchema.extend({
   pressed: z.boolean(),
 });
 
-export const addProfileSchema = z.object({
-  address: z.string().trim().min(1, "Please enter your address."),
-  bio: z.string().optional(),
-  birthday: z.date({ error: "Please enter your date of birth." }),
-  location: z.string().trim().min(1, "Please enter your location."),
-  major: z.string().trim().min(1, "Please enter your major."),
-  phoneNumber: z.string().trim().min(1, "Please enter your WhatsApp number."),
-  userId: z.string().min(1),
+const profileText = z.string().trim().max(200);
+
+/** The caller's own member details; omitted fields stay as they are. */
+export const saveProfileSchema = z.object({
+  address: profileText.optional(),
+  birthday: z.date().nullable().optional(),
+  location: profileText.optional(),
+  major: profileText.optional(),
+  phoneNumber: profileText.optional(),
 });
+export type SaveProfileInput = z.infer<typeof saveProfileSchema>;
 
 export const setRoleSchema = z.object({
   role: z.enum(ASSIGNABLE_ROLES),

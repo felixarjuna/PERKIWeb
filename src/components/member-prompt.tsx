@@ -20,7 +20,7 @@ export default function MemberPrompt() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [dismissed, setDismissed] = useState(true);
-  const { data: hasProfile } = api.profiles.hasOwnProfile.useQuery(undefined, {
+  const { data: own } = api.profiles.mine.useQuery(undefined, {
     enabled: Boolean(session),
   });
 
@@ -44,7 +44,7 @@ export default function MemberPrompt() {
   if (
     dismissed ||
     !session ||
-    hasProfile !== false ||
+    own?.profile !== null ||
     pathname === "/member/join"
   ) {
     return null;

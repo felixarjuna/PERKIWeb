@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   addPrayerSchema,
-  addProfileSchema,
   addScheduleBatchSchema,
   addScheduleSchema,
   addTakeawaySchema,
   editPrayerSchema,
   prayerAcknowledgementSchema,
   queryByIdSchema,
+  saveProfileSchema,
   updateScheduleSchema,
   updateTakeawaySchema,
 } from "~/server/api/schema/schema";
@@ -237,37 +237,27 @@ describe("queryByIdSchema", () => {
   });
 });
 
-describe("addProfileSchema", () => {
-  const profile = {
-    address: "Street 1",
-    birthday: new Date(2000, 0, 1),
-    location: "Aachen",
-    major: "CS",
-    phoneNumber: "+49123",
-    userId: "user-1",
-  };
-
-  it("accepts a profile with optional bio omitted", () => {
-    expect(addProfileSchema.safeParse(profile).success).toBe(true);
+describe("saveProfileSchema", () => {
+  it("accepts any subset of the five fields", () => {
+    expect(saveProfileSchema.safeParse({}).success).toBe(true);
+    expect(saveProfileSchema.safeParse({ major: "CS" }).success).toBe(true);
   });
 
-  it.each(["address", "location", "major", "phoneNumber"])(
-    "rejects blank %s",
-    (field) => {
-      expect(
-        addProfileSchema.safeParse({ ...profile, [field]: "   " }).success
-      ).toBe(false);
-    }
-  );
+  it("trims text and keeps an empty string so it can clear a field", () => {
+    expect(saveProfileSchema.parse({ address: "", major: "  CS " })).toEqual({
+      address: "",
+      major: "CS",
+    });
+  });
 
-  it("requires birthday to be a Date", () => {
+  it("requires birthday to be a Date or null", () => {
     expect(
-      addProfileSchema.safeParse({ ...profile, birthday: "2000-01-01" }).success
+      saveProfileSchema.safeParse({ birthday: "2000-01-01" }).success
     ).toBe(false);
+    expect(saveProfileSchema.safeParse({ birthday: null }).success).toBe(true);
   });
 
-  it("requires userId", () => {
-    const { userId: _userId, ...withoutUser } = profile;
-    expect(addProfileSchema.safeParse(withoutUser).success).toBe(false);
+  it("drops a userId so nobody can save someone else's profile", () => {
+    expect(saveProfileSchema.parse({ userId: "other" })).toEqual({});
   });
 });

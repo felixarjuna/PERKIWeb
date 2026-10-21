@@ -129,6 +129,11 @@ export const users = pgTable(
     })
       .defaultNow()
       .$onUpdate(() => new Date()),
+    /** When the profile welcome step was saved or skipped; null = not yet. */
+    welcomeSeenAt: timestamp("welcomeSeenAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
   },
   (t) => [
     check(

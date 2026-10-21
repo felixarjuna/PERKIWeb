@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { discordInviteFrom, driveUrlFrom, sheetIdFrom } from "./settings";
+import {
+  discordInviteFrom,
+  driveUrlFrom,
+  sheetIdFrom,
+  whatsappGroupFrom,
+} from "./settings";
 
 const ID = "1McH8SoN1ut6CfERNi6BSh45O8vhshfZElDA42FbTZMs";
 
@@ -53,5 +58,19 @@ describe("discordInviteFrom", () => {
     expect(discordInviteFrom("https://discord.com/channels/1/2")).toBeNull();
     expect(discordInviteFrom("https://example.com/invite/x")).toBeNull();
     expect(discordInviteFrom("discord.gg/abc")).toBeNull();
+  });
+});
+
+describe("whatsappGroupFrom", () => {
+  it("accepts a WhatsApp group invite", () => {
+    expect(whatsappGroupFrom(" https://chat.whatsapp.com/AbC123 ")).toBe(
+      "https://chat.whatsapp.com/AbC123"
+    );
+  });
+
+  it("rejects other links", () => {
+    expect(whatsappGroupFrom("http://chat.whatsapp.com/AbC123")).toBeNull();
+    expect(whatsappGroupFrom("https://wa.me/49123")).toBeNull();
+    expect(whatsappGroupFrom("https://chat.whatsapp.com/")).toBeNull();
   });
 });
