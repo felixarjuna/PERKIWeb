@@ -157,3 +157,34 @@ test("validates required schedule fields", async ({ page }) => {
   );
   await expect(page).toHaveURL("/admin/schedules/new");
 });
+
+test("calendar shows a month's gatherings and their open slots", async ({
+  page,
+}) => {
+  const title = `Calendar ${uniqueSuffix()}`;
+  const date = scheduleDate();
+  await page.goto("/admin/schedules/new");
+  await createSchedule(page, title, date);
+
+  await page.getByRole("radio", { name: "Calendar" }).click();
+  await expect(page).toHaveURL("/admin/schedules?view=calendar");
+  const next = page.getByRole("button", { name: "Next month" });
+  await next.click();
+  await next.click();
+  await expect(
+    page.getByRole("heading", { name: format(date, "MMMM yyyy") })
+  ).toBeVisible();
+
+  // The form left multimedia, accommodation and the cooking group empty.
+  const event = page.getByRole("link", { name: new RegExp(title) });
+  await expect(event).toContainText("3 open");
+  await expect(event).toContainText(
+    "Open: Multimedia, Accommodation, Cooking group"
+  );
+
+  // The month survives a reload, and the gathering opens its edit form.
+  await page.reload();
+  await event.click();
+  await expect(page).toHaveURL(EDIT_SCHEDULE_URL);
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(title);
+});

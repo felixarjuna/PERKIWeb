@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   localDay,
   onPickedDay,
+  openSlots,
   slotsFromSchedule,
   termOn,
 } from "./schedule-team";
@@ -66,5 +67,35 @@ describe("onPickedDay", () => {
     expect(onPickedDay(picked, new Date("2026-04-30T22:00:00.000Z"))).toEqual(
       new Date("2026-06-13T13:30:00.000Z")
     );
+  });
+});
+
+describe("openSlots", () => {
+  it("lists the empty slots a service needs, in team order", () => {
+    expect(
+      openSlots({
+        accommodation: "-",
+        cleaningGroup: "Group 2",
+        cookingGroup: null,
+        leader: "Ana",
+        multimedia: " ",
+        musician: "Ben",
+        noteWriter: "Cleo",
+        preacher: "Pdt. John Kusuma",
+        type: "church_service",
+      })
+    ).toEqual(["Multimedia", "Accommodation", "Cooking group"]);
+  });
+
+  it("asks a Bible study only for its own slots", () => {
+    expect(
+      openSlots({
+        cleaningGroup: "",
+        leader: "Ana",
+        musician: "Ben",
+        noteWriter: "",
+        type: "bible_study",
+      })
+    ).toEqual(["Note writer", "Cleaning group"]);
   });
 });

@@ -1,15 +1,42 @@
 "use client";
 
 import { DateTime } from "luxon";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "~/trpc/react";
-import { QueryMessage } from "../admin-controls";
+import { AdminSegmented, QueryMessage } from "../admin-controls";
 import { type ContentFilters, filterSchedules } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
 import RecordActions from "./record-actions";
+import ScheduleCalendar, { monthOf } from "./schedule-calendar";
+
+const VIEWS = [
+  { label: "List", value: "list" },
+  { label: "Calendar", value: "calendar" },
+] as const;
+
+/** Keeps the view and month in the URL, so back and reload land on the same month. */
+function updateUrl(values: Record<string, string | null>) {
+  const next = new URLSearchParams(window.location.search);
+  for (const [key, value] of Object.entries(values)) {
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+  }
+  const query = next.toString();
+  window.history.pushState(
+    null,
+    "",
+    query ? `/admin/schedules?${query}` : "/admin/schedules"
+  );
+}
 
 export default function ScheduleManager() {
+  const params = useSearchParams();
+  const view = params.get("view") === "calendar" ? "calendar" : "list";
   const query = api.schedules.getSchedules.useQuery();
   const utils = api.useUtils();
   const [filters, setFilters] = useState<ContentFilters>({
@@ -28,7 +55,22 @@ export default function ScheduleManager() {
   const records = filterSchedules(query.data ?? [], filters, new Date());
   return (
     <div className="flex flex-col gap-5">
-      <ContentToolbar filters={filters} onChange={setFilters} schedules />
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminSegmented
+          label="View"
+          onChange={(next) =>
+            updateUrl({
+              month: null,
+              view: next === "calendar" ? "calendar" : null,
+            })
+          }
+          options={VIEWS}
+          value={view}
+        />
+      </div>
+      {view === "list" ? (
+        <ContentToolbar filters={filters} onChange={setFilters} schedules />
+      ) : null}
       {query.isLoading ? <QueryMessage>Loading schedules…</QueryMessage> : null}
       {query.isError ? (
         <QueryMessage
@@ -38,7 +80,14 @@ export default function ScheduleManager() {
           }}
         />
       ) : null}
-      {query.isLoading || query.isError ? null : (
+      {!(query.isLoading || query.isError) && view === "calendar" ? (
+        <ScheduleCalendar
+          month={params.get("month") ?? monthOf(new Date())}
+          onMonthChange={(month) => updateUrl({ month })}
+          schedules={query.data ?? []}
+        />
+      ) : null}
+      {query.isLoading || query.isError || view === "calendar" ? null : (
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
             {records.length} schedules · Changes appear on the public website
