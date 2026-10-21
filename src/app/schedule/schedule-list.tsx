@@ -13,7 +13,8 @@ export default function ScheduleList() {
 
   function renderScheduleCollection(
     list: Schedule[] | undefined,
-    loadingMessage: string
+    loadingMessage: string,
+    emptyMessage: string
   ) {
     if (!list) {
       return <Loader message={loadingMessage} />;
@@ -22,7 +23,7 @@ export default function ScheduleList() {
     if (list.length === 0) {
       return (
         <p className="type-body rounded-xl bg-card p-4 text-muted-foreground sm:p-6">
-          No gatherings scheduled here yet.
+          {emptyMessage}
         </p>
       );
     }
@@ -51,10 +52,11 @@ export default function ScheduleList() {
   function renderThisWeekSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="type-heading">This Week</h2>
+        <h2 className="type-heading">This week</h2>
         {renderScheduleCollection(
           thisWeekSchedule,
-          "Loading this week schedules ..."
+          "Loading this week…",
+          "Nothing is scheduled for this week."
         )}
       </div>
     );
@@ -70,10 +72,11 @@ export default function ScheduleList() {
   function renderUpcomingSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="type-heading">Upcoming Schedules</h2>
+        <h2 className="type-heading">Upcoming</h2>
         {renderScheduleCollection(
           upcomingSchedules,
-          "Loading upcoming schedules ..."
+          "Loading upcoming gatherings…",
+          "Nothing is scheduled after this week yet. New gatherings appear here once they’re planned."
         )}
       </div>
     );
@@ -88,10 +91,11 @@ export default function ScheduleList() {
   function renderPreviousSchedule() {
     return (
       <div className="space-y-4">
-        <h2 className="type-heading">Previous Schedules</h2>
+        <h2 className="type-heading">Previous</h2>
         {renderScheduleCollection(
           previousSchedules,
-          "Loading previous schedules ..."
+          "Loading previous gatherings…",
+          "Past gatherings will appear here."
         )}
       </div>
     );

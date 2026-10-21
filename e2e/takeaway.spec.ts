@@ -7,6 +7,9 @@ import { adminLogin, selectOption, toast } from "./helpers";
 /** Takeaways are written in the admin area, so they credit the seeded admin. */
 const ADMIN_USERNAME = "e2eadmin";
 const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
+/** "Share" with a native share sheet, "Copy link" without one. */
+const SHARE_BUTTON = /Share|Copy link/;
+const SEARCH_URL = /[?&]q=PELAYANAN/;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
@@ -133,7 +136,7 @@ test("a takeaway card opens the full takeaway on its own page", async ({
   // Actions come after the notes.
   const footer = page.locator("main footer");
   await expect(
-    footer.getByRole("button", { name: /Share|Copy link/ })
+    footer.getByRole("button", { name: SHARE_BUTTON })
   ).toBeVisible();
   await footer.getByRole("link", { name: "All takeaways" }).click();
   await expect(page).toHaveURL("/takeaway");
@@ -157,7 +160,7 @@ test("searching takeaways narrows the list and keeps the query in the URL", asyn
   await expect(
     page.getByRole("link", { exact: true, name: scheduleTitle })
   ).toBeVisible();
-  await expect(page).toHaveURL(/[?&]q=PELAYANAN/);
+  await expect(page).toHaveURL(SEARCH_URL);
 
   await page.reload();
   await expect(search).toHaveValue(`PELAYANAN ${suffix}`);
@@ -175,6 +178,11 @@ test("searching takeaways narrows the list and keeps the query in the URL", asyn
 test("an unknown takeaway is a 404", async ({ page }) => {
   const response = await page.goto("/takeaway/999999999");
   expect(response?.status()).toBe(404);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Takeaway not found" })
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Browse all takeaways" }).click();
+  await expect(page).toHaveURL("/takeaway");
 });
 
 test("a takeaway created from a direct link credits its author", async ({

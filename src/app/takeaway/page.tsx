@@ -15,7 +15,7 @@ export default function TakeawayPage() {
       title="Takeaways"
     >
       {/* The list reads the search from the URL, which needs a boundary. */}
-      <Suspense fallback={<Loader message="Loading takeaways ..." />}>
+      <Suspense fallback={<Loader message="Loading takeaways…" />}>
         <TakeawayList />
       </Suspense>
     </Template>

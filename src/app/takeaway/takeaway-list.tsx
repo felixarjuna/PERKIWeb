@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { eventTypeEnum } from "~/lib/db/schema/schema";
+import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
 import { api, type RouterOutputs } from "~/trpc/react";
 import {
   contributorNames,
@@ -72,7 +72,7 @@ export default function TakeawayList() {
   );
 
   if (takeaways === undefined) {
-    return <Loader className="mt-8" message="Loading takeaways ..." />;
+    return <Loader className="mt-8" message="Loading takeaways…" />;
   }
 
   return (
@@ -83,7 +83,7 @@ export default function TakeawayList() {
           id="takeaway-search"
           label="Search takeaways"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search title, passage or notes"
+          placeholder="Search titles, passages and notes"
           value={query}
         />
         <Select
@@ -124,24 +124,12 @@ export default function TakeawayList() {
       {/* Always mounted so screen readers announce when nothing matches. */}
       <div role="status">
         {takeaways.length === 0 ? (
-          <div className="rounded-xl bg-card p-4 sm:p-6">
-            <p className="type-body text-muted-foreground">
-              {deferredQuery
-                ? `No takeaways match “${deferredQuery}”.`
-                : "No takeaways for this fellowship type yet."}
-            </p>
-            {deferredQuery ? (
-              <Button
-                className="mt-3"
-                onClick={() => setQuery("")}
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                Clear search
-              </Button>
-            ) : null}
-          </div>
+          <EmptyState
+            onClearSearch={() => setQuery("")}
+            onShowAll={() => setType("all")}
+            query={deferredQuery}
+            type={type}
+          />
         ) : null}
       </div>
 
@@ -153,6 +141,52 @@ export default function TakeawayList() {
             </li>
           ))}
         </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** Says why the list is empty and offers the one action that refills it. */
+function EmptyState({
+  query,
+  type,
+  onClearSearch,
+  onShowAll,
+}: {
+  query: string;
+  type: EventTypeEnum | "all";
+  onClearSearch: () => void;
+  onShowAll: () => void;
+}) {
+  // Mid-sentence, so only "Bible" keeps its capital.
+  const kind = {
+    all: "",
+    bible_study: "Bible study ",
+    church_service: "church service ",
+  }[type];
+  let message =
+    "No takeaways yet. Notes from services and Bible studies appear here once they’re written.";
+  let action: { label: string; onClick: () => void } | null = null;
+  if (query) {
+    message = `No ${kind}takeaways match “${query}”.`;
+    action = { label: "Clear search", onClick: onClearSearch };
+  } else if (type !== "all") {
+    message = `No ${kind}takeaways yet.`;
+    action = { label: "Show all fellowships", onClick: onShowAll };
+  }
+  return (
+    <div className="rounded-xl bg-card p-4 sm:p-6">
+      <p className="type-body text-muted-foreground">{message}</p>
+      {action ? (
+        <Button
+          className="mt-3"
+          onClick={action.onClick}
+          size="sm"
+          type="button"
+          variant="secondary"
+        >
+          {action.label}
+        </Button>
       ) : null}
     </div>
   );

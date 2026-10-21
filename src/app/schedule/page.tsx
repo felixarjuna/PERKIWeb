@@ -10,7 +10,7 @@ export default function SchedulePage() {
             “There is a time for everything, and a season for every activity
             under the heavens.”
           </p>
-          <p>– Ecclesiastes 3:1</p>
+          <p>— Ecclesiastes 3:1</p>
         </div>
       }
       title="Schedule"

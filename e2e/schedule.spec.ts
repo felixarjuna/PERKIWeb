@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await adminLogin(page);
 });
 
-/** Two months ahead always lands in "Upcoming Schedules". */
+/** Two months ahead always lands in "Upcoming". */
 const MONTHS_AHEAD = 2;
 const DAY_OF_MONTH = 15;
 const REQUIRED_LABELS = ["Fellowship Type", "Title", "Bible Verse", "Liturgos"];

@@ -50,12 +50,12 @@ function formatDate(date: Date) {
   };
 }
 
-/** Roles that are filled in; empty ones are left out instead of showing "-". */
+/** Roles that are filled in, named as in the admin form; empty ones are left out instead of showing "-". */
 function team(schedule: Schedule) {
   return [
-    { label: "Worship leader", name: schedule.leader },
-    { label: "Music", name: schedule.musician },
-    { label: "Notes", name: schedule.noteWriter },
+    { label: "Liturgos", name: schedule.leader },
+    { label: "Musician", name: schedule.musician },
+    { label: "Note writer", name: schedule.noteWriter },
     { label: "Multimedia", name: schedule.multimedia },
     { label: "Accommodation", name: schedule.accommodation },
   ].filter((role): role is { label: string; name: string } =>
