@@ -6,7 +6,7 @@ const siteLinks = [
   { href: "/schedule", label: "Schedule" },
   { href: "/takeaway", label: "Takeaway" },
   { href: "/prayers", label: "Weekly prayer" },
-  { href: "/member/join", label: "Become a member" },
+  { href: "/account", label: "Become a member" },
 ] as const;
 
 const legalLinks = [

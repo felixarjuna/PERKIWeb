@@ -8,6 +8,8 @@ import {
 import { auth } from "~/server/auth";
 import AccountActions from "./account-actions";
 import AccountForm from "./account-form";
+import ProfileSummary from "./profile-summary";
+import WhatsappCard from "./whatsapp-card";
 
 export default async function AccountPage({
   searchParams,
@@ -22,8 +24,13 @@ export default async function AccountPage({
   }
 
   return (
-    <Template title="Account">
+    <Template
+      subtitle="Your details help us care for you as a fellowship."
+      title="Your profile"
+    >
       <div className="flex w-full flex-col gap-4">
+        <ProfileSummary />
+        <WhatsappCard />
         <AccountForm />
         <AccountActions />
       </div>
