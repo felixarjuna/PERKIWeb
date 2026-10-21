@@ -71,7 +71,8 @@ function Calendar({
           defaultClassNames.dropdown
         ),
         dropdown_root: cn(
-          "relative rounded-md border border-input shadow-xs has-focus:border-ring has-focus:ring-[3px] has-focus:ring-ring/50",
+          // Filled like every form control here, never outlined.
+          "relative rounded-md bg-secondary has-focus:ring-[3px] has-focus:ring-ring/50",
           defaultClassNames.dropdown_root
         ),
         dropdowns: cn(
@@ -133,7 +134,8 @@ function Calendar({
       }}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          // The site is in English; "default" followed the browser ("Mär").
+          date.toLocaleString("en", { month: "short" }),
         ...formatters,
       }}
       showOutsideDays={showOutsideDays}

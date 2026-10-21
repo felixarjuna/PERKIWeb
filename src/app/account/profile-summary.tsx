@@ -108,7 +108,9 @@ function LockedRow({
         <LockHint label={label} />
       </span>
       {children ?? (
-        <span className="type-body-sm min-w-0 truncate text-muted-foreground">
+        // Wraps rather than truncates: a locked row can't be opened to read
+        // the rest of a long email.
+        <span className="type-body-sm min-w-0 break-all text-right text-muted-foreground">
           {value || "Not set"}
         </span>
       )}
@@ -118,16 +120,24 @@ function LockedRow({
 
 /** A detail the member edits: tapping the row opens its editor. */
 function EditableRow({
-  empty,
+  optional = false,
   label,
   onEdit,
   value,
 }: {
-  empty: string;
+  optional?: boolean;
   label: string;
   onEdit: () => void;
   value: string | null;
 }) {
+  // Quiet "Optional" text; only what's still missing gets the cream chip.
+  const placeholder = optional ? (
+    <span className="type-body-sm text-muted-foreground">Optional</span>
+  ) : (
+    <span className="type-caption rounded-full bg-paper px-2 py-1 text-paper-foreground">
+      Add
+    </span>
+  );
   return (
     <li>
       <button
@@ -141,9 +151,7 @@ function EditableRow({
             {value}
           </span>
         ) : (
-          <span className="type-caption rounded-full bg-paper px-2 py-1 text-paper-foreground">
-            {empty}
-          </span>
+          placeholder
         )}
         <ChevronRight
           aria-hidden="true"
@@ -268,13 +276,12 @@ export default function ProfileSummary() {
         <p className="type-body-sm text-muted-foreground">
           {completion.state === "complete"
             ? "All done. Thank you for helping us care for you."
-            : "A few details help us care for you as a fellowship."}
+            : `${completion.total - completion.filled} more to go.`}
         </p>
       </section>
       <ul className="flex flex-col rounded-xl bg-card p-2 sm:p-3">
         {PROFILE_FIELDS.map((field) => (
           <EditableRow
-            empty="Add"
             key={field}
             label={labels[field]}
             onEdit={() => setEditing(field)}
@@ -282,9 +289,9 @@ export default function ProfileSummary() {
           />
         ))}
         <EditableRow
-          empty="Optional"
           label={labels.nickname}
           onEdit={() => setEditing("nickname")}
+          optional
           value={shown(profile?.nickname)}
         />
       </ul>

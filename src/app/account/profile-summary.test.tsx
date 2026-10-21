@@ -67,6 +67,8 @@ describe("profile summary", () => {
   it("shows progress and each detail, with Add for what's missing", () => {
     render(<ProfileSummary />);
     expect(screen.getByText("4 of 5")).toBeTruthy();
+    // Says what's left rather than repeating the page subtitle.
+    expect(screen.getByText("1 more to go.")).toBeTruthy();
     expect(
       screen
         .getByRole("progressbar", { name: "Profile" })
@@ -95,6 +97,10 @@ describe("profile summary", () => {
         true
       );
       expect(labelText.parentElement?.classList.contains("gap-1")).toBe(true);
+      // Long emails wrap instead of being cut off: the row can't be opened.
+      const shown = within(row as HTMLElement).getByText(value);
+      expect(shown.classList).not.toContain("truncate");
+      expect(shown.classList).toContain("break-all");
     }
     await userEvent.click(
       screen.getByRole("button", { name: "Name comes from Google" })
@@ -127,6 +133,10 @@ describe("profile summary", () => {
     render(<ProfileSummary />);
     const rows = screen.getAllByRole("listitem");
     expect(rows.at(-1)?.textContent).toContain("Nickname");
+    // Optional is quiet text, not the cream chip that marks what's missing.
+    const optional = screen.getByText("Optional");
+    expect(optional.classList).not.toContain("bg-paper");
+    expect(optional.classList).toContain("text-muted-foreground");
     await userEvent.click(
       screen.getByRole("button", { name: "Nickname Optional" })
     );
