@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
 import { Button } from "~/components/ui/button";
 import type { SYNCED_FIELDS } from "~/lib/schedule-import";
+import { localTime } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -203,9 +204,26 @@ export default function ScheduleImport() {
                 key={entry.row}
                 title={entryTitle(entry.schedule)}
               >
-                <p className="type-body-sm mt-1 text-muted-foreground">
-                  {teamLine(entry.schedule) || "No team yet"}
-                </p>
+                <dl className="type-body-sm mt-2 grid gap-1">
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground">Starts</dt>
+                    <dd className="tabular-nums">
+                      {localTime(entry.schedule.date)}
+                    </dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground">Bible verse</dt>
+                    <dd className="break-words">
+                      {entry.schedule.bibleVerse || "Not in the sheet"}
+                    </dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground">Team</dt>
+                    <dd className="break-words">
+                      {teamLine(entry.schedule) || "No team yet"}
+                    </dd>
+                  </div>
+                </dl>
               </Row>
             ))}
           </Group>
