@@ -178,8 +178,23 @@ function MonthAgenda({
               )}
               href={`/admin/schedules/${schedule.id}/edit`}
             >
-              <span className="flex h-16 w-12 shrink-0 flex-col items-center justify-center self-start rounded-lg bg-secondary">
-                <span className="type-caption text-muted-foreground">
+              {/* Cream when slots are still open, so they stand out while scrolling. */}
+              <span
+                className={cn(
+                  "flex h-16 w-12 shrink-0 flex-col items-center justify-center self-start rounded-lg",
+                  open.length > 0
+                    ? "bg-paper text-paper-foreground"
+                    : "bg-secondary"
+                )}
+              >
+                <span
+                  className={cn(
+                    "type-caption",
+                    open.length > 0
+                      ? "text-paper-foreground/70"
+                      : "text-muted-foreground"
+                  )}
+                >
                   {date.toFormat("ccc")}
                 </span>
                 <span className="type-body tabular-nums">{date.day}</span>
