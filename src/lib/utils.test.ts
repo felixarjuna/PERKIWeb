@@ -10,9 +10,9 @@ import {
   timeAgo,
 } from "./utils";
 
-type ProfileRow = RouterOutputs["profiles"]["getUserProfiles"][number];
+type ProfileRow = RouterOutputs["profiles"]["members"][number];
 
-/** Builds a minimal getUserProfiles row; only `birthday` matters here. */
+/** Builds a minimal members row; only `birthday` matters here. */
 const row = (birthday: Date | null): ProfileRow => ({
   profiles: {
     address: null,
@@ -26,7 +26,14 @@ const row = (birthday: Date | null): ProfileRow => ({
     updatedAt: null,
     userId: "user",
   },
-  user: null,
+  user: {
+    createdAt: null,
+    email: null,
+    id: "user",
+    image: null,
+    name: null,
+    role: "member",
+  },
 });
 
 describe("cn", () => {

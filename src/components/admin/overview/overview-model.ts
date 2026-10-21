@@ -69,15 +69,15 @@ export function getCommunityOverview(
   const scoped = members.filter(
     (member) =>
       !options.location ||
-      normalizeLocation(member.profiles.location) === options.location
+      normalizeLocation(member.profiles?.location ?? null) === options.location
   );
   const registered = scoped.filter((member) =>
-    validDate(member.profiles.createdAt)
+    validDate(member.profiles?.createdAt ?? null)
   );
   const registeredBetween = (start: DateTime, end: DateTime) =>
     registered
       .filter((member) => {
-        const date = member.profiles.createdAt;
+        const date = member.profiles?.createdAt;
         return (
           date &&
           date.getTime() >= start.toMillis() &&
@@ -86,8 +86,8 @@ export function getCommunityOverview(
       })
       .sort(
         (a, b) =>
-          (b.profiles.createdAt?.getTime() ?? 0) -
-          (a.profiles.createdAt?.getTime() ?? 0)
+          (b.profiles?.createdAt?.getTime() ?? 0) -
+          (a.profiles?.createdAt?.getTime() ?? 0)
       );
   const { count, unit } = OVERVIEW_RANGES[options.range];
   // The last bucket always contains the selected month.
@@ -102,7 +102,7 @@ export function getCommunityOverview(
       count: inBucket.length,
       cumulative: registered.filter(
         (member) =>
-          (member.profiles.createdAt?.getTime() ?? Number.POSITIVE_INFINITY) <
+          (member.profiles?.createdAt?.getTime() ?? Number.POSITIVE_INFINITY) <
           end.toMillis()
       ).length,
       end: end.toJSDate(),
@@ -114,13 +114,14 @@ export function getCommunityOverview(
     birthdays: scoped
       .filter(
         (member) =>
-          calendarBirthday(member.profiles.birthday)?.month === month.month
+          calendarBirthday(member.profiles?.birthday ?? null)?.month ===
+          month.month
       )
       .sort(
         (a, b) =>
-          (calendarBirthday(a.profiles.birthday)?.day ?? 0) -
-            (calendarBirthday(b.profiles.birthday)?.day ?? 0) ||
-          a.profiles.id.localeCompare(b.profiles.id)
+          (calendarBirthday(a.profiles?.birthday ?? null)?.day ?? 0) -
+            (calendarBirthday(b.profiles?.birthday ?? null)?.day ?? 0) ||
+          a.user.id.localeCompare(b.user.id)
       ),
     buckets,
     current: registeredBetween(month, month.plus({ months: 1 })).length,

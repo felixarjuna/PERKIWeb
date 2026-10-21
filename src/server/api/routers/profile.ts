@@ -49,12 +49,20 @@ const markWelcomeSeen = (userId: string) =>
     .where(and(eq(users.id, userId), isNull(users.welcomeSeenAt)));
 
 export const profileRouter = createTRPCRouter({
-  /** Member directory with contact details: admins only. */
-  getUserProfiles: adminProcedure.query(async () => {
+  /** Records that the welcome step was skipped. */
+  markWelcomeSeen: protectedProcedure.mutation(async ({ ctx }) => {
+    await markWelcomeSeen(ctx.session.user.id);
+  }),
+  /**
+   * Every account with its member details (null until the profile is
+   * started), for the directory and dashboard: admins only.
+   */
+  members: adminProcedure.query(async () => {
     const rows = await db
       .select({
         profiles,
         user: {
+          createdAt: users.createdAt,
           email: users.email,
           id: users.id,
           image: users.image,
@@ -62,18 +70,12 @@ export const profileRouter = createTRPCRouter({
           role: users.role,
         },
       })
-      .from(profiles)
-      .leftJoin(users, eq(profiles.userId, users.id));
+      .from(users)
+      .leftJoin(profiles, eq(profiles.userId, users.id));
     return rows.map((row) => ({
       ...row,
-      user: row.user
-        ? { ...row.user, role: normalizeRole(row.user.role) }
-        : null,
+      user: { ...row.user, role: normalizeRole(row.user.role) },
     }));
-  }),
-  /** Records that the welcome step was skipped. */
-  markWelcomeSeen: protectedProcedure.mutation(async ({ ctx }) => {
-    await markWelcomeSeen(ctx.session.user.id);
   }),
   mine: protectedProcedure.query(({ ctx }) =>
     loadOwnProfile(ctx.session.user.id)

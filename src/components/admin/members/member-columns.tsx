@@ -10,11 +10,13 @@ import {
   birthdayMonth,
   birthdayOrder,
   type Member,
+  memberCompletion,
   memberDate,
   memberName,
   memberRole,
   memberSearchText,
   normalizeLocation,
+  profileLabel,
   registeredTime,
 } from "./member-model";
 
@@ -85,7 +87,7 @@ export function createMemberColumns(
               {memberName(member)}
             </button>
             <span className="type-caption truncate text-muted-foreground">
-              {member.user?.email ?? "No email"}
+              {member.user.email ?? "No email"}
             </span>
           </div>
         );
@@ -119,7 +121,32 @@ export function createMemberColumns(
         ROLES.indexOf(right.getValue<Role>(id)),
     },
     {
-      accessorFn: (member) => member.profiles.phoneNumber?.trim() || undefined,
+      accessorFn: (member) => memberCompletion(member).state,
+      cell: ({ row }) => (
+        <span className="type-caption whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
+          {profileLabel(row.original)}
+        </span>
+      ),
+      filterFn: "arrHas",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          ascLabel="Least first"
+          column={column}
+          descLabel="Most first"
+          label="Profile"
+        />
+      ),
+      id: "profile",
+      meta: { label: "Profile" },
+      size: 120,
+      sortFn: (left, right) =>
+        memberCompletion(left.original).filled -
+          memberCompletion(right.original).filled ||
+        Number(left.original.profiles !== null) -
+          Number(right.original.profiles !== null),
+    },
+    {
+      accessorFn: (member) => member.profiles?.phoneNumber?.trim() || undefined,
       cell: ({ getValue }) => getValue<string | undefined>() ?? <Missing />,
       enableSorting: false,
       header: ({ column }) => (
@@ -130,8 +157,9 @@ export function createMemberColumns(
       size: 160,
     },
     {
-      accessorFn: (member) => normalizeLocation(member.profiles.location),
-      cell: ({ row }) => row.original.profiles.location?.trim() || <Missing />,
+      accessorFn: (member) =>
+        normalizeLocation(member.profiles?.location ?? null),
+      cell: ({ row }) => row.original.profiles?.location?.trim() || <Missing />,
       filterFn: "arrHas",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -156,7 +184,7 @@ export function createMemberColumns(
     {
       accessorFn: birthdayOrder,
       cell: ({ row }) => {
-        const { birthday } = row.original.profiles;
+        const birthday = row.original.profiles?.birthday ?? null;
         return birthdayOrder(row.original) ? (
           memberDate(birthday, true)
         ) : (
@@ -181,7 +209,7 @@ export function createMemberColumns(
       accessorFn: registeredTime,
       cell: ({ row }) =>
         registeredTime(row.original) ? (
-          memberDate(row.original.profiles.createdAt)
+          memberDate(row.original.profiles?.createdAt ?? null)
         ) : (
           <Missing />
         ),
@@ -201,7 +229,7 @@ export function createMemberColumns(
       sortUndefined: "last",
     },
     {
-      accessorFn: (member) => member.profiles.major?.trim() || undefined,
+      accessorFn: (member) => member.profiles?.major?.trim() || undefined,
       cell: ({ getValue }) => getValue<string | undefined>() ?? <Missing />,
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -218,7 +246,7 @@ export function createMemberColumns(
       sortUndefined: "last",
     },
     {
-      accessorFn: (member) => member.profiles.address?.trim() || undefined,
+      accessorFn: (member) => member.profiles?.address?.trim() || undefined,
       cell: ({ getValue }) => (
         <Truncated
           className="max-w-56"
@@ -234,7 +262,7 @@ export function createMemberColumns(
       size: 240,
     },
     {
-      accessorFn: (member) => member.profiles.bio?.trim() || undefined,
+      accessorFn: (member) => member.profiles?.bio?.trim() || undefined,
       cell: ({ getValue }) => (
         <Truncated
           className="max-w-64"

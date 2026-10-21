@@ -17,6 +17,7 @@ const member = (index: number): Member => ({
     userId: `u${index}`,
   },
   user: {
+    createdAt: null,
     email: null,
     id: `u${index}`,
     image: null,

@@ -58,7 +58,7 @@ function MonthStepper({
 }
 
 export default function CommunityOverview() {
-  const query = api.profiles.getUserProfiles.useQuery();
+  const query = api.profiles.members.useQuery();
   const currentMonth = DateTime.now()
     .setZone("Europe/Berlin")
     .toFormat(MONTH_FORMAT);

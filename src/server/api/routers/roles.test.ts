@@ -153,14 +153,14 @@ describe("roles.myRole", () => {
   });
 });
 
-describe("profiles.getUserProfiles", () => {
+describe("profiles.members", () => {
   it("shows the role in the member directory", async () => {
     const mita = await insertUser({ role: "mita" });
     const legacy = await insertUser({ role: "admin" });
     await testDb
       .insert(profiles)
       .values({ location: "Aachen", userId: legacy.id });
-    const rows = await callerFor(mita.id).profiles.getUserProfiles();
-    expect(rows.find((r) => r.user?.id === legacy.id)?.user?.role).toBe("mita");
+    const rows = await callerFor(mita.id).profiles.members();
+    expect(rows.find((r) => r.user.id === legacy.id)?.user.role).toBe("mita");
   });
 });

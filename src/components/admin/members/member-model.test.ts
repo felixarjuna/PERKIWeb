@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getCommunityOverview } from "../overview/overview-model";
 import {
   birthdayOrder,
+  findMember,
   getMemberLocations,
   type Member,
   memberFilterParams,
@@ -12,9 +13,9 @@ import {
 const member = (
   id: string,
   name: string,
-  extra: Partial<Member["profiles"]> = {}
+  extra: Partial<NonNullable<Member["profiles"]>> | null = {}
 ): Member => ({
-  profiles: {
+  profiles: extra && {
     address: null,
     bio: null,
     birthday: null,
@@ -28,6 +29,7 @@ const member = (
     ...extra,
   },
   user: {
+    createdAt: null,
     email: `${name}@test.local`,
     id,
     image: null,
@@ -62,6 +64,7 @@ describe("member directory URL state", () => {
       locations: ["aachen", "missing"],
       page: 3,
       pageSize: 25,
+      profile: [],
       q: "ben",
       roles: [],
       sort: { desc: true, id: "birthday" },
@@ -141,14 +144,14 @@ describe("community metrics", () => {
     expect(overview.current).toBe(1);
     expect(overview.previous).toBe(1);
     expect(overview.missingDates).toBe(1);
-    expect(overview.birthdays.map((m) => m.profiles.id)).toEqual(["b"]);
+    expect(overview.birthdays.map((m) => m.user.id)).toEqual(["b"]);
     expect(overview.buckets.at(-1)).toMatchObject({
       count: 1,
       cumulative: 2,
       fullLabel: "October 2026",
     });
     // The bucket lists who registered: Ben, on 1 Oct in Berlin time.
-    expect(overview.buckets.at(-1)?.members.map((m) => m.profiles.id)).toEqual([
+    expect(overview.buckets.at(-1)?.members.map((m) => m.user.id)).toEqual([
       "b",
     ]);
   });
@@ -215,5 +218,38 @@ describe("community metrics", () => {
       "2026",
     ]);
     expect(years.buckets.at(-1)?.count).toBe(2);
+  });
+});
+
+describe("profile state", () => {
+  it("reads the profile filter and drops unknown states", () => {
+    expect(
+      readMemberFilters(
+        new URLSearchParams("profile=incomplete,bogus,not-started")
+      ).profile
+    ).toEqual(["incomplete", "not-started"]);
+    expect(memberFilterParams({ profile: [] }).profile).toBe("");
+    expect(memberFilterParams({ profile: ["complete"] }).profile).toBe(
+      "complete"
+    );
+  });
+
+  it("finds a member by account id, or by the profile id older links used", () => {
+    const records = [
+      member("u1", "Ben", { id: "p1" }),
+      member("u2", "Anna", null),
+    ];
+    expect(findMember(records, "u2")?.user.name).toBe("Anna");
+    expect(findMember(records, "p1")?.user.name).toBe("Ben");
+    expect(findMember(records, "nope")).toBeUndefined();
+  });
+
+  it("searches, sorts and groups accounts without a profile", () => {
+    const account = member("x", "Xena", null);
+    expect(memberSearchText(account)).toBe("xena xena@test.local");
+    expect(birthdayOrder(account)).toBeUndefined();
+    expect(getMemberLocations([account])).toEqual([
+      { label: "Not provided", value: "missing" },
+    ]);
   });
 });

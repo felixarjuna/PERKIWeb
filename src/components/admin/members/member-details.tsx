@@ -8,7 +8,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { type Member, memberDate, memberName } from "./member-model";
+import { profileFieldLabels } from "~/lib/profile-completion";
+import {
+  type Member,
+  memberCompletion,
+  memberDate,
+  memberName,
+} from "./member-model";
 import MemberRole from "./member-role";
 
 const PHONE_FORMATTING = /[^\d+]/g;
@@ -41,6 +47,18 @@ function MemberValue({
   return text;
 }
 
+/** "Profile complete", "Profile not started" or "Missing: phone, address". */
+function profileSummary(member: Member) {
+  const { missing, state } = memberCompletion(member);
+  if (state === "complete") {
+    return "Profile complete";
+  }
+  if (state === "not-started") {
+    return "Profile not started";
+  }
+  return `Missing: ${missing.map((field) => profileFieldLabels[field].toLowerCase()).join(", ")}`;
+}
+
 export default function MemberDetails({
   member,
   open,
@@ -52,16 +70,17 @@ export default function MemberDetails({
   onOpenChange: (open: boolean) => void;
   returnFocus: RefObject<HTMLElement | null>;
 }) {
+  const profile = member?.profiles ?? null;
   const fields = member
     ? [
-        ["Email", member.user?.email],
-        ["Phone", member.profiles.phoneNumber],
-        ["Location", member.profiles.location],
-        ["Birthday", memberDate(member.profiles.birthday, true)],
-        ["Registered", memberDate(member.profiles.createdAt)],
-        ["Major", member.profiles.major],
-        ["Address", member.profiles.address],
-        ["About", member.profiles.bio],
+        ["Email", member.user.email],
+        ["Phone", profile?.phoneNumber],
+        ["Location", profile?.location],
+        ["Birthday", memberDate(profile?.birthday ?? null, true)],
+        ["Registered", memberDate(profile?.createdAt ?? null)],
+        ["Major", profile?.major],
+        ["Address", profile?.address],
+        ["About", profile?.bio],
       ]
     : [];
   return (
@@ -84,7 +103,7 @@ export default function MemberDetails({
           </SheetTitle>
           <SheetDescription>
             {member
-              ? "Member profile · Community directory"
+              ? profileSummary(member)
               : "This profile is unavailable. Close this panel to return to the directory."}
           </SheetDescription>
         </SheetHeader>

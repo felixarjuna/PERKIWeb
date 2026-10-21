@@ -38,7 +38,7 @@ export function getWeekdayInCurrentWeek(date: Date, dayOfWeek: number) {
 }
 
 export const countBirthdaysThisMonth = (
-  profiles: RouterOutputs["profiles"]["getUserProfiles"]
+  profiles: RouterOutputs["profiles"]["members"]
 ) => {
   const now = DateTime.now(); // Current date (e.g., April 6, 2025)
   const currentMonth = now.month; // e.g., 4 for April

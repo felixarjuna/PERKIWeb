@@ -27,7 +27,7 @@ export default function MemberRole({ member }: { member: Member }) {
   const utils = api.useUtils();
   const viewer = api.roles.myRole.useQuery();
   const target = memberRole(member);
-  const userId = member.user?.id ?? member.profiles.userId;
+  const userId = member.user.id;
   const canEdit =
     viewer.data !== undefined && isStaffRole(viewer.data) && target !== "owner";
   const history = api.roles.getHistory.useQuery(

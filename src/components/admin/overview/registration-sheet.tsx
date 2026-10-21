@@ -45,27 +45,24 @@ export default function RegistrationSheet({
         {count ? (
           <ul className="flex flex-col divide-y divide-border/40">
             {bucket?.members.map((member) => (
-              <li
-                className="flex items-center gap-3 py-2"
-                key={member.profiles.id}
-              >
+              <li className="flex items-center gap-3 py-2" key={member.user.id}>
                 <span className="type-caption flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
                   {memberName(member).slice(0, 2).toUpperCase()}
                 </span>
                 <Link
                   className="min-w-0 flex-1 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
-                  href={`/admin/members?member=${encodeURIComponent(member.profiles.id)}`}
+                  href={`/admin/members?member=${encodeURIComponent(member.user.id)}`}
                 >
                   <span className="type-body-sm block truncate hover:underline">
                     {memberName(member)}
                   </span>
                   <span className="type-caption block truncate text-muted-foreground">
-                    {member.profiles.location?.trim() ||
+                    {member.profiles?.location?.trim() ||
                       "Location not provided"}
                   </span>
                 </Link>
                 <span className="type-caption shrink-0 text-muted-foreground tabular-nums">
-                  {memberDate(member.profiles.createdAt)}
+                  {memberDate(member.profiles?.createdAt ?? null)}
                 </span>
               </li>
             ))}

@@ -191,30 +191,40 @@ describe("profiles.whatsappGroup", () => {
   });
 });
 
-describe("profiles.getUserProfiles", () => {
-  it("joins each profile with its user's public columns for admins", async () => {
-    const member = await insertUser({ email: "member", name: "Member" });
+describe("profiles.members", () => {
+  it("lists every account with its profile, or none, for admins", async () => {
+    const member = await insertUser({
+      createdAt: new Date("2026-03-02T10:00:00.000Z"),
+      email: "member",
+      hashedPassword: "secret",
+      name: "Member",
+    });
     await insertProfile(member.id);
-    const admin = await insertUser({ role: "admin" });
+    const newcomer = await insertUser({ name: "Newcomer" });
+    const admin = await insertUser({ name: "Admin", role: "admin" });
 
-    const rows = await callerFor(admin.id).profiles.getUserProfiles();
+    const rows = await callerFor(admin.id).profiles.members();
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.profiles.phoneNumber).toBe("+49 123 456789");
-    expect(rows[0]?.user).toEqual({
+    expect(rows).toHaveLength(3);
+    const byId = (id: string) => rows.find((row) => row.user.id === id);
+    expect(byId(member.id)?.profiles?.phoneNumber).toBe("+49 123 456789");
+    expect(byId(member.id)?.user).toEqual({
+      createdAt: new Date("2026-03-02T10:00:00.000Z"),
       email: "member",
       id: member.id,
       image: null,
       name: "Member",
       role: "member",
     });
-    expect(rows[0]?.user).not.toHaveProperty("hashedPassword");
+    expect(byId(newcomer.id)?.profiles).toBeNull();
+    expect(byId(admin.id)?.user.role).toBe("mita");
+    expect(JSON.stringify(rows)).not.toContain("secret");
   });
 
   it("rejects signed-out visitors", async () => {
-    await expect(
-      anonymousCaller().profiles.getUserProfiles()
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(anonymousCaller().profiles.members()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   it("hides member PII from a freshly self-registered account", async () => {
@@ -223,7 +233,7 @@ describe("profiles.getUserProfiles", () => {
     const stranger = await insertUser({ name: "Stranger" });
 
     await expect(
-      callerFor(stranger.id).profiles.getUserProfiles()
+      callerFor(stranger.id).profiles.members()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
@@ -232,8 +242,8 @@ describe("profiles.getUserProfiles", () => {
     await insertProfile(member.id);
     const writer = await insertUser({ role: "writer" });
 
-    await expect(
-      callerFor(writer.id).profiles.getUserProfiles()
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(callerFor(writer.id).profiles.members()).rejects.toMatchObject(
+      { code: "FORBIDDEN" }
+    );
   });
 });

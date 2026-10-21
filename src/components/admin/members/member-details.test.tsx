@@ -52,7 +52,14 @@ const target = (role: "owner" | "member"): Member => ({
     updatedAt: null,
     userId: "u1",
   },
-  user: { email: "t@test.local", id: "u1", image: null, name: "Tess", role },
+  user: {
+    createdAt: null,
+    email: "t@test.local",
+    id: "u1",
+    image: null,
+    name: "Tess",
+    role,
+  },
 });
 
 function DetailHarness({ member }: { member?: Member }) {
