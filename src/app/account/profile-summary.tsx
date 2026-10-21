@@ -68,7 +68,9 @@ function LockHint({ label }: { label: string }) {
         <TooltipTrigger asChild>
           <button
             aria-label={`${label} comes from Google`}
-            className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            // A 24px target whose padding overlaps the gap, so the lock
+            // sits close to the label.
+            className="-ml-1 flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={(event) => {
               // Radix closes a tooltip on click; a tap should show it.
               event.preventDefault();
@@ -76,7 +78,7 @@ function LockHint({ label }: { label: string }) {
             }}
             type="button"
           >
-            <Lock aria-hidden="true" className="size-4" />
+            <Lock aria-hidden="true" className="size-3.5" />
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-56" side="top">
@@ -91,8 +93,10 @@ function LockHint({ label }: { label: string }) {
 function LockedRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <li className={rowClass}>
-      <LockHint label={label} />
-      <span className="type-body-sm flex-1">{label}</span>
+      <span className="flex flex-1 items-center gap-1">
+        <span className="type-body-sm">{label}</span>
+        <LockHint label={label} />
+      </span>
       <span className="type-body-sm min-w-0 truncate text-muted-foreground">
         {value || "Not set"}
       </span>
@@ -211,8 +215,7 @@ export default function ProfileSummary() {
             Profile
           </h2>
           {completion.state === "complete" ? (
-            <span className="type-body-sm inline-flex items-center gap-1 text-foreground">
-              Completed
+            <span className="type-body-sm inline-flex items-center gap-1.5 text-foreground">
               {/* Satoshi's letters sit low in their line box; 1px down centres
                   the icon on the capitals instead of the box. */}
               <CircleCheck
@@ -220,6 +223,7 @@ export default function ProfileSummary() {
                 // Filled: the circle takes the text colour, the check the card's.
                 className="size-4 shrink-0 translate-y-px fill-current stroke-card"
               />
+              Completed
             </span>
           ) : (
             <span className="type-body-sm text-muted-foreground tabular-nums">

@@ -56,10 +56,7 @@ describe("profile summary", () => {
     // Filled: a solid circle with the check cut out of it.
     const icon = screen.getByText("Completed").querySelector("svg");
     expect(icon?.classList.contains("fill-current")).toBe(true);
-    // The check follows the word, close to it.
-    const label = screen.getByText("Completed");
-    expect(label.lastElementChild).toBe(icon);
-    expect(label.classList.contains("gap-1")).toBe(true);
+
     expect(screen.queryByText("5 of 5")).toBeNull();
   });
 
@@ -85,11 +82,15 @@ describe("profile summary", () => {
     ] as const) {
       const row = screen.getByText(label).closest("li");
       expect(row?.textContent).toContain(value);
-      // The lock comes first, before the label.
+      // The lock follows the label, close to it.
       const lock = within(row as HTMLElement).getByRole("button", {
         name: `${label} comes from Google`,
       });
-      expect(row?.firstElementChild?.contains(lock)).toBe(true);
+      const labelText = screen.getByText(label);
+      expect(labelText.parentElement?.lastElementChild?.contains(lock)).toBe(
+        true
+      );
+      expect(labelText.parentElement?.classList.contains("gap-1")).toBe(true);
     }
     await userEvent.click(
       screen.getByRole("button", { name: "Name comes from Google" })
