@@ -11,5 +11,5 @@ export default async function AdminDashboardPage({
     requestedPath("/admin/dashboard", await searchParams)
   );
 
-  return <DashboardView {...adminShellProps(role)} />;
+  return <DashboardView {...(await adminShellProps(role))} />;
 }

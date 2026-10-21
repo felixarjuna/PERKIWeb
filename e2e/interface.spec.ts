@@ -65,7 +65,7 @@ for (const width of widths) {
       for (const route of [
         "/admin/names",
         "/admin/schedules",
-        "/admin/settings",
+        "/admin/settings/integrations",
         "/admin/speakers",
         "/admin/takeaways",
         "/admin/schedules/new",

@@ -8,7 +8,7 @@ export default async function ManagementPage() {
   const { role } = await requireTakeawayAccess("/admin/takeaways");
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       actions={
         <Link className={buttonVariants()} href="/admin/takeaways/new">
           Add takeaway

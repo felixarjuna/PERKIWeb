@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { settings } from "~/lib/db/schema/schema";
+import { DEFAULT_DISCORD_INVITE_URL, SETTING_KEYS } from "~/lib/settings";
 import { insertUser } from "~/test/caller";
+import { testDb } from "~/test/db";
 import { adminShellProps, canManageTakeaways, getRole, isAdmin } from "./authz";
 
 const DRIVE = "https://drive.example.test/folder";
@@ -29,15 +32,18 @@ describe("adminShellProps", () => {
     vi.unstubAllEnvs();
   });
 
-  it("gives the Drive URL to staff only, and tells everyone it is configured", () => {
+  it("gives the Drive URL to staff only, and tells everyone it is configured", async () => {
     vi.stubEnv("DRIVE_FOLDER_URL", DRIVE);
-    expect(adminShellProps("writer")).toEqual({
+    expect(await adminShellProps("writer")).toEqual({
+      discordUrl: DEFAULT_DISCORD_INVITE_URL,
       driveConfigured: true,
       driveUrl: null,
       viewerRole: "writer",
     });
     for (const role of ["mita", "owner"] as const) {
-      expect(adminShellProps(role)).toEqual({
+      // biome-ignore lint/performance/noAwaitInLoops: two roles, checked in order.
+      expect(await adminShellProps(role)).toEqual({
+        discordUrl: DEFAULT_DISCORD_INVITE_URL,
         driveConfigured: true,
         driveUrl: DRIVE,
         viewerRole: role,
@@ -45,11 +51,27 @@ describe("adminShellProps", () => {
     }
   });
 
-  it("reports no Drive at all when the folder is unset or empty", () => {
+  it("prefers the links saved in Settings", async () => {
+    vi.stubEnv("DRIVE_FOLDER_URL", DRIVE);
+    await testDb.insert(settings).values([
+      {
+        key: SETTING_KEYS.driveFolderUrl,
+        value: "https://drive.google.com/new",
+      },
+      { key: SETTING_KEYS.discordInviteUrl, value: "https://discord.gg/new" },
+    ]);
+    expect(await adminShellProps("mita")).toMatchObject({
+      discordUrl: "https://discord.gg/new",
+      driveUrl: "https://drive.google.com/new",
+    });
+  });
+
+  it("reports no Drive at all when the folder is unset or empty", async () => {
     for (const value of [undefined, ""]) {
       vi.stubEnv("DRIVE_FOLDER_URL", value);
       for (const role of ["writer", "mita", "owner"] as const) {
-        expect(adminShellProps(role)).toMatchObject({
+        // biome-ignore lint/performance/noAwaitInLoops: a few roles, checked in order.
+        expect(await adminShellProps(role)).toMatchObject({
           driveConfigured: false,
           driveUrl: null,
         });

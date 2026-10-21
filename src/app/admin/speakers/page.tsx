@@ -6,7 +6,7 @@ export default async function SpeakersPage() {
   const { role } = await requireAdmin("/admin/speakers");
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       section="Speakers"
       subtitle="Guest pastors who preach at our services."
     >

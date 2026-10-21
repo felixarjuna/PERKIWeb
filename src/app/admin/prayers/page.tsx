@@ -7,7 +7,7 @@ export default async function PrayersManagementPage() {
   const { role } = await requireAdmin("/admin/prayers");
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       actions={<AddPrayerDialog />}
       section="Prayers"
       subtitle="Review requests before they appear on the prayer wall."

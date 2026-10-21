@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { settings } from "~/lib/db/schema/schema";
+import { DEFAULT_DISCORD_INVITE_URL } from "~/lib/settings";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -20,12 +21,25 @@ describe("settings router", () => {
   beforeEach(() => {
     google.opens = true;
   });
-
-  it("has no schedule sheet until one is set", async () => {
-    expect(await (await admin()).settings.scheduleSheet()).toBeNull();
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it("saves the id from a pasted link and shows the file name", async () => {
+  it("starts with no sheet, no Drive folder and the default Discord invite", async () => {
+    vi.stubEnv("DRIVE_FOLDER_URL", "");
+    expect(await (await admin()).settings.integrations()).toEqual({
+      discordInvite: {
+        isDefault: true,
+        updatedAt: null,
+        updatedBy: null,
+        url: DEFAULT_DISCORD_INVITE_URL,
+      },
+      driveFolder: null,
+      scheduleSheet: null,
+    });
+  });
+
+  it("saves the sheet id from a pasted link and shows the file name", async () => {
     const api = await admin();
 
     expect(
@@ -34,7 +48,7 @@ describe("settings router", () => {
       })
     ).toEqual({ title: "2026 - Jadwal Pelayanan PERKI" });
 
-    expect(await api.settings.scheduleSheet()).toMatchObject({
+    expect((await api.settings.integrations()).scheduleSheet).toMatchObject({
       id: ID,
       title: "2026 - Jadwal Pelayanan PERKI",
       updatedBy: "Mita",
@@ -61,16 +75,56 @@ describe("settings router", () => {
 
     await api.settings.setScheduleSheet({ link: null });
 
-    expect(await api.settings.scheduleSheet()).toBeNull();
+    expect((await api.settings.integrations()).scheduleSheet).toBeNull();
+  });
+
+  it("shows a Drive folder still set in the environment until one is saved", async () => {
+    vi.stubEnv("DRIVE_FOLDER_URL", "https://drive.google.com/old");
+    const api = await admin();
+    expect((await api.settings.integrations()).driveFolder).toMatchObject({
+      fromEnvironment: true,
+      url: "https://drive.google.com/old",
+    });
+
+    await api.settings.setDriveFolder({
+      link: "https://drive.google.com/drive/folders/new",
+    });
+
+    expect((await api.settings.integrations()).driveFolder).toMatchObject({
+      fromEnvironment: false,
+      updatedBy: "Mita",
+      url: "https://drive.google.com/drive/folders/new",
+    });
+    await expect(
+      api.settings.setDriveFolder({ link: "https://example.com/folder" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("changes the Discord invite and goes back to the default", async () => {
+    const api = await admin();
+    await api.settings.setDiscordInvite({ link: "https://discord.gg/newcode" });
+    expect((await api.settings.integrations()).discordInvite).toMatchObject({
+      isDefault: false,
+      url: "https://discord.gg/newcode",
+    });
+
+    await api.settings.setDiscordInvite({ link: null });
+    expect((await api.settings.integrations()).discordInvite).toMatchObject({
+      isDefault: true,
+      url: DEFAULT_DISCORD_INVITE_URL,
+    });
+    await expect(
+      api.settings.setDiscordInvite({ link: "https://example.com/invite/x" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("is staff-only", async () => {
     const member = callerFor((await insertUser()).id);
-    await expect(member.settings.scheduleSheet()).rejects.toMatchObject({
+    await expect(member.settings.integrations()).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
     await expect(
-      anonymousCaller().settings.setScheduleSheet({ link: ID })
+      anonymousCaller().settings.setDiscordInvite({ link: null })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

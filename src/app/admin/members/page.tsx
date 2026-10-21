@@ -14,7 +14,7 @@ export default async function MembersPage({
   );
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       section="Members"
       subtitle="Find your people, keep in touch, and get to know your community."
     >

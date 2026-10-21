@@ -1,13 +1,12 @@
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { BusFront, Clock3, MapPin } from "lucide-react";
 import { buttonVariants } from "~/components/ui/button";
-import { DISCORD_INVITE_URL } from "~/lib/data";
 import MapEmbed from "./map-embed";
 import Section from "./section";
 
 const busLines = ["7", "27", "37", "47", "147"] as const;
 
-export default function VisitUs() {
+export default function VisitUs({ discordUrl }: { discordUrl: string }) {
   return (
     <Section
       eyebrow="Come and see"
@@ -80,7 +79,7 @@ export default function VisitUs() {
                       size: "sm",
                       variant: "outline",
                     })}
-                    href={DISCORD_INVITE_URL}
+                    href={discordUrl}
                     rel="noopener noreferrer"
                     target="_blank"
                   >

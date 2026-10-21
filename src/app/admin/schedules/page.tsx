@@ -8,7 +8,7 @@ export default async function ManagementPage() {
   const { role } = await requireAdmin("/admin/schedules");
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       actions={
         <Link className={buttonVariants()} href="/admin/schedules/new">
           Add schedule

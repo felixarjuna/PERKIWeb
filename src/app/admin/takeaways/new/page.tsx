@@ -14,7 +14,7 @@ export default async function EditorPage({
   );
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       section="Takeaways"
       title="Add takeaway"
     >

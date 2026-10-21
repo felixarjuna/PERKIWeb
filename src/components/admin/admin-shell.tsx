@@ -30,6 +30,7 @@ export default function AdminShell({
   subtitle,
   actions,
   viewerRole,
+  discordUrl,
   driveConfigured,
   driveUrl,
 }: {
@@ -39,6 +40,7 @@ export default function AdminShell({
   subtitle?: string;
   actions?: ReactNode;
   viewerRole: Role;
+  discordUrl: string;
   driveConfigured: boolean;
   driveUrl: string | null;
 }) {
@@ -46,6 +48,7 @@ export default function AdminShell({
     <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>
         <AppSidebar
+          discordUrl={discordUrl}
           driveConfigured={driveConfigured}
           driveUrl={driveUrl}
           viewerRole={viewerRole}
