@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { insertSchedule } from "./db";
+import { insertSchedule, insertTakeaway } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption, toast } from "./helpers";
 
@@ -103,6 +103,39 @@ test("takeaway list shows a new takeaway right after adding it", async ({
   await createTakeaway(page, scheduleTitle, keypoints);
 
   await expect(takeawayArticle(page, keypoints)).toHaveCount(1);
+});
+
+test("a takeaway card opens the full takeaway on its own page", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const scheduleTitle = `Public takeaway schedule ${suffix}`;
+  const first = `First paragraph ${suffix}`;
+  const second = `Second paragraph ${suffix}`;
+  const takeawayId = await insertTakeaway(
+    await insertSchedule(scheduleTitle),
+    `${first}\n\n${second}`
+  );
+
+  await page.goto("/takeaway");
+  await page.getByRole("link", { exact: true, name: scheduleTitle }).click();
+
+  await expect(page).toHaveURL(`/takeaway/${takeawayId}`);
+  await expect(page).toHaveTitle(`${scheduleTitle} · PERKI Aachen`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: scheduleTitle })
+  ).toBeVisible();
+  await expect(page.getByText(first, { exact: true })).toBeVisible();
+  await expect(page.getByText(second, { exact: true })).toBeVisible();
+  await expect(page.getByText("Test Author")).toBeVisible();
+
+  await page.getByRole("link", { name: "All takeaways" }).click();
+  await expect(page).toHaveURL("/takeaway");
+});
+
+test("an unknown takeaway is a 404", async ({ page }) => {
+  const response = await page.goto("/takeaway/999999999");
+  expect(response?.status()).toBe(404);
 });
 
 test("a takeaway created from a direct link credits its author", async ({

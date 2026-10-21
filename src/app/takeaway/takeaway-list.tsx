@@ -1,6 +1,7 @@
 "use client";
 
-import { ListFilter } from "lucide-react";
+import { ChevronRight, ListFilter } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 import Loader from "~/components/loader";
 import {
@@ -11,9 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { type EventTypeEnum, eventTypeEnum } from "~/lib/db/schema/schema";
-import { dateTimeFormatter } from "~/lib/utils";
-import { api } from "~/trpc/react";
+import { eventTypeEnum } from "~/lib/db/schema/schema";
+import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  contributorNames,
+  fellowshipLabel,
+  preview,
+  serviceDate,
+} from "./takeaway-format";
+
+type Takeaway = RouterOutputs["takeaways"]["getTakeaways"][number];
 
 export default function TakeawayList() {
   const { data } = api.takeaways.getTakeaways.useQuery();
@@ -62,7 +70,7 @@ export default function TakeawayList() {
             <SelectItem value="all">All fellowships</SelectItem>
             {eventTypeEnum.enumValues.map((value) => (
               <SelectItem key={value} value={value}>
-                {value === "bible_study" ? "Bible study" : "Church service"}
+                {fellowshipLabel(value)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -76,61 +84,53 @@ export default function TakeawayList() {
         </p>
       ) : null}
 
-      {takeaways.map((item) => {
-        const contributors = item.takeaways.contributors as string[];
-        return (
-          <TakeawayItem
-            bibleVerse={item.schedules.bibleVerse}
-            contributors={contributors}
-            date={dateTimeFormatter(item.schedules.date.toString())}
-            eventType={item.schedules.type}
-            key={item.takeaways.id}
-            speaker={item.schedules.leader}
-            summary={item.takeaways.keypoints}
-            title={item.schedules.title}
-          />
-        );
-      })}
+      {takeaways.length > 0 ? (
+        <ul className="space-y-4">
+          {takeaways.map((item) => (
+            <li key={item.takeaways.id}>
+              <TakeawayCard item={item} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
 
-interface TakeawayItemProps {
-  readonly bibleVerse: string;
-  readonly contributors: string[];
-  readonly date: string;
-  readonly eventType: EventTypeEnum;
-  readonly speaker: string;
-  readonly summary: string;
-  readonly title: string;
-}
-
-function TakeawayItem(props: TakeawayItemProps) {
+function TakeawayCard({ item }: { item: Takeaway }) {
+  const { schedules: schedule, takeaways: takeaway } = item;
+  const contributors = contributorNames(takeaway.contributors);
   return (
-    <article className="w-full rounded-xl bg-card p-4 transition-colors duration-150 hover:bg-accent/40 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className="type-subheading min-w-0 flex-1 break-words">
-          {props.title}
-        </h2>
-        <div className="flex shrink-0 items-center gap-x-2">
-          <span className="type-caption whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
-            {props.eventType === "bible_study"
-              ? "bible study"
-              : "church service"}
-          </span>
-        </div>
-      </div>
-      <div className="type-caption mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-        <p>{props.speaker}</p>
-        <span>&middot;</span>
-        <p>{props.bibleVerse}</p>
-        <span>&middot;</span>
-        <p>{props.date}</p>
-      </div>
-      <p className="type-body mt-4 whitespace-break-spaces">{props.summary}</p>
-      <p className="type-caption mt-4 text-muted-foreground">
-        {props.contributors.join(" ")}
+    <article className="relative rounded-xl bg-card p-4 transition-colors duration-150 hover:bg-accent/40 sm:p-6">
+      <p className="type-eyebrow text-muted-foreground">
+        {fellowshipLabel(schedule.type)} · {serviceDate(schedule.date)}
       </p>
+      <h2 className="type-subheading mt-2 break-words">
+        <Link
+          className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          href={`/takeaway/${takeaway.id}`}
+        >
+          {schedule.title}
+        </Link>
+      </h2>
+      <p className="type-body-sm mt-1 text-muted-foreground">
+        {[schedule.bibleVerse, schedule.preacher].filter(Boolean).join(" · ")}
+      </p>
+      <p className="type-body mt-3 line-clamp-3 whitespace-pre-line text-pretty">
+        {preview(takeaway.keypoints)}
+      </p>
+      <div className="type-body-sm mt-4 flex items-center justify-between gap-3 text-muted-foreground">
+        <p className="min-w-0">
+          {contributors ? `Shared by ${contributors}` : null}
+        </p>
+        <span
+          aria-hidden="true"
+          className="flex shrink-0 items-center gap-1 text-foreground"
+        >
+          Read
+          <ChevronRight className="size-4" />
+        </span>
+      </div>
     </article>
   );
 }
