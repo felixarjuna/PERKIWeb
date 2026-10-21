@@ -37,10 +37,23 @@ const typeLabel = (type: CalendarSchedule["type"]) =>
 const openOf = (schedule: CalendarSchedule, today: string) =>
   localDay(schedule.date) >= today ? openSlots(schedule) : [];
 
-function OpenBadge({ open }: { open: string[] }) {
+const OPEN_LIST = new Intl.ListFormat("en", { type: "conjunction" });
+
+/**
+ * Whether the team is complete. A small cream dot marks open slots; the words
+ * carry the meaning. `compact` (month grid) gives the count, otherwise the
+ * slots are named.
+ */
+function TeamStatus({ open, compact }: { open: string[]; compact?: boolean }) {
   return open.length > 0 ? (
-    <span className="type-caption w-fit rounded-full bg-paper px-2 text-paper-foreground">
-      {open.length} open
+    <span className="type-caption inline-flex items-center gap-1.5 text-foreground">
+      <span
+        aria-hidden="true"
+        className="size-1.5 shrink-0 rounded-full bg-paper"
+      />
+      {compact
+        ? `${open.length} open`
+        : `Needs ${OPEN_LIST.format(open.map((slot) => slot.toLowerCase()))}`}
     </span>
   ) : (
     <span className="type-caption inline-flex items-center gap-1 text-muted-foreground">
@@ -73,7 +86,7 @@ function CellEvent({
         {localTime(schedule.date)} · {typeLabel(schedule.type)}
       </span>
       <span className="type-body-sm truncate">{schedule.title}</span>
-      {past ? null : <OpenBadge open={open} />}
+      {past ? null : <TeamStatus compact open={open} />}
       {open.length > 0 ? (
         <span className="sr-only">Open: {open.join(", ")}</span>
       ) : null}
@@ -178,23 +191,8 @@ function MonthAgenda({
               )}
               href={`/admin/schedules/${schedule.id}/edit`}
             >
-              {/* Cream when slots are still open, so they stand out while scrolling. */}
-              <span
-                className={cn(
-                  "flex h-16 w-12 shrink-0 flex-col items-center justify-center self-start rounded-lg",
-                  open.length > 0
-                    ? "bg-paper text-paper-foreground"
-                    : "bg-secondary"
-                )}
-              >
-                <span
-                  className={cn(
-                    "type-caption",
-                    open.length > 0
-                      ? "text-paper-foreground/70"
-                      : "text-muted-foreground"
-                  )}
-                >
+              <span className="flex h-16 w-12 shrink-0 flex-col items-center justify-center self-start rounded-lg bg-secondary">
+                <span className="type-caption text-muted-foreground">
                   {date.toFormat("ccc")}
                 </span>
                 <span className="type-body tabular-nums">{date.day}</span>
@@ -206,12 +204,7 @@ function MonthAgenda({
                 <span className="type-body-sm break-words">
                   {schedule.title}
                 </span>
-                {past ? null : <OpenBadge open={open} />}
-                {open.length > 0 ? (
-                  <span className="type-caption text-muted-foreground">
-                    {open.join(", ")}
-                  </span>
-                ) : null}
+                {past ? null : <TeamStatus open={open} />}
               </span>
             </Link>
           </li>
