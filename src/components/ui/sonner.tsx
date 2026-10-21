@@ -21,17 +21,25 @@ const Toaster = ({ ...props }: ToasterProps) => (
       success: <CircleCheck className="h-4 w-4" />,
       warning: <TriangleAlert className="h-4 w-4" />,
     }}
+    style={
+      {
+        // Sonner's own theme CSS outranks utility classes, so the toast
+        // takes its colors from these variables: a raised green surface,
+        // no outline, like the site's dialogs.
+        "--border-radius": "var(--radius-xl)",
+        "--normal-bg": "var(--popover)",
+        "--normal-border": "var(--popover)",
+        "--normal-text": "var(--popover-foreground)",
+      } as React.CSSProperties
+    }
     // The site ships a single dark-green theme; no next-themes provider.
     theme="dark"
     toastOptions={{
       classNames: {
-        actionButton:
-          "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-        cancelButton:
-          "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-        description: "group-[.toast]:text-muted-foreground",
-        toast:
-          "group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border-none group-[.toaster]:shadow-lg",
+        actionButton: "!bg-primary !text-primary-foreground",
+        cancelButton: "!bg-secondary !text-muted-foreground",
+        description: "!text-muted-foreground",
+        toast: "font-satoshi shadow-lg",
       },
     }}
     {...props}
