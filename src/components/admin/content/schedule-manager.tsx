@@ -9,8 +9,9 @@ import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented, QueryMessage } from "../admin-controls";
 import { type ContentFilters, filterSchedules } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
+import { monthOf } from "./month-calendar";
 import RecordActions from "./record-actions";
-import ScheduleCalendar, { monthOf } from "./schedule-calendar";
+import ScheduleCalendar from "./schedule-calendar";
 
 const VIEWS = [
   { icon: List, label: "List", value: "list" },
