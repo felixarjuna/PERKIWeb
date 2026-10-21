@@ -183,6 +183,12 @@ describe("member table", () => {
     expect(screen.getByText("Not started")).toBeTruthy();
     expect(screen.getByText("3 of 5")).toBeTruthy();
     expect(screen.getByText("Complete")).toBeTruthy();
+    // Each state has its own icon, so it reads at a glance.
+    const icon = (text: string) =>
+      screen.getByText(text).closest("span")?.querySelector("svg")?.classList;
+    expect(icon("Complete")?.contains("lucide-circle-check")).toBe(true);
+    expect(icon("3 of 5")?.contains("lucide-circle-dashed")).toBe(true);
+    expect(icon("Not started")?.contains("lucide-circle")).toBe(true);
   });
 
   it("opens a profile from the pinned member name", async () => {

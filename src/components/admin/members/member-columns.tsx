@@ -1,8 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Circle, CircleCheck, CircleDashed } from "lucide-react";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
+import type { ProfileState } from "~/lib/profile-completion";
 import { ROLES, type Role } from "~/lib/roles";
 import { cn } from "~/lib/utils";
 import { RoleBadge } from "../role-badge";
@@ -21,6 +23,12 @@ import {
 } from "./member-model";
 
 const MISSING = normalizeLocation(null);
+/** Done, partly filled in, not started: readable at a glance in the table. */
+const PROFILE_ICONS: Record<ProfileState, typeof Circle> = {
+  complete: CircleCheck,
+  incomplete: CircleDashed,
+  "not-started": Circle,
+};
 
 export type MemberColumn = ColumnDef<DataTableFeatures, Member>;
 
@@ -122,11 +130,15 @@ export function createMemberColumns(
     },
     {
       accessorFn: (member) => memberCompletion(member).state,
-      cell: ({ row }) => (
-        <span className="type-caption whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
-          {profileLabel(row.original)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const Icon = PROFILE_ICONS[memberCompletion(row.original).state];
+        return (
+          <span className="type-caption inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
+            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
+            {profileLabel(row.original)}
+          </span>
+        );
+      },
       filterFn: "arrHas",
       header: ({ column }) => (
         <DataTableColumnHeader
