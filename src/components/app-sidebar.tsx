@@ -30,7 +30,7 @@ import {
 import { DISCORD_INVITE_URL } from "~/lib/data";
 import { isStaffRole, type Role } from "~/lib/roles";
 
-const GROUPS = ["Community", "Content"] as const;
+const GROUPS = ["Community", "Content", "Workspace"] as const;
 
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
 export function AppSidebar({
