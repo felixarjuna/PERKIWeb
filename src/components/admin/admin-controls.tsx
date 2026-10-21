@@ -16,7 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
 
 export interface AdminOption {
-  /** Shown instead of the label in a segmented control; the label names it. */
+  /** Shown before the label in a segmented control. */
   icon?: LucideIcon;
   label: string;
   value: string;
@@ -133,16 +133,16 @@ export function AdminSegmented({
     >
       {options.map((option) => (
         <ToggleGroupItem
-          aria-label={option.icon ? option.label : undefined}
+          className={
+            option.icon ? "flex-auto gap-1.5 [&_svg]:shrink-0" : undefined
+          }
           key={option.value}
-          title={option.icon ? option.label : undefined}
           value={option.value}
         >
           {option.icon ? (
             <option.icon aria-hidden="true" className="size-4" />
-          ) : (
-            option.label
-          )}
+          ) : null}
+          {option.label}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
