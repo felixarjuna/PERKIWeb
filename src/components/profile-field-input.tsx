@@ -1,8 +1,18 @@
 "use client";
 
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
 import { Input } from "~/components/ui/input";
 import { PhoneInput } from "~/components/ui/phone-input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 import type { ProfileField } from "~/lib/profile-completion";
+import { cn } from "~/lib/utils";
 import type { SaveProfileInput } from "~/server/api/schema/schema";
 
 /** Length of the `YYYY-MM-DD` prefix of an ISO timestamp. */
@@ -40,6 +50,71 @@ export function saveInputOf(
   return { [field]: draft.trim() };
 }
 
+const DRAFT_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const OLDEST_BIRTH_YEAR = 1940;
+/** Where an empty birthday opens: nearer most members than today. */
+const FIRST_SHOWN_YEAR = 2000;
+
+/** A `YYYY-MM-DD` draft as a local calendar day, the way the picker shows it. */
+function localDay(draft: string): Date | undefined {
+  const match = DRAFT_DATE.exec(draft);
+  return match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : undefined;
+}
+
+/** The schedule form's date picker, with month and year dropdowns. */
+function BirthdayPicker({
+  id,
+  onChange,
+  value,
+}: {
+  id: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const selected = localDay(value);
+  const today = new Date();
+  const shown = selected ? format(selected, "PPP") : "Pick a date";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          // The field's <Label> would otherwise replace the shown date.
+          aria-label={`Birthday, ${shown}`}
+          className={cn(
+            "w-full justify-start bg-secondary pl-3 text-left font-normal hover:bg-secondary",
+            !selected && "text-muted-foreground"
+          )}
+          id={id}
+          type="button"
+          variant="secondary"
+        >
+          <span>{shown}</span>
+          <CalendarIcon
+            aria-hidden="true"
+            className="ml-auto size-4 opacity-50"
+          />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-1">
+        <Calendar
+          autoFocus
+          captionLayout="dropdown"
+          defaultMonth={selected ?? new Date(FIRST_SHOWN_YEAR, 0)}
+          endMonth={today}
+          mode="single"
+          onSelect={(picked) =>
+            onChange(picked ? format(picked, "yyyy-MM-dd") : "")
+          }
+          selected={selected}
+          startMonth={new Date(OLDEST_BIRTH_YEAR, 0)}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function ProfileFieldInput({
   field,
   id,
@@ -51,6 +126,9 @@ export default function ProfileFieldInput({
   onChange: (value: string) => void;
   value: string;
 }) {
+  if (field === "birthday") {
+    return <BirthdayPicker id={id} onChange={onChange} value={value} />;
+  }
   if (field === "phoneNumber") {
     return (
       <PhoneInput
@@ -65,11 +143,10 @@ export default function ProfileFieldInput({
   }
   return (
     <Input
-      autoComplete={field === "birthday" ? "bday" : undefined}
       id={id}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholders[field] || undefined}
-      type={field === "birthday" ? "date" : "text"}
+      type="text"
       value={value}
     />
   );

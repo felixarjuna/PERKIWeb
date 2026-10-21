@@ -5,7 +5,8 @@ import { profileCompletion } from "~/lib/profile-completion";
 import ProfileSummary from "./profile-summary";
 
 const { saveMine } = vi.hoisted(() => ({ saveMine: vi.fn() }));
-const profile = {
+let profile: Record<string, string | Date | null>;
+const incomplete = {
   address: "Roermonder Str. 110",
   birthday: new Date("2000-03-12T00:00:00.000Z"),
   location: "Aachen",
@@ -35,7 +36,17 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 describe("profile summary", () => {
-  beforeEach(() => saveMine.mockReset());
+  beforeEach(() => {
+    saveMine.mockReset();
+    profile = incomplete;
+  });
+
+  it("says Completed once every detail is filled in", () => {
+    profile = { ...incomplete, phoneNumber: "+49 151 1234" };
+    render(<ProfileSummary />);
+    expect(screen.getByText("Completed")).toBeTruthy();
+    expect(screen.queryByText("5 of 5")).toBeNull();
+  });
 
   it("shows progress and each detail, with Add for what's missing", () => {
     render(<ProfileSummary />);

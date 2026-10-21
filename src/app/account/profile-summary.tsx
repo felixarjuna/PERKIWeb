@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CircleCheck } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -102,9 +102,16 @@ export default function ProfileSummary() {
           <h2 className="type-subheading" id="profile-progress">
             Profile
           </h2>
-          <span className="type-body-sm text-muted-foreground tabular-nums">
-            {completion.filled} of {completion.total}
-          </span>
+          {completion.state === "complete" ? (
+            <span className="type-body-sm inline-flex items-center gap-1.5 text-foreground">
+              <CircleCheck aria-hidden="true" className="size-4" />
+              Completed
+            </span>
+          ) : (
+            <span className="type-body-sm text-muted-foreground tabular-nums">
+              {completion.filled} of {completion.total}
+            </span>
+          )}
         </div>
         <div
           aria-labelledby="profile-progress"

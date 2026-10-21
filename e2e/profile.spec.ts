@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { adminLogin, createSignedInUser, toast } from "./helpers";
 
 const WHATSAPP = "https://chat.whatsapp.com/E2eGroupLink";
+const JANUARY_15_2000 = /January 15th, 2000/;
 
 test("the welcome step comes once on the next app page, then returns there", async ({
   page,
@@ -66,7 +67,6 @@ test("members complete their profile on /account and unlock WhatsApp", async ({
   ).toBeVisible();
 
   const fields = [
-    ["Birthday", "2000-03-15"],
     ["Where you live", "Aachen"],
     ["Address", "Roermonder Str. 110"],
     ["Studies", "Maschinenbau"],
@@ -79,6 +79,22 @@ test("members complete their profile on /account and unlock WhatsApp", async ({
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(dialog).toBeHidden();
   }
+  // The birthday uses the schedule form's calendar; an empty one opens at
+  // January 2000.
+  await page.getByRole("button", { name: "Birthday Add" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Birthday, Pick a date" })
+    .click();
+  await page.getByRole("button", { name: JANUARY_15_2000 }).click();
+  await expect(
+    page.getByRole("button", { name: "Birthday, January 15th, 2000" })
+  ).toBeVisible();
+  await page
+    .getByRole("dialog", { name: "Birthday" })
+    .getByRole("button", { name: "Save" })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Birthday" })).toBeHidden();
   await page.getByRole("button", { name: "Phone Add" }).click();
   await page
     .getByRole("dialog")
@@ -87,7 +103,7 @@ test("members complete their profile on /account and unlock WhatsApp", async ({
   await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  await expect(page.getByText("5 of 5")).toBeVisible();
+  await expect(page.getByText("Completed")).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Join the WhatsApp group" })
   ).toHaveAttribute("href", WHATSAPP);
