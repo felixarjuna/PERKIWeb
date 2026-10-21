@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Account = RouterOutputs["people"]["accounts"][number];
@@ -257,8 +258,9 @@ export default function NameLinks() {
           <span className="text-muted-foreground">{linked.data.length}</span>
         </h2>
         <p className="type-body-sm text-muted-foreground">
-          Every account with the names it's written as. Names you linked can be
-          removed; names spelled exactly like the account link on their own.
+          Every account with the names it's written as. Remove a name you linked
+          with its ×; names spelled exactly like the account link on their own
+          and have no ×.
         </p>
         {linked.data.length === 0 ? (
           <p className="type-body-sm text-muted-foreground">
@@ -283,17 +285,20 @@ export default function NameLinks() {
                 >
                   {entry.names.map((name) => (
                     <li
-                      className="type-body-sm inline-flex min-h-8 items-center gap-1 rounded-full bg-secondary py-0.5 ps-3 pe-1 text-secondary-foreground"
+                      className={cn(
+                        "type-caption inline-flex h-6 items-center gap-1 rounded-full bg-secondary ps-2 text-secondary-foreground",
+                        name.saved ? "pe-0.5" : "pe-2"
+                      )}
                       key={name.key}
                     >
                       <span className="break-words">{name.label}</span>
-                      <span className="type-caption text-muted-foreground tabular-nums">
+                      <span className="text-muted-foreground tabular-nums">
                         {name.count > 0 ? `×${name.count}` : "unused"}
                       </span>
                       {name.saved ? (
                         <Button
                           aria-label={`Unlink “${name.label}”`}
-                          className="rounded-full"
+                          className="size-5 rounded-full text-muted-foreground hover:text-foreground [&_svg]:size-3"
                           disabled={pending}
                           onClick={() => unlink.mutate({ name: name.key })}
                           size="icon-sm"
@@ -302,11 +307,7 @@ export default function NameLinks() {
                         >
                           <X aria-hidden="true" />
                         </Button>
-                      ) : (
-                        <span className="type-caption pe-2 text-muted-foreground">
-                          exact
-                        </span>
-                      )}
+                      ) : null}
                     </li>
                   ))}
                 </ul>
