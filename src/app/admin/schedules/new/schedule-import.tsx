@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
-import { PreachedBy, TeamList } from "~/components/schedule/team";
+import { TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
 import type { SYNCED_FIELDS } from "~/lib/schedule-import";
 import { localTime } from "~/lib/schedule-team";
@@ -202,8 +202,12 @@ export default function ScheduleImport() {
                 title={entryTitle(entry.schedule)}
                 verse={entry.schedule.bibleVerse}
               >
-                <PreachedBy className="mt-3" team={entry.team} />
-                <TeamList className="mt-3" team={entry.team} />
+                {entry.team.length > 0 ? (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="type-eyebrow text-muted-foreground">Team</p>
+                    <TeamList className="mt-2" team={entry.team} withPreacher />
+                  </div>
+                ) : null}
               </Row>
             ))}
           </Group>

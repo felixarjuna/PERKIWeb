@@ -30,15 +30,22 @@ export function PreachedBy({
   );
 }
 
-/** Who serves, in slot order, each with their role and avatar; the preacher is shown by `PreachedBy`. */
+/**
+ * Who serves, in slot order, each with their role and avatar. The preacher is
+ * left to `PreachedBy` unless `withPreacher` lists them here too.
+ */
 export function TeamList({
   team,
+  withPreacher = false,
   className,
 }: {
   team: readonly TeamSlot[];
+  withPreacher?: boolean;
   className?: string;
 }) {
-  const slots = team.filter((slot) => slot.role !== "preacher");
+  const slots = withPreacher
+    ? team
+    : team.filter((slot) => slot.role !== "preacher");
   if (slots.length === 0) {
     return null;
   }
