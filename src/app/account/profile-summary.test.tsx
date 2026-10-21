@@ -56,6 +56,10 @@ describe("profile summary", () => {
     // Filled: a solid circle with the check cut out of it.
     const icon = screen.getByText("Completed").querySelector("svg");
     expect(icon?.classList.contains("fill-current")).toBe(true);
+    // The check follows the word, close to it.
+    const label = screen.getByText("Completed");
+    expect(label.lastElementChild).toBe(icon);
+    expect(label.classList.contains("gap-1")).toBe(true);
     expect(screen.queryByText("5 of 5")).toBeNull();
   });
 

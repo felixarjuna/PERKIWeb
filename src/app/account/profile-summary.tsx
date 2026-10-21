@@ -211,7 +211,8 @@ export default function ProfileSummary() {
             Profile
           </h2>
           {completion.state === "complete" ? (
-            <span className="type-body-sm inline-flex items-center gap-1.5 text-foreground">
+            <span className="type-body-sm inline-flex items-center gap-1 text-foreground">
+              Completed
               {/* Satoshi's letters sit low in their line box; 1px down centres
                   the icon on the capitals instead of the box. */}
               <CircleCheck
@@ -219,7 +220,6 @@ export default function ProfileSummary() {
                 // Filled: the circle takes the text colour, the check the card's.
                 className="size-4 shrink-0 translate-y-px fill-current stroke-card"
               />
-              Completed
             </span>
           ) : (
             <span className="type-body-sm text-muted-foreground tabular-nums">
