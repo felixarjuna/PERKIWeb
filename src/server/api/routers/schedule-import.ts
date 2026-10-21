@@ -49,6 +49,7 @@ async function planTab(tab: string) {
       cleaningGroup: schedules.cleaningGroup,
       cookingGroup: schedules.cookingGroup,
       date: schedules.date,
+      description: schedules.description,
       id: schedules.id,
       leader: schedules.leader,
       multimedia: schedules.multimedia,
@@ -146,12 +147,17 @@ export const scheduleImportRouter = createTRPCRouter({
           added += 1;
         } else if (entry.status === "changed") {
           const columns = syncedColumns(row);
-          const setsTime = entry.changes.some(
-            (change) => change.field === "time"
-          );
+          const changes = (field: string) =>
+            entry.changes.some((change) => change.field === field);
           await tx
             .update(schedules)
-            .set(setsTime ? { ...columns, date: row.date } : columns)
+            .set({
+              ...columns,
+              ...(changes("time") ? { date: row.date } : {}),
+              ...(changes("description")
+                ? { description: row.description }
+                : {}),
+            })
             .where(eq(schedules.id, entry.id));
           await syncAssignments(tx, entry.id, columns);
           updated += 1;

@@ -1,10 +1,11 @@
 "use client";
 
+import { CalendarDays, List } from "lucide-react";
 import { DateTime } from "luxon";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented, QueryMessage } from "../admin-controls";
 import { type ContentFilters, filterSchedules } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
@@ -12,8 +13,8 @@ import RecordActions from "./record-actions";
 import ScheduleCalendar, { monthOf } from "./schedule-calendar";
 
 const VIEWS = [
-  { label: "List", value: "list" },
-  { label: "Calendar", value: "calendar" },
+  { icon: List, label: "List", value: "list" },
+  { icon: CalendarDays, label: "Calendar", value: "calendar" },
 ] as const;
 
 /** Keeps the view and month in the URL, so back and reload land on the same month. */
@@ -31,6 +32,70 @@ function updateUrl(values: Record<string, string | null>) {
     null,
     "",
     query ? `/admin/schedules?${query}` : "/admin/schedules"
+  );
+}
+
+const ZONE = "Europe/Berlin";
+
+type ScheduleRecord = RouterOutputs["schedules"]["getSchedules"][number];
+
+/**
+ * One schedule: the date beside the details on every screen size, actions at
+ * the end.
+ */
+function ScheduleRow({
+  record,
+  onDelete,
+  pending,
+}: {
+  record: ScheduleRecord;
+  onDelete: () => void;
+  pending: boolean;
+}) {
+  const date = DateTime.fromJSDate(record.date).setZone(ZONE);
+  const thisYear = date.hasSame(DateTime.now().setZone(ZONE), "year");
+  const meta = [record.preacher || record.leader, record.bibleVerse]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <li className="flex gap-4 rounded-xl bg-card p-4 sm:p-5">
+      <div className="flex w-14 shrink-0 flex-col items-center self-start rounded-lg bg-secondary py-2">
+        <span className="type-caption text-muted-foreground">
+          {date.toFormat("LLL")}
+        </span>
+        <span className="type-subheading tabular-nums">{date.day}</span>
+        <span className="type-caption text-muted-foreground">
+          {thisYear ? date.toFormat("ccc") : date.year}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="type-caption text-muted-foreground">
+            {record.type === "church_service"
+              ? "Church service"
+              : "Bible study"}{" "}
+            · {date.toFormat("HH:mm")}
+          </p>
+          <h2 className="type-subheading break-words">{record.title}</h2>
+          {meta ? (
+            <p className="type-body-sm text-muted-foreground">{meta}</p>
+          ) : null}
+          {record.description ? (
+            <p className="type-body-sm line-clamp-2 break-words text-muted-foreground">
+              {record.description}
+            </p>
+          ) : null}
+        </div>
+        <RecordActions
+          description="This permanently deletes the schedule and every takeaway written for it. This cannot be undone."
+          editUrl={`/admin/schedules/${record.id}/edit`}
+          name={record.title}
+          onDelete={onDelete}
+          pending={pending}
+        />
+      </div>
+    </li>
   );
 }
 
@@ -96,50 +161,12 @@ export default function ScheduleManager() {
           {records.length ? (
             <ul className="flex flex-col gap-3">
               {records.map((record) => (
-                <li
-                  className="flex flex-col gap-4 rounded-xl bg-card p-5 lg:flex-row lg:items-center lg:gap-6"
+                <ScheduleRow
                   key={record.id}
-                >
-                  <div className="flex w-fit shrink-0 flex-col rounded-lg bg-secondary px-4 py-3 text-center lg:w-20">
-                    <span className="type-subheading tabular-nums">
-                      {DateTime.fromJSDate(record.date)
-                        .setZone("Europe/Berlin")
-                        .toFormat("dd")}
-                    </span>
-                    <span className="type-caption text-muted-foreground">
-                      {DateTime.fromJSDate(record.date)
-                        .setZone("Europe/Berlin")
-                        .toFormat("LLL yyyy")}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-2">
-                    <p className="type-caption text-muted-foreground">
-                      {record.type === "church_service"
-                        ? "Church service"
-                        : "Bible study"}{" "}
-                      ·{" "}
-                      {DateTime.fromJSDate(record.date)
-                        .setZone("Europe/Berlin")
-                        .toFormat("HH:mm")}
-                    </p>
-                    <h2 className="type-subheading break-words">
-                      {record.title}
-                    </h2>
-                    <p className="type-body-sm text-muted-foreground">
-                      {record.preacher || record.leader} · {record.bibleVerse}
-                    </p>
-                    <p className="type-body-sm line-clamp-2 break-words text-muted-foreground">
-                      {record.description}
-                    </p>
-                  </div>
-                  <RecordActions
-                    description="This permanently deletes the schedule and every takeaway written for it. This cannot be undone."
-                    editUrl={`/admin/schedules/${record.id}/edit`}
-                    name={record.title}
-                    onDelete={() => remove.mutate({ id: record.id })}
-                    pending={remove.isPending}
-                  />
-                </li>
+                  onDelete={() => remove.mutate({ id: record.id })}
+                  pending={remove.isPending}
+                  record={record}
+                />
               ))}
             </ul>
           ) : (

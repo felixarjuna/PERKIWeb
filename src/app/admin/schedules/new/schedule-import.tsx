@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
 import { TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
-import type { SYNCED_FIELDS } from "~/lib/schedule-import";
+import type { FieldChange } from "~/lib/schedule-import";
 import { localTime } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -17,11 +17,12 @@ import { api, type RouterOutputs } from "~/trpc/react";
 type Preview = RouterOutputs["scheduleImport"]["preview"];
 type Entry = Preview["entries"][number];
 
-const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number] | "time", string> = {
+const FIELD_LABELS: Record<FieldChange["field"], string> = {
   accommodation: "Accommodation",
   bibleVerse: "Bible verse",
   cleaningGroup: "Cleaning",
   cookingGroup: "Cooking",
+  description: "Description",
   leader: "Leader",
   multimedia: "Multimedia",
   musician: "Musician",

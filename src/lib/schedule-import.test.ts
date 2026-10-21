@@ -10,6 +10,7 @@ const row: SheetSchedule = {
   date: new Date("2026-01-03T14:30:00.000Z"),
   day: "2026-01-03",
   description: "",
+  formerDescription: null,
   leader: "Ana",
   multimedia: "",
   musician: "Ben",
@@ -27,6 +28,7 @@ const stored: StoredSchedule = {
   cookingGroup: null,
   // Stored at 18:00 Aachen time by hand; still the same day.
   date: new Date("2026-01-03T17:00:00.000Z"),
+  description: "",
   id: 7,
   leader: "Ana",
   multimedia: null,
@@ -37,6 +39,35 @@ const stored: StoredSchedule = {
 };
 
 describe("planImport", () => {
+  it("replaces a description an earlier import made from the internal notes", () => {
+    const sheet = {
+      ...row,
+      description: "Perjamuan Kudus",
+      formerDescription: "Perjamuan Kudus · Ana is away",
+    };
+    const [leaked] = planImport(
+      [sheet],
+      [{ ...stored, description: "Perjamuan Kudus · Ana is away" }]
+    );
+    expect(leaked).toMatchObject({
+      changes: [
+        {
+          field: "description",
+          from: "Perjamuan Kudus · Ana is away",
+          to: "Perjamuan Kudus",
+        },
+      ],
+      status: "changed",
+    });
+
+    // A description written on the site is left alone.
+    const [kept] = planImport(
+      [sheet],
+      [{ ...stored, description: "Communion and fellowship" }]
+    );
+    expect(kept).toMatchObject({ changes: [], status: "unchanged" });
+  });
+
   it("marks a date with no stored schedule as new", () => {
     expect(planImport([row], [])).toEqual([{ schedule: row, status: "new" }]);
   });

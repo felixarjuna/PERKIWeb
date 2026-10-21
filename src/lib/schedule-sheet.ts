@@ -14,7 +14,14 @@ export interface SheetSchedule {
   date: Date;
   /** `yyyy-MM-dd` in Aachen, used to match the row with a stored schedule. */
   day: string;
+  /** Public: the 2025 "Event Description", or the 2026 "Events" note. */
   description: string;
+  /**
+   * What an earlier import wrote as the description when the row has
+   * internal "Special notes" (null when it has none). The import replaces it,
+   * so those notes stop being public.
+   */
+  formerDescription: string | null;
   leader: string;
   multimedia: string;
   musician: string;
@@ -89,6 +96,8 @@ function readRow(
       skipped: { day, reason: "Nothing is planned on this date.", row },
     };
   }
+  const description = cell("event description") || cell("events");
+  const specialNotes = cell("special notes");
   return {
     schedule: {
       accommodation: cell("akomodasi"),
@@ -97,9 +106,13 @@ function readRow(
       cookingGroup: cell("masak"),
       date: startOn({ day: date.day, month: date.month, year: date.year }),
       day,
-      description:
-        cell("event description") ||
-        [cell("events"), cell("special notes")].filter(Boolean).join(" · "),
+      // "Special notes" are for the team (who's away, reminders) and never
+      // become the public description.
+      description,
+      formerDescription:
+        specialNotes && !cell("event description")
+          ? [cell("events"), specialNotes].filter(Boolean).join(" · ")
+          : null,
       leader: type === "church_service" ? cell("liturgis") : cell("leader"),
       multimedia: cell("multimedia"),
       musician: cell("musik"),
