@@ -178,7 +178,7 @@ function MonthAgenda({
               )}
               href={`/admin/schedules/${schedule.id}/edit`}
             >
-              <span className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-secondary py-2">
+              <span className="flex h-16 w-12 shrink-0 flex-col items-center justify-center self-start rounded-lg bg-secondary">
                 <span className="type-caption text-muted-foreground">
                   {date.toFormat("ccc")}
                 </span>
