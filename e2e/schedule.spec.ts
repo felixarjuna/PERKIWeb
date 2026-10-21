@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 /** Two months ahead always lands in "Upcoming". */
 const MONTHS_AHEAD = 2;
 const DAY_OF_MONTH = 15;
-const REQUIRED_LABELS = ["Fellowship Type", "Title", "Bible Verse", "Liturgos"];
+const REQUIRED_LABELS = ["Title", "Bible Verse", "Liturgist", "Musician"];
 const EDIT_SCHEDULE_URL = /\/admin\/schedules\/\d+\/edit$/;
 
 const scheduleDate = () => {
@@ -30,7 +30,7 @@ const scheduleHeader = (page: Page, title: string) =>
 
 /** Fills and submits /admin/schedules/new; ends back on /admin/schedules. */
 const createSchedule = async (page: Page, title: string, date: Date) => {
-  await selectOption(page, "Fellowship Type", "Bible study");
+  await selectOption(page, "Fellowship Type", "Church service");
   await page.getByLabel("Title", { exact: true }).fill(title);
 
   await page.getByRole("button", { name: "Date" }).click();
@@ -50,8 +50,8 @@ const createSchedule = async (page: Page, title: string, date: Date) => {
   await page.getByLabel("Bible Verse", { exact: true }).fill("Psalm 23:1");
   await page
     .getByLabel("Description", { exact: true })
-    .fill("An e2e bible study about the good shepherd.");
-  await selectOption(page, "Liturgos", "Toni Setiawan");
+    .fill("An e2e service about the good shepherd.");
+  await selectOption(page, "Liturgist", "Toni Setiawan");
   await selectOption(page, "Musician", "Felix Arjuna");
   await selectOption(page, "Note writer", "Kezia Singgih");
   await selectOption(page, "Cleaning Group");
@@ -138,6 +138,7 @@ test("schedule list shows a new schedule right after adding it", async ({
 
 test("validates required schedule fields", async ({ page }) => {
   await page.goto("/admin/schedules/new");
+  await selectOption(page, "Fellowship Type", "Church service");
   await page.getByRole("button", { name: "Add schedule" }).click();
 
   await expect(page.getByText("A date of service is required.")).toBeVisible();

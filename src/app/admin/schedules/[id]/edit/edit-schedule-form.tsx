@@ -1,76 +1,39 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
-
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
-import { Button } from "~/components/ui/button";
-import { Calendar } from "~/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
-import {
-  accommodation,
-  liturgos,
-  multimedia,
-  musicians,
-  noteWriter,
-  speakers,
-} from "~/lib/data";
-import { cn } from "~/lib/utils";
-import { updateScheduleSchema } from "~/server/api/schema/schema";
+import { Button, buttonVariants } from "~/components/ui/button";
+import { Form } from "~/components/ui/form";
+import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
-import { useGroupNames } from "../../use-group-names";
+import { ScheduleFields, type ScheduleValues } from "../../schedule-fields";
 
 export default function EditScheduleForm() {
-  const groupNames = useGroupNames();
   const router = useRouter();
+  const { id: idParam } = useParams<{ id: string }>();
+  const id = Number.parseInt(idParam, 10);
+  const { data: schedule } = api.schedules.getScheduleById.useQuery({ id });
 
-  const { id } = useParams<{ id: string }>();
-  const { data: schedule } = api.schedules.getScheduleById.useQuery({
-    id: Number.parseInt(id, 10),
-  });
-
-  /** form defintion. */
-  const form = useForm<z.infer<typeof updateScheduleSchema>>({
-    resolver: zodResolver(updateScheduleSchema),
+  const form = useForm<ScheduleValues>({
+    resolver: zodResolver(addScheduleSchema),
   });
 
   React.useEffect(() => {
-    form.reset({
-      ...schedule,
-      accommodation: schedule?.accommodation ?? undefined,
-      cookingGroup: schedule?.cookingGroup ?? undefined,
-      multimedia: schedule?.multimedia ?? undefined,
-      preacher: schedule?.preacher ?? undefined,
-    });
+    if (schedule) {
+      form.reset({
+        ...schedule,
+        accommodation: schedule.accommodation ?? undefined,
+        cookingGroup: schedule.cookingGroup ?? undefined,
+        multimedia: schedule.multimedia ?? undefined,
+        preacher: schedule.preacher ?? undefined,
+      });
+    }
   }, [form, schedule]);
 
-  /** update schedule action. */
   const utils = api.useUtils();
   const updateSchedule = api.schedules.updateSchedule.useMutation({
     onError: (error) => toast.error(error.message),
@@ -86,371 +49,25 @@ export default function EditScheduleForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof updateScheduleSchema>) {
-    updateSchedule.mutate(values);
-  }
-
-  function renderFellowshipForm() {
-    return (
-      <div className="space-y-4">
-        <h2 className="type-heading">Fellowship Information</h2>
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <FormControl>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            className={cn(
-                              "w-full justify-start bg-secondary pl-3 text-left font-normal hover:bg-secondary",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            type="button"
-                            variant="secondary"
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent align="start" className="w-auto p-1">
-                        <Calendar
-                          autoFocus
-                          disabled={(date) => date < new Date("1900-01-01")}
-                          mode="single"
-                          onSelect={field.onChange}
-                          selected={field.value}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="preacher"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preacher</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a speaker for the service" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {speakers.map((speaker) => (
-                          <SelectItem key={speaker} value={speaker}>
-                            {speaker}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="bibleVerse"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bible Verse</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea className="min-h-48" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  function renderServantsForm() {
-    return (
-      <div className="space-y-4">
-        <h2 className="type-heading">Servant Information</h2>
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="leader"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Liturgos/PA Leader</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {liturgos.map((leader) => (
-                          <SelectItem key={leader} value={leader}>
-                            {leader}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="noteWriter"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Note writer</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {noteWriter.map((writer) => (
-                          <SelectItem key={writer} value={writer}>
-                            {writer}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="musician"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Musician</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {musicians.map((musician) => (
-                          <SelectItem key={musician} value={musician}>
-                            {musician}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="multimedia"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Multimedia</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {multimedia.map((mediator) => (
-                          <SelectItem key={mediator} value={mediator}>
-                            {mediator}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <FormField
-              control={form.control}
-              name="accommodation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Accommodation</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accommodation.map((accomodator) => (
-                          <SelectItem key={accomodator} value={accomodator}>
-                            {accomodator}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="">
-            <FormField
-              control={form.control}
-              name="cookingGroup"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cooking Group</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {groupNames.map((group) => (
-                          <SelectItem key={group} value={group}>
-                            {group}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="">
-            <FormField
-              control={form.control}
-              name="cleaningGroup"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cleaning Group</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {groupNames.map((group) => (
-                          <SelectItem key={group} value={group}>
-                            {group}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </section>
-      </div>
-    );
-  }
-
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-8"
-        onSubmit={form.handleSubmit(onSubmit, (error) => {
-          toast.success("Something went wrong.", {
-            description: JSON.stringify(error),
-          });
-        })}
+        className="flex flex-col gap-6"
+        onSubmit={form.handleSubmit((values) =>
+          updateSchedule.mutate({ ...values, id })
+        )}
       >
-        {renderFellowshipForm()}
-        {renderServantsForm()}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            disabled={updateSchedule.isPending}
-            type="submit"
-            variant={"default"}
-          >
+        <ScheduleFields form={form} />
+        <div className="flex flex-wrap items-center gap-3">
+          <Button disabled={updateSchedule.isPending} type="submit">
             Save changes
           </Button>
-          <Button
-            className="flex gap-x-2"
-            onClick={() => router.push("/admin/schedules")}
-            type="button"
+          <Link
+            className={buttonVariants({ variant: "ghost" })}
+            href="/admin/schedules"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+            Cancel
+          </Link>
         </div>
       </form>
     </Form>

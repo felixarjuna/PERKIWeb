@@ -4,6 +4,7 @@ import { botRouter } from "./routers/bot";
 import { groupRouter } from "./routers/groups";
 import { profileRouter } from "./routers/profile";
 import { rolesRouter } from "./routers/roles";
+import { scheduleImportRouter } from "./routers/schedule-import";
 import { scheduleRouter } from "./routers/schedules";
 import { takeawayRouter } from "./routers/takeaway";
 import { userRouter } from "./routers/users";
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   prayers: prayerRouter,
   profiles: profileRouter,
   roles: rolesRouter,
+  scheduleImport: scheduleImportRouter,
   schedules: scheduleRouter,
   takeaways: takeawayRouter,
   users: userRouter,
