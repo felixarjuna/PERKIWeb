@@ -58,6 +58,28 @@ const abbreviates = (written: string[], full: string[]) =>
   written.length <= full.length &&
   written.every((word, index) => full[index]?.startsWith(word));
 
+/**
+ * Same first name, and the other written words appear later in the account
+ * name in order: a skipped middle name ("Steffen Tjandra" → "Steffen Josua
+ * Tjandra"), also abbreviated ("Steffen T.").
+ */
+function skipsMiddleNames(written: string[], full: string[]) {
+  if (written[0] !== full[0]) {
+    return false;
+  }
+  let next = 1;
+  for (const word of written.slice(1)) {
+    const found = full.findIndex(
+      (candidate, index) => index >= next && candidate.startsWith(word)
+    );
+    if (found === -1) {
+      return false;
+    }
+    next = found + 1;
+  }
+  return true;
+}
+
 const MAX_TYPOS = 2;
 
 /** How well a written name fits an account name; 0 means not at all. */
@@ -67,7 +89,11 @@ function score(written: string, full: string) {
   }
   const writtenWords = written.split(" ");
   const fullWords = full.split(" ");
-  if (writtenWords.length > 1 && abbreviates(writtenWords, fullWords)) {
+  if (
+    writtenWords.length > 1 &&
+    (abbreviates(writtenWords, fullWords) ||
+      skipsMiddleNames(writtenWords, fullWords))
+  ) {
     return 3;
   }
   // Typos only count on full names; two letters off a short first name is

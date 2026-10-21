@@ -10,6 +10,7 @@ const accounts = [
   account("jericho", "Jericho Oland Marsahala"),
   account("wins", "Wins"),
   account("eli", "Eli V"),
+  account("steffen", "Steffen Josua Tjandra"),
 ];
 
 describe("nameKey", () => {
@@ -33,6 +34,14 @@ describe("suggestAccount", () => {
     expect(suggestAccount("Winston A.", accounts)?.id).toBe("winston-a");
     expect(suggestAccount("Karyn Gasperz", accounts)?.id).toBe("karyn");
     expect(suggestAccount("Felix", accounts)?.id).toBe("felix");
+  });
+
+  it("matches a name written without its middle name", () => {
+    expect(suggestAccount("Steffen Tjandra", accounts)?.id).toBe("steffen");
+    expect(suggestAccount("Steffen T.", accounts)?.id).toBe("steffen");
+    expect(suggestAccount("Steffen Josua", accounts)?.id).toBe("steffen");
+    // The first name has to match: "Josua Tjandra" is someone else.
+    expect(suggestAccount("Josua Tjandra", accounts)).toBeNull();
   });
 
   it("suggests nothing when a first name is shared or nothing fits", () => {
