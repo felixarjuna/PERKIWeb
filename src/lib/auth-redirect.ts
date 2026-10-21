@@ -72,3 +72,11 @@ export function getSameOriginReturnPath(
     return "/";
   }
 }
+
+/** The welcome step, returning to `returnPath` (or `/`) afterwards. */
+export function welcomePath(returnPath: string): string {
+  const path = getReturnPath(returnPath);
+  return path === "/"
+    ? "/welcome"
+    : `/welcome?${new URLSearchParams({ callbackUrl: path })}`;
+}
