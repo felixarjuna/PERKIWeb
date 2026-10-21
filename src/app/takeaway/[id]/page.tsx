@@ -74,8 +74,9 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
   return (
     <Template
       subtitle={
+        // Metadata, not a lead: smaller than the template's subtitle size.
         // Each part stays whole; the line breaks only between parts.
-        <p>
+        <p className="type-body-sm">
           <span className="whitespace-nowrap">
             {fellowshipLabel(schedule.type)} ·
           </span>{" "}
@@ -120,12 +121,16 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
       </article>
 
       {/* Actions wait until the end so nothing sits between the reader and the notes. */}
-      <footer className="mt-12 flex flex-wrap items-center gap-3">
-        <ShareButton title={schedule.title} />
-        <Link className={buttonVariants({ variant: "ghost" })} href="/takeaway">
+      <footer className="mt-12 flex items-center justify-between gap-3">
+        {/* -ms-4 lines the ghost link's text up with the notes' left edge. */}
+        <Link
+          className={buttonVariants({ className: "-ms-4", variant: "ghost" })}
+          href="/takeaway"
+        >
           <ChevronLeft aria-hidden="true" className="size-4" />
           All takeaways
         </Link>
+        <ShareButton title={schedule.title} />
       </footer>
     </Template>
   );
