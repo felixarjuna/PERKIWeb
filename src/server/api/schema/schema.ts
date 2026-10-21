@@ -85,3 +85,38 @@ export const setRoleSchema = z.object({
   role: z.enum(ASSIGNABLE_ROLES),
   userId: z.string().min(1),
 });
+
+const SITE_PATH = /^\/[\w./-]+$/;
+
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((value) => value || null)
+    .nullable()
+    .optional();
+
+/** A guest speaker as entered in the workspace. */
+export const speakerInput = z.object({
+  active: z.boolean().default(true),
+  /** Other spellings, as typed; stored normalised. */
+  aliases: z.array(z.string().trim().min(1).max(100)).max(20).default([]),
+  favoriteVerse: optionalText(300),
+  name: z.string().trim().min(2).max(100),
+  photoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(
+      (value) => value === "" || SITE_PATH.test(value) || URL.canParse(value),
+      {
+        message:
+          "Use a full link (https://…) or a site path like /images/john.jpg.",
+      }
+    )
+    .transform((value) => value || null)
+    .nullable()
+    .optional(),
+  story: optionalText(5000),
+});

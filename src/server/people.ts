@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { inArray, ne } from "drizzle-orm";
 import {
   groupMembers,
   nameLinks,
@@ -41,9 +41,11 @@ export async function resolveAccounts(tx: Transaction, names: string[]) {
 /** Points every slot and group entry with this spelling at its resolved account. */
 async function relink(tx: Transaction, key: string) {
   const [slots, members] = await Promise.all([
+    // Preachers are guest speakers, never member accounts.
     tx
       .select({ id: scheduleAssignments.id, name: scheduleAssignments.name })
-      .from(scheduleAssignments),
+      .from(scheduleAssignments)
+      .where(ne(scheduleAssignments.role, "preacher")),
     tx
       .select({ id: groupMembers.id, name: groupMembers.name })
       .from(groupMembers),

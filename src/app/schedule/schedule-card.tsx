@@ -170,7 +170,7 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
 /** One gathering on the schedule timeline: the date on a rail, details beside it. */
 export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
   const date = formatDate(schedule.date);
-  const preacher = schedule.team.find((slot) => slot.role === "preacher")?.name;
+  const preacher = schedule.team.find((slot) => slot.role === "preacher");
   return (
     <article className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
       <div className="flex flex-col items-center">
@@ -195,8 +195,9 @@ export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
         </p>
         <h3 className="type-heading mt-1 break-words">{schedule.title}</h3>
         {preacher ? (
-          <p className="type-body-sm mt-1 text-muted-foreground">
-            Preached by {preacher}
+          <p className="type-body-sm mt-1.5 flex items-center gap-2 text-muted-foreground">
+            <PersonAvatar person={preacher} size="sm" />
+            Preached by {preacher.name}
           </p>
         ) : null}
         <Description text={schedule.description} />

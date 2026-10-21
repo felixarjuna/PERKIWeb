@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import {
   groupMembers,
@@ -34,8 +34,6 @@ interface Unlinked {
   key: string;
   /** The most common spelling, for display. */
   name: string;
-  /** Only ever written as preacher: usually a guest pastor. */
-  preacherOnly: boolean;
   spellings: Map<string, number>;
   total: number;
   uses: Map<string, number>;
@@ -172,7 +170,12 @@ export const peopleRouter = createTRPCRouter({
           role: scheduleAssignments.role,
         })
         .from(scheduleAssignments)
-        .where(isNull(scheduleAssignments.userId)),
+        .where(
+          and(
+            isNull(scheduleAssignments.userId),
+            ne(scheduleAssignments.role, "preacher")
+          )
+        ),
       db
         .select({ group: groups.name, name: groupMembers.name })
         .from(groupMembers)
@@ -181,31 +184,25 @@ export const peopleRouter = createTRPCRouter({
       loadAccounts(),
     ]);
     const byKey = new Map<string, Unlinked>();
-    const add = (name: string, use: string, preacher: boolean) => {
+    const add = (name: string, use: string) => {
       const key = nameKey(name);
       const entry = byKey.get(key) ?? {
         key,
         name,
-        preacherOnly: true,
         spellings: new Map(),
         total: 0,
         uses: new Map(),
       };
       entry.total += 1;
-      entry.preacherOnly &&= preacher;
       entry.spellings.set(name, (entry.spellings.get(name) ?? 0) + 1);
       entry.uses.set(use, (entry.uses.get(use) ?? 0) + 1);
       byKey.set(key, entry);
     };
     for (const slot of slots) {
-      add(
-        slot.name,
-        servingRoleLabels[slot.role as ServingRole] ?? slot.role,
-        slot.role === "preacher"
-      );
+      add(slot.name, servingRoleLabels[slot.role as ServingRole] ?? slot.role);
     }
     for (const member of members) {
-      add(member.name, member.group, false);
+      add(member.name, member.group);
     }
     return [...byKey.values()]
       .map((entry) => {
@@ -215,18 +212,12 @@ export const peopleRouter = createTRPCRouter({
         return {
           key: entry.key,
           name,
-          preacherOnly: entry.preacherOnly,
           spellings: [...entry.spellings.keys()],
           suggestion: suggestAccount(name, accounts),
           total: entry.total,
           uses: [...entry.uses].map(([label, count]) => ({ count, label })),
         };
       })
-      .sort(
-        (a, b) =>
-          Number(a.preacherOnly) - Number(b.preacherOnly) ||
-          b.total - a.total ||
-          a.name.localeCompare(b.name)
-      );
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
   }),
 });

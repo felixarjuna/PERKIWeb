@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { pastors } from "~/lib/data";
+import { initials } from "~/lib/people";
 import { cn } from "~/lib/utils";
 import Section from "./section";
 
@@ -31,7 +31,7 @@ const updatePortrait = (
   proximity: number,
   reduce: boolean
 ) => {
-  const portrait = element.querySelector("img");
+  const portrait = element.querySelector<HTMLElement>("[data-portrait]");
   if (!portrait) {
     return;
   }
@@ -45,6 +45,9 @@ const updatePortrait = (
 };
 
 function Story({ story }: { readonly story: string | React.ReactNode }) {
+  if (!story) {
+    return null;
+  }
   return (
     <div className="type-body max-w-prose space-y-4">
       {paragraphs(story).map((part, index) =>
@@ -59,12 +62,68 @@ function Story({ story }: { readonly story: string | React.ReactNode }) {
   );
 }
 
+export interface LandingPastor {
+  favoriteVerse: string | null;
+  name: string;
+  /** A site path or a full image URL; initials stand in when missing. */
+  photoUrl: string | null;
+  story: string | null;
+}
+
+/**
+ * A round portrait; external photos skip the image optimiser, which only
+ * knows site paths. Without a photo, initials stand in (decorative: the name
+ * is always written next to it).
+ */
+function Portrait({
+  pastor,
+  alt,
+  className,
+  size,
+  style,
+}: {
+  pastor: LandingPastor;
+  alt: string;
+  className: string;
+  size: number;
+  style?: React.CSSProperties;
+}) {
+  if (!pastor.photoUrl) {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          "type-heading flex items-center justify-center bg-secondary text-secondary-foreground",
+          className
+        )}
+        data-portrait=""
+        style={style}
+      >
+        {initials(pastor.name)}
+      </span>
+    );
+  }
+  return (
+    <Image
+      alt={alt}
+      className={className}
+      data-portrait=""
+      height={size * 2}
+      sizes={`${size / 16}rem`}
+      src={pastor.photoUrl}
+      style={style}
+      unoptimized={!pastor.photoUrl.startsWith("/")}
+      width={size * 2}
+    />
+  );
+}
+
 /**
  * Phone layout: a centred gallery of portraits. The one in the middle
  * is large, its neighbours peek in smaller at the sides, arrows or a
  * swipe move between them, and the story opens only on request.
  */
-function PastorGallery() {
+function PastorGallery({ pastors }: { pastors: readonly LandingPastor[] }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [active, setActive] = useState(0);
   const [destination, setDestination] = useState(0);
@@ -176,17 +235,15 @@ function PastorGallery() {
                 onClick={(event) => goTo(index, event.detail > 0)}
                 type="button"
               >
-                <Image
+                <Portrait
                   alt=""
                   className="size-32 rounded-full object-cover object-top"
-                  height={256}
-                  sizes="8rem"
-                  src={pastor.img}
+                  pastor={pastor}
+                  size={128}
                   style={{
                     opacity: index === 0 ? 1 : PORTRAIT_MIN_OPACITY,
                     transform: `scale(${index === 0 ? 1 : PORTRAIT_MIN_SCALE})`,
                   }}
-                  width={256}
                 />
               </button>
             </li>
@@ -230,9 +287,11 @@ function PastorGallery() {
               key={pastor.name}
             >
               <h3 className="type-heading">{pastor.name}</h3>
-              <p className="type-quote mx-auto mt-2 max-w-sm text-balance text-muted-foreground">
-                “{pastor.favoriteVerse}”
-              </p>
+              {pastor.favoriteVerse ? (
+                <p className="type-quote mx-auto mt-2 max-w-sm text-balance text-muted-foreground">
+                  “{pastor.favoriteVerse}”
+                </p>
+              ) : null}
             </div>
           ))}
         </div>
@@ -267,7 +326,7 @@ function PastorGallery() {
  * story beside them. Every panel stays mounted and stacked in one grid
  * cell, so the block keeps one height and nothing jumps on switch.
  */
-function PastorTabs() {
+function PastorTabs({ pastors }: { pastors: readonly LandingPastor[] }) {
   const first = pastors.at(0);
   if (!first) {
     return null;
@@ -289,13 +348,11 @@ function PastorTabs() {
             key={pastor.name}
             value={slug(pastor.name)}
           >
-            <Image
+            <Portrait
               alt=""
               className="size-14 shrink-0 rounded-full object-cover object-top"
-              height={112}
-              sizes="3.5rem"
-              src={pastor.img}
-              width={112}
+              pastor={pastor}
+              size={56}
             />
             <span className="type-subheading text-balance">{pastor.name}</span>
           </TabsTrigger>
@@ -311,19 +368,19 @@ function PastorTabs() {
             value={slug(pastor.name)}
           >
             <div className="flex items-center gap-6">
-              <Image
+              <Portrait
                 alt={`Portrait of ${pastor.name}`}
                 className="size-28 shrink-0 rounded-full object-cover object-top"
-                height={224}
-                sizes="7rem"
-                src={pastor.img}
-                width={224}
+                pastor={pastor}
+                size={112}
               />
               <div className="min-w-0">
                 <h3 className="type-heading">{pastor.name}</h3>
-                <p className="type-quote mt-1 text-balance text-muted-foreground">
-                  “{pastor.favoriteVerse}”
-                </p>
+                {pastor.favoriteVerse ? (
+                  <p className="type-quote mt-1 text-balance text-muted-foreground">
+                    “{pastor.favoriteVerse}”
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="mt-6">
@@ -336,11 +393,18 @@ function PastorTabs() {
   );
 }
 
-export default function OurPastors() {
+export default function OurPastors({
+  pastors,
+}: {
+  pastors: readonly LandingPastor[];
+}) {
+  if (pastors.length === 0) {
+    return null;
+  }
   return (
     <Section eyebrow="Who serves us" id="pastors" title="Our pastors">
-      <PastorGallery />
-      <PastorTabs />
+      <PastorGallery pastors={pastors} />
+      <PastorTabs pastors={pastors} />
     </Section>
   );
 }

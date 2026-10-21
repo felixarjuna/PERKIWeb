@@ -46,7 +46,7 @@ const createSchedule = async (page: Page, title: string, date: Date) => {
     format(date, "PPP")
   );
 
-  await selectOption(page, "Preacher", "Billy Lugito");
+  await selectOption(page, "Preacher", "Pdt. John Kusuma");
   await page.getByLabel("Bible Verse", { exact: true }).fill("Psalm 23:1");
   await page
     .getByLabel("Description", { exact: true })
@@ -73,7 +73,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   const header = scheduleHeader(page, title);
   await expect(header).toBeVisible();
   const card = header;
-  await expect(card).toContainText("Billy Lugito");
+  await expect(card).toContainText("Pdt. John Kusuma");
   await expect(card).toContainText("Psalm 23:1");
 
   // Edit

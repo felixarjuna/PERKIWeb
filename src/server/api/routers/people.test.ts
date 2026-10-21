@@ -56,7 +56,6 @@ describe("people router", () => {
     expect(unlinked).toEqual([
       expect.objectContaining({
         key: "jco",
-        preacherOnly: false,
         suggestion: null,
         total: 2,
         uses: [
@@ -70,7 +69,6 @@ describe("people router", () => {
         suggestion: expect.objectContaining({ id: winston.id }),
         total: 2,
       }),
-      expect.objectContaining({ key: "pdt guest", preacherOnly: true }),
     ]);
   });
 

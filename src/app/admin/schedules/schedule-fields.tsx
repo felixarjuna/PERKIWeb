@@ -34,10 +34,10 @@ import {
   multimedia,
   musicians,
   noteWriter,
-  speakers,
 } from "~/lib/data";
 import { cn } from "~/lib/utils";
 import type { addScheduleSchema } from "~/server/api/schema/schema";
+import { api } from "~/trpc/react";
 import { useGroupNames } from "./use-group-names";
 
 export type ScheduleValues = z.infer<typeof addScheduleSchema>;
@@ -65,6 +65,12 @@ function teamDescription(type: ScheduleValues["type"] | undefined) {
   }
   return "Pick the type first: a service also has multimedia, accommodation and a cooking group.";
 }
+
+/** Keeps a saved value selectable even when it's no longer in the list (older schedules). */
+const withCurrent = (options: readonly string[], value: unknown) =>
+  typeof value === "string" && value !== "" && !options.includes(value)
+    ? [value, ...options]
+    : options;
 
 function SelectField({
   form,
@@ -96,7 +102,7 @@ function SelectField({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {options.map((option) => (
+              {withCurrent(options, field.value).map((option) => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -182,6 +188,8 @@ function Panel({
  */
 export function ScheduleFields({ form }: { form: Form }) {
   const groupNames = useGroupNames();
+  const { data: activeSpeakers } = api.speakers.active.useQuery();
+  const speakerNames = activeSpeakers?.map((speaker) => speaker.name) ?? [];
   const type = form.watch("type");
   const isService = type === "church_service";
 
@@ -261,7 +269,7 @@ export function ScheduleFields({ form }: { form: Form }) {
               form={form}
               label="Preacher"
               name="preacher"
-              options={speakers}
+              options={speakerNames}
               placeholder="Choose the speaker"
             />
           ) : null}
