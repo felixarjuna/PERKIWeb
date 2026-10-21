@@ -104,7 +104,12 @@ export default function ProfileSummary() {
           </h2>
           {completion.state === "complete" ? (
             <span className="type-body-sm inline-flex items-center gap-1.5 text-foreground">
-              <CircleCheck aria-hidden="true" className="size-4" />
+              {/* Satoshi's letters sit low in their line box; 1px down centres
+                  the icon on the capitals instead of the box. */}
+              <CircleCheck
+                aria-hidden="true"
+                className="size-4 shrink-0 translate-y-px"
+              />
               Completed
             </span>
           ) : (
