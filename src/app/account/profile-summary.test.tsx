@@ -118,9 +118,9 @@ describe("profile summary", () => {
     // Initials stand in until (or unless) the photo loads.
     expect(within(row).getByText("MS")).toBeTruthy();
     // 32px, so the Photo row is as tall as Name and Email.
-    expect(
-      within(row).getByText("MS").parentElement?.classList
-    ).toContain("size-8");
+    expect(within(row).getByText("MS").parentElement?.classList).toContain(
+      "size-8"
+    );
   });
 
   it("keeps the optional nickname at the bottom of the details", async () => {
