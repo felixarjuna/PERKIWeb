@@ -27,7 +27,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { DISCORD_INVITE_URL } from "~/lib/data";
 import { isStaffRole, type Role } from "~/lib/roles";
 
 const GROUPS = ["Community", "Content"] as const;
@@ -35,11 +34,13 @@ const GROUPS = ["Community", "Content"] as const;
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
 export function AppSidebar({
   viewerRole,
+  discordUrl,
   driveConfigured,
   driveUrl,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   viewerRole: Role;
+  discordUrl: string;
   /** Whether a Drive folder is set; writers get no URL, only this flag. */
   driveConfigured: boolean;
   driveUrl: string | null;
@@ -115,11 +116,7 @@ export function AppSidebar({
             {staff ? <BotStatus /> : null}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Discord server">
-                <a
-                  href={DISCORD_INVITE_URL}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
+                <a href={discordUrl} rel="noopener noreferrer" target="_blank">
                   <DiscordLogoIcon aria-hidden="true" />
                   <span>Discord server</span>
                 </a>

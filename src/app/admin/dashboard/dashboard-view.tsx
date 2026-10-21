@@ -6,7 +6,7 @@ import CommunityOverview from "~/components/admin/overview/community-overview";
 export default function DashboardView(
   props: Pick<
     ComponentProps<typeof AdminShell>,
-    "driveConfigured" | "driveUrl" | "viewerRole"
+    "discordUrl" | "driveConfigured" | "driveUrl" | "viewerRole"
   >
 ) {
   return (

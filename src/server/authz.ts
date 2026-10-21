@@ -10,6 +10,7 @@ import {
 } from "~/lib/roles";
 import { db } from "~/server";
 import { auth } from "~/server/auth";
+import { siteLinks } from "~/server/settings";
 
 /**
  * The user's role, read from the database on every check (not from the
@@ -27,12 +28,12 @@ export const getRole = async (userId: string): Promise<Role> => {
 /**
  * Props every admin page passes to `AdminShell`. Only staff get the Drive
  * URL; `driveConfigured` lets the shell hide the Drive item when no folder
- * is set. Reads the environment directly so server tests can import this
- * module without the full env.
+ * is set. Both links come from Settings (`siteLinks`).
  */
-export const adminShellProps = (role: Role) => {
-  const driveFolderUrl = process.env.DRIVE_FOLDER_URL || null;
+export const adminShellProps = async (role: Role) => {
+  const { discordInviteUrl, driveFolderUrl } = await siteLinks();
   return {
+    discordUrl: discordInviteUrl,
     driveConfigured: driveFolderUrl !== null,
     driveUrl: isStaffRole(role) ? driveFolderUrl : null,
     viewerRole: role,

@@ -13,7 +13,7 @@ export default async function EditorPage({
   );
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       section="Schedules"
       title="Add schedule"
     >

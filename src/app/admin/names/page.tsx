@@ -6,7 +6,7 @@ export default async function NameLinksPage() {
   const { role } = await requireAdmin("/admin/names");
   return (
     <AdminShell
-      {...adminShellProps(role)}
+      {...(await adminShellProps(role))}
       section="Name links"
       subtitle="Connect the names on schedules and in groups to member accounts."
     >

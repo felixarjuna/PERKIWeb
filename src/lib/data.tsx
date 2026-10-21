@@ -6,7 +6,6 @@ interface Event {
 }
 
 /** Permanent invite to the PERKI Aachen Discord server (perki.bot posts birthdays there). */
-export const DISCORD_INVITE_URL = "https://discord.gg/4hf5yWFfVP";
 
 export const events: Event[] = [
   {

@@ -7,13 +7,18 @@ import Navigation from "~/components/home/navigation";
 import OurPastors from "~/components/home/our-pastors";
 import VisitUs from "~/components/home/visit-us";
 import WhatWeDo from "~/components/home/what-we-do";
+import { DEFAULT_DISCORD_INVITE_URL } from "~/lib/settings";
+import { siteLinks } from "~/server/settings";
 import { api } from "~/trpc/server";
 
 export default async function Home() {
   // Speakers are managed in the workspace, so the page renders per request.
   // The home page must never fail on them: without the table (a deploy before
   // its migration, or e2e before setup) it renders without "Our pastors".
-  const pastors = await api.speakers.active().catch(() => []);
+  const [pastors, links] = await Promise.all([
+    api.speakers.active().catch(() => []),
+    siteLinks().catch(() => ({ discordInviteUrl: DEFAULT_DISCORD_INVITE_URL })),
+  ]);
   return (
     <>
       <Navigation revealAfter="hero" />
@@ -32,9 +37,9 @@ export default async function Home() {
         </div>
         <WhatWeDo />
         <OurPastors pastors={pastors} />
-        <VisitUs />
+        <VisitUs discordUrl={links.discordInviteUrl} />
       </main>
-      <Footer />
+      <Footer discordUrl={links.discordInviteUrl} />
     </>
   );
 }
