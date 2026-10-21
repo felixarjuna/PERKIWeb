@@ -95,3 +95,37 @@ export function termOn<T extends { startsOn: string }>(
       undefined
     );
 }
+
+interface ScheduleNeeds extends ScheduleSlots {
+  cleaningGroup?: string | null;
+  cookingGroup?: string | null;
+}
+
+/** Slots every gathering of a type needs filled, in team order. */
+const NEEDED = {
+  bible_study: [
+    ["Leader", "leader"],
+    ["Musician", "musician"],
+    ["Note writer", "noteWriter"],
+    ["Cleaning group", "cleaningGroup"],
+  ],
+  church_service: [
+    ["Preacher", "preacher"],
+    ["Liturgist", "leader"],
+    ["Musician", "musician"],
+    ["Multimedia", "multimedia"],
+    ["Accommodation", "accommodation"],
+    ["Note writer", "noteWriter"],
+    ["Cooking group", "cookingGroup"],
+    ["Cleaning group", "cleaningGroup"],
+  ],
+} as const satisfies Record<
+  ScheduleSlots["type"],
+  readonly (readonly [string, keyof ScheduleNeeds])[]
+>;
+
+/** The slots of a schedule nobody has taken yet, by label. */
+export const openSlots = (schedule: ScheduleNeeds): string[] =>
+  NEEDED[schedule.type].flatMap(([label, column]) =>
+    filled(schedule[column] as string | null | undefined) ? [] : [label]
+  );

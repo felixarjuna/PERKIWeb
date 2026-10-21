@@ -75,8 +75,28 @@ describe("parseScheduleSheet", () => {
     expect(rows[0]).toMatchObject({
       bibleVerse: "Kejadian 6",
       description: "Noah",
+      formerDescription: null,
       title: "Heroes of Faith",
     });
+  });
+
+  it("keeps the internal special notes out of the description", () => {
+    const { schedules: rows } = parseScheduleSheet([
+      ["Tanggal", "Acara", "Leader", "Piket", "Events", "Special Notes"],
+      ["3.1.2026", "Penelaahan Alkitab", "Ana", "Group 3", "", "Ben is away"],
+      [
+        "10.1.2026",
+        "Penelaahan Alkitab",
+        "Ana",
+        "Group 3",
+        "Retreat",
+        "Bring food",
+      ],
+    ]);
+    expect(rows).toMatchObject([
+      { description: "", formerDescription: "Ben is away" },
+      { description: "Retreat", formerDescription: "Retreat · Bring food" },
+    ]);
   });
 
   it("keeps columns a shorter repeated header leaves out", () => {

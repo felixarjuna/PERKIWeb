@@ -18,6 +18,7 @@ type SyncedField = (typeof SYNCED_FIELDS)[number];
 
 export interface StoredSchedule extends Record<SyncedField, string | null> {
   date: Date;
+  description: string;
   id: number;
 }
 
@@ -25,8 +26,11 @@ export interface StoredSchedule extends Record<SyncedField, string | null> {
 const NO_TIME = "00:00";
 
 export interface FieldChange {
-  /** `time`: a stored schedule without a time gets the default start. */
-  field: SyncedField | "time";
+  /**
+   * `time`: a stored schedule without a time gets the default start.
+   * `description`: an internal note an earlier import made public is replaced.
+   */
+  field: SyncedField | "time" | "description";
   from: string;
   to: string;
 }
@@ -74,6 +78,16 @@ export function planImport(
       }
       return [{ field, from, to }];
     });
+    if (
+      row.formerDescription !== null &&
+      text(match.description) === row.formerDescription
+    ) {
+      changes.push({
+        field: "description",
+        from: match.description,
+        to: row.description,
+      });
+    }
     const storedTime = localTime(match.date);
     if (storedTime === NO_TIME && localTime(row.date) !== NO_TIME) {
       changes.push({

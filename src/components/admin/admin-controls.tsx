@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { type LucideIcon, Search } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -16,6 +16,8 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
 
 export interface AdminOption {
+  /** Shown before the label in a segmented control. */
+  icon?: LucideIcon;
   label: string;
   value: string;
 }
@@ -130,7 +132,16 @@ export function AdminSegmented({
       value={value}
     >
       {options.map((option) => (
-        <ToggleGroupItem key={option.value} value={option.value}>
+        <ToggleGroupItem
+          className={
+            option.icon ? "flex-auto gap-1.5 [&_svg]:shrink-0" : undefined
+          }
+          key={option.value}
+          value={option.value}
+        >
+          {option.icon ? (
+            <option.icon aria-hidden="true" className="size-4" />
+          ) : null}
           {option.label}
         </ToggleGroupItem>
       ))}

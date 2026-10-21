@@ -1,27 +1,38 @@
 "use client";
 
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, CalendarDays, List, RefreshCw } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
-import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
+import {
+  AdminSegmented,
+  AdminSelect,
+  QueryMessage,
+} from "~/components/admin/admin-controls";
 import { TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
-import type { SYNCED_FIELDS } from "~/lib/schedule-import";
+import type { FieldChange } from "~/lib/schedule-import";
 import { localTime } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
+import ImportCalendar from "./import-calendar";
+
+const VIEWS = [
+  { icon: List, label: "List", value: "list" },
+  { icon: CalendarDays, label: "Calendar", value: "calendar" },
+] as const;
 
 type Preview = RouterOutputs["scheduleImport"]["preview"];
 type Entry = Preview["entries"][number];
 
-const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number] | "time", string> = {
+const FIELD_LABELS: Record<FieldChange["field"], string> = {
   accommodation: "Accommodation",
   bibleVerse: "Bible verse",
   cleaningGroup: "Cleaning",
   cookingGroup: "Cooking",
+  description: "Description",
   leader: "Leader",
   multimedia: "Multimedia",
   musician: "Musician",
@@ -98,6 +109,83 @@ function Group({
   );
 }
 
+const importLabel = (count: number) => {
+  if (count === 0) {
+    return "Everything is up to date";
+  }
+  return `Import ${count} ${count === 1 ? "schedule" : "schedules"}`;
+};
+
+/** The preview as lists: new dates with their team, changes field by field, skipped rows. */
+function ImportList({
+  added,
+  changed,
+  skipped,
+}: {
+  added: Entry[];
+  changed: Entry[];
+  skipped: Preview["skipped"];
+}) {
+  return (
+    <>
+      <Group count={added.length} title="New">
+        {added.map((entry) => (
+          <Row
+            day={entry.day}
+            key={entry.row}
+            time={localTime(entry.schedule.date)}
+            title={entryTitle(entry.schedule)}
+            verse={entry.schedule.bibleVerse}
+          >
+            {entry.team.length > 0 ? (
+              <div className="mt-3 border-t pt-3">
+                <p className="type-eyebrow text-muted-foreground">Team</p>
+                <TeamList className="mt-2" team={entry.team} withPreacher />
+              </div>
+            ) : null}
+          </Row>
+        ))}
+      </Group>
+
+      <Group count={changed.length} title="Changed">
+        {changed.map((entry) => (
+          <Row
+            day={entry.day}
+            key={entry.row}
+            title={entryTitle(entry.schedule)}
+          >
+            <dl className="type-body-sm mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
+              {entry.changes.map((change) => (
+                <div className="contents" key={change.field}>
+                  <dt className="text-muted-foreground">
+                    {FIELD_LABELS[change.field]}
+                  </dt>
+                  <dd className="flex flex-wrap items-center gap-1.5 break-words">
+                    <span className="text-muted-foreground line-through">
+                      {change.from || "empty"}
+                    </span>
+                    <ArrowRight
+                      aria-label="becomes"
+                      className="size-3.5 shrink-0"
+                    />
+                    <span>{change.to || "empty"}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Row>
+        ))}
+      </Group>
+
+      <Group count={skipped.length} title="Skipped">
+        {skipped.map((row) => (
+          <Row day={row.day} key={row.row} title={row.reason} />
+        ))}
+      </Group>
+    </>
+  );
+}
+
 /**
  * Imports a year tab of the schedule sheet. The preview shows what would be
  * added and changed; nothing is written until the import is confirmed.
@@ -107,6 +195,7 @@ export default function ScheduleImport() {
   const utils = api.useUtils();
   const status = api.scheduleImport.status.useQuery();
   const [tab, setTab] = React.useState("");
+  const [view, setView] = React.useState("list");
   const selectedTab = tab || status.data?.tabs[0] || "";
   const preview = api.scheduleImport.preview.useQuery(
     { tab: selectedTab },
@@ -177,6 +266,13 @@ export default function ScheduleImport() {
           />
           Read again
         </Button>
+        <AdminSegmented
+          className="ml-auto"
+          label="Preview as"
+          onChange={setView}
+          options={VIEWS}
+          value={view}
+        />
       </div>
 
       {preview.isError ? (
@@ -193,60 +289,14 @@ export default function ScheduleImport() {
             up to date · {skipped.length} skipped
           </p>
 
-          <Group count={added.length} title="New">
-            {added.map((entry) => (
-              <Row
-                day={entry.day}
-                key={entry.row}
-                time={localTime(entry.schedule.date)}
-                title={entryTitle(entry.schedule)}
-                verse={entry.schedule.bibleVerse}
-              >
-                {entry.team.length > 0 ? (
-                  <div className="mt-3 border-t pt-3">
-                    <p className="type-eyebrow text-muted-foreground">Team</p>
-                    <TeamList className="mt-2" team={entry.team} withPreacher />
-                  </div>
-                ) : null}
-              </Row>
-            ))}
-          </Group>
-
-          <Group count={changed.length} title="Changed">
-            {changed.map((entry) => (
-              <Row
-                day={entry.day}
-                key={entry.row}
-                title={entryTitle(entry.schedule)}
-              >
-                <dl className="type-body-sm mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
-                  {entry.changes.map((change) => (
-                    <div className="contents" key={change.field}>
-                      <dt className="text-muted-foreground">
-                        {FIELD_LABELS[change.field]}
-                      </dt>
-                      <dd className="flex flex-wrap items-center gap-1.5 break-words">
-                        <span className="text-muted-foreground line-through">
-                          {change.from || "empty"}
-                        </span>
-                        <ArrowRight
-                          aria-label="becomes"
-                          className="size-3.5 shrink-0"
-                        />
-                        <span>{change.to || "empty"}</span>
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </Row>
-            ))}
-          </Group>
-
-          <Group count={skipped.length} title="Skipped">
-            {skipped.map((row) => (
-              <Row day={row.day} key={row.row} title={row.reason} />
-            ))}
-          </Group>
+          {view === "calendar" ? (
+            <ImportCalendar
+              label={(field) => FIELD_LABELS[field]}
+              preview={preview.data}
+            />
+          ) : (
+            <ImportList added={added} changed={changed} skipped={skipped} />
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -254,9 +304,7 @@ export default function ScheduleImport() {
               onClick={() => run.mutate({ tab: selectedTab })}
               type="button"
             >
-              {toImport === 0
-                ? "Everything is up to date"
-                : `Import ${toImport} ${toImport === 1 ? "schedule" : "schedules"}`}
+              {importLabel(toImport)}
             </Button>
             <p className="type-caption text-muted-foreground">
               Titles and descriptions edited on the site are kept.

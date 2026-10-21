@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import AdminShell from "~/components/admin/admin-shell";
 import ScheduleManager from "~/components/admin/content/schedule-manager";
 import { buttonVariants } from "~/components/ui/button";
@@ -17,7 +18,9 @@ export default async function ManagementPage() {
       section="Schedules"
       subtitle="Plan gatherings and keep the fellowship informed."
     >
-      <ScheduleManager />
+      <Suspense fallback={null}>
+        <ScheduleManager />
+      </Suspense>
     </AdminShell>
   );
 }

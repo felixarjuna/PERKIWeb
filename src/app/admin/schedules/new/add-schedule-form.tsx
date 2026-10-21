@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { DateTime } from "luxon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -8,14 +9,23 @@ import { toast } from "sonner";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { startOn } from "~/lib/schedule-team";
 import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 import { ScheduleFields, type ScheduleValues } from "../schedule-fields";
 import ScheduleImport from "./schedule-import";
 
-function ManualSchedule() {
+/** A `yyyy-MM-dd` day at the default start in Aachen, if it's a real date. */
+function startOfDay(day: string | undefined) {
+  const parsed = day ? DateTime.fromISO(day) : null;
+  return parsed?.isValid
+    ? startOn({ day: parsed.day, month: parsed.month, year: parsed.year })
+    : undefined;
+}
+
+function ManualSchedule({ day }: { day?: string }) {
   const form = useForm<ScheduleValues>({
-    defaultValues: {},
+    defaultValues: { date: startOfDay(day) },
     resolver: zodResolver(addScheduleSchema),
   });
 
@@ -58,7 +68,7 @@ function ManualSchedule() {
   );
 }
 
-export default function AddScheduleForm() {
+export default function AddScheduleForm({ day }: { day?: string }) {
   return (
     <Tabs className="w-full" defaultValue="manual">
       <TabsList className="mb-6 grid w-full grid-cols-2 sm:w-fit">
@@ -66,7 +76,7 @@ export default function AddScheduleForm() {
         <TabsTrigger value="spreadsheet">Import from sheet</TabsTrigger>
       </TabsList>
       <TabsContent value="manual">
-        <ManualSchedule />
+        <ManualSchedule day={day} />
       </TabsContent>
       <TabsContent value="spreadsheet">
         <ScheduleImport />
