@@ -109,7 +109,8 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroup>
         ))}
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup>
+          <SidebarGroupLabel>Integrations</SidebarGroupLabel>
           <SidebarMenu>
             {staff ? <BotStatus /> : null}
             <SidebarMenuItem>
@@ -153,40 +154,41 @@ export function AppSidebar({
                 </Tooltip>
               </SidebarMenuItem>
             ) : null}
-
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Visit website">
-                <Link href="/">
-                  <ArrowUpRight aria-hidden="true" />
-                  <span>Visit website</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {footerItems.map((item) => {
-              const active = pathname.startsWith(item.url);
-              return (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={active}
-                    tooltip={item.title}
-                  >
-                    <Link
-                      aria-current={active ? "page" : undefined}
-                      href={item.url}
-                      onClick={close}
-                    >
-                      <item.icon aria-hidden="true" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Visit website">
+              <Link href="/">
+                <ArrowUpRight aria-hidden="true" />
+                <span>Visit website</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {footerItems.map((item) => {
+            const active = pathname.startsWith(item.url);
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={item.title}
+                >
+                  <Link
+                    aria-current={active ? "page" : undefined}
+                    href={item.url}
+                    onClick={close}
+                  >
+                    <item.icon aria-hidden="true" />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
         <NavUser
           user={{
             avatar: session?.user.image ?? "",
