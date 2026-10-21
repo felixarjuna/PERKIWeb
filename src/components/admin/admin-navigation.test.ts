@@ -5,6 +5,7 @@ it("separates the overview and member directory from content management", () => 
   expect(adminNavigation.map((item) => item.url)).toEqual([
     "/admin/dashboard",
     "/admin/members",
+    "/admin/names",
     "/admin/schedules",
     "/admin/takeaways",
     "/admin/prayers",

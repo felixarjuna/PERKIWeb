@@ -63,6 +63,7 @@ for (const width of widths) {
       }
 
       for (const route of [
+        "/admin/names",
         "/admin/schedules",
         "/admin/takeaways",
         "/admin/schedules/new",

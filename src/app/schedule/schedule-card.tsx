@@ -4,6 +4,7 @@ import { ChevronDown, Sparkles, Utensils } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
+import { PeopleGrid, PersonAvatar } from "~/components/person-avatar";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Drawer,
@@ -54,7 +55,11 @@ function formatDate(date: Date) {
 function team(schedule: Schedule) {
   return schedule.team
     .filter((slot) => slot.role !== "preacher")
-    .map((slot) => ({ label: servingRoleLabels[slot.role], name: slot.name }));
+    .map((slot) => ({
+      image: slot.image,
+      label: servingRoleLabels[slot.role],
+      name: slot.name,
+    }));
 }
 
 function duties(schedule: Schedule) {
@@ -138,16 +143,7 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
             <div className="flex flex-col items-center gap-4 py-6">
               <RandomVerse items={verses} />
               {members ? (
-                <ul className="flex flex-wrap justify-center gap-2">
-                  {members.map((member) => (
-                    <li
-                      className="type-body-sm rounded-full bg-paper px-3 py-1 text-paper-foreground"
-                      key={member}
-                    >
-                      {member}
-                    </li>
-                  ))}
-                </ul>
+                <PeopleGrid className="justify-center" people={members} />
               ) : (
                 <p className="type-body-sm text-muted-foreground">
                   The members of this group aren't listed for this date.
@@ -207,9 +203,12 @@ export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
 
         <dl className="type-body-sm mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
           {team(schedule).map((role) => (
-            <div className="flex gap-1.5" key={role.label}>
+            <div className="flex items-center gap-1.5" key={role.label}>
               <dt className="text-muted-foreground">{role.label}</dt>
-              <dd className="break-words">{role.name}</dd>
+              <dd className="flex min-w-0 items-center gap-1.5 break-words">
+                <PersonAvatar person={role} size="sm" />
+                {role.name}
+              </dd>
             </div>
           ))}
         </dl>

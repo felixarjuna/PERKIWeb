@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { asc, desc, eq } from "drizzle-orm";
-import { scheduleAssignments, schedules } from "~/lib/db/schema/schema";
+import { scheduleAssignments, schedules, users } from "~/lib/db/schema/schema";
+import type { Person } from "~/lib/people";
 import {
   localDay,
   type Slot,
@@ -71,28 +72,39 @@ export const scheduleRouter = createTRPCRouter({
     }),
   /**
    * Schedules, newest first, with their team and the members of the groups
-   * cooking and cleaning that day. Account ids are never included.
+   * cooking and cleaning that day. Account ids are never included, and
+   * photos only for signed-in viewers.
    */
-  getSchedules: publicProcedure.query(async () => {
+  getSchedules: publicProcedure.query(async ({ ctx }) => {
+    const withPhotos = Boolean(ctx.session?.user);
     const [rows, assignments, terms] = await Promise.all([
       db.select().from(schedules).orderBy(desc(schedules.date)),
       db
         .select({
+          image: users.image,
           name: scheduleAssignments.name,
           role: scheduleAssignments.role,
           scheduleId: scheduleAssignments.scheduleId,
         })
         .from(scheduleAssignments)
+        .leftJoin(users, eq(users.id, scheduleAssignments.userId))
         .orderBy(asc(scheduleAssignments.position)),
-      loadGroupTerms(),
+      loadGroupTerms(withPhotos),
     ]);
     return rows.map((schedule) => {
       const own = assignments.filter((a) => a.scheduleId === schedule.id);
       // Schedules written by the previous release have no assignments yet.
-      const team: Slot[] =
+      const team: (Slot & Person)[] =
         own.length > 0
-          ? own.map((a) => ({ name: a.name, role: a.role as ServingRole }))
-          : slotsFromSchedule(schedule);
+          ? own.map((a) => ({
+              image: withPhotos ? a.image : null,
+              name: a.name,
+              role: a.role as ServingRole,
+            }))
+          : slotsFromSchedule(schedule).map((slot) => ({
+              ...slot,
+              image: null,
+            }));
       const term = termOn(terms, localDay(schedule.date));
       const membersOf = (name: string | null) =>
         term?.groups.find(

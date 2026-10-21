@@ -265,6 +265,29 @@ export const groupMembers = pgTable(
   (t) => [uniqueIndex("group_members_group_name").on(t.groupId, t.name)]
 );
 
+/**
+ * A spelling of a person's name (as written on the schedule sheet or in a
+ * group) linked to their account, so every slot and group entry with that
+ * spelling points to the same member.
+ */
+export const nameLinks = pgTable("name_links", {
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+  id: serial("id").primaryKey().notNull(),
+  linkedById: text("linkedById").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  /** Normalised with `nameKey()`: lowercase, no dots, single spaces. */
+  name: text("name").notNull().unique(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
 export const accounts = pgTable(
   "account",
   {

@@ -44,7 +44,15 @@ describe("groups router", () => {
     await insertTerm("2027-04-01", "Group 1", ["Future"]);
 
     expect(await anonymousCaller().groups.getCurrent()).toEqual({
-      groups: [{ members: ["Wynnona", "Toni"], name: "Group 1" }],
+      groups: [
+        {
+          members: [
+            { image: null, name: "Wynnona" },
+            { image: null, name: "Toni" },
+          ],
+          name: "Group 1",
+        },
+      ],
       startsOn: "2026-04-01",
     });
   });

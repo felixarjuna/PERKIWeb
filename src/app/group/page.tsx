@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
+import { AvatarStack, PeopleGrid } from "~/components/person-avatar";
 import Template from "~/components/template";
 import {
   Accordion,
@@ -34,16 +35,14 @@ export default async function Group() {
                 key={group.name}
                 value={group.name}
               >
-                <AccordionTrigger>{group.name}</AccordionTrigger>
-                <AccordionContent className="flex flex-wrap gap-2">
-                  {group.members.map((member) => (
-                    <div
-                      className="type-caption w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground"
-                      key={member}
-                    >
-                      {member}
-                    </div>
-                  ))}
+                <AccordionTrigger>
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-3 pe-3">
+                    {group.name}
+                    <AvatarStack people={group.members} />
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <PeopleGrid className="pt-1 pb-2" people={group.members} />
                 </AccordionContent>
               </AccordionItem>
             ))}
