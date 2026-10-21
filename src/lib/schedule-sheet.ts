@@ -1,0 +1,144 @@
+import { DateTime } from "luxon";
+
+/** Gatherings happen in Aachen; a sheet date is that calendar day there. */
+const ZONE = "Europe/Berlin";
+const DATE_PATTERN = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
+
+/** A schedule read from one row of a year tab ("2026", "2025", …). */
+export interface SheetSchedule {
+  accommodation: string;
+  bibleVerse: string;
+  cleaningGroup: string;
+  cookingGroup: string;
+  date: Date;
+  /** `yyyy-MM-dd` in Aachen, used to match the row with a stored schedule. */
+  day: string;
+  description: string;
+  leader: string;
+  multimedia: string;
+  musician: string;
+  noteWriter: string;
+  preacher: string;
+  /** Sheet row number (1-based) for messages. */
+  row: number;
+  title: string;
+  type: "church_service" | "bible_study";
+}
+
+export interface SkippedRow {
+  day: string;
+  reason: string;
+  row: number;
+}
+
+const EVENT_TYPES: Record<string, SheetSchedule["type"]> = {
+  kebaktian: "church_service",
+  "penelaahan alkitab": "bible_study",
+};
+
+/** Slot columns; a row with none of them filled has nothing planned. */
+const SLOT_COLUMNS = [
+  "preacher",
+  "leader",
+  "liturgis",
+  "musik",
+  "multimedia",
+  "akomodasi",
+  "catatan",
+  "masak",
+  "piket",
+];
+
+/** The sheet writes "-" (or nothing) for an empty slot. */
+const clean = (value: string | undefined) => {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "-" ? "" : trimmed;
+};
+
+const headerKey = (value: string) => value.trim().toLowerCase();
+
+/** Reads one dated row: a schedule, or the reason it's skipped. */
+function readRow(
+  cells: string[],
+  columns: Map<string, number>,
+  row: number
+): { schedule: SheetSchedule } | { skipped: SkippedRow } {
+  const cell = (name: string) => {
+    const column = columns.get(name);
+    return column === undefined ? "" : clean(cells[column]);
+  };
+  const dateText = cells[0]?.trim() ?? "";
+  const date = DateTime.fromFormat(dateText, "d.M.yyyy", { zone: ZONE });
+  const day = date.toISODate();
+  if (!(date.isValid && day)) {
+    return {
+      skipped: { day: dateText, reason: "The date can't be read.", row },
+    };
+  }
+  const event = cell("acara");
+  const type = EVENT_TYPES[event.toLowerCase()];
+  if (!type) {
+    const reason = event
+      ? `"${event}" isn't a service or Bible study, so it isn't imported.`
+      : "The row has no event.";
+    return { skipped: { day, reason, row } };
+  }
+  if (SLOT_COLUMNS.every((name) => cell(name) === "")) {
+    return {
+      skipped: { day, reason: "Nothing is planned on this date.", row },
+    };
+  }
+  return {
+    schedule: {
+      accommodation: cell("akomodasi"),
+      bibleVerse: cell("bible verse") || cell("tema kotbah"),
+      cleaningGroup: cell("piket"),
+      cookingGroup: cell("masak"),
+      date: date.toJSDate(),
+      day,
+      description:
+        cell("event description") ||
+        [cell("events"), cell("special notes")].filter(Boolean).join(" · "),
+      leader: type === "church_service" ? cell("liturgis") : cell("leader"),
+      multimedia: cell("multimedia"),
+      musician: cell("musik"),
+      noteWriter: cell("catatan"),
+      preacher: cell("preacher"),
+      row,
+      title: cell("event title") || event,
+      type,
+    },
+  };
+}
+
+/**
+ * Reads a year tab as it is kept by hand: header rows repeat every quarter,
+ * blank rows separate months, and the group list sits below the dates. Columns
+ * are found by their header, because the layout changes between years (2025
+ * has "Event Title" and "Bible verse"; 2026 has "Events" and "Tema Kotbah").
+ */
+export function parseScheduleSheet(values: string[][]): {
+  schedules: SheetSchedule[];
+  skipped: SkippedRow[];
+} {
+  const schedules: SheetSchedule[] = [];
+  const skipped: SkippedRow[] = [];
+  let columns: Map<string, number> | undefined;
+
+  for (const [index, cells] of values.entries()) {
+    const first = cells[0]?.trim() ?? "";
+    if (headerKey(first) === "tanggal") {
+      columns = new Map(
+        cells.map((header, column) => [headerKey(header), column])
+      );
+    } else if (columns && DATE_PATTERN.test(first)) {
+      const result = readRow(cells, columns, index + 1);
+      if ("schedule" in result) {
+        schedules.push(result.schedule);
+      } else {
+        skipped.push(result.skipped);
+      }
+    }
+  }
+  return { schedules, skipped };
+}
