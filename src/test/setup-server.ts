@@ -8,5 +8,9 @@ import { migrateTestDb, resetTestDb } from "./db";
 vi.mock("~/server", async () => ({ db: (await import("./db")).testDb }));
 vi.mock("~/server/auth", () => ({ auth: vi.fn(() => null) }));
 
-beforeAll(migrateTestDb);
+// Migrations insert some data (e.g. the current groups); tests start empty.
+beforeAll(async () => {
+  await migrateTestDb();
+  await resetTestDb();
+});
 afterEach(resetTestDb);

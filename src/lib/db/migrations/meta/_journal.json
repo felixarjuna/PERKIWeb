@@ -78,6 +78,13 @@
       "when": 1792511499055,
       "tag": "0010_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792571599592,
+      "tag": "0011_schedule_assignments_groups",
+      "breakpoints": true
     }
   ]
 }

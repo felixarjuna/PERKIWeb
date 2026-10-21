@@ -42,7 +42,6 @@ import { Textarea } from "~/components/ui/textarea";
 import { env } from "~/env.mjs";
 import {
   accommodation,
-  groupNames,
   liturgos,
   multimedia,
   musicians,
@@ -53,8 +52,10 @@ import { eventTypeEnum, type NewSchedule } from "~/lib/db/schema/schema";
 import { cn } from "~/lib/utils";
 import { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
+import { useGroupNames } from "../use-group-names";
 
 export default function AddScheduleForm() {
+  const groupNames = useGroupNames();
   /** form definition. */
   const form = useForm<z.infer<typeof addScheduleSchema>>({
     defaultValues: {},
@@ -159,11 +160,11 @@ export default function AddScheduleForm() {
                               <FormControl>
                                 <Button
                                   className={cn(
-                                    "w-full justify-start pl-3 text-left",
+                                    "w-full justify-start bg-secondary pl-3 text-left font-normal hover:bg-secondary",
                                     !field.value && "text-muted-foreground"
                                   )}
                                   type="button"
-                                  variant="outline"
+                                  variant="secondary"
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP")

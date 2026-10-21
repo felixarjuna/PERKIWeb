@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   integer,
   json,
   pgEnum,
@@ -15,6 +16,7 @@ import {
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
+import { SERVING_ROLES } from "../../serving-roles";
 
 export const eventTypeEnum = pgEnum("event_type", [
   "church_service",
@@ -195,6 +197,73 @@ export const profileRelations = relations(profiles, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+/** Who fills a slot on a schedule: a member account, or just a name for guests and unmatched names. */
+export const scheduleAssignments = pgTable(
+  "schedule_assignments",
+  {
+    id: serial("id").primaryKey().notNull(),
+    /** Name as shown on the schedule; kept even when the member is linked. */
+    name: text("name").notNull(),
+    /** Order within a role when several people share it. */
+    position: integer("position").default(0).notNull(),
+    role: text("role").notNull(),
+    scheduleId: integer("scheduleId")
+      .notNull()
+      .references(() => schedules.id, { onDelete: "cascade" }),
+    userId: text("userId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+  },
+  (t) => [
+    uniqueIndex("schedule_assignments_slot").on(
+      t.scheduleId,
+      t.role,
+      t.position
+    ),
+    check(
+      "schedule_assignments_role_check",
+      sql`${t.role} in (${sql.raw(SERVING_ROLES.map((role) => `'${role}'`).join(", "))})`
+    ),
+  ]
+);
+
+/** One period (about six months) of cooking and cleaning groups. */
+export const groupTerms = pgTable("group_terms", {
+  id: serial("id").primaryKey().notNull(),
+  /** First day the groups apply; a term lasts until the next one starts. */
+  startsOn: date("startsOn", { mode: "string" }).notNull().unique(),
+});
+
+export const groups = pgTable(
+  "groups",
+  {
+    id: serial("id").primaryKey().notNull(),
+    /** As written on the schedule, e.g. "Group 3". */
+    name: text("name").notNull(),
+    termId: integer("termId")
+      .notNull()
+      .references(() => groupTerms.id, { onDelete: "cascade" }),
+  },
+  (t) => [uniqueIndex("groups_term_name").on(t.termId, t.name)]
+);
+
+export const groupMembers = pgTable(
+  "group_members",
+  {
+    groupId: integer("groupId")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    id: serial("id").primaryKey().notNull(),
+    /** Name as listed in the group; members without an account have only this. */
+    name: text("name").notNull(),
+    position: integer("position").default(0).notNull(),
+    userId: text("userId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+  },
+  (t) => [uniqueIndex("group_members_group_name").on(t.groupId, t.name)]
+);
 
 export const accounts = pgTable(
   "account",

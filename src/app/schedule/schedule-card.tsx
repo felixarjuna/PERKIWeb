@@ -15,7 +15,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "~/components/ui/drawer";
-import { groups } from "~/lib/data";
+import { servingRoleLabels } from "~/lib/serving-roles";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
@@ -50,23 +50,27 @@ function formatDate(date: Date) {
   };
 }
 
-/** Roles that are filled in, named as in the admin form; empty ones are left out instead of showing "-". */
+/** Who serves, in slot order; the preacher is shown under the title instead. */
 function team(schedule: Schedule) {
-  return [
-    { label: "Liturgos", name: schedule.leader },
-    { label: "Musician", name: schedule.musician },
-    { label: "Note writer", name: schedule.noteWriter },
-    { label: "Multimedia", name: schedule.multimedia },
-    { label: "Accommodation", name: schedule.accommodation },
-  ].filter((role): role is { label: string; name: string } =>
-    Boolean(role.name)
-  );
+  return schedule.team
+    .filter((slot) => slot.role !== "preacher")
+    .map((slot) => ({ label: servingRoleLabels[slot.role], name: slot.name }));
 }
 
 function duties(schedule: Schedule) {
   return [
-    { icon: Utensils, label: "Cooking", name: schedule.cookingGroup },
-    { icon: Sparkles, label: "Cleaning", name: schedule.cleaningGroup },
+    {
+      icon: Utensils,
+      label: "Cooking",
+      members: schedule.groupMembers.cooking,
+      name: schedule.cookingGroup,
+    },
+    {
+      icon: Sparkles,
+      label: "Cleaning",
+      members: schedule.groupMembers.cleaning,
+      name: schedule.cleaningGroup,
+    },
   ].filter((duty): duty is typeof duty & { name: string } =>
     Boolean(duty.name)
   );
@@ -115,9 +119,7 @@ function Description({ text }: { text: string }) {
 }
 
 function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
-  const members = groups.find(
-    (group) => group.name.toLowerCase() === duty.name.toLowerCase()
-  )?.members;
+  const { members } = duty;
   return (
     <Drawer>
       <DrawerTrigger
@@ -135,16 +137,22 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
           <DrawerDescription asChild>
             <div className="flex flex-col items-center gap-4 py-6">
               <RandomVerse items={verses} />
-              <ul className="flex flex-wrap justify-center gap-2">
-                {members?.map((member) => (
-                  <li
-                    className="type-body-sm rounded-full bg-paper px-3 py-1 text-paper-foreground"
-                    key={member}
-                  >
-                    {member}
-                  </li>
-                ))}
-              </ul>
+              {members ? (
+                <ul className="flex flex-wrap justify-center gap-2">
+                  {members.map((member) => (
+                    <li
+                      className="type-body-sm rounded-full bg-paper px-3 py-1 text-paper-foreground"
+                      key={member}
+                    >
+                      {member}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="type-body-sm text-muted-foreground">
+                  The members of this group aren't listed for this date.
+                </p>
+              )}
             </div>
           </DrawerDescription>
         </DrawerHeader>
@@ -166,6 +174,7 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
 /** One gathering on the schedule timeline: the date on a rail, details beside it. */
 export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
   const date = formatDate(schedule.date);
+  const preacher = schedule.team.find((slot) => slot.role === "preacher")?.name;
   return (
     <article className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
       <div className="flex flex-col items-center">
@@ -189,9 +198,9 @@ export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
           {[date.time, schedule.bibleVerse].filter(Boolean).join(" · ")}
         </p>
         <h3 className="type-heading mt-1 break-words">{schedule.title}</h3>
-        {schedule.preacher ? (
+        {preacher ? (
           <p className="type-body-sm mt-1 text-muted-foreground">
-            Preached by {schedule.preacher}
+            Preached by {preacher}
           </p>
         ) : null}
         <Description text={schedule.description} />

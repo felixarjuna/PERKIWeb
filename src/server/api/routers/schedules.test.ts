@@ -1,6 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
-import { schedules as schedulesTable, takeaways } from "~/lib/db/schema/schema";
+import {
+  groupMembers,
+  groups,
+  groupTerms,
+  scheduleAssignments,
+  schedules as schedulesTable,
+  takeaways,
+} from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -216,6 +223,108 @@ describe("schedules router", () => {
       )
     );
     expect((await onlySchedule()).title).toBe(validSchedule.title);
+  });
+
+  it("records the team as assignments, linking a name only to a unique account", async () => {
+    const api = await signedIn();
+    const leader = await insertUser({ name: "Leader" });
+    await insertUser({ name: "Musician" });
+    await insertUser({ name: "Musician" });
+
+    await api.schedules.addSchedule({ ...validSchedule, preacher: "-" });
+
+    const rows = await testDb
+      .select({
+        name: scheduleAssignments.name,
+        role: scheduleAssignments.role,
+        userId: scheduleAssignments.userId,
+      })
+      .from(scheduleAssignments);
+    expect(rows).toEqual([
+      { name: "Leader", role: "leader", userId: leader.id },
+      { name: "Musician", role: "musician", userId: null },
+      { name: "Writer", role: "note_writer", userId: null },
+    ]);
+  });
+
+  it("replaces the assignments when a schedule is updated", async () => {
+    const api = await signedIn();
+    await api.schedules.addSchedule(validSchedule);
+    const { id } = await onlySchedule();
+
+    await api.schedules.updateSchedule({
+      ...validSchedule,
+      id,
+      leader: "Liturgist",
+      multimedia: "Tech",
+      type: "church_service",
+    });
+
+    const [schedule] = await anonymousCaller().schedules.getSchedules();
+    expect(schedule?.team).toEqual([
+      { name: "Liturgist", role: "liturgist" },
+      { name: "Musician", role: "musician" },
+      { name: "Tech", role: "multimedia" },
+      { name: "Writer", role: "note_writer" },
+    ]);
+  });
+
+  it("falls back to the name columns for schedules without assignments", async () => {
+    await testDb.insert(schedulesTable).values(validSchedule);
+
+    const [schedule] = await anonymousCaller().schedules.getSchedules();
+
+    expect(schedule?.team.map((slot) => slot.role)).toEqual([
+      "leader",
+      "musician",
+      "note_writer",
+    ]);
+  });
+
+  it("never sends account ids with the team", async () => {
+    const api = await signedIn();
+    await insertUser({ name: "Leader" });
+    await api.schedules.addSchedule(validSchedule);
+
+    const [schedule] = await anonymousCaller().schedules.getSchedules();
+
+    expect(JSON.stringify(schedule?.team)).not.toContain("userId");
+  });
+
+  it("lists the members of the groups in force on the schedule's date", async () => {
+    const insertTerm = async (startsOn: string, members: string[]) => {
+      const [term] = await testDb
+        .insert(groupTerms)
+        .values({ startsOn })
+        .returning();
+      const [group] = await testDb
+        .insert(groups)
+        .values({ name: "Group 4", termId: term?.id ?? 0 })
+        .returning();
+      await testDb.insert(groupMembers).values(
+        members.map((name, position) => ({
+          groupId: group?.id ?? 0,
+          name,
+          position,
+        }))
+      );
+    };
+    await insertTerm("2026-04-01", ["Ana", "Ben"]);
+    await insertTerm("2026-10-01", ["Cleo"]);
+    const api = await signedIn();
+    await api.schedules.addScheduleBatch([
+      { ...validSchedule, date: new Date("2026-03-28T18:00:00Z") },
+      { ...validSchedule, date: new Date("2026-09-26T18:00:00Z") },
+      { ...validSchedule, cookingGroup: "Group 9" },
+    ]);
+
+    const schedules = await anonymousCaller().schedules.getSchedules();
+
+    expect(schedules.map((s) => s.groupMembers)).toEqual([
+      { cleaning: ["Cleo"], cooking: null },
+      { cleaning: ["Ana", "Ben"], cooking: null },
+      { cleaning: null, cooking: null },
+    ]);
   });
 
   it("rejects every write from signed-out visitors", async () => {
