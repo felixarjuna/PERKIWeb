@@ -68,7 +68,7 @@ function Row({
       <p className="type-body mt-0.5 break-words">{title}</p>
       {verse === undefined ? null : (
         <p className="type-body-sm mt-0.5 break-words text-muted-foreground">
-          {verse || "No Bible verse in the sheet"}
+          {verse || "No Bible verse"}
         </p>
       )}
       {children}
