@@ -1,5 +1,6 @@
 "use client";
 
+import { Bot } from "lucide-react";
 import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
@@ -88,19 +89,22 @@ export function BotStatus() {
             }}
             type="button"
           >
-            {/* ml-1 centres the 8px dot under the 16px nav icons above it. */}
-            <span className="relative ml-1 flex size-2 shrink-0 items-center justify-center">
-              {online ? (
-                <span className="absolute size-2 animate-ping rounded-full bg-primary/60 motion-reduce:hidden" />
-              ) : null}
-              <span
-                className={cn(
-                  "relative size-2 rounded-full",
-                  online === undefined && "bg-muted-foreground",
-                  online === true && "bg-primary",
-                  online === false && "bg-destructive"
-                )}
-              />
+            {/* The status dot sits on the icon's corner, so it stays visible when the sidebar collapses to icons. */}
+            <span className="relative flex shrink-0">
+              <Bot aria-hidden="true" className="size-4" />
+              <span className="absolute -top-1 -right-1 flex size-2">
+                {online ? (
+                  <span className="absolute size-2 animate-ping rounded-full bg-primary/60 motion-reduce:hidden" />
+                ) : null}
+                <span
+                  className={cn(
+                    "relative size-2 rounded-full ring-2 ring-sidebar",
+                    online === undefined && "bg-muted-foreground",
+                    online === true && "bg-primary",
+                    online === false && "bg-destructive"
+                  )}
+                />
+              </span>
             </span>
             <span>
               perki.bot <span className="text-muted-foreground">· {shown}</span>
