@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
+import { PreachedBy, TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
 import type { SYNCED_FIELDS } from "~/lib/schedule-import";
 import { localTime } from "~/lib/schedule-team";
@@ -46,35 +47,30 @@ const entryTitle = ({ title, type }: Entry["schedule"]) =>
 const formatDay = (day: string) =>
   DateTime.fromISO(day).toFormat("ccc d LLL yyyy");
 
-/** Names filled on a new date, in slot order, for a one-line summary. */
-function teamLine(schedule: Entry["schedule"]) {
-  return [
-    schedule.preacher,
-    schedule.leader,
-    schedule.musician,
-    schedule.multimedia,
-    schedule.accommodation,
-    schedule.noteWriter,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
 function Row({
   day,
+  time,
   title,
+  verse,
   children,
 }: {
   day: string;
+  time?: string;
   title: string;
+  verse?: string;
   children?: React.ReactNode;
 }) {
   return (
     <li className="rounded-xl bg-card p-4">
       <p className="type-caption text-muted-foreground tabular-nums">
-        {formatDay(day)}
+        {time ? `${formatDay(day)} · ${time}` : formatDay(day)}
       </p>
       <p className="type-body mt-0.5 break-words">{title}</p>
+      {verse ? (
+        <p className="type-body-sm mt-0.5 break-words text-muted-foreground">
+          {verse}
+        </p>
+      ) : null}
       {children}
     </li>
   );
@@ -202,28 +198,12 @@ export default function ScheduleImport() {
               <Row
                 day={entry.day}
                 key={entry.row}
+                time={localTime(entry.schedule.date)}
                 title={entryTitle(entry.schedule)}
+                verse={entry.schedule.bibleVerse}
               >
-                <dl className="type-body-sm mt-2 grid gap-1">
-                  <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Starts</dt>
-                    <dd className="tabular-nums">
-                      {localTime(entry.schedule.date)}
-                    </dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Bible verse</dt>
-                    <dd className="break-words">
-                      {entry.schedule.bibleVerse || "Not in the sheet"}
-                    </dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Team</dt>
-                    <dd className="break-words">
-                      {teamLine(entry.schedule) || "No team yet"}
-                    </dd>
-                  </div>
-                </dl>
+                <PreachedBy className="mt-3" team={entry.team} />
+                <TeamList className="mt-3" team={entry.team} />
               </Row>
             ))}
           </Group>
@@ -235,13 +215,13 @@ export default function ScheduleImport() {
                 key={entry.row}
                 title={entryTitle(entry.schedule)}
               >
-                <dl className="type-body-sm mt-2 grid gap-1">
+                <dl className="type-body-sm mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
                   {entry.changes.map((change) => (
-                    <div className="flex flex-wrap gap-x-2" key={change.field}>
+                    <div className="contents" key={change.field}>
                       <dt className="text-muted-foreground">
                         {FIELD_LABELS[change.field]}
                       </dt>
-                      <dd className="flex items-center gap-1.5 break-words">
+                      <dd className="flex flex-wrap items-center gap-1.5 break-words">
                         <span className="text-muted-foreground line-through">
                           {change.from || "empty"}
                         </span>

@@ -53,6 +53,12 @@ describe("schedule import router", () => {
       ["2026-01-10", "new"],
     ]);
     expect(preview.skipped).toHaveLength(2);
+    // The team as it will appear on the schedule: role, name and photo.
+    expect(preview.entries[1]?.team).toContainEqual({
+      image: null,
+      name: "Dan",
+      role: "liturgist",
+    });
     expect(await testDb.select().from(schedules)).toEqual([]);
 
     expect(await api.scheduleImport.run({ tab: "2026" })).toEqual({

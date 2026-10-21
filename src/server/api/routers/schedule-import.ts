@@ -1,13 +1,16 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { schedules } from "~/lib/db/schema/schema";
+import { schedules, speakers, users } from "~/lib/db/schema/schema";
 import { planImport } from "~/lib/schedule-import";
 import { parseScheduleSheet, type SheetSchedule } from "~/lib/schedule-sheet";
+import { type Slot, slotsFromSchedule } from "~/lib/schedule-team";
 import { db } from "~/server";
 import { sheetTabs, sheetValues } from "~/server/google-sheets";
+import { resolveAccounts } from "~/server/people";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
 import { scheduleSheetId } from "~/server/settings";
+import { resolveSpeakers } from "~/server/speakers";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 const YEAR_TAB = /^\d{4}$/;
@@ -72,10 +75,42 @@ const syncedColumns = (row: SheetSchedule) => ({
   ...(row.bibleVerse ? { bibleVerse: row.bibleVerse } : {}),
 });
 
+/**
+ * Each row's team as it would appear on the schedule: members with their
+ * account photo, preachers with their speaker photo. Staff-only, like the
+ * preview itself.
+ */
+async function previewTeams(rows: SheetSchedule[]) {
+  const slotsOf = (row: SheetSchedule) => slotsFromSchedule(row);
+  const names = rows.flatMap((row) =>
+    slotsOf(row)
+      .filter((slot) => slot.role !== "preacher")
+      .map((slot) => slot.name)
+  );
+  const [userIdFor, speakerFor] = await db.transaction((tx) =>
+    Promise.all([resolveAccounts(tx, names), resolveSpeakers(tx)])
+  );
+  const [accounts, speakerRows] = await Promise.all([
+    db.select({ id: users.id, image: users.image }).from(users),
+    db.select({ id: speakers.id, photoUrl: speakers.photoUrl }).from(speakers),
+  ]);
+  const imageOf = (slot: Slot) => {
+    if (slot.role === "preacher") {
+      const id = speakerFor(slot.name);
+      return speakerRows.find((speaker) => speaker.id === id)?.photoUrl ?? null;
+    }
+    const id = userIdFor(slot.name);
+    return accounts.find((account) => account.id === id)?.image ?? null;
+  };
+  return (row: SheetSchedule) =>
+    slotsOf(row).map((slot) => ({ ...slot, image: imageOf(slot) }));
+}
+
 export const scheduleImportRouter = createTRPCRouter({
   /** What importing the tab would do, without writing anything. */
   preview: adminProcedure.input(tabInput).query(async ({ input }) => {
     const { entries, skipped } = await planTab(input.tab);
+    const teamOf = await previewTeams(entries.map((entry) => entry.schedule));
     return {
       entries: entries.map((entry) => ({
         changes: entry.status === "new" ? [] : entry.changes,
@@ -83,6 +118,7 @@ export const scheduleImportRouter = createTRPCRouter({
         row: entry.schedule.row,
         schedule: entry.schedule,
         status: entry.status,
+        team: teamOf(entry.schedule),
       })),
       skipped,
     };

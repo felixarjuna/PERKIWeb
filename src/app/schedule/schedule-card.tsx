@@ -4,7 +4,8 @@ import { ChevronDown, Sparkles, Utensils } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
-import { PeopleGrid, PersonAvatar } from "~/components/person-avatar";
+import { PeopleGrid } from "~/components/person-avatar";
+import { PreachedBy, TeamList } from "~/components/schedule/team";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Drawer,
@@ -16,7 +17,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "~/components/ui/drawer";
-import { servingRoleLabels } from "~/lib/serving-roles";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
@@ -49,17 +49,6 @@ function formatDate(date: Date) {
     time: local.toFormat("HH:mm"),
     weekday: local.toFormat("ccc"),
   };
-}
-
-/** Who serves, in slot order; the preacher is shown under the title instead. */
-function team(schedule: Schedule) {
-  return schedule.team
-    .filter((slot) => slot.role !== "preacher")
-    .map((slot) => ({
-      image: slot.image,
-      label: servingRoleLabels[slot.role],
-      name: slot.name,
-    }));
 }
 
 function duties(schedule: Schedule) {
@@ -170,7 +159,6 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
 /** One gathering on the schedule timeline: the date on a rail, details beside it. */
 export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
   const date = formatDate(schedule.date);
-  const preacher = schedule.team.find((slot) => slot.role === "preacher");
   return (
     <article className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
       <div className="flex flex-col items-center">
@@ -194,25 +182,10 @@ export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
           {[date.time, schedule.bibleVerse].filter(Boolean).join(" · ")}
         </p>
         <h3 className="type-heading mt-1 break-words">{schedule.title}</h3>
-        {preacher ? (
-          <p className="type-body-sm mt-1.5 flex items-center gap-2 text-muted-foreground">
-            <PersonAvatar person={preacher} size="sm" />
-            Preached by {preacher.name}
-          </p>
-        ) : null}
+        <PreachedBy className="mt-1.5" team={schedule.team} />
         <Description text={schedule.description} />
 
-        <dl className="type-body-sm mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
-          {team(schedule).map((role) => (
-            <div className="flex items-center gap-1.5" key={role.label}>
-              <dt className="text-muted-foreground">{role.label}</dt>
-              <dd className="flex min-w-0 items-center gap-1.5 break-words">
-                <PersonAvatar person={role} size="sm" />
-                {role.name}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <TeamList className="mt-4" team={schedule.team} />
         <div className="mt-3 flex flex-wrap gap-2">
           {duties(schedule).map((duty) => (
             <DutyDrawer duty={duty} key={duty.label} />
