@@ -1,15 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { scheduleAssignments, schedules } from "~/lib/db/schema/schema";
+import {
+  scheduleAssignments,
+  schedules,
+  settings,
+} from "~/lib/db/schema/schema";
+import { SETTING_KEYS } from "~/lib/settings";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 import { SHEET_2026 } from "~/test/fixtures/schedule-sheet";
 
-const google = vi.hoisted(() => ({
-  sheetId: "sheet-id" as string | null,
-  values: [] as string[][],
-}));
+const google = vi.hoisted(() => ({ values: [] as string[][] }));
 vi.mock("~/server/google-sheets", () => ({
-  scheduleSheetId: () => google.sheetId,
   sheetTabs: vi.fn(async () => ["List Pelayan 2026", "2025", "2026"]),
   sheetValues: vi.fn(async () => google.values),
 }));
@@ -17,9 +18,11 @@ vi.mock("~/server/google-sheets", () => ({
 const admin = async () => callerFor((await insertUser({ role: "mita" })).id);
 
 describe("schedule import router", () => {
-  beforeEach(() => {
-    google.sheetId = "sheet-id";
+  beforeEach(async () => {
     google.values = SHEET_2026;
+    await testDb
+      .insert(settings)
+      .values({ key: SETTING_KEYS.scheduleSheetId, value: "sheet-id" });
   });
 
   it("lists only the year tabs, newest first", async () => {
@@ -30,7 +33,7 @@ describe("schedule import router", () => {
   });
 
   it("reports when the sheet isn't set up", async () => {
-    google.sheetId = null;
+    await testDb.delete(settings);
     const api = await admin();
     expect(await api.scheduleImport.status()).toEqual({
       configured: false,

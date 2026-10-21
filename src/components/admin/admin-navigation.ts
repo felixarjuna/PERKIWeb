@@ -5,6 +5,7 @@ import {
   Link2,
   Mic,
   NotebookPen,
+  Settings,
   UsersRound,
 } from "lucide-react";
 import { isStaffRole, type Role } from "~/lib/roles";
@@ -51,6 +52,13 @@ export const adminNavigation = [
     icon: HandHeart,
     title: "Prayers",
     url: "/admin/prayers",
+  },
+  // Rendered at the bottom of the sidebar, above the account menu.
+  {
+    group: "Footer",
+    icon: Settings,
+    title: "Settings",
+    url: "/admin/settings",
   },
 ] as const;
 

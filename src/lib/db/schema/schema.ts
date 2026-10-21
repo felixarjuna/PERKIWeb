@@ -322,6 +322,21 @@ export const nameLinks = pgTable("name_links", {
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
+/** Workspace settings staff change on /admin/settings, one row per key (see `src/lib/settings.ts`). */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey().notNull(),
+  updatedAt: timestamp("updatedAt", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+  updatedById: text("updatedById").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  value: text("value").notNull(),
+});
+
 export const accounts = pgTable(
   "account",
   {

@@ -1,9 +1,7 @@
 const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets";
 
-// Validated in env.mjs; read directly so server tests need no full environment.
-
-/** The schedule sheet's id, or null when the import isn't configured. */
-export const scheduleSheetId = () => process.env.SCHEDULE_SHEET_ID || null;
+// The API key is validated in env.mjs; read directly so server tests need no
+// full environment. Which sheet to read is a workspace setting.
 
 async function sheetsRequest<T>(path: string): Promise<T> {
   const url = new URL(`${SHEETS_API}/${path}`);
@@ -13,6 +11,14 @@ async function sheetsRequest<T>(path: string): Promise<T> {
     throw new Error(`Google Sheets answered ${response.status}.`);
   }
   return (await response.json()) as T;
+}
+
+/** A spreadsheet's file name, e.g. "2026 - Jadwal Pelayanan PERKI". */
+export async function sheetTitle(sheetId: string): Promise<string> {
+  const data = await sheetsRequest<{ properties?: { title?: string } }>(
+    `${encodeURIComponent(sheetId)}?fields=properties.title`
+  );
+  return data.properties?.title ?? "";
 }
 
 /** Tab titles of a spreadsheet, in sheet order. */

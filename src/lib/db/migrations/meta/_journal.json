@@ -99,6 +99,13 @@
       "when": 1792579685126,
       "tag": "0013_speakers",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792580742142,
+      "tag": "0014_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { DateTime } from "luxon";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
@@ -132,7 +133,11 @@ export default function ScheduleImport() {
   if (status.data && !status.data.configured) {
     return (
       <QueryMessage>
-        The import isn't set up yet: add the sheet's id as SCHEDULE_SHEET_ID.
+        No schedule sheet is set yet. Add its link on the{" "}
+        <Link className="underline underline-offset-4" href="/admin/settings">
+          Settings
+        </Link>{" "}
+        page.
       </QueryMessage>
     );
   }

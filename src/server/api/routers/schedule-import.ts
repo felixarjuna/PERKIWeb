@@ -5,23 +5,20 @@ import { schedules } from "~/lib/db/schema/schema";
 import { planImport } from "~/lib/schedule-import";
 import { parseScheduleSheet, type SheetSchedule } from "~/lib/schedule-sheet";
 import { db } from "~/server";
-import {
-  scheduleSheetId,
-  sheetTabs,
-  sheetValues,
-} from "~/server/google-sheets";
+import { sheetTabs, sheetValues } from "~/server/google-sheets";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
+import { scheduleSheetId } from "~/server/settings";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 const YEAR_TAB = /^\d{4}$/;
 const tabInput = z.object({ tab: z.string().min(1).max(100) });
 
-function requireSheetId() {
-  const id = scheduleSheetId();
+async function requireSheetId() {
+  const id = await scheduleSheetId();
   if (!id) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "The schedule sheet isn't set up (SCHEDULE_SHEET_ID).",
+      message: "No schedule sheet is set. Add its link on the Settings page.",
     });
   }
   return id;
@@ -39,7 +36,7 @@ const fromGoogle = <T>(request: () => Promise<T>): Promise<T> =>
 
 /** Reads a tab and compares it with the stored schedules. */
 async function planTab(tab: string) {
-  const sheetId = requireSheetId();
+  const sheetId = await requireSheetId();
   const values = await fromGoogle(() => sheetValues(sheetId, tab));
   const { schedules: rows, skipped } = parseScheduleSheet(values);
   const stored = await db
@@ -126,7 +123,7 @@ export const scheduleImportRouter = createTRPCRouter({
   }),
   /** Whether the import is set up, and the sheet's year tabs (newest first). */
   status: adminProcedure.query(async () => {
-    const sheetId = scheduleSheetId();
+    const sheetId = await scheduleSheetId();
     if (!sheetId) {
       return { configured: false as const, tabs: [] };
     }
