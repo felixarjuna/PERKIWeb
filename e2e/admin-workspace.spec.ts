@@ -21,7 +21,7 @@ test("overview shows real registration and birthday controls", async ({
     page.getByRole("heading", { name: "Time to celebrate" })
   ).toBeVisible();
   const history = page
-    .getByRole("list", { name: "Registration history" })
+    .getByRole("list", { name: "New accounts history" })
     .getByRole("listitem");
   for (const [range, count] of [
     ["1Y", 12],
@@ -34,17 +34,17 @@ test("overview shows real registration and birthday controls", async ({
     await expect(history).toHaveCount(count);
   }
   await page.getByRole("radio", { name: "Total" }).click();
-  // A column lists who registered then; the overview month stays put.
+  // A column lists who joined then; the overview month stays put.
   await history.last().getByRole("button").click();
   const sheet = page.getByRole("dialog");
-  await expect(sheet).toContainText("Registered in");
+  await expect(sheet).toContainText("Joined in");
   await expect(sheet.getByRole("link").first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   await expect(month).toHaveText(shown ?? "");
   await selectOption(page, "Location", "Aachen");
   await expect(
-    page.getByRole("term").filter({ hasText: "Members" })
+    page.getByRole("term").filter({ hasText: "Accounts" })
   ).toBeVisible();
 });
 

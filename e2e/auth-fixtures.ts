@@ -15,8 +15,13 @@ const SESSION_DURATION_SECONDS = 60 * 60;
 const MILLISECONDS_PER_SECOND = 1000;
 const SESSION_COOKIE = "authjs.session-token";
 
+/**
+ * Inserts a Google-linked account. It has already seen the welcome step
+ * unless `welcome` is true, so specs land where they navigate.
+ */
 export const createTestAccount = async (
-  label: string
+  label: string,
+  { welcome = false }: { welcome?: boolean } = {}
 ): Promise<TestAccount> => {
   assertLocalDatabase(e2eEnv.DATABASE_URL);
   const sql = postgres(e2eEnv.DATABASE_URL, { max: 1 });
@@ -28,7 +33,7 @@ export const createTestAccount = async (
   };
   try {
     await sql.begin(async (tx) => {
-      await tx`insert into "user" (id, email, name) values (${user.id}, ${user.email}, ${user.name})`;
+      await tx`insert into "user" (id, email, name, "welcomeSeenAt") values (${user.id}, ${user.email}, ${user.name}, ${welcome ? null : new Date()})`;
       await tx`insert into account ("userId", type, provider, "providerAccountId") values (${user.id}, 'oidc', 'google', ${user.id})`;
     });
     return user;

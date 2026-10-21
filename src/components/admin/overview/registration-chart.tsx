@@ -57,9 +57,9 @@ export default function RegistrationChart({
   const cumulative = metric === "cumulative";
   const unitOf = (value: number) => {
     if (cumulative) {
-      return "members in total";
+      return "accounts in total";
     }
-    return value === 1 ? "registration" : "registrations";
+    return value === 1 ? "new account" : "new accounts";
   };
   const metricValue = (month: Month) =>
     cumulative ? month.cumulative : month.count;
@@ -76,11 +76,11 @@ export default function RegistrationChart({
     <section className="flex min-h-80 min-w-0 flex-col gap-3 rounded-xl bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="type-subheading">Registrations</h2>
+          <h2 className="type-subheading">New accounts</h2>
           <p className="type-caption text-muted-foreground">
             {cumulative
-              ? `Member profiles in total, by ${UNIT_NOUN[unit]}`
-              : `New member profiles per ${UNIT_NOUN[unit]}`}
+              ? `Accounts in total, by ${UNIT_NOUN[unit]}`
+              : `New accounts per ${UNIT_NOUN[unit]}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -148,7 +148,7 @@ export default function RegistrationChart({
             </svg>
           ) : null}
           <ul
-            aria-label="Registration history"
+            aria-label="New accounts history"
             className="absolute inset-0 flex"
           >
             {months.map((month) => {
@@ -159,7 +159,7 @@ export default function RegistrationChart({
                 <li className="flex min-w-0 flex-1" key={month.key}>
                   <button
                     aria-haspopup="dialog"
-                    aria-label={`${month.fullLabel}: ${value} ${unitOf(value)}. See who registered`}
+                    aria-label={`${month.fullLabel}: ${value} ${unitOf(value)}. See who joined`}
                     className="group relative flex h-full w-full justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => onSelectBucket(month.key)}
                     type="button"
@@ -225,9 +225,9 @@ export default function RegistrationChart({
         ))}
       </div>
       <p className="type-caption text-muted-foreground">
-        Retained profiles only, not attendance.
+        Accounts that still exist, not attendance.
         {missingDates
-          ? ` ${missingDates} without a registration date are left out.`
+          ? ` ${missingDates} from before sign-up dates were recorded are left out.`
           : ""}
       </p>
     </section>

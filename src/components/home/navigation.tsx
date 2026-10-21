@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { authPageUrl } from "~/lib/auth-redirect";
 import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
 const navigations = [
   { href: "/", icon: House, name: "Home" },
@@ -41,6 +42,14 @@ export default function Navigation({ revealAfter }: NavigationProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [visible, setVisible] = useState(!revealAfter);
+  const { data: own } = api.profiles.mine.useQuery(undefined, {
+    enabled: Boolean(session),
+  });
+  // Stays until the profile is complete; unlike the reminder it never snoozes.
+  const unfinished =
+    Boolean(session) &&
+    own !== undefined &&
+    own.completion.state !== "complete";
 
   useEffect(() => {
     if (!revealAfter) {
@@ -96,6 +105,11 @@ export default function Navigation({ revealAfter }: NavigationProps) {
             })}
             <li>
               <button
+                // Label spans are flex items, so a hidden suffix would read
+                // as "Account , profile …"; name the state outright instead.
+                aria-label={
+                  unfinished ? "Account, profile incomplete" : undefined
+                }
                 className={itemClass}
                 onClick={
                   session
@@ -110,8 +124,11 @@ export default function Navigation({ revealAfter }: NavigationProps) {
                 }
                 type="button"
               >
-                <span className={tileClass}>
+                <span className={cn(tileClass, "relative")}>
                   <User aria-hidden="true" className="size-4" />
+                  {unfinished ? (
+                    <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary" />
+                  ) : null}
                 </span>
                 <span className="sr-only sm:not-sr-only">
                   {session ? "Account" : "Sign in"}

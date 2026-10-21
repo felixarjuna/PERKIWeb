@@ -51,7 +51,14 @@ describe("Google sign-in", () => {
     searchParams = new URLSearchParams({ callbackUrl });
     render(<SignInForm />);
     await userEvent.setup().click(googleButton());
-    expect(signIn).toHaveBeenCalledWith("google", { redirectTo: "/" });
+    expect(signIn).toHaveBeenCalledWith("google", {
+      redirectTo: "/welcome",
+    });
+  });
+  it("goes through the welcome step when there is nowhere else to go", async () => {
+    render(<SignInForm />);
+    await userEvent.setup().click(googleButton());
+    expect(signIn).toHaveBeenCalledWith("google", { redirectTo: "/welcome" });
   });
   it("uses the safe destination recovered by the server after an OAuth error", async () => {
     searchParams = new URLSearchParams({ error: "OAuthCallbackError" });

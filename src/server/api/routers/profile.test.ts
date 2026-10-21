@@ -1,169 +1,278 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { profiles } from "~/lib/db/schema/schema";
+import { profiles, users } from "~/lib/db/schema/schema";
+import { SETTING_KEYS } from "~/lib/settings";
+import { setSetting } from "~/server/settings";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
-const profileFor = (userId: string) => ({
+const fullProfile = {
   address: "Musterstr. 1, 80333 Munich",
-  bio: "Hi!",
   birthday: new Date("2000-02-29T00:00:00.000Z"),
   location: "Munich",
   major: "Informatics",
   phoneNumber: "+49 123 456789",
-  userId,
-});
+};
+
+const WHATSAPP = "https://chat.whatsapp.com/AbC123";
+
+/** A profile row as the old join form left it. */
+const insertProfile = (
+  userId: string,
+  values: Partial<typeof profiles.$inferInsert> = fullProfile
+) => testDb.insert(profiles).values({ userId, ...values });
 
 const profilesOf = (userId: string) =>
   testDb.select().from(profiles).where(eq(profiles.userId, userId));
 
-describe("profiles.addUserProfile", () => {
-  it("stores the signed-in user's profile", async () => {
+describe("profiles.mine", () => {
+  it("has no profile and a due welcome for a new account", async () => {
     const user = await insertUser();
 
-    await callerFor(user.id).profiles.addUserProfile(profileFor(user.id));
+    const mine = await callerFor(user.id).profiles.mine();
 
-    const rows = await profilesOf(user.id);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
-      ...profileFor(user.id),
-      birthday: new Date("2000-02-29T00:00:00.000Z"),
+    expect(mine.profile).toBeNull();
+    expect(mine.completion.state).toBe("not-started");
+    expect(mine.welcomeDue).toBe(true);
+  });
+
+  it("counts a profile from the old join form as complete, welcome not due", async () => {
+    const user = await insertUser();
+    await insertProfile(user.id);
+
+    const mine = await callerFor(user.id).profiles.mine();
+
+    expect(mine.completion.state).toBe("complete");
+    expect(mine.welcomeDue).toBe(false);
+    expect(mine.profile).toMatchObject({ phoneNumber: "+49 123 456789" });
+    expect(mine.profile).not.toHaveProperty("bio");
+  });
+
+  it("never sends a session whose account was deleted to the welcome step", async () => {
+    // e.g. `pnpm roles cleanup --apply` removed it while the JWT lives on.
+    const mine = await callerFor("deleted-account").profiles.mine();
+
+    expect(mine.welcomeDue).toBe(false);
+  });
+
+  it("rejects signed-out visitors", async () => {
+    await expect(anonymousCaller().profiles.mine()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+});
+
+describe("profiles.saveMine", () => {
+  it("creates a profile from a single field", async () => {
+    const user = await insertUser();
+
+    const saved = await callerFor(user.id).profiles.saveMine({
+      birthday: fullProfile.birthday,
+    });
+
+    expect(saved.completion).toMatchObject({ filled: 1, state: "incomplete" });
+    expect(saved.welcomeDue).toBe(false);
+    const [row] = await profilesOf(user.id);
+    expect(row?.birthday).toEqual(fullProfile.birthday);
+  });
+
+  it("keeps fields it wasn't given", async () => {
+    const user = await insertUser();
+    const api = callerFor(user.id);
+    await api.profiles.saveMine({ birthday: fullProfile.birthday });
+
+    await api.profiles.saveMine({ phoneNumber: "+49 1" });
+
+    const [row] = await profilesOf(user.id);
+    expect(row).toMatchObject({
+      birthday: fullProfile.birthday,
+      phoneNumber: "+49 1",
     });
   });
 
-  it("rejects a second profile for the same user with CONFLICT", async () => {
+  it("clears a field saved as an empty string", async () => {
     const user = await insertUser();
-    const api = callerFor(user.id);
-    await api.profiles.addUserProfile(profileFor(user.id));
+    await insertProfile(user.id);
 
-    await expect(
-      api.profiles.addUserProfile({ ...profileFor(user.id), major: "Physics" })
-    ).rejects.toMatchObject({ code: "CONFLICT" });
-    const rows = await profilesOf(user.id);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.major).toBe("Informatics");
+    await callerFor(user.id).profiles.saveMine({ major: "" });
+
+    const [row] = await profilesOf(user.id);
+    expect(row?.major).toBeNull();
   });
 
-  it("stores one profile when the same user submits twice at once", async () => {
+  it("only ever writes the caller's own profile", async () => {
+    const other = await insertUser();
+    await insertProfile(other.id);
+    const user = await insertUser();
+
+    await callerFor(user.id).profiles.saveMine({
+      major: "Physics",
+      userId: other.id,
+    } as never);
+
+    const [otherRow] = await profilesOf(other.id);
+    expect(otherRow?.major).toBe("Informatics");
+    const [own] = await profilesOf(user.id);
+    expect(own?.major).toBe("Physics");
+  });
+
+  it("stores one profile when two first saves arrive at once", async () => {
     const user = await insertUser();
     const api = callerFor(user.id);
 
     const results = await Promise.allSettled([
-      api.profiles.addUserProfile(profileFor(user.id)),
-      api.profiles.addUserProfile(profileFor(user.id)),
+      api.profiles.saveMine({ major: "Physics" }),
+      api.profiles.saveMine({ location: "Aachen" }),
     ]);
 
-    expect(results.map((r) => r.status).sort()).toEqual([
-      "fulfilled",
-      "rejected",
-    ]);
-    expect(results.find((r) => r.status === "rejected")).toMatchObject({
-      reason: { code: "CONFLICT" },
-    });
+    expect(results.map((r) => r.status)).toEqual(["fulfilled", "fulfilled"]);
     expect(await profilesOf(user.id)).toHaveLength(1);
-  });
-
-  it("rejects submitting a profile for another user with FORBIDDEN", async () => {
-    const victim = await insertUser();
-    const attacker = await insertUser();
-
-    await expect(
-      callerFor(attacker.id).profiles.addUserProfile(profileFor(victim.id))
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(await profilesOf(victim.id)).toHaveLength(0);
-  });
-
-  it("rejects a missing birthday with BAD_REQUEST", async () => {
-    const user = await insertUser();
-    const { birthday: _birthday, ...withoutBirthday } = profileFor(user.id);
-
-    await expect(
-      callerFor(user.id).profiles.addUserProfile(withoutBirthday as never)
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("rejects signed-out visitors", async () => {
     await expect(
-      anonymousCaller().profiles.addUserProfile(profileFor("anyone"))
+      anonymousCaller().profiles.saveMine({ major: "Physics" })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });
 
-describe("profiles.getUserProfiles", () => {
-  it("joins each profile with its user's public columns for admins", async () => {
-    const member = await insertUser({ email: "member", name: "Member" });
-    await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
-    const admin = await insertUser({ role: "admin" });
+describe("nickname", () => {
+  it("is optional, saved on its own and left out of completion", async () => {
+    const user = await insertUser();
+    await insertProfile(user.id);
+    const api = callerFor(user.id);
 
-    const rows = await callerFor(admin.id).profiles.getUserProfiles();
+    const saved = await api.profiles.saveMine({ nickname: "  Mimi " });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.profiles.phoneNumber).toBe("+49 123 456789");
-    expect(rows[0]?.user).toEqual({
+    expect(saved.profile?.nickname).toBe("Mimi");
+    expect(saved.completion.state).toBe("complete");
+    await api.profiles.saveMine({ nickname: "" });
+    expect((await api.profiles.mine()).profile?.nickname).toBeNull();
+  });
+
+  it("rejects a nickname longer than 50 characters", async () => {
+    const user = await insertUser();
+    await expect(
+      callerFor(user.id).profiles.saveMine({ nickname: "x".repeat(51) })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
+
+describe("profiles.markWelcomeSeen", () => {
+  it("stops the welcome step without creating a profile", async () => {
+    const user = await insertUser();
+    const api = callerFor(user.id);
+
+    await api.profiles.markWelcomeSeen();
+
+    expect((await api.profiles.mine()).welcomeDue).toBe(false);
+    expect(await profilesOf(user.id)).toHaveLength(0);
+    const [row] = await testDb
+      .select({ welcomeSeenAt: users.welcomeSeenAt })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(row?.welcomeSeenAt).toBeInstanceOf(Date);
+  });
+});
+
+describe("profiles.whatsappGroup", () => {
+  it("is not configured until staff set a link", async () => {
+    const user = await insertUser();
+    await insertProfile(user.id);
+
+    expect(await callerFor(user.id).profiles.whatsappGroup()).toEqual({
+      configured: false,
+      unlocked: true,
+      url: null,
+    });
+  });
+
+  it("keeps the link from an incomplete profile", async () => {
+    const admin = await insertUser({ role: "mita" });
+    await setSetting(SETTING_KEYS.whatsappGroupUrl, WHATSAPP, admin.id);
+    const user = await insertUser();
+    await insertProfile(user.id, { major: "Physics" });
+
+    expect(await callerFor(user.id).profiles.whatsappGroup()).toEqual({
+      configured: true,
+      unlocked: false,
+      url: null,
+    });
+  });
+
+  it("gives the link to a complete profile", async () => {
+    const admin = await insertUser({ role: "mita" });
+    await setSetting(SETTING_KEYS.whatsappGroupUrl, WHATSAPP, admin.id);
+    const user = await insertUser();
+    await insertProfile(user.id);
+
+    expect(await callerFor(user.id).profiles.whatsappGroup()).toEqual({
+      configured: true,
+      unlocked: true,
+      url: WHATSAPP,
+    });
+  });
+
+  it("rejects signed-out visitors", async () => {
+    await expect(
+      anonymousCaller().profiles.whatsappGroup()
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+});
+
+describe("profiles.members", () => {
+  it("lists every account with its profile, or none, for admins", async () => {
+    const member = await insertUser({
+      createdAt: new Date("2026-03-02T10:00:00.000Z"),
+      email: "member",
+      hashedPassword: "secret",
+      name: "Member",
+    });
+    await insertProfile(member.id);
+    const newcomer = await insertUser({ name: "Newcomer" });
+    const admin = await insertUser({ name: "Admin", role: "admin" });
+
+    const rows = await callerFor(admin.id).profiles.members();
+
+    expect(rows).toHaveLength(3);
+    const byId = (id: string) => rows.find((row) => row.user.id === id);
+    expect(byId(member.id)?.profiles?.phoneNumber).toBe("+49 123 456789");
+    expect(byId(member.id)?.user).toEqual({
+      createdAt: new Date("2026-03-02T10:00:00.000Z"),
       email: "member",
       id: member.id,
       image: null,
       name: "Member",
       role: "member",
     });
-    expect(rows[0]?.user).not.toHaveProperty("hashedPassword");
+    expect(byId(newcomer.id)?.profiles).toBeNull();
+    expect(byId(admin.id)?.user.role).toBe("mita");
+    expect(JSON.stringify(rows)).not.toContain("secret");
   });
 
   it("rejects signed-out visitors", async () => {
-    await expect(
-      anonymousCaller().profiles.getUserProfiles()
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(anonymousCaller().profiles.members()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   it("hides member PII from a freshly self-registered account", async () => {
     const member = await insertUser();
-    await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
+    await insertProfile(member.id);
     const stranger = await insertUser({ name: "Stranger" });
 
     await expect(
-      callerFor(stranger?.id ?? "").profiles.getUserProfiles()
+      callerFor(stranger.id).profiles.members()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("keeps the member directory from writers", async () => {
     const member = await insertUser();
-    await callerFor(member.id).profiles.addUserProfile(profileFor(member.id));
+    await insertProfile(member.id);
     const writer = await insertUser({ role: "writer" });
 
-    await expect(
-      callerFor(writer.id).profiles.getUserProfiles()
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-  });
-});
-
-describe("profiles.hasOwnProfile", () => {
-  it("is false before the user registers as a member", async () => {
-    const user = await insertUser();
-
-    expect(await callerFor(user.id).profiles.hasOwnProfile()).toBe(false);
-  });
-
-  it("is true once the user's profile exists", async () => {
-    const user = await insertUser();
-    const api = callerFor(user.id);
-    await api.profiles.addUserProfile(profileFor(user.id));
-
-    expect(await api.profiles.hasOwnProfile()).toBe(true);
-  });
-
-  it("does not leak another user's registration", async () => {
-    const registered = await insertUser();
-    const other = await insertUser();
-    await callerFor(registered.id).profiles.addUserProfile(
-      profileFor(registered.id)
+    await expect(callerFor(writer.id).profiles.members()).rejects.toMatchObject(
+      { code: "FORBIDDEN" }
     );
-
-    expect(await callerFor(other.id).profiles.hasOwnProfile()).toBe(false);
-  });
-
-  it("rejects anonymous callers with UNAUTHORIZED", async () => {
-    await expect(
-      anonymousCaller().profiles.hasOwnProfile()
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

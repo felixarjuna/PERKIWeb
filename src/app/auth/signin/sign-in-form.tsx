@@ -44,7 +44,11 @@ export default function SignInForm({ returnPath }: { returnPath?: string }) {
   const onGoogleLogin = async () => {
     setIsSigningIn(true);
     try {
-      await signIn("google", { redirectTo: callbackUrl });
+      // With nowhere else to go, pass the welcome step first; it moves on
+      // to the landing page straight away once it's been seen.
+      await signIn("google", {
+        redirectTo: callbackUrl === "/" ? "/welcome" : callbackUrl,
+      });
     } catch {
       toast.error("Sign in with Google failed.", {
         description: "Please try again.",

@@ -12,11 +12,13 @@ const member = (index: number): Member => ({
     id: `m${index}`,
     location: "Aachen",
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: `u${index}`,
   },
   user: {
+    createdAt: null,
     email: null,
     id: `u${index}`,
     image: null,

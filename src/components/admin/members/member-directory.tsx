@@ -26,12 +26,15 @@ import { createMemberColumns } from "./member-columns";
 import MemberDetails from "./member-details";
 import {
   birthdayMonthOptions,
+  findMember,
   getMemberLocations,
   type Member,
   type MemberFilters,
   memberFilterParams,
+  memberId,
   memberSortColumns,
   PAGE_SIZES,
+  profileOptions,
   readMemberFilters,
 } from "./member-model";
 
@@ -66,7 +69,7 @@ function setFilters(filters: Partial<MemberFilters>, replace = false) {
 }
 
 export default function MemberDirectory() {
-  const query = api.profiles.getUserProfiles.useQuery();
+  const query = api.profiles.members.useQuery();
   const params = useSearchParams();
   const paramString = params.toString();
   const filters = useMemo(
@@ -84,7 +87,7 @@ export default function MemberDirectory() {
     () =>
       createMemberColumns((member, origin) => {
         returnFocus.current = origin;
-        updateUrl({ member: member.profiles.id });
+        updateUrl({ member: memberId(member) });
       }),
     []
   );
@@ -106,8 +109,17 @@ export default function MemberDirectory() {
     if (filters.roles.length) {
       active.push({ id: "role", value: filters.roles });
     }
+    if (filters.profile.length) {
+      active.push({ id: "profile", value: filters.profile });
+    }
     return active;
-  }, [filters.q, filters.locations, filters.birthdayMonths, filters.roles]);
+  }, [
+    filters.q,
+    filters.locations,
+    filters.birthdayMonths,
+    filters.roles,
+    filters.profile,
+  ]);
   const pagination = useMemo<PaginationState>(
     () => ({ pageIndex: filters.page - 1, pageSize: filters.pageSize }),
     [filters.page, filters.pageSize]
@@ -118,7 +130,7 @@ export default function MemberDirectory() {
     columns,
     data: records,
     features: dataTableFeatures,
-    getRowId: (member) => member.profiles.id,
+    getRowId: memberId,
     onColumnFiltersChange: (updater: Updater<ColumnFiltersState>) => {
       const next = functionalUpdate(updater, columnFilters);
       const values = (id: string) => {
@@ -128,6 +140,7 @@ export default function MemberDirectory() {
       setFilters({
         birthdayMonths: values("birthdayMonth"),
         locations: values("location"),
+        profile: values("profile") as MemberFilters["profile"],
         roles: values("role"),
       });
     },
@@ -170,18 +183,20 @@ export default function MemberDirectory() {
     }
   }, [query.data, filters.page, pageCount]);
 
-  const memberId = params.get("member");
-  const selected = records.find((member) => member.profiles.id === memberId);
+  const openMember = params.get("member");
+  const selected = findMember(records, openMember);
   const filtered = table.getFilteredRowModel().rows.length;
   const isFiltered = Boolean(
     filters.q ||
       filters.locations.length ||
       filters.birthdayMonths.length ||
-      filters.roles.length
+      filters.roles.length ||
+      filters.profile.length
   );
   const locationColumn = table.getColumn("location");
   const birthdayColumn = table.getColumn("birthdayMonth");
   const roleColumn = table.getColumn("role");
+  const profileColumn = table.getColumn("profile");
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -214,11 +229,24 @@ export default function MemberDirectory() {
           title="Role"
         />
       ) : null}
+      {profileColumn ? (
+        <DataTableFacetedFilter
+          column={profileColumn}
+          options={profileOptions}
+          title="Profile"
+        />
+      ) : null}
       {isFiltered ? (
         <Button
           className="h-10"
           onClick={() =>
-            setFilters({ birthdayMonths: [], locations: [], q: "", roles: [] })
+            setFilters({
+              birthdayMonths: [],
+              locations: [],
+              profile: [],
+              q: "",
+              roles: [],
+            })
           }
           size="sm"
           type="button"
@@ -242,7 +270,7 @@ export default function MemberDirectory() {
           updateUrl({ member: "" });
         }
       }}
-      open={Boolean(memberId)}
+      open={Boolean(openMember)}
       returnFocus={returnFocus}
     />
   );

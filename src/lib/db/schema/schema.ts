@@ -129,6 +129,11 @@ export const users = pgTable(
     })
       .defaultNow()
       .$onUpdate(() => new Date()),
+    /** When the profile welcome step was saved or skipped; null = not yet. */
+    welcomeSeenAt: timestamp("welcomeSeenAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
   },
   (t) => [
     check(
@@ -170,6 +175,8 @@ export const profiles = pgTable("profiles", {
     .$defaultFn(() => crypto.randomUUID()),
   location: text("location"),
   major: text("major"),
+  /** What the member likes to be called; the Google name stays as is. */
+  nickname: text("nickname"),
   phoneNumber: text("phoneNumber"),
   updatedAt: timestamp("updatedAt", {
     mode: "date",

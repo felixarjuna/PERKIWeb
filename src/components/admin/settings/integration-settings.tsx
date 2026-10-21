@@ -132,7 +132,7 @@ function LinkDialog({
   );
 }
 
-type Editing = "discord" | "drive" | "sheet" | null;
+type Editing = "discord" | "drive" | "sheet" | "whatsapp" | null;
 
 /** Settings → Integrations: the outside services the workspace links to. */
 export default function IntegrationSettings() {
@@ -163,6 +163,10 @@ export default function IntegrationSettings() {
     onError,
     onSuccess: done("Discord invite saved"),
   });
+  const whatsapp = api.settings.setWhatsappGroup.useMutation({
+    onError,
+    onSuccess: done("WhatsApp group link saved"),
+  });
 
   if (query.isError) {
     return <QueryMessage error onRetry={() => query.refetch()} />;
@@ -170,7 +174,8 @@ export default function IntegrationSettings() {
   if (query.isPending) {
     return <QueryMessage>Loading settings…</QueryMessage>;
   }
-  const { discordInvite, driveFolder, scheduleSheet } = query.data;
+  const { discordInvite, driveFolder, scheduleSheet, whatsappGroup } =
+    query.data;
   const close = (open: boolean) => {
     if (!open) {
       setEditing(null);
@@ -269,6 +274,39 @@ export default function IntegrationSettings() {
         </SettingRow>
       </SettingsGroup>
 
+      <SettingsGroup title="WhatsApp">
+        <SettingRow
+          description={
+            <>
+              Members see “Join the WhatsApp group” on their profile once all
+              their details are filled in. Never shown publicly.
+              {whatsappGroup ? changedBy(whatsappGroup) : ""}
+            </>
+          }
+          title="Group link"
+        >
+          {whatsappGroup ? (
+            <OpenLink
+              href={whatsappGroup.url}
+              label={whatsappGroup.url.replace("https://", "")}
+            />
+          ) : (
+            <span className="type-body-sm text-muted-foreground">
+              Not set, so members don't see the group
+            </span>
+          )}
+          <Button
+            aria-label="Change the WhatsApp group link"
+            onClick={() => setEditing("whatsapp")}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            {whatsappGroup ? "Change" : "Add"}
+          </Button>
+        </SettingRow>
+      </SettingsGroup>
+
       <LinkDialog
         description="Paste the link from the browser. It's saved only if Google can open it, so the sheet must be shared with “Anyone with the link”."
         onOpenChange={close}
@@ -319,6 +357,23 @@ export default function IntegrationSettings() {
               }
         }
         title="Discord invite"
+      />
+      <LinkDialog
+        description="In WhatsApp: group info → Invite via link → Copy link."
+        onOpenChange={close}
+        onSave={(link) => whatsapp.mutate({ link })}
+        open={editing === "whatsapp"}
+        pending={whatsapp.isPending}
+        placeholder="https://chat.whatsapp.com/…"
+        remove={
+          whatsappGroup
+            ? {
+                label: "Remove link",
+                onRemove: () => whatsapp.mutate({ link: null }),
+              }
+            : undefined
+        }
+        title="WhatsApp group"
       />
     </>
   );

@@ -4,6 +4,7 @@ import {
   getReturnPath,
   getSameOriginReturnPath,
   requestedPath,
+  welcomePath,
 } from "./auth-redirect";
 
 describe("return destinations", () => {
@@ -67,5 +68,18 @@ describe("saved OAuth destinations", () => {
         "https://perki.test"
       )
     ).toBe("/");
+  });
+});
+
+describe("welcomePath", () => {
+  it("keeps where the person was going", () => {
+    expect(welcomePath("/schedule?week=2")).toBe(
+      "/welcome?callbackUrl=%2Fschedule%3Fweek%3D2"
+    );
+  });
+
+  it("drops unsafe or landing-page destinations", () => {
+    expect(welcomePath("https://evil.test")).toBe("/welcome");
+    expect(welcomePath("/")).toBe("/welcome");
   });
 });

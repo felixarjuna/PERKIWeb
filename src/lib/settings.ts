@@ -3,6 +3,7 @@ export const SETTING_KEYS = {
   discordInviteUrl: "discord_invite_url",
   driveFolderUrl: "drive_folder_url",
   scheduleSheetId: "schedule_sheet_id",
+  whatsappGroupUrl: "whatsapp_group_url",
 } as const;
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
 
@@ -12,6 +13,7 @@ export const DEFAULT_DISCORD_INVITE_URL = "https://discord.gg/4hf5yWFfVP";
 const SHEET_URL_ID = /\/spreadsheets\/d\/([\w-]+)/;
 const SHEET_ID = /^[\w-]{20,}$/;
 const DISCORD_INVITE_PATH = /^\/(invite\/)?[\w-]+\/?$/;
+const WHATSAPP_GROUP_PATH = /^\/[\w-]+\/?$/;
 
 /**
  * The spreadsheet id in a pasted Google Sheets link
@@ -56,4 +58,13 @@ export function discordInviteFrom(input: string): string | null {
     (["discord.com", "www.discord.com"].includes(url.hostname) &&
       url.pathname.startsWith("/invite/"));
   return isInvite ? url.toString() : null;
+}
+
+/** A WhatsApp group invite (chat.whatsapp.com/<code>), or null. */
+export function whatsappGroupFrom(input: string): string | null {
+  const url = httpsUrl(input);
+  return url?.hostname === "chat.whatsapp.com" &&
+    WHATSAPP_GROUP_PATH.test(url.pathname)
+    ? url.toString()
+    : null;
 }

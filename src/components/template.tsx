@@ -1,7 +1,8 @@
 import type React from "react";
 import { cn } from "~/lib/utils";
 import Navigation from "./home/navigation";
-import MemberPrompt from "./member-prompt";
+import ProfileReminder from "./profile-reminder";
+import WelcomeGate from "./welcome-gate";
 
 interface ITemplateProps {
   readonly children?: React.ReactNode;
@@ -23,6 +24,7 @@ export default function Template(props: ITemplateProps) {
   return (
     <div className="min-h-screen bg-background pb-24 text-foreground">
       <Navigation />
+      <WelcomeGate />
       <main
         className={cn(
           "type-body mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pt-28 sm:px-6 sm:pt-36",
@@ -39,7 +41,7 @@ export default function Template(props: ITemplateProps) {
           ) : null}
         </header>
 
-        <MemberPrompt />
+        <ProfileReminder />
         <div className="mt-8 flex w-full flex-col sm:mt-10">
           {props.children}
         </div>

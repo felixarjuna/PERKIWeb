@@ -9,6 +9,7 @@ import { AdminSelect, QueryMessage } from "../admin-controls";
 import { getMemberLocations } from "../members/member-model";
 import BirthdayList from "./birthday-list";
 import { getCommunityOverview, type OverviewRange } from "./overview-model";
+import ProfileFunnel from "./profile-funnel";
 import RegistrationChart from "./registration-chart";
 import RegistrationSheet from "./registration-sheet";
 
@@ -58,7 +59,7 @@ function MonthStepper({
 }
 
 export default function CommunityOverview() {
-  const query = api.profiles.getUserProfiles.useQuery();
+  const query = api.profiles.members.useQuery();
   const currentMonth = DateTime.now()
     .setZone("Europe/Berlin")
     .toFormat(MONTH_FORMAT);
@@ -123,8 +124,8 @@ export default function CommunityOverview() {
   const change = difference >= 0 ? `+${difference}` : String(difference);
   const tiles = [
     {
-      detail: "registered",
-      label: "Members",
+      detail: "signed in",
+      label: "Accounts",
       value: data.total,
     },
     {
@@ -157,6 +158,7 @@ export default function CommunityOverview() {
           </div>
         ))}
       </dl>
+      <ProfileFunnel funnel={data.funnel} />
       <div className="grid gap-4 lg:h-96 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)]">
         <RegistrationChart
           buckets={data.buckets}

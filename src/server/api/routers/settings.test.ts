@@ -36,6 +36,7 @@ describe("settings router", () => {
       },
       driveFolder: null,
       scheduleSheet: null,
+      whatsappGroup: null,
     });
   });
 
@@ -118,11 +119,31 @@ describe("settings router", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
+  it("sets and removes the WhatsApp group link", async () => {
+    const api = await admin();
+    await api.settings.setWhatsappGroup({
+      link: "https://chat.whatsapp.com/AbC123",
+    });
+    expect((await api.settings.integrations()).whatsappGroup).toMatchObject({
+      updatedBy: "Mita",
+      url: "https://chat.whatsapp.com/AbC123",
+    });
+
+    await api.settings.setWhatsappGroup({ link: null });
+    expect((await api.settings.integrations()).whatsappGroup).toBeNull();
+    await expect(
+      api.settings.setWhatsappGroup({ link: "https://wa.me/49123" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
   it("is staff-only", async () => {
     const member = callerFor((await insertUser()).id);
     await expect(member.settings.integrations()).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
+    await expect(
+      member.settings.setWhatsappGroup({ link: null })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(
       anonymousCaller().settings.setDiscordInvite({ link: null })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });

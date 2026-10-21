@@ -14,6 +14,7 @@ const bucket = (
   cumulative,
   end: new Date(),
   fullLabel,
+  joinedAt: {},
   key,
   label,
   members: [],
@@ -48,14 +49,14 @@ describe("registration chart", () => {
     );
     await userEvent.click(
       screen.getByRole("button", {
-        name: "September 2026: 2 registrations. See who registered",
+        name: "September 2026: 2 new accounts. See who joined",
       })
     );
     expect(onSelectBucket).toHaveBeenCalledWith("2026-09");
     await userEvent.click(screen.getByRole("radio", { name: "Total" }));
     expect(
       screen.getByRole("button", {
-        name: "October 2026: 6 members in total. See who registered",
+        name: "October 2026: 6 accounts in total. See who joined",
       })
     ).toBeTruthy();
     for (const label of ["1Y", "2Y", "5Y"]) {

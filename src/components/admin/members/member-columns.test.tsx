@@ -18,9 +18,9 @@ const EMIL = /Emil/;
 const member = (
   id: string,
   name: string,
-  extra: Partial<Member["profiles"]> = {}
+  extra: Partial<NonNullable<Member["profiles"]>> | null = {}
 ): Member => ({
-  profiles: {
+  profiles: extra && {
     address: null,
     bio: null,
     birthday: null,
@@ -28,12 +28,14 @@ const member = (
     id,
     location: null,
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: id,
     ...extra,
   },
   user: {
+    createdAt: null,
     email: `${name.toLowerCase()}@test.local`,
     id,
     image: null,
@@ -57,7 +59,7 @@ const list = [
 ];
 const withRole = (base: Member, role: Role): Member => ({
   ...base,
-  user: base.user ? { ...base.user, role } : base.user,
+  user: { ...base.user, role },
 });
 const roleList = [
   withRole(member("m", "Mo"), "member"),
@@ -75,7 +77,7 @@ function useMemberRows(
     columns: createMemberColumns(vi.fn()),
     data,
     features: dataTableFeatures,
-    getRowId: (row) => row.profiles.id,
+    getRowId: (row) => row.user.id,
     state: { columnFilters, sorting },
   });
   return table.getRowModel().rows.map((row) => row.id);
@@ -135,6 +137,61 @@ describe("member table", () => {
     ]);
   });
 
+  it("shows and filters profile state", () => {
+    const people = [
+      member("n", "Nia", null),
+      member("h", "Hal", {
+        birthday: new Date("1990-10-22"),
+        location: "Aachen",
+        phoneNumber: "+49",
+      }),
+      member("f", "Fay", {
+        address: "Street 1",
+        birthday: new Date("1990-10-22"),
+        location: "Aachen",
+        major: "CS",
+        phoneNumber: "+49",
+      }),
+    ];
+    const byName = [{ desc: false, id: "name" }];
+    expect(
+      rowIds(byName, [{ id: "profile", value: ["incomplete"] }], people)
+    ).toEqual(["h"]);
+    expect(
+      rowIds(
+        byName,
+        [{ id: "profile", value: ["not-started", "complete"] }],
+        people
+      )
+    ).toEqual(["f", "n"]);
+    expect(rowIds([{ desc: true, id: "profile" }], [], people)).toEqual([
+      "f",
+      "h",
+      "n",
+    ]);
+
+    function Harness() {
+      const table = useTable({
+        columns: createMemberColumns(vi.fn()),
+        data: people,
+        features: dataTableFeatures,
+        getRowId: (row) => row.user.id,
+        state: { columnVisibility: { search: false }, sorting: byName },
+      });
+      return <DataTable empty="None" label="Members" table={table} />;
+    }
+    render(<Harness />);
+    expect(screen.getByText("Not started")).toBeTruthy();
+    expect(screen.getByText("3 of 5")).toBeTruthy();
+    expect(screen.getByText("Complete")).toBeTruthy();
+    // Each state has its own icon, so it reads at a glance.
+    const icon = (text: string) =>
+      screen.getByText(text).closest("span")?.querySelector("svg")?.classList;
+    expect(icon("Complete")?.contains("lucide-circle-check")).toBe(true);
+    expect(icon("3 of 5")?.contains("lucide-circle-dashed")).toBe(true);
+    expect(icon("Not started")?.contains("lucide-circle")).toBe(true);
+  });
+
   it("opens a profile from the pinned member name", async () => {
     const onOpen = vi.fn();
     function Harness() {
@@ -142,7 +199,7 @@ describe("member table", () => {
         columns: createMemberColumns(onOpen),
         data: list,
         features: dataTableFeatures,
-        getRowId: (row) => row.profiles.id,
+        getRowId: (row) => row.user.id,
         state: {
           columnPinning: { end: [], start: ["name"] },
           columnVisibility: { search: false },
@@ -173,7 +230,7 @@ describe("member table", () => {
         columns: createMemberColumns(vi.fn()),
         data: people,
         features: dataTableFeatures,
-        getRowId: (row) => row.profiles.id,
+        getRowId: (row) => row.user.id,
         state: { columnVisibility: { search: false } },
       });
       return <DataTable empty="None" label="Members" table={table} />;

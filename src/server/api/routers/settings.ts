@@ -10,6 +10,7 @@ import {
   type SettingKey,
   sheetIdFrom,
   sheetUrl,
+  whatsappGroupFrom,
 } from "~/lib/settings";
 import { db } from "~/server";
 import { sheetTitle } from "~/server/google-sheets";
@@ -67,6 +68,7 @@ export const settingsRouter = createTRPCRouter({
     const sheet = row(SETTING_KEYS.scheduleSheetId);
     const drive = row(SETTING_KEYS.driveFolderUrl);
     const discord = row(SETTING_KEYS.discordInviteUrl);
+    const whatsapp = row(SETTING_KEYS.whatsappGroupUrl);
     return {
       discordInvite: discord
         ? { ...changed(discord), isDefault: false, url: discord.value }
@@ -83,6 +85,7 @@ export const settingsRouter = createTRPCRouter({
         title: await sheetTitle(sheet.value).catch(() => null),
         url: sheetUrl(sheet.value),
       },
+      whatsappGroup: whatsapp && { ...changed(whatsapp), url: whatsapp.value },
     };
   }),
   /** Back to the default invite with `null`. */
@@ -142,5 +145,17 @@ export const settingsRouter = createTRPCRouter({
         ctx.session.user.id
       );
       return { title };
+    }),
+  /** Hides the WhatsApp card on /account with `null`. */
+  setWhatsappGroup: adminProcedure
+    .input(linkInput)
+    .mutation(async ({ ctx, input }) => {
+      const url = input.link === null ? null : whatsappGroupFrom(input.link);
+      if (input.link !== null && !url) {
+        throw invalid(
+          "Paste a WhatsApp group invite link (chat.whatsapp.com/…)."
+        );
+      }
+      await setSetting(SETTING_KEYS.whatsappGroupUrl, url, ctx.session.user.id);
     }),
 });
