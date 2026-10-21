@@ -98,7 +98,7 @@ export function BotStatus() {
                 ) : null}
                 <span
                   className={cn(
-                    "relative size-2 rounded-full ring-2 ring-sidebar",
+                    "relative size-2 rounded-full",
                     online === undefined && "bg-muted-foreground",
                     online === true && "bg-primary",
                     online === false && "bg-destructive"
