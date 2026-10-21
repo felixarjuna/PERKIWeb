@@ -110,9 +110,12 @@ export const scheduleImportRouter = createTRPCRouter({
           added += 1;
         } else if (entry.status === "changed") {
           const columns = syncedColumns(row);
+          const setsTime = entry.changes.some(
+            (change) => change.field === "time"
+          );
           await tx
             .update(schedules)
-            .set(columns)
+            .set(setsTime ? { ...columns, date: row.date } : columns)
             .where(eq(schedules.id, entry.id));
           await syncAssignments(tx, entry.id, columns);
           updated += 1;

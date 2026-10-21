@@ -47,6 +47,37 @@ export function slotsFromSchedule(schedule: ScheduleSlots): Slot[] {
   });
 }
 
+/** Gatherings start at 15:30 in Aachen unless a schedule says otherwise. */
+export const DEFAULT_START = { hour: 15, minute: 30 } as const;
+
+/** 15:30 in Aachen on a calendar day. */
+export const startOn = (day: { day: number; month: number; year: number }) =>
+  DateTime.fromObject({ ...day, ...DEFAULT_START }, { zone: ZONE }).toJSDate();
+
+/**
+ * The day picked in a calendar (the browser's local midnight) at the time of
+ * `current` when it has one, otherwise at the default start, in Aachen.
+ */
+export function onPickedDay(picked: Date, current?: Date) {
+  const day = {
+    day: picked.getDate(),
+    month: picked.getMonth() + 1,
+    year: picked.getFullYear(),
+  };
+  const time = current && DateTime.fromJSDate(current).setZone(ZONE);
+  if (time && time.toFormat("HH:mm") !== "00:00") {
+    return DateTime.fromObject(
+      { ...day, hour: time.hour, minute: time.minute },
+      { zone: ZONE }
+    ).toJSDate();
+  }
+  return startOn(day);
+}
+
+/** A stored time in Aachen as `HH:mm`; 00:00 means no time was ever set. */
+export const localTime = (date: Date) =>
+  DateTime.fromJSDate(date).setZone(ZONE).toFormat("HH:mm");
+
 /** The calendar day of a gathering in Aachen, as `yyyy-MM-dd`. */
 export const localDay = (date: Date) =>
   DateTime.fromJSDate(date).setZone(ZONE).toISODate() ?? "";

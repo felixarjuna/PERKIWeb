@@ -1,5 +1,5 @@
 import type { SheetSchedule } from "./schedule-sheet";
-import { localDay } from "./schedule-team";
+import { localDay, localTime } from "./schedule-team";
 
 /** Fields the sheet owns. Title and description are only set on new schedules, so edits made on the site survive a re-import. */
 export const SYNCED_FIELDS = [
@@ -21,8 +21,12 @@ export interface StoredSchedule extends Record<SyncedField, string | null> {
   id: number;
 }
 
+/** Midnight is what dates without a time were stored as. */
+const NO_TIME = "00:00";
+
 export interface FieldChange {
-  field: SyncedField;
+  /** `time`: a stored schedule without a time gets the default start. */
+  field: SyncedField | "time";
   from: string;
   to: string;
 }
@@ -42,6 +46,8 @@ const text = (value: string | null | undefined) => value?.trim() ?? "";
  * Pairs each sheet row with the stored schedule on the same day (preferring
  * the same event type) and lists what the import would change. An empty
  * Bible verse in the sheet keeps the stored one; empty slots clear the slot.
+ * A schedule stored without a time (00:00) gets the default start; a time
+ * set on the site is kept.
  */
 export function planImport(
   rows: SheetSchedule[],
@@ -68,6 +74,14 @@ export function planImport(
       }
       return [{ field, from, to }];
     });
+    const storedTime = localTime(match.date);
+    if (storedTime === NO_TIME && localTime(row.date) !== NO_TIME) {
+      changes.push({
+        field: "time",
+        from: storedTime,
+        to: localTime(row.date),
+      });
+    }
     return {
       changes,
       id: match.id,

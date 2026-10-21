@@ -9,12 +9,13 @@ import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
 import { Button } from "~/components/ui/button";
 import type { SYNCED_FIELDS } from "~/lib/schedule-import";
+import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Preview = RouterOutputs["scheduleImport"]["preview"];
 type Entry = Preview["entries"][number];
 
-const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number], string> = {
+const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number] | "time", string> = {
   accommodation: "Accommodation",
   bibleVerse: "Bible verse",
   cleaningGroup: "Cleaning",
@@ -24,6 +25,7 @@ const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number], string> = {
   musician: "Musician",
   noteWriter: "Note writer",
   preacher: "Preacher",
+  time: "Time",
   type: "Type",
 };
 
@@ -169,7 +171,13 @@ export default function ScheduleImport() {
           type="button"
           variant="ghost"
         >
-          <RefreshCw aria-hidden="true" className="size-4" />
+          <RefreshCw
+            aria-hidden="true"
+            className={cn(
+              "size-4",
+              preview.isFetching && "animate-spin motion-reduce:animate-none"
+            )}
+          />
           Read again
         </Button>
       </div>

@@ -7,7 +7,7 @@ const row: SheetSchedule = {
   bibleVerse: "",
   cleaningGroup: "Group 3",
   cookingGroup: "",
-  date: new Date("2026-01-02T23:00:00.000Z"),
+  date: new Date("2026-01-03T14:30:00.000Z"),
   day: "2026-01-03",
   description: "",
   leader: "Ana",
@@ -58,6 +58,18 @@ describe("planImport", () => {
         { field: "noteWriter", from: "Cleo", to: "" },
       ],
       status: "changed",
+    });
+  });
+
+  it("gives a schedule stored without a time the default start, but keeps a set time", () => {
+    const midnight = { ...stored, date: new Date("2026-01-02T23:00:00.000Z") };
+    expect(planImport([row], [midnight])[0]).toMatchObject({
+      changes: [{ field: "time", from: "00:00", to: "15:30" }],
+      status: "changed",
+    });
+    // `stored` is at 18:00, entered on the site.
+    expect(planImport([row], [stored])[0]).toMatchObject({
+      status: "unchanged",
     });
   });
 

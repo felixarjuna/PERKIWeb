@@ -5,13 +5,13 @@ import { parseScheduleSheet } from "./schedule-sheet";
 describe("parseScheduleSheet", () => {
   const { schedules, skipped } = parseScheduleSheet(SHEET_2026);
 
-  it("reads services and Bible studies by header, at midnight in Aachen", () => {
+  it("reads services and Bible studies by header, at 15:30 in Aachen", () => {
     expect(schedules).toEqual([
       expect.objectContaining({
         bibleVerse: "",
         cleaningGroup: "Group 3",
         cookingGroup: "",
-        date: new Date("2026-01-02T23:00:00.000Z"),
+        date: new Date("2026-01-03T14:30:00.000Z"),
         day: "2026-01-03",
         leader: "Ana",
         musician: "Ben",
@@ -77,6 +77,31 @@ describe("parseScheduleSheet", () => {
       description: "Noah",
       title: "Heroes of Faith",
     });
+  });
+
+  it("keeps columns a shorter repeated header leaves out", () => {
+    const { schedules: rows } = parseScheduleSheet([
+      [
+        "Tanggal",
+        "Acara",
+        "Leader",
+        " Musik",
+        "Catatan",
+        "Piket",
+        "Tema Kotbah",
+      ],
+      ["Tanggal", "Acara", "Leader", " Musik", "Catatan", "Piket"],
+      [
+        "16.5.2026",
+        "Penelaahan Alkitab",
+        "Ana",
+        "Ben",
+        "Cleo",
+        "Group 2",
+        "1 Yohanes 1:5-10",
+      ],
+    ]);
+    expect(rows[0]?.bibleVerse).toBe("1 Yohanes 1:5-10");
   });
 
   it("ignores rows before the first header", () => {
