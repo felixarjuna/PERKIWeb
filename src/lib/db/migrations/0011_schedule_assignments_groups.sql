@@ -63,7 +63,7 @@ INSERT INTO "group_members" ("groupId", "name", "position")
 SELECT g."id", m."name", m."position"
 FROM "new_groups" g
 JOIN (VALUES
-	('Group 1', 0, 'Wynnona'), ('Group 1', 1, 'Toni'), ('Group 1', 2, 'Wira'), ('Group 1', 3, 'Trevor'), ('Group 1', 4, 'Winston S'), ('Group 1', 5, 'Tius'), ('Group 1', 6, 'Andrew'), ('Group 1', 7, 'Marcelian (Elin)'),
+	('Group 1', 0, 'Wynnona'), ('Group 1', 1, 'Toni'), ('Group 1', 2, 'Wira'), ('Group 1', 3, 'Trevor'), ('Group 1', 4, 'Winston S'), ('Group 1', 5, 'Tius'), ('Group 1', 6, 'Andrew'), ('Group 1', 7, 'Marcelian'),
 	('Group 2', 0, 'Aldi'), ('Group 2', 1, 'Erico'), ('Group 2', 2, 'Richie'), ('Group 2', 3, 'Nina'), ('Group 2', 4, 'Beatrix'), ('Group 2', 5, 'Jason C.'), ('Group 2', 6, 'Kelly'),
 	('Group 3', 0, 'Chen'), ('Group 3', 1, 'Daven'), ('Group 3', 2, 'Steffen'), ('Group 3', 3, 'Rifelo'), ('Group 3', 4, 'Ricky'), ('Group 3', 5, 'Karyn'), ('Group 3', 6, 'Ellaine'),
 	('Group 4', 0, 'Victor'), ('Group 4', 1, 'Winston Y'), ('Group 4', 2, 'Stefani'), ('Group 4', 3, 'Deronn'), ('Group 4', 4, 'Billy'), ('Group 4', 5, 'Arian'), ('Group 4', 6, 'Oliver'),

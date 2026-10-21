@@ -1,4 +1,6 @@
+import { ChevronLeft } from "lucide-react";
 import { DateTime } from "luxon";
+import Link from "next/link";
 import Template from "~/components/template";
 import {
   Accordion,
@@ -6,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
+import { buttonVariants } from "~/components/ui/button";
 import { api } from "~/trpc/server";
 
 export default async function Group() {
@@ -51,6 +54,18 @@ export default async function Group() {
           </p>
         )}
       </div>
+
+      {/* The groups page is opened from a schedule's cooking or cleaning drawer. */}
+      <footer className="mt-12">
+        {/* -ms-4 lines the ghost link's text up with the groups' left edge. */}
+        <Link
+          className={buttonVariants({ className: "-ms-4", variant: "ghost" })}
+          href="/schedule"
+        >
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          Schedule
+        </Link>
+      </footer>
     </Template>
   );
 }
