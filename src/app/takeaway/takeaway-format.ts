@@ -41,6 +41,36 @@ export function paragraphs(text: string) {
     .filter(Boolean);
 }
 
+/** Longest first line still read as a section title, e.g. "1. Integritas Nuh". */
+const HEADING_MAX_LENGTH = 60;
+/** A first line ending like a sentence or clause is prose, not a title. */
+const ENDS_LIKE_PROSE = /[.,;:!?…)\]"”'’-]$/;
+/** Writers sometimes type "1.  Title"; titles collapse runs of spaces. */
+const SPACES = /\s+/g;
+/** Titles and the sentence under them start with a capital or a number. */
+const STARTS_UPPER = /^[\p{Lu}\d]/u;
+
+/**
+ * Paragraphs, with a writer's own section title split off: a short first line
+ * that doesn't end like a sentence, followed by a line starting a new sentence.
+ * A sentence hard-wrapped mid-way continues in lowercase, so it stays prose.
+ */
+export function sections(text: string) {
+  return paragraphs(text).map((paragraph) => {
+    const [first = "", ...rest] = paragraph.split("\n");
+    const title = first.trim().replace(SPACES, " ");
+    const isHeading =
+      rest.length > 0 &&
+      title.length <= HEADING_MAX_LENGTH &&
+      STARTS_UPPER.test(title) &&
+      STARTS_UPPER.test(rest[0]?.trim() ?? "") &&
+      !ENDS_LIKE_PROSE.test(title);
+    return isHeading
+      ? { body: rest.join("\n").trim(), heading: title }
+      : { body: paragraph, heading: null };
+  });
+}
+
 /** List preview: blank lines dropped so the 3-line clamp never ends on a gap. */
 export function preview(text: string) {
   return paragraphs(text).join("\n");

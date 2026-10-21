@@ -10,7 +10,7 @@ import { api } from "~/trpc/server";
 import {
   contributorNames,
   fellowshipLabel,
-  paragraphs,
+  sections,
   serviceDate,
 } from "../takeaway-format";
 
@@ -101,15 +101,23 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
         ))}
       </dl>
 
-      <article className="mt-8 space-y-4">
-        {paragraphs(takeaway.keypoints).map((paragraph, index) => (
-          <p
-            className="type-body whitespace-pre-line text-pretty"
-            // Paragraphs have no id and never reorder.
-            key={`${index.toString()}-${paragraph.slice(0, 16)}`}
+      {/* ~68 characters a line: Satoshi averages ~0.48em, and its wide "0" makes ch-based caps too loose. */}
+      <article className="mt-8 max-w-[33rem]">
+        {sections(takeaway.keypoints).map((section, index) => (
+          <section
+            className={section.heading ? "mt-10 first:mt-0" : "mt-5 first:mt-0"}
+            // Sections have no id and never reorder.
+            key={`${index.toString()}-${section.body.slice(0, 16)}`}
           >
-            {paragraph}
-          </p>
+            {section.heading ? (
+              <h2 className="type-subheading mb-2 text-balance">
+                {section.heading}
+              </h2>
+            ) : null}
+            <p className="type-body whitespace-pre-line text-pretty">
+              {section.body}
+            </p>
+          </section>
         ))}
       </article>
     </Template>
