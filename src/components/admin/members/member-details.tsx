@@ -73,6 +73,7 @@ export default function MemberDetails({
   const profile = member?.profiles ?? null;
   const fields = member
     ? [
+        ["Nickname", profile?.nickname],
         ["Email", member.user.email],
         ["Phone", profile?.phoneNumber],
         ["Location", profile?.location],

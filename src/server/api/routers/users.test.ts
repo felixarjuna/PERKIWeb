@@ -32,6 +32,21 @@ describe("removed password APIs", () => {
   );
 });
 
+describe("names from Google", () => {
+  it("can't be changed from the app", async () => {
+    const user = await insertUser({ name: "Maria Santoso" });
+    const rename = Reflect.get(
+      callerFor(user.id).users,
+      "updateUser"
+    ) as RemovedMutation;
+
+    await expect(rename({ id: user.id, name: "Mimi" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect((await findUser(user.id))?.name).toBe("Maria Santoso");
+  });
+});
+
 describe("users.getUserById", () => {
   it("returns the signed-in account without password metadata", async () => {
     const user = await insertUser({
@@ -55,61 +70,5 @@ describe("users.getUserById", () => {
     await expect(anonymousCaller().users.getUserById()).rejects.toMatchObject({
       code: "UNAUTHORIZED",
     });
-  });
-});
-
-describe("users.updateUser", () => {
-  it("updates the display name without changing Google's email or account identity", async () => {
-    const user = await insertUser({
-      email: "member@example.com",
-      name: "Member",
-    });
-    await callerFor(user.id).users.updateUser({
-      email: "attacker@example.com",
-      hashedPassword: "injected",
-      id: user.id,
-      image: "https://evil.test/avatar",
-      name: "New Name",
-      username: "attacker@example.com",
-    } as never);
-    expect(await findUser(user.id)).toMatchObject({
-      email: "member@example.com",
-      hashedPassword: null,
-      image: null,
-      name: "New Name",
-    });
-  });
-  it("accepts a name-only update", async () => {
-    const user = await insertUser();
-    await callerFor(user.id).users.updateUser({
-      id: user.id,
-      name: "Updated",
-    } as never);
-    expect((await findUser(user.id))?.name).toBe("Updated");
-  });
-  it("rejects a blank name", async () => {
-    const user = await insertUser();
-    await expect(
-      callerFor(user.id).users.updateUser({ id: user.id, name: "   " } as never)
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-  });
-  it("rejects updates to another account", async () => {
-    const victim = await insertUser({ name: "Victim" });
-    const attacker = await insertUser();
-    await expect(
-      callerFor(attacker.id).users.updateUser({
-        id: victim.id,
-        name: "Changed",
-      } as never)
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect((await findUser(victim.id))?.name).toBe("Victim");
-  });
-  it("rejects signed-out updates", async () => {
-    await expect(
-      anonymousCaller().users.updateUser({
-        id: "anyone",
-        name: "Changed",
-      } as never)
-    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

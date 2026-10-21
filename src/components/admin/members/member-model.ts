@@ -169,7 +169,12 @@ export function memberFilterParams(
 
 /** Lower-cased text the directory search matches against. */
 export const memberSearchText = (member: Member) =>
-  [memberName(member), member.user.email, member.profiles?.phoneNumber]
+  [
+    memberName(member),
+    member.profiles?.nickname,
+    member.user.email,
+    member.profiles?.phoneNumber,
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();

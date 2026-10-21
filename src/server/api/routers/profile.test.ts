@@ -136,6 +136,28 @@ describe("profiles.saveMine", () => {
   });
 });
 
+describe("nickname", () => {
+  it("is optional, saved on its own and left out of completion", async () => {
+    const user = await insertUser();
+    await insertProfile(user.id);
+    const api = callerFor(user.id);
+
+    const saved = await api.profiles.saveMine({ nickname: "  Mimi " });
+
+    expect(saved.profile?.nickname).toBe("Mimi");
+    expect(saved.completion.state).toBe("complete");
+    await api.profiles.saveMine({ nickname: "" });
+    expect((await api.profiles.mine()).profile?.nickname).toBeNull();
+  });
+
+  it("rejects a nickname longer than 50 characters", async () => {
+    const user = await insertUser();
+    await expect(
+      callerFor(user.id).profiles.saveMine({ nickname: "x".repeat(51) })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
+
 describe("profiles.markWelcomeSeen", () => {
   it("stops the welcome step without creating a profile", async () => {
     const user = await insertUser();

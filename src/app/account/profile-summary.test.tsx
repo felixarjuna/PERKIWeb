@@ -11,6 +11,7 @@ const incomplete = {
   birthday: new Date("2000-03-12T00:00:00.000Z"),
   location: "Aachen",
   major: "Informatik",
+  nickname: null,
   phoneNumber: null,
 };
 
@@ -29,6 +30,13 @@ vi.mock("~/trpc/react", () => ({
       },
       saveMine: {
         useMutation: () => ({ isPending: false, mutate: saveMine }),
+      },
+    },
+    users: {
+      getUserById: {
+        useQuery: () => ({
+          data: { email: "maria@gmail.com", name: "Maria Santoso" },
+        }),
       },
     },
     useUtils: () => ({ profiles: { invalidate: () => Promise.resolve() } }),
@@ -60,6 +68,30 @@ describe("profile summary", () => {
       screen.getByRole("button", { name: "Birthday 12 March" })
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Phone Add" })).toBeTruthy();
+  });
+
+  it("shows the Google name and email as locked, with an optional nickname", async () => {
+    render(<ProfileSummary />);
+    for (const [label, value] of [
+      ["Name", "Maria Santoso"],
+      ["Email", "maria@gmail.com"],
+    ] as const) {
+      const row = screen.getByText(label).closest("li");
+      expect(row?.textContent).toContain(value);
+      expect(row?.textContent).toContain("From Google");
+      expect(row?.querySelector("button")).toBeNull();
+      expect(row?.querySelector(".lucide-lock")).toBeTruthy();
+    }
+    await userEvent.click(
+      screen.getByRole("button", { name: "Nickname Optional" })
+    );
+    const dialog = screen.getByRole("dialog");
+    await userEvent.type(within(dialog).getByLabelText("Nickname"), "Mimi");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(saveMine).toHaveBeenCalledWith(
+      { nickname: "Mimi" },
+      expect.anything()
+    );
   });
 
   it("edits one field in a dialog that says why we ask", async () => {

@@ -12,6 +12,7 @@ const member = (index: number): Member => ({
     id: `m${index}`,
     location: "Aachen",
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: `u${index}`,

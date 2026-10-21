@@ -23,6 +23,7 @@ const member = (
     id,
     location: null,
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: id,
@@ -247,6 +248,9 @@ describe("profile state", () => {
   it("searches, sorts and groups accounts without a profile", () => {
     const account = member("x", "Xena", null);
     expect(memberSearchText(account)).toBe("xena xena@test.local");
+    expect(
+      memberSearchText(member("y", "Yuki", { nickname: "Mimi" }))
+    ).toContain("mimi");
     expect(birthdayOrder(account)).toBeUndefined();
     expect(getMemberLocations([account])).toEqual([
       { label: "Not provided", value: "missing" },

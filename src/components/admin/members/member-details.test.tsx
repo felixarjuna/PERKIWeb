@@ -48,6 +48,7 @@ const target = (role: "owner" | "member"): Member => ({
     id: "p1",
     location: null,
     major: null,
+    nickname: "Tee",
     phoneNumber: null,
     updatedAt: null,
     userId: "u1",
@@ -88,6 +89,12 @@ it("returns focus to the directory search when details were opened through a URL
       screen.getByRole("textbox", { name: "Search members" })
     )
   );
+});
+
+it("shows the nickname a member chose", () => {
+  render(<DetailHarness member={target("member")} />);
+  expect(screen.getByText("Nickname")).toBeTruthy();
+  expect(screen.getByText("Tee")).toBeTruthy();
 });
 
 it("shows the owner read-only with no role select", () => {

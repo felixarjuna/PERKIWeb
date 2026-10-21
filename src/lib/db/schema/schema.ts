@@ -175,6 +175,8 @@ export const profiles = pgTable("profiles", {
     .$defaultFn(() => crypto.randomUUID()),
   location: text("location"),
   major: text("major"),
+  /** What the member likes to be called; the Google name stays as is. */
+  nickname: text("nickname"),
   phoneNumber: text("phoneNumber"),
   updatedAt: timestamp("updatedAt", {
     mode: "date",

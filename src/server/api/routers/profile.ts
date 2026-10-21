@@ -17,6 +17,7 @@ const ownProfileColumns = {
   birthday: profiles.birthday,
   location: profiles.location,
   major: profiles.major,
+  nickname: profiles.nickname,
   phoneNumber: profiles.phoneNumber,
 };
 

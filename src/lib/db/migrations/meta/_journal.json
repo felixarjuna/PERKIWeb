@@ -120,6 +120,13 @@
       "when": 1792596748332,
       "tag": "0016_welcome_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792600320791,
+      "tag": "0017_profile_nickname",
+      "breakpoints": true
     }
   ]
 }

@@ -4,31 +4,40 @@ import { createSignedInUser, toast } from "./helpers";
 
 const ACCOUNT_LOAD_TIMEOUT_MS = 15_000;
 
-test("updates the display name while Google email stays read-only", async ({
+test("Google name and email are locked; members choose a nickname", async ({
   page,
 }) => {
-  const user = await createSignedInUser(page, "rename");
-  const newName = `Renamed ${uniqueSuffix()}`;
+  const user = await createSignedInUser(page, "nickname");
+  const nickname = `Nick ${uniqueSuffix()}`;
   await page.goto("/account");
-  const nameInput = page.getByLabel("Name", { exact: true });
-  await expect(nameInput).toHaveValue(user.name, {
-    timeout: ACCOUNT_LOAD_TIMEOUT_MS,
-  });
-  const emailInput = page.getByLabel("Email", { exact: true });
-  await expect(emailInput).toHaveValue(user.email);
-  await expect(emailInput).toHaveAttribute("readonly", "");
+  for (const [label, value] of [
+    ["Name", user.name],
+    ["Email", user.email],
+  ] as const) {
+    const row = page.getByRole("listitem").filter({ hasText: label }).first();
+    // biome-ignore lint/performance/noAwaitInLoops: one row at a time.
+    await expect(row).toContainText(value, {
+      timeout: ACCOUNT_LOAD_TIMEOUT_MS,
+    });
+    await expect(row).toContainText("From Google");
+    await expect(row.getByRole("button")).toHaveCount(0);
+  }
+  await expect(page.getByRole("textbox")).toHaveCount(0);
   await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Change password" })).toHaveCount(
-    0
-  );
-  await nameInput.fill(newName);
-  await page.getByRole("button", { name: "Update account" }).click();
-  await expect(toast(page, "Account updated!")).toBeVisible();
+
+  await page.getByRole("button", { name: "Nickname Optional" }).click();
+  const dialog = page.getByRole("dialog", { name: "Nickname" });
+  await dialog.getByLabel("Nickname", { exact: true }).fill(nickname);
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(toast(page, "Nickname saved")).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(newName);
-  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(
-    user.email
-  );
+  await expect(
+    page.getByRole("button", { name: `Nickname ${nickname}` })
+  ).toBeVisible({ timeout: ACCOUNT_LOAD_TIMEOUT_MS });
+  // The Google name is untouched.
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Name" }).first()
+  ).toContainText(user.name);
 });
 
 test("old password settings bookmarks return to the account page", async ({

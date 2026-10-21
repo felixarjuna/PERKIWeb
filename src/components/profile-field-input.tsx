@@ -18,11 +18,15 @@ import type { SaveProfileInput } from "~/server/api/schema/schema";
 /** Length of the `YYYY-MM-DD` prefix of an ISO timestamp. */
 const ISO_DATE_LENGTH = 10;
 
-const placeholders: Record<ProfileField, string> = {
+/** A member detail, or the optional nickname next to the Google name. */
+export type EditableField = ProfileField | "nickname";
+
+const placeholders: Record<EditableField, string> = {
   address: "Roermonder Str. 110",
   birthday: "",
   location: "Aachen",
   major: "Maschinenbau",
+  nickname: "What friends call you",
   phoneNumber: "+49 151 12345678",
 };
 
@@ -41,7 +45,7 @@ export function draftOf(value: string | Date | null | undefined): string {
  * midnight, like the old join form; an empty value clears the field.
  */
 export function saveInputOf(
-  field: ProfileField,
+  field: EditableField,
   draft: string
 ): SaveProfileInput {
   if (field === "birthday") {
@@ -121,7 +125,7 @@ export default function ProfileFieldInput({
   onChange,
   value,
 }: {
-  field: ProfileField;
+  field: EditableField;
   id: string;
   onChange: (value: string) => void;
   value: string;

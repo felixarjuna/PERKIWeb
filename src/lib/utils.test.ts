@@ -22,6 +22,7 @@ const row = (birthday: Date | null): ProfileRow => ({
     id: crypto.randomUUID(),
     location: null,
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: "user",

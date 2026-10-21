@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronRight, CircleCheck } from "lucide-react";
+import { ChevronRight, CircleCheck, Lock } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState } from "react";
 import { toast } from "sonner";
 import ProfileFieldInput, {
   draftOf,
+  type EditableField,
   saveInputOf,
 } from "~/components/profile-field-input";
 import { Button } from "~/components/ui/button";
@@ -20,7 +21,6 @@ import {
 import { Label } from "~/components/ui/label";
 import {
   PROFILE_FIELDS,
-  type ProfileField,
   profileFieldLabels,
   profileFieldReasons,
 } from "~/lib/profile-completion";
@@ -35,13 +35,82 @@ const shown = (value: string | Date | null | undefined) => {
   return value?.trim() || null;
 };
 
+const labels: Record<EditableField, string> = {
+  ...profileFieldLabels,
+  nickname: "Nickname",
+};
+const reasons: Record<EditableField, string> = {
+  ...profileFieldReasons,
+  nickname:
+    "What you'd like to be called. Your name from Google stays as it is.",
+};
+
+const rowClass =
+  "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left";
+
+/** Name or email from Google: shown, never edited here. */
+function LockedRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <li className={rowClass}>
+      <span className="type-body-sm flex-1">{label}</span>
+      <span className="flex min-w-0 flex-col items-end">
+        <span className="type-body-sm max-w-full truncate text-muted-foreground">
+          {value || "Not set"}
+        </span>
+        <span className="type-caption inline-flex items-center gap-1 text-muted-foreground">
+          <Lock aria-hidden="true" className="size-3 shrink-0" />
+          From Google
+        </span>
+      </span>
+    </li>
+  );
+}
+
+/** A detail the member edits: tapping the row opens its editor. */
+function EditableRow({
+  empty,
+  label,
+  onEdit,
+  value,
+}: {
+  empty: string;
+  label: string;
+  onEdit: () => void;
+  value: string | null;
+}) {
+  return (
+    <li>
+      <button
+        className={`${rowClass} hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+        onClick={onEdit}
+        type="button"
+      >
+        <span className="type-body-sm flex-1">{label}</span>{" "}
+        {value ? (
+          <span className="type-body-sm min-w-0 truncate text-muted-foreground">
+            {value}
+          </span>
+        ) : (
+          <span className="type-caption rounded-full bg-paper px-2 py-1 text-paper-foreground">
+            {empty}
+          </span>
+        )}
+        <ChevronRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+      </button>
+    </li>
+  );
+}
+
 /** Edits one field: the input, why we ask, Save and Cancel. */
 function FieldEditor({
   field,
   initial,
   onClose,
 }: {
-  field: ProfileField;
+  field: EditableField;
   initial: string;
   onClose: () => void;
 }) {
@@ -59,14 +128,14 @@ function FieldEditor({
             toast.error("Couldn't save", { description: error.message }),
           onSuccess: async () => {
             await utils.profiles.invalidate();
-            toast.success(`${profileFieldLabels[field]} saved`);
+            toast.success(`${labels[field]} saved`);
             onClose();
           },
         });
       }}
     >
       <div className="flex flex-col gap-2">
-        <Label htmlFor={id}>{profileFieldLabels[field]}</Label>
+        <Label htmlFor={id}>{labels[field]}</Label>
         <ProfileFieldInput
           field={field}
           id={id}
@@ -89,7 +158,8 @@ function FieldEditor({
 /** Progress plus one row per detail; tapping a row edits just that field. */
 export default function ProfileSummary() {
   const { data } = api.profiles.mine.useQuery();
-  const [editing, setEditing] = useState<ProfileField | null>(null);
+  const { data: account } = api.users.getUserById.useQuery();
+  const [editing, setEditing] = useState<EditableField | null>(null);
   if (!data) {
     return <div className="h-80 animate-pulse rounded-xl bg-card" />;
   }
@@ -97,6 +167,16 @@ export default function ProfileSummary() {
   const percent = (completion.filled / completion.total) * 100;
   return (
     <div className="flex flex-col gap-4">
+      <ul className="flex flex-col rounded-xl bg-card p-2 sm:p-3">
+        <LockedRow label="Name" value={account?.name} />
+        <LockedRow label="Email" value={account?.email} />
+        <EditableRow
+          empty="Optional"
+          label={labels.nickname}
+          onEdit={() => setEditing("nickname")}
+          value={shown(profile?.nickname)}
+        />
+      </ul>
       <section className="flex flex-col gap-2 rounded-xl bg-card p-4 sm:p-6">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="type-subheading" id="profile-progress">
@@ -138,35 +218,15 @@ export default function ProfileSummary() {
         </p>
       </section>
       <ul className="flex flex-col rounded-xl bg-card p-2 sm:p-3">
-        {PROFILE_FIELDS.map((field) => {
-          const value = shown(profile?.[field]);
-          return (
-            <li key={field}>
-              <button
-                className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => setEditing(field)}
-                type="button"
-              >
-                <span className="type-body-sm flex-1">
-                  {profileFieldLabels[field]}
-                </span>{" "}
-                {value ? (
-                  <span className="type-body-sm min-w-0 truncate text-muted-foreground">
-                    {value}
-                  </span>
-                ) : (
-                  <span className="type-caption rounded-full bg-paper px-2 py-1 text-paper-foreground">
-                    Add
-                  </span>
-                )}
-                <ChevronRight
-                  aria-hidden="true"
-                  className="size-4 shrink-0 text-muted-foreground"
-                />
-              </button>
-            </li>
-          );
-        })}
+        {PROFILE_FIELDS.map((field) => (
+          <EditableRow
+            empty="Add"
+            key={field}
+            label={labels[field]}
+            onEdit={() => setEditing(field)}
+            value={shown(profile?.[field])}
+          />
+        ))}
       </ul>
       <Dialog
         onOpenChange={(open) => {
@@ -180,10 +240,8 @@ export default function ProfileSummary() {
           {editing ? (
             <>
               <DialogHeader>
-                <DialogTitle>{profileFieldLabels[editing]}</DialogTitle>
-                <DialogDescription>
-                  {profileFieldReasons[editing]}
-                </DialogDescription>
+                <DialogTitle>{labels[editing]}</DialogTitle>
+                <DialogDescription>{reasons[editing]}</DialogDescription>
               </DialogHeader>
               <FieldEditor
                 field={editing}

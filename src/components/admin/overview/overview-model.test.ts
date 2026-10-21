@@ -22,6 +22,7 @@ const account = (
     id: `p-${id}`,
     location: null,
     major: null,
+    nickname: null,
     phoneNumber: null,
     updatedAt: null,
     userId: id,

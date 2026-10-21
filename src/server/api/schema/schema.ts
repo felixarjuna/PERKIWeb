@@ -79,6 +79,7 @@ export const saveProfileSchema = z.object({
   birthday: z.date().nullable().optional(),
   location: profileText.optional(),
   major: profileText.optional(),
+  nickname: z.string().trim().max(50).optional(),
   phoneNumber: profileText.optional(),
 });
 export type SaveProfileInput = z.infer<typeof saveProfileSchema>;
