@@ -7,14 +7,17 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
+import { TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
 import type { SYNCED_FIELDS } from "~/lib/schedule-import";
+import { localTime } from "~/lib/schedule-team";
+import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Preview = RouterOutputs["scheduleImport"]["preview"];
 type Entry = Preview["entries"][number];
 
-const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number], string> = {
+const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number] | "time", string> = {
   accommodation: "Accommodation",
   bibleVerse: "Bible verse",
   cleaningGroup: "Cleaning",
@@ -24,6 +27,7 @@ const FIELD_LABELS: Record<(typeof SYNCED_FIELDS)[number], string> = {
   musician: "Musician",
   noteWriter: "Note writer",
   preacher: "Preacher",
+  time: "Time",
   type: "Type",
 };
 
@@ -43,35 +47,30 @@ const entryTitle = ({ title, type }: Entry["schedule"]) =>
 const formatDay = (day: string) =>
   DateTime.fromISO(day).toFormat("ccc d LLL yyyy");
 
-/** Names filled on a new date, in slot order, for a one-line summary. */
-function teamLine(schedule: Entry["schedule"]) {
-  return [
-    schedule.preacher,
-    schedule.leader,
-    schedule.musician,
-    schedule.multimedia,
-    schedule.accommodation,
-    schedule.noteWriter,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
 function Row({
   day,
+  time,
   title,
+  verse,
   children,
 }: {
   day: string;
+  time?: string;
   title: string;
+  verse?: string;
   children?: React.ReactNode;
 }) {
   return (
     <li className="rounded-xl bg-card p-4">
       <p className="type-caption text-muted-foreground tabular-nums">
-        {formatDay(day)}
+        {time ? `${formatDay(day)} · ${time}` : formatDay(day)}
       </p>
       <p className="type-body mt-0.5 break-words">{title}</p>
+      {verse === undefined ? null : (
+        <p className="type-body-sm mt-0.5 break-words text-muted-foreground">
+          {verse || "No Bible verse"}
+        </p>
+      )}
       {children}
     </li>
   );
@@ -169,7 +168,13 @@ export default function ScheduleImport() {
           type="button"
           variant="ghost"
         >
-          <RefreshCw aria-hidden="true" className="size-4" />
+          <RefreshCw
+            aria-hidden="true"
+            className={cn(
+              "size-4",
+              preview.isFetching && "animate-spin motion-reduce:animate-none"
+            )}
+          />
           Read again
         </Button>
       </div>
@@ -193,11 +198,16 @@ export default function ScheduleImport() {
               <Row
                 day={entry.day}
                 key={entry.row}
+                time={localTime(entry.schedule.date)}
                 title={entryTitle(entry.schedule)}
+                verse={entry.schedule.bibleVerse}
               >
-                <p className="type-body-sm mt-1 text-muted-foreground">
-                  {teamLine(entry.schedule) || "No team yet"}
-                </p>
+                {entry.team.length > 0 ? (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="type-eyebrow text-muted-foreground">Team</p>
+                    <TeamList className="mt-2" team={entry.team} withPreacher />
+                  </div>
+                ) : null}
               </Row>
             ))}
           </Group>
@@ -209,13 +219,13 @@ export default function ScheduleImport() {
                 key={entry.row}
                 title={entryTitle(entry.schedule)}
               >
-                <dl className="type-body-sm mt-2 grid gap-1">
+                <dl className="type-body-sm mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
                   {entry.changes.map((change) => (
-                    <div className="flex flex-wrap gap-x-2" key={change.field}>
+                    <div className="contents" key={change.field}>
                       <dt className="text-muted-foreground">
                         {FIELD_LABELS[change.field]}
                       </dt>
-                      <dd className="flex items-center gap-1.5 break-words">
+                      <dd className="flex flex-wrap items-center gap-1.5 break-words">
                         <span className="text-muted-foreground line-through">
                           {change.from || "empty"}
                         </span>

@@ -53,6 +53,12 @@ describe("schedule import router", () => {
       ["2026-01-10", "new"],
     ]);
     expect(preview.skipped).toHaveLength(2);
+    // The team as it will appear on the schedule: role, name and photo.
+    expect(preview.entries[1]?.team).toContainEqual({
+      image: null,
+      name: "Dan",
+      role: "liturgist",
+    });
     expect(await testDb.select().from(schedules)).toEqual([]);
 
     expect(await api.scheduleImport.run({ tab: "2026" })).toEqual({
@@ -124,6 +130,34 @@ describe("schedule import router", () => {
       musician: "Zoe",
       title: "Renamed on the site",
     });
+  });
+
+  it("moves a schedule stored at 00:00 to the default 15:30", async () => {
+    const api = await admin();
+    await testDb.insert(schedules).values({
+      bibleVerse: "",
+      cleaningGroup: "Group 3",
+      date: new Date("2026-01-02T23:00:00.000Z"),
+      description: "",
+      leader: "Ana",
+      musician: "Ben",
+      noteWriter: "Cleo",
+      title: "Penelaahan Alkitab",
+      type: "bible_study",
+    });
+
+    const preview = await api.scheduleImport.preview({ tab: "2026" });
+    expect(preview.entries[0]?.changes).toContainEqual({
+      field: "time",
+      from: "00:00",
+      to: "15:30",
+    });
+    await api.scheduleImport.run({ tab: "2026" });
+
+    const study = (await testDb.select().from(schedules)).find(
+      (schedule) => schedule.type === "bible_study"
+    );
+    expect(study?.date).toEqual(new Date("2026-01-03T14:30:00.000Z"));
   });
 
   it("is admin-only", async () => {

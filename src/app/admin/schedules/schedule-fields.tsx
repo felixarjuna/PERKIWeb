@@ -35,6 +35,7 @@ import {
   musicians,
   noteWriter,
 } from "~/lib/data";
+import { onPickedDay } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import type { addScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
@@ -151,7 +152,11 @@ function DateField({ form }: { form: Form }) {
               <Calendar
                 autoFocus
                 mode="single"
-                onSelect={field.onChange}
+                onSelect={(picked) =>
+                  field.onChange(
+                    picked ? onPickedDay(picked, field.value) : picked
+                  )
+                }
                 selected={field.value}
               />
             </PopoverContent>

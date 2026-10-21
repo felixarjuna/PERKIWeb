@@ -64,3 +64,6 @@ request/*
 
 # Local MCP config (Supabase project ref); never commit it
 .mcp.json
+
+# brainstorm mockups
+.superpowers/

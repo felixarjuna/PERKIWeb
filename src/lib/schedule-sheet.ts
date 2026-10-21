@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { startOn } from "./schedule-team";
 
 /** Gatherings happen in Aachen; a sheet date is that calendar day there. */
 const ZONE = "Europe/Berlin";
@@ -94,7 +95,7 @@ function readRow(
       bibleVerse: cell("bible verse") || cell("tema kotbah"),
       cleaningGroup: cell("piket"),
       cookingGroup: cell("masak"),
-      date: date.toJSDate(),
+      date: startOn({ day: date.day, month: date.month, year: date.year }),
       day,
       description:
         cell("event description") ||
@@ -128,9 +129,14 @@ export function parseScheduleSheet(values: string[][]): {
   for (const [index, cells] of values.entries()) {
     const first = cells[0]?.trim() ?? "";
     if (headerKey(first) === "tanggal") {
-      columns = new Map(
-        cells.map((header, column) => [headerKey(header), column])
-      );
+      // Repeated header rows can be shorter (2026 drops "Tema Kotbah" after
+      // the first one), so a header only updates the columns it names.
+      columns = new Map([
+        ...(columns ?? []),
+        ...cells.flatMap((header, column): [string, number][] =>
+          headerKey(header) ? [[headerKey(header), column]] : []
+        ),
+      ]);
     } else if (columns && DATE_PATTERN.test(first)) {
       const result = readRow(cells, columns, index + 1);
       if ("schedule" in result) {

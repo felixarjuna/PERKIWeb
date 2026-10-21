@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { localDay, slotsFromSchedule, termOn } from "./schedule-team";
+import {
+  localDay,
+  onPickedDay,
+  slotsFromSchedule,
+  termOn,
+} from "./schedule-team";
 
 describe("slotsFromSchedule", () => {
   it("reads the leader column as liturgist at a service and leader at a Bible study", () => {
@@ -40,5 +45,26 @@ describe("termOn", () => {
 
   it("returns undefined before the first term", () => {
     expect(termOn(terms, "2025-01-01")).toBeUndefined();
+  });
+});
+
+describe("onPickedDay", () => {
+  // A calendar hands back the browser's local midnight of the picked day.
+  const picked = new Date(2026, 5, 13);
+
+  it("uses 15:30 in Aachen for a new schedule", () => {
+    expect(onPickedDay(picked)).toEqual(new Date("2026-06-13T13:30:00.000Z"));
+  });
+
+  it("keeps the time of a schedule that has one", () => {
+    expect(onPickedDay(picked, new Date("2026-05-01T16:00:00.000Z"))).toEqual(
+      new Date("2026-06-13T16:00:00.000Z")
+    );
+  });
+
+  it("treats a stored midnight as no time", () => {
+    expect(onPickedDay(picked, new Date("2026-04-30T22:00:00.000Z"))).toEqual(
+      new Date("2026-06-13T13:30:00.000Z")
+    );
   });
 });
