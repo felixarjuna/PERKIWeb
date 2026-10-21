@@ -51,10 +51,9 @@ describe("integration settings", () => {
       screen.getByRole("button", { name: "Change the WhatsApp group link" })
     );
     const dialog = screen.getByRole("dialog");
-    await userEvent.type(
-      within(dialog).getByRole("textbox"),
-      "https://chat.whatsapp.com/AbC123"
-    );
+    // Staff paste the invite; typing it key by key is slow under load.
+    await userEvent.click(within(dialog).getByRole("textbox"));
+    await userEvent.paste("https://chat.whatsapp.com/AbC123");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(setWhatsappGroup).toHaveBeenCalledWith({
       link: "https://chat.whatsapp.com/AbC123",
