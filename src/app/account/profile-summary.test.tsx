@@ -53,6 +53,9 @@ describe("profile summary", () => {
     profile = { ...incomplete, phoneNumber: "+49 151 1234" };
     render(<ProfileSummary />);
     expect(screen.getByText("Completed")).toBeTruthy();
+    // Filled: a solid circle with the check cut out of it.
+    const icon = screen.getByText("Completed").querySelector("svg");
+    expect(icon?.classList.contains("fill-current")).toBe(true);
     expect(screen.queryByText("5 of 5")).toBeNull();
   });
 
@@ -70,7 +73,7 @@ describe("profile summary", () => {
     expect(screen.getByRole("button", { name: "Phone Add" })).toBeTruthy();
   });
 
-  it("shows the Google name and email as locked, with an optional nickname", async () => {
+  it("shows the Google name and email as locked, explained on tap", async () => {
     render(<ProfileSummary />);
     for (const [label, value] of [
       ["Name", "Maria Santoso"],
@@ -78,10 +81,28 @@ describe("profile summary", () => {
     ] as const) {
       const row = screen.getByText(label).closest("li");
       expect(row?.textContent).toContain(value);
-      expect(row?.textContent).toContain("From Google");
-      expect(row?.querySelector("button")).toBeNull();
-      expect(row?.querySelector(".lucide-lock")).toBeTruthy();
+      // The lock comes first, before the label.
+      const lock = within(row as HTMLElement).getByRole("button", {
+        name: `${label} comes from Google`,
+      });
+      expect(row?.firstElementChild?.contains(lock)).toBe(true);
     }
+    await userEvent.click(
+      screen.getByRole("button", { name: "Name comes from Google" })
+    );
+    expect(
+      (
+        await screen.findAllByText(
+          "From your Google account. It can't be changed here."
+        )
+      ).length
+    ).toBeGreaterThan(0);
+  });
+
+  it("keeps the optional nickname at the bottom of the details", async () => {
+    render(<ProfileSummary />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.at(-1)?.textContent).toContain("Nickname");
     await userEvent.click(
       screen.getByRole("button", { name: "Nickname Optional" })
     );

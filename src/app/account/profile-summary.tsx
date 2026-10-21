@@ -20,6 +20,12 @@ import {
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import {
   PROFILE_FIELDS,
   profileFieldLabels,
   profileFieldReasons,
@@ -48,19 +54,47 @@ const reasons: Record<EditableField, string> = {
 const rowClass =
   "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left";
 
-/** Name or email from Google: shown, never edited here. */
+const FROM_GOOGLE = "From your Google account. It can't be changed here.";
+
+/**
+ * The lock before a Google field. Its tooltip also opens on tap, since
+ * touch screens never hover and most members are on their phones.
+ */
+function LockHint({ label }: { label: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <TooltipProvider>
+      <Tooltip onOpenChange={setOpen} open={open}>
+        <TooltipTrigger asChild>
+          <button
+            aria-label={`${label} comes from Google`}
+            className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={(event) => {
+              // Radix closes a tooltip on click; a tap should show it.
+              event.preventDefault();
+              setOpen(true);
+            }}
+            type="button"
+          >
+            <Lock aria-hidden="true" className="size-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-56" side="top">
+          {FROM_GOOGLE}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/** Name or email from Google: shown with a lock, never edited here. */
 function LockedRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <li className={rowClass}>
+      <LockHint label={label} />
       <span className="type-body-sm flex-1">{label}</span>
-      <span className="flex min-w-0 flex-col items-end">
-        <span className="type-body-sm max-w-full truncate text-muted-foreground">
-          {value || "Not set"}
-        </span>
-        <span className="type-caption inline-flex items-center gap-1 text-muted-foreground">
-          <Lock aria-hidden="true" className="size-3 shrink-0" />
-          From Google
-        </span>
+      <span className="type-body-sm min-w-0 truncate text-muted-foreground">
+        {value || "Not set"}
       </span>
     </li>
   );
@@ -170,12 +204,6 @@ export default function ProfileSummary() {
       <ul className="flex flex-col rounded-xl bg-card p-2 sm:p-3">
         <LockedRow label="Name" value={account?.name} />
         <LockedRow label="Email" value={account?.email} />
-        <EditableRow
-          empty="Optional"
-          label={labels.nickname}
-          onEdit={() => setEditing("nickname")}
-          value={shown(profile?.nickname)}
-        />
       </ul>
       <section className="flex flex-col gap-2 rounded-xl bg-card p-4 sm:p-6">
         <div className="flex items-baseline justify-between gap-3">
@@ -188,7 +216,8 @@ export default function ProfileSummary() {
                   the icon on the capitals instead of the box. */}
               <CircleCheck
                 aria-hidden="true"
-                className="size-4 shrink-0 translate-y-px"
+                // Filled: the circle takes the text colour, the check the card's.
+                className="size-4 shrink-0 translate-y-px fill-current stroke-card"
               />
               Completed
             </span>
@@ -227,6 +256,12 @@ export default function ProfileSummary() {
             value={shown(profile?.[field])}
           />
         ))}
+        <EditableRow
+          empty="Optional"
+          label={labels.nickname}
+          onEdit={() => setEditing("nickname")}
+          value={shown(profile?.nickname)}
+        />
       </ul>
       <Dialog
         onOpenChange={(open) => {

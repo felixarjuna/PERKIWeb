@@ -188,6 +188,8 @@ describe("member table", () => {
     const icon = (text: string) =>
       screen.getByText(text).closest("span")?.querySelector("svg")?.classList;
     expect(icon("Complete")?.contains("lucide-circle-check")).toBe(true);
+    expect(icon("Complete")?.contains("fill-current")).toBe(true);
+    expect(icon("3 of 5")?.contains("fill-current")).toBe(false);
     expect(icon("3 of 5")?.contains("lucide-circle-dashed")).toBe(true);
     expect(icon("Not started")?.contains("lucide-circle")).toBe(true);
   });

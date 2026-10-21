@@ -19,9 +19,15 @@ test("Google name and email are locked; members choose a nickname", async ({
     await expect(row).toContainText(value, {
       timeout: ACCOUNT_LOAD_TIMEOUT_MS,
     });
-    await expect(row).toContainText("From Google");
-    await expect(row.getByRole("button")).toHaveCount(0);
+    await expect(
+      row.getByRole("button", { name: `${label} comes from Google` })
+    ).toBeVisible();
   }
+  // A tap on the lock explains it, on phones too.
+  await page.getByRole("button", { name: "Email comes from Google" }).click();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "From your Google account"
+  );
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
 
