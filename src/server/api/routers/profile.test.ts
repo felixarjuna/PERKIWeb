@@ -48,6 +48,13 @@ describe("profiles.mine", () => {
     expect(mine.profile).not.toHaveProperty("bio");
   });
 
+  it("never sends a session whose account was deleted to the welcome step", async () => {
+    // e.g. `pnpm roles cleanup --apply` removed it while the JWT lives on.
+    const mine = await callerFor("deleted-account").profiles.mine();
+
+    expect(mine.welcomeDue).toBe(false);
+  });
+
   it("rejects signed-out visitors", async () => {
     await expect(anonymousCaller().profiles.mine()).rejects.toMatchObject({
       code: "UNAUTHORIZED",

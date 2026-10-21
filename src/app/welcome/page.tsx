@@ -26,7 +26,12 @@ export default async function WelcomePage({
     Array.isArray(callback) ? callback[0] : callback
   );
   // Shown once: anyone who has a profile or already saw it moves straight on.
-  const { welcomeDue } = await api.profiles.mine();
+  // If the profile can't be read (e.g. before deploy:migrate adds
+  // welcomeSeenAt), move on rather than fail the sign-in that led here.
+  const welcomeDue = await api.profiles
+    .mine()
+    .then((own) => own.welcomeDue)
+    .catch(() => false);
   if (!welcomeDue) {
     redirect(returnPath);
   }

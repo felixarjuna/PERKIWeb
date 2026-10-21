@@ -38,7 +38,9 @@ async function loadOwnProfile(userId: string) {
   return {
     completion: profileCompletion(own),
     profile: own,
-    welcomeDue: !(own || user?.welcomeSeenAt),
+    // A session can outlive its account (deleted duplicates); never welcome
+    // one, or the gate would trap it away from sign-out.
+    welcomeDue: Boolean(user) && !(own || user?.welcomeSeenAt),
   };
 }
 
