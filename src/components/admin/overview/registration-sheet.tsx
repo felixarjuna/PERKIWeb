@@ -11,7 +11,7 @@ import {
 import { memberDate, memberName } from "../members/member-model";
 import type { RegistrationBucket } from "./overview-model";
 
-/** Who registered in one chart bucket (a month, quarter or year). */
+/** Who joined in one chart bucket (a month, quarter or year). */
 export default function RegistrationSheet({
   bucket,
   locationLabel,
@@ -35,10 +35,10 @@ export default function RegistrationSheet({
       <SheetContent className="flex w-full flex-col gap-6 overflow-y-auto border-0 p-6 text-foreground sm:max-w-md">
         <SheetHeader className="pt-5 text-left">
           <SheetTitle className="type-heading">
-            Registered in {bucket?.fullLabel}
+            Joined in {bucket?.fullLabel}
           </SheetTitle>
           <SheetDescription>
-            {count} new member {count === 1 ? "profile" : "profiles"}
+            {count} new {count === 1 ? "account" : "accounts"}
             {locationLabel ? ` in ${locationLabel}` : ""}
           </SheetDescription>
         </SheetHeader>
@@ -62,14 +62,14 @@ export default function RegistrationSheet({
                   </span>
                 </Link>
                 <span className="type-caption shrink-0 text-muted-foreground tabular-nums">
-                  {memberDate(member.profiles?.createdAt ?? null)}
+                  {memberDate(bucket?.joinedAt[member.user.id] ?? null)}
                 </span>
               </li>
             ))}
           </ul>
         ) : (
           <p className="type-body-sm text-muted-foreground">
-            No one registered in this period.
+            No one joined in this period.
           </p>
         )}
       </SheetContent>
