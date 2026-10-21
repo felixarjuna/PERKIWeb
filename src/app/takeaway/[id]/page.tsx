@@ -89,6 +89,7 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
         </p>
       }
       title={schedule.title}
+      width="wide"
     >
       <dl className="type-body-sm grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 rounded-xl bg-card p-4 sm:p-6">
         {details.map((detail) => (
@@ -99,8 +100,7 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
         ))}
       </dl>
 
-      {/* ~68 characters a line: Satoshi averages ~0.48em, and its wide "0" makes ch-based caps too loose. */}
-      <article className="mt-8 max-w-[33rem]">
+      <article className="mt-8">
         {sections(takeaway.keypoints).map((section, index) => (
           <section
             className={section.heading ? "mt-10 first:mt-0" : "mt-5 first:mt-0"}
