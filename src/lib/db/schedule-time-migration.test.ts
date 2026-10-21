@@ -12,7 +12,7 @@ const sqlOf = (tag: string) =>
 
 describe(`${TAG} data fix`, () => {
   it(
-    "moves schedules stored at 00:00 in Aachen to 15:30 and leaves set times",
+    "moves 00:00 and Friday-evening schedules to Saturday 15:30 and leaves set times",
     async () => {
       const db = new PGlite();
       const index = journal.entries.findIndex((entry) => entry.tag === TAG);
@@ -22,12 +22,15 @@ describe(`${TAG} data fix`, () => {
           .map((entry) => sqlOf(entry.tag))
           .join("\n")
       );
-      // Winter (UTC+1), summer (UTC+2), and one already at 18:00.
+      // Winter (UTC+1), summer (UTC+2), one already at 18:00 on a Saturday,
+      // and two entered as the Friday evening before (22:00 and 20:00).
       await db.exec(`
         insert into "schedules" ("id", "bibleVerse", "cleaningGroup", "date", "description", "leader", "musician", "noteWriter", "title", "type") values
           (1, 'v', 'g', '2026-01-02T23:00:00Z', 'd', 'a', 'b', 'c', 't', 'bible_study'),
           (2, 'v', 'g', '2026-06-12T22:00:00Z', 'd', 'a', 'b', 'c', 't', 'church_service'),
-          (3, 'v', 'g', '2026-06-13T16:00:00Z', 'd', 'a', 'b', 'c', 't', 'church_service');
+          (3, 'v', 'g', '2026-06-13T16:00:00Z', 'd', 'a', 'b', 'c', 't', 'church_service'),
+          (4, 'v', 'g', '2023-07-28T20:00:00Z', 'd', 'a', 'b', 'c', 't', 'church_service'),
+          (5, 'v', 'g', '2023-11-10T19:00:00Z', 'd', 'a', 'b', 'c', 't', 'bible_study');
       `);
 
       await db.exec(sqlOf(TAG));
@@ -39,6 +42,8 @@ describe(`${TAG} data fix`, () => {
         "2026-01-03T14:30:00.000Z",
         "2026-06-13T13:30:00.000Z",
         "2026-06-13T16:00:00.000Z",
+        "2023-07-29T13:30:00.000Z",
+        "2023-11-11T14:30:00.000Z",
       ]);
       await db.close();
     },

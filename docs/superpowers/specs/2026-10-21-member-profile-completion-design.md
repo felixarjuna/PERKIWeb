@@ -90,8 +90,18 @@ Mobile-first (~390px). Mockups from the brainstorm are in
 - Saving with only some fields filled is allowed and creates the profile.
   No field is required to save; per-field validation still applies to what
   was entered (valid date, plausible phone via the existing `PhoneInput`).
-- Never shown on admin pages, auth pages, or the landing page for
-  signed-out visitors.
+- **When it appears (my call, from the owner's "they'd see it when opening
+  the app"):** sessions last 30 days and renew on use, so regular members
+  rarely sign in again. The step therefore appears on the person's **next
+  visit to any app page** (pages rendered in `Template`: schedule,
+  takeaway, prayers, group, account, …), not only right after a sign-in.
+  The page they were opening is the return path.
+- **Landing page (my call, from the standing preference that `/` is for
+  newcomers and member prompts live on app pages):** `/` never redirects.
+  But a sign-in whose return path would be `/` goes through the welcome
+  step first (when it's due) and then lands on `/`, so signing in from the
+  landing page still shows it right away.
+- Never shown on admin pages or auth pages.
 
 ### 2. Reminder card on app pages
 
@@ -203,9 +213,10 @@ Mobile-first (~390px). Mockups from the brainstorm are in
 
 ## Left to the builder
 
-- Where the welcome-step redirect lives (page-level check in app pages vs. a
-  route the sign-in callback goes through), as long as it's once per
-  account, preserves the return path, and never runs on admin/auth pages.
+- How the welcome check is wired (e.g. a server-side check in `Template`'s
+  app pages plus the sign-in return-path rule above), as long as it's once
+  per account, preserves the return path, adds no noticeable latency, and
+  never runs on `/`, admin or auth pages.
 - Whether the welcome step is its own route (e.g. `/welcome`) or a mode of
   `/account`.
 - Exact copy beyond the lines quoted above, dot styling, editor component
