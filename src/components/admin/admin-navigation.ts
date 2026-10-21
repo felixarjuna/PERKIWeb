@@ -53,8 +53,9 @@ export const adminNavigation = [
     title: "Prayers",
     url: "/admin/prayers",
   },
+  // Rendered at the bottom of the sidebar, above the account menu.
   {
-    group: "Workspace",
+    group: "Footer",
     icon: Settings,
     title: "Settings",
     url: "/admin/settings",

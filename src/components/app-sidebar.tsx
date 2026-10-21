@@ -30,7 +30,7 @@ import {
 import { DISCORD_INVITE_URL } from "~/lib/data";
 import { isStaffRole, type Role } from "~/lib/roles";
 
-const GROUPS = ["Community", "Content", "Workspace"] as const;
+const GROUPS = ["Community", "Content"] as const;
 
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
 export function AppSidebar({
@@ -51,6 +51,7 @@ export function AppSidebar({
     group,
     items: navigation.filter((item) => item.group === group),
   })).filter(({ items }) => items.length > 0);
+  const footerItems = navigation.filter((item) => item.group === "Footer");
   const { data: session } = useSession();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -161,6 +162,27 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {footerItems.map((item) => {
+              const active = pathname.startsWith(item.url);
+              return (
+                <SidebarMenuItem key={item.url}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    tooltip={item.title}
+                  >
+                    <Link
+                      aria-current={active ? "page" : undefined}
+                      href={item.url}
+                      onClick={close}
+                    >
+                      <item.icon aria-hidden="true" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
