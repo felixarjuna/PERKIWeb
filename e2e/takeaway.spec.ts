@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { insertSchedule } from "./db";
+import { insertSchedule, insertTakeaway } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, selectOption, toast } from "./helpers";
 
@@ -7,6 +7,9 @@ import { adminLogin, selectOption, toast } from "./helpers";
 /** Takeaways are written in the admin area, so they credit the seeded admin. */
 const ADMIN_USERNAME = "e2eadmin";
 const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
+/** "Share" with a native share sheet, "Copy link" without one. */
+const SHARE_BUTTON = /Share|Copy link/;
+const SEARCH_URL = /[?&]q=PELAYANAN/;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
@@ -103,6 +106,83 @@ test("takeaway list shows a new takeaway right after adding it", async ({
   await createTakeaway(page, scheduleTitle, keypoints);
 
   await expect(takeawayArticle(page, keypoints)).toHaveCount(1);
+});
+
+test("a takeaway card opens the full takeaway on its own page", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const scheduleTitle = `Public takeaway schedule ${suffix}`;
+  const first = `First paragraph ${suffix}`;
+  const second = `Second paragraph ${suffix}`;
+  const takeawayId = await insertTakeaway(
+    await insertSchedule(scheduleTitle),
+    `${first}\n\n${second}`
+  );
+
+  await page.goto("/takeaway");
+  await page.getByRole("link", { exact: true, name: scheduleTitle }).click();
+
+  await expect(page).toHaveURL(`/takeaway/${takeawayId}`);
+  await expect(page).toHaveTitle(`${scheduleTitle} · PERKI Aachen`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: scheduleTitle })
+  ).toBeVisible();
+  await expect(page.getByText(first, { exact: true })).toBeVisible();
+  await expect(page.getByText(second, { exact: true })).toBeVisible();
+  await expect(page.getByText("Test Author")).toBeVisible();
+  await expect(page.getByText("1 min read")).toBeVisible();
+
+  // Actions come after the notes.
+  const footer = page.locator("main footer");
+  await expect(
+    footer.getByRole("button", { name: SHARE_BUTTON })
+  ).toBeVisible();
+  await footer.getByRole("link", { name: "All takeaways" }).click();
+  await expect(page).toHaveURL("/takeaway");
+});
+
+test("searching takeaways narrows the list and keeps the query in the URL", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const scheduleTitle = `Searchable takeaway ${suffix}`;
+  await insertTakeaway(
+    await insertSchedule(scheduleTitle),
+    `Notes about pelayanan ${suffix}`
+  );
+
+  await page.goto("/takeaway");
+  const search = page.getByLabel("Search takeaways");
+  // Matches the notes, not only the title, ignoring case.
+  await search.fill(`PELAYANAN ${suffix}`);
+  await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(1);
+  await expect(
+    page.getByRole("link", { exact: true, name: scheduleTitle })
+  ).toBeVisible();
+  await expect(page).toHaveURL(SEARCH_URL);
+
+  await page.reload();
+  await expect(search).toHaveValue(`PELAYANAN ${suffix}`);
+  await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(1);
+
+  await search.fill(`nothing-matches-${suffix}`);
+  await expect(page.getByRole("status")).toContainText(
+    `No takeaways match “nothing-matches-${suffix}”.`
+  );
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(search).toHaveValue("");
+  await expect(page).toHaveURL("/takeaway");
+});
+
+test("an unknown takeaway is a 404", async ({ page }) => {
+  const response = await page.goto("/takeaway/999999999");
+  expect(response?.status()).toBe(404);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Takeaway not found" })
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Browse all takeaways" }).click();
+  await expect(page).toHaveURL("/takeaway");
 });
 
 test("a takeaway created from a direct link credits its author", async ({
