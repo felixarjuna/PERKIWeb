@@ -131,18 +131,10 @@ export function createMemberColumns(
     {
       accessorFn: (member) => memberCompletion(member).state,
       cell: ({ row }) => {
-        const { state } = memberCompletion(row.original);
-        const Icon = PROFILE_ICONS[state];
+        const Icon = PROFILE_ICONS[memberCompletion(row.original).state];
         return (
           <span className="type-caption inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
-            <Icon
-              aria-hidden="true"
-              className={cn(
-                "size-3.5 shrink-0",
-                // Filled when done: a solid circle with the check cut out.
-                state === "complete" && "fill-current stroke-paper"
-              )}
-            />
+            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
             {profileLabel(row.original)}
           </span>
         );
