@@ -96,12 +96,42 @@ describe("people router", () => {
       jericho.id,
       jericho.id,
     ]);
-    expect(await api.people.links()).toEqual([
+    expect(await api.people.linked()).toEqual([
       {
         account: expect.objectContaining({ id: jericho.id }),
-        name: "jco",
+        names: [{ count: 3, key: "jco", label: "Jco", saved: true }],
       },
     ]);
+  });
+
+  it("groups every spelling under its account, saved links and exact names alike", async () => {
+    const { api, winston } = await setup();
+    await api.schedules.addSchedule({
+      ...service,
+      date: new Date("2026-05-16T16:00:00Z"),
+      musician: "Winston Alexander",
+    });
+    await api.people.link({ name: "Winston A.", userId: winston.id });
+
+    const [entry] = await api.people.linked();
+
+    expect(entry).toEqual({
+      account: expect.objectContaining({ id: winston.id }),
+      names: [
+        {
+          count: 4,
+          key: "winston a",
+          label: "Winston A. / Winston A",
+          saved: true,
+        },
+        {
+          count: 1,
+          key: "winston alexander",
+          label: "Winston Alexander",
+          saved: false,
+        },
+      ],
+    });
   });
 
   it("unlinks a spelling again", async () => {
@@ -110,7 +140,7 @@ describe("people router", () => {
 
     await api.people.unlink({ name: "JCO" });
 
-    expect(await api.people.links()).toEqual([]);
+    expect(await api.people.linked()).toEqual([]);
     expect(
       (await testDb.select().from(groupMembers)).map((m) => m.userId)
     ).toEqual([null]);

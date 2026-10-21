@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, Unlink } from "lucide-react";
+import { ChevronsUpDown, X } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { QueryMessage } from "~/components/admin/admin-controls";
@@ -153,7 +153,7 @@ function UnlinkedRow({
 export default function NameLinks() {
   const utils = api.useUtils();
   const unlinked = api.people.unlinked.useQuery();
-  const links = api.people.links.useQuery();
+  const linked = api.people.linked.useQuery();
   const refresh = () =>
     Promise.all([
       utils.people.invalidate(),
@@ -177,15 +177,15 @@ export default function NameLinks() {
     },
   });
 
-  if (unlinked.isError || links.isError) {
+  if (unlinked.isError || linked.isError) {
     return (
       <QueryMessage
         error
-        onRetry={() => Promise.all([unlinked.refetch(), links.refetch()])}
+        onRetry={() => Promise.all([unlinked.refetch(), linked.refetch()])}
       />
     );
   }
-  if (unlinked.isPending || links.isPending) {
+  if (unlinked.isPending || linked.isPending) {
     return <QueryMessage>Loading names…</QueryMessage>;
   }
 
@@ -196,7 +196,7 @@ export default function NameLinks() {
   const pending = link.isPending || unlink.isPending;
 
   return (
-    <div className="space-y-10">
+    <div className="@container space-y-10">
       <section className="space-y-3">
         <h2 className="type-subheading">
           Not linked yet{" "}
@@ -254,45 +254,62 @@ export default function NameLinks() {
       <section className="space-y-3">
         <h2 className="type-subheading">
           Linked{" "}
-          <span className="text-muted-foreground">{links.data.length}</span>
+          <span className="text-muted-foreground">{linked.data.length}</span>
         </h2>
-        {links.data.length === 0 ? (
+        <p className="type-body-sm text-muted-foreground">
+          Every account with the names it's written as. Names you linked can be
+          removed; names spelled exactly like the account link on their own.
+        </p>
+        {linked.data.length === 0 ? (
           <p className="type-body-sm text-muted-foreground">
-            Names you link appear here. Names spelled exactly like an account
-            are linked automatically.
+            No names point to an account yet.
           </p>
         ) : (
-          <ul className="@container grid gap-2">
-            {links.data.map((entry) => (
+          <ul className="grid @3xl:grid-cols-2 gap-2">
+            {linked.data.map((entry) => (
               <li
-                className="flex items-center gap-3 rounded-xl bg-card p-3 ps-4"
-                key={entry.name}
+                className="flex flex-col gap-3 rounded-xl bg-card p-4"
+                key={entry.account.id}
               >
-                <span className="type-body-sm min-w-0 flex-1 break-words">
-                  <span className="text-muted-foreground">{entry.name}</span>
-                  <span aria-hidden="true" className="text-muted-foreground">
-                    {" → "}
-                  </span>
-                  <span className="sr-only"> is linked to </span>
-                  <span className="inline-flex items-center gap-1.5 align-middle">
-                    <PersonAvatar
-                      person={accountPerson(entry.account)}
-                      size="sm"
-                    />
-                    {entry.account.name}
-                  </span>
-                </span>
-                <Button
-                  aria-label={`Unlink ${entry.name}`}
-                  disabled={pending}
-                  onClick={() => unlink.mutate({ name: entry.name })}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
+                <div className="flex min-w-0 items-center gap-3">
+                  <PersonAvatar person={accountPerson(entry.account)} />
+                  <p className="type-body min-w-0 break-words">
+                    {entry.account.name ?? "Unnamed account"}
+                  </p>
+                </div>
+                <ul
+                  aria-label={`Names linked to ${entry.account.name ?? "this account"}`}
+                  className="flex flex-wrap gap-1.5"
                 >
-                  <Unlink aria-hidden="true" className="size-4" />
-                  <span className="hidden sm:inline">Unlink</span>
-                </Button>
+                  {entry.names.map((name) => (
+                    <li
+                      className="type-body-sm inline-flex min-h-8 items-center gap-1 rounded-full bg-secondary py-0.5 ps-3 pe-1 text-secondary-foreground"
+                      key={name.key}
+                    >
+                      <span className="break-words">{name.label}</span>
+                      <span className="type-caption text-muted-foreground tabular-nums">
+                        {name.count > 0 ? `×${name.count}` : "unused"}
+                      </span>
+                      {name.saved ? (
+                        <Button
+                          aria-label={`Unlink “${name.label}”`}
+                          className="rounded-full"
+                          disabled={pending}
+                          onClick={() => unlink.mutate({ name: name.key })}
+                          size="icon-sm"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <X aria-hidden="true" />
+                        </Button>
+                      ) : (
+                        <span className="type-caption pe-2 text-muted-foreground">
+                          exact
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
