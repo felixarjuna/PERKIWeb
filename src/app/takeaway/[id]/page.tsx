@@ -10,9 +10,11 @@ import { api } from "~/trpc/server";
 import {
   contributorNames,
   fellowshipLabel,
+  readingMinutes,
   sections,
   serviceDate,
 } from "../takeaway-format";
+import ShareButton from "./share-button";
 
 interface TakeawayPageProps {
   readonly params: Promise<{ id: string }>;
@@ -60,6 +62,7 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
     (await params).id
   );
   const contributors = contributorNames(takeaway.contributors);
+  const minutes = readingMinutes(takeaway.keypoints);
   const details = [
     { label: "Passage", value: schedule.bibleVerse },
     { label: "Preached by", value: schedule.preacher },
@@ -71,28 +74,23 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
   return (
     <Template
       subtitle={
+        // Each part stays whole; the line breaks only between parts.
         <p>
-          {fellowshipLabel(schedule.type)} ·{" "}
-          <time dateTime={schedule.date.toISOString()}>
-            {serviceDate(schedule.date, "long")}
-          </time>
+          <span className="whitespace-nowrap">
+            {fellowshipLabel(schedule.type)} ·
+          </span>{" "}
+          <span className="whitespace-nowrap">
+            <time dateTime={schedule.date.toISOString()}>
+              {serviceDate(schedule.date, "long")}
+            </time>{" "}
+            ·
+          </span>{" "}
+          <span className="whitespace-nowrap">{minutes} min read</span>
         </p>
       }
       title={schedule.title}
     >
-      <Link
-        className={buttonVariants({
-          className: "-ms-3 self-start text-muted-foreground",
-          size: "sm",
-          variant: "ghost",
-        })}
-        href="/takeaway"
-      >
-        <ChevronLeft aria-hidden="true" className="size-4" />
-        All takeaways
-      </Link>
-
-      <dl className="type-body-sm mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 rounded-xl bg-card p-4 sm:p-6">
+      <dl className="type-body-sm grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 rounded-xl bg-card p-4 sm:p-6">
         {details.map((detail) => (
           <div className="contents" key={detail.label}>
             <dt className="text-muted-foreground">{detail.label}</dt>
@@ -120,6 +118,15 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
           </section>
         ))}
       </article>
+
+      {/* Actions wait until the end so nothing sits between the reader and the notes. */}
+      <footer className="mt-12 flex flex-wrap items-center gap-3">
+        <ShareButton title={schedule.title} />
+        <Link className={buttonVariants({ variant: "ghost" })} href="/takeaway">
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          All takeaways
+        </Link>
+      </footer>
     </Template>
   );
 }

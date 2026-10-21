@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   contributorNames,
   fellowshipLabel,
+  matchesQuery,
   paragraphs,
   preview,
+  readingMinutes,
   sections,
   serviceDate,
 } from "./takeaway-format";
@@ -71,6 +73,32 @@ describe("paragraphs", () => {
 
   it("joins paragraphs without blank lines for the list preview", () => {
     expect(preview("One.\n\nTwo.\nThree.")).toBe("One.\nTwo.\nThree.");
+  });
+});
+
+describe("readingMinutes", () => {
+  const words = (count: number) => new Array(count).fill("kata").join(" ");
+
+  it("estimates at 200 words a minute, at least one minute", () => {
+    expect(readingMinutes("")).toBe(1);
+    expect(readingMinutes(words(50))).toBe(1);
+    expect(readingMinutes(words(1000))).toBe(5);
+    expect(readingMinutes(`${words(700)}\n\n${words(500)}`)).toBe(6);
+  });
+});
+
+describe("matchesQuery", () => {
+  const fields = ["Heroes of Faith", "Kejadian 8:20", null, "Integritas Nuh"];
+
+  it("matches every word anywhere, ignoring case and accents", () => {
+    expect(matchesQuery(fields, "")).toBe(true);
+    expect(matchesQuery(fields, "  nuh  kejadian ")).toBe(true);
+    expect(matchesQuery(fields, "FAITH")).toBe(true);
+    expect(matchesQuery(["Pélayanan"], "pelayanan")).toBe(true);
+  });
+
+  it("fails when any word is missing", () => {
+    expect(matchesQuery(fields, "nuh musa")).toBe(false);
   });
 });
 
