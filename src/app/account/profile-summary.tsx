@@ -224,7 +224,7 @@ export default function ProfileSummary() {
               image: account?.image ?? null,
               name: account?.name ?? "",
             }}
-            size="lg"
+            size="md"
           />
         </LockedRow>
         <LockedRow label="Name" value={account?.name} />
