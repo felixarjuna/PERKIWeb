@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -63,13 +63,26 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
   );
   const contributors = contributorNames(takeaway.contributors);
   const minutes = readingMinutes(takeaway.keypoints);
-  const details = [
+  const details: { label: string; value: React.ReactNode }[] = [
     { label: "Passage", value: schedule.bibleVerse },
     { label: "Preached by", value: schedule.preacher },
     { label: "Shared by", value: contributors },
   ].filter((detail): detail is { label: string; value: string } =>
     Boolean(detail.value)
   );
+  // Back to the gathering: its team, duties and any other takeaways.
+  details.push({
+    label: "Gathering",
+    value: (
+      <Link
+        className="inline-flex items-center gap-1 rounded-sm underline underline-offset-4 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        href={`/schedule/${schedule.id}`}
+      >
+        See the gathering
+        <ChevronRight aria-hidden="true" className="size-4" />
+      </Link>
+    ),
+  });
 
   return (
     <Template

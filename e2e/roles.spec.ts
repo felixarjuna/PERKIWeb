@@ -7,7 +7,13 @@ import {
   WRITER,
   WRITER_2,
 } from "./fixtures";
-import { adminLogin, loginAs, selectOption, toast } from "./helpers";
+import {
+  adminLogin,
+  loadUntilVisible,
+  loginAs,
+  selectOption,
+  toast,
+} from "./helpers";
 
 const NOT_FOUND = 404;
 const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
@@ -119,6 +125,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await page.reload();
 
   const own = page.getByRole("listitem").filter({ hasText: keypoints });
+  await loadUntilVisible(page, own);
   await own.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   await page.getByLabel("Key points", { exact: true }).fill(edited);
@@ -128,11 +135,12 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   ).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
-  await expect(
-    page.getByRole("listitem").filter({ hasText: edited })
-  ).toHaveCount(1);
+  const revised = page.getByRole("listitem").filter({ hasText: edited });
+  await loadUntilVisible(page, revised);
+  await expect(revised).toHaveCount(1);
 
   const other = page.getByRole("listitem").filter({ hasText: otherTitle });
+  await loadUntilVisible(page, other);
   await expect(other).toHaveCount(1);
   await expect(
     other.getByRole("link", { name: `Edit ${otherTitle}` })

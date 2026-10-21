@@ -1,15 +1,18 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import { CalendarDays, List } from "lucide-react";
 import { DateTime } from "luxon";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import LoadMore from "~/components/load-more";
+import { useDebouncedValue } from "~/hooks/use-debounced-value";
+import { monthOf, monthRange } from "~/lib/months";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented, QueryMessage } from "../admin-controls";
-import { type ContentFilters, filterSchedules } from "./content-filters";
+import { type ContentFilters, scheduleQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
-import { monthOf } from "./month-calendar";
 import RecordActions from "./record-actions";
 import ScheduleCalendar from "./schedule-calendar";
 
@@ -38,7 +41,9 @@ function updateUrl(values: Record<string, string | null>) {
 
 const ZONE = "Europe/Berlin";
 
-type ScheduleRecord = RouterOutputs["schedules"]["getSchedules"][number];
+const PAGE_SIZE = 20;
+
+type ScheduleRecord = RouterOutputs["schedules"]["list"]["items"][number];
 
 /**
  * One schedule: the date beside the details on every screen size, actions at
@@ -103,7 +108,7 @@ function ScheduleRow({
 export default function ScheduleManager() {
   const params = useSearchParams();
   const view = params.get("view") === "calendar" ? "calendar" : "list";
-  const query = api.schedules.getSchedules.useQuery();
+  const month = params.get("month") ?? monthOf(new Date());
   const utils = api.useUtils();
   const [filters, setFilters] = useState<ContentFilters>({
     order: "asc",
@@ -111,6 +116,25 @@ export default function ScheduleManager() {
     q: "",
     type: "all",
   });
+  // Fixed per visit, so "upcoming" and "past" keep a stable cache key.
+  const [now] = useState(() => new Date());
+  const input = scheduleQuery(
+    { ...filters, q: useDebouncedValue(filters.q) },
+    now
+  );
+  const list = api.schedules.list.useInfiniteQuery(
+    { ...input, limit: PAGE_SIZE },
+    {
+      enabled: view === "list",
+      getNextPageParam: (page) => page.nextCursor,
+      placeholderData: keepPreviousData,
+    }
+  );
+  const calendar = api.schedules.inRange.useQuery(monthRange(month), {
+    enabled: view === "calendar",
+    placeholderData: keepPreviousData,
+  });
+  const query = view === "calendar" ? calendar : list;
   const remove = api.schedules.deleteSchedule.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -118,7 +142,7 @@ export default function ScheduleManager() {
       toast.success("Schedule deleted.");
     },
   });
-  const records = filterSchedules(query.data ?? [], filters, new Date());
+  const records = list.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -148,16 +172,16 @@ export default function ScheduleManager() {
       ) : null}
       {!(query.isLoading || query.isError) && view === "calendar" ? (
         <ScheduleCalendar
-          month={params.get("month") ?? monthOf(new Date())}
-          onMonthChange={(month) => updateUrl({ month })}
-          schedules={query.data ?? []}
+          month={month}
+          onMonthChange={(next) => updateUrl({ month: next })}
+          schedules={calendar.data ?? []}
         />
       ) : null}
       {query.isLoading || query.isError || view === "calendar" ? null : (
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
-            {records.length} schedules · Changes appear on the public website
-            immediately
+            {records.length} schedules{list.hasNextPage ? " so far" : ""} ·
+            Changes appear on the public website immediately
           </p>
           {records.length ? (
             <ul className="flex flex-col gap-3">
@@ -176,6 +200,16 @@ export default function ScheduleManager() {
               see more.
             </QueryMessage>
           )}
+          <LoadMore
+            count={records.length}
+            hasNextPage={list.hasNextPage && !list.isPlaceholderData}
+            key={JSON.stringify(input)}
+            loading={list.isFetching}
+            noun="schedules"
+            onLoadMore={() => {
+              list.fetchNextPage();
+            }}
+          />
         </>
       )}
     </div>

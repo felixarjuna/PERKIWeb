@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { eventTypeEnum } from "~/lib/db/schema/schema";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
 
 export const addTakeawaySchema = z.object({
@@ -119,4 +120,44 @@ export const speakerInput = z.object({
     .nullable()
     .optional(),
   story: optionalText(5000),
+});
+
+/** Most items one page of a list may hold. */
+export const MAX_PAGE_SIZE = 50;
+
+/** Where the next page starts: the last item's date and id. */
+const cursorSchema = z
+  .object({ date: z.date(), id: z.number().int() })
+  .nullish();
+
+/**
+ * One page of a list, filtered by words, gathering type and an optional date
+ * window: gatherings from `from` (inclusive) and/or before `before`.
+ */
+const pageSchema = z.object({
+  before: z.date().optional(),
+  cursor: cursorSchema,
+  from: z.date().optional(),
+  limit: z.number().int().min(1).max(MAX_PAGE_SIZE).default(10),
+  /** Every word must appear somewhere in the searched fields. */
+  q: z.string().trim().max(200).default(""),
+  type: z.enum([...eventTypeEnum.enumValues, "all"]).default("all"),
+});
+
+const orderSchema = z.enum(["asc", "desc"]).default("desc");
+
+export const scheduleListSchema = pageSchema.extend({
+  order: orderSchema,
+});
+
+/** Every schedule from `from` (inclusive) to `before` (exclusive), earliest first. */
+export const scheduleRangeSchema = z.object({
+  before: z.date().optional(),
+  from: z.date(),
+});
+
+export const takeawayListSchema = pageSchema;
+
+export const manageableTakeawaySchema = pageSchema.extend({
+  order: orderSchema,
 });

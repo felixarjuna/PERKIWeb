@@ -40,6 +40,6 @@ export type AppRouter = typeof appRouter;
  *
  * @example
  * const trpc = createCaller(createContext);
- * const res = await trpc.schedules.getSchedules();
+ * const res = await trpc.schedules.list({});
  */
 export const createCaller = createCallerFactory(appRouter);

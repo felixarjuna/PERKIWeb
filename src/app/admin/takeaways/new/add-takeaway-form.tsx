@@ -35,7 +35,7 @@ const addTakeawayFormSchema = z.object({
 /** `username` comes from the server session, so it is set on first render. */
 export default function AddTakeawayForm({ username }: { username: string }) {
   /** loading schedule selection. */
-  const { data: schedules } = api.schedules.getSchedules.useQuery();
+  const { data: schedules } = api.schedules.options.useQuery();
 
   /** toast and router. */
   const router = useRouter();

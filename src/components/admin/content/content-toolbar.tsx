@@ -48,7 +48,9 @@ export default function ContentToolbar({
         label={`Search ${schedules ? "schedules" : "takeaways"}`}
         onChange={(event) => onChange({ ...filters, q: event.target.value })}
         placeholder={
-          schedules ? "Search title or speaker" : "Search title or takeaway"
+          schedules
+            ? "Search title, passage or name"
+            : "Search title or takeaway"
         }
         value={filters.q}
       />

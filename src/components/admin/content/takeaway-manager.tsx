@@ -1,22 +1,34 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { useState } from "react";
 import { toast } from "sonner";
+import LoadMore from "~/components/load-more";
+import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { api } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
-import { type ContentFilters, filterTakeaways } from "./content-filters";
+import { type ContentFilters, takeawayQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
 import RecordActions from "./record-actions";
 
+const PAGE_SIZE = 20;
+
 export default function TakeawayManager() {
-  const query = api.takeaways.getManageable.useQuery();
   const utils = api.useUtils();
   const [filters, setFilters] = useState<ContentFilters>({
     order: "desc",
     q: "",
     type: "all",
   });
+  const input = takeawayQuery({ ...filters, q: useDebouncedValue(filters.q) });
+  const query = api.takeaways.getManageable.useInfiniteQuery(
+    { ...input, limit: PAGE_SIZE },
+    {
+      getNextPageParam: (page) => page.nextCursor,
+      placeholderData: keepPreviousData,
+    }
+  );
   const remove = api.takeaways.deleteTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -24,7 +36,7 @@ export default function TakeawayManager() {
       toast.success("Takeaway deleted.");
     },
   });
-  const records = filterTakeaways(query.data ?? [], filters);
+  const records = query.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <div className="flex flex-col gap-5">
       <ContentToolbar filters={filters} onChange={setFilters} />
@@ -40,8 +52,8 @@ export default function TakeawayManager() {
       {query.isLoading || query.isError ? null : (
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
-            {records.length} takeaways · Changes appear on the public website
-            immediately
+            {records.length} takeaways{query.hasNextPage ? " so far" : ""} ·
+            Changes appear on the public website immediately
           </p>
           {records.length ? (
             <ul className="grid gap-3">
@@ -90,6 +102,16 @@ export default function TakeawayManager() {
               No takeaways match. Try a different search or gathering type.
             </QueryMessage>
           )}
+          <LoadMore
+            count={records.length}
+            hasNextPage={query.hasNextPage && !query.isPlaceholderData}
+            key={JSON.stringify(input)}
+            loading={query.isFetching}
+            noun="takeaways"
+            onLoadMore={() => {
+              query.fetchNextPage();
+            }}
+          />
         </>
       )}
     </div>

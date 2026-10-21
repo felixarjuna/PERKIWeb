@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { insertSchedule, insertTakeaway } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { adminLogin, selectOption, toast } from "./helpers";
+import { adminLogin, loadUntilVisible, selectOption, toast } from "./helpers";
 
 /** Usernames are derived from the display name ("E2E Member"). */
 /** Takeaways are written in the admin area, so they credit the seeded admin. */
@@ -56,6 +56,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await page.reload();
 
   const article = takeawayArticle(page, keypoints);
+  await loadUntilVisible(page, article);
   await expect(article).toHaveCount(1);
   await expect(
     article.getByRole("heading", { name: scheduleTitle })
@@ -79,6 +80,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
   const edited = takeawayArticle(page, editedKeypoints);
+  await loadUntilVisible(page, edited);
   await expect(edited).toHaveCount(1);
   await expect(takeawayArticle(page, keypoints)).toHaveCount(0);
 
@@ -105,6 +107,7 @@ test("takeaway list shows a new takeaway right after adding it", async ({
   await openCreateFromList(page);
   await createTakeaway(page, scheduleTitle, keypoints);
 
+  await loadUntilVisible(page, takeawayArticle(page, keypoints));
   await expect(takeawayArticle(page, keypoints)).toHaveCount(1);
 });
 
@@ -121,7 +124,9 @@ test("a takeaway card opens the full takeaway on its own page", async ({
   );
 
   await page.goto("/takeaway");
-  await page.getByRole("link", { exact: true, name: scheduleTitle }).click();
+  const card = page.getByRole("link", { exact: true, name: scheduleTitle });
+  await loadUntilVisible(page, card);
+  await card.click();
 
   await expect(page).toHaveURL(`/takeaway/${takeawayId}`);
   await expect(page).toHaveTitle(`${scheduleTitle} · PERKI Aachen`);
@@ -170,7 +175,7 @@ test("searching takeaways narrows the list and keeps the query in the URL", asyn
   await expect(page.getByRole("status")).toContainText(
     `No takeaways match “nothing-matches-${suffix}”.`
   );
-  await page.getByRole("button", { name: "Clear search" }).click();
+  await page.getByRole("button", { name: "Clear filters" }).click();
   await expect(search).toHaveValue("");
   await expect(page).toHaveURL("/takeaway");
 });
@@ -198,6 +203,7 @@ test("a takeaway created from a direct link credits its author", async ({
   await page.reload();
 
   const article = takeawayArticle(page, keypoints);
+  await loadUntilVisible(page, article);
   await expect(article).toHaveCount(1);
   await expect(article).toContainText(ADMIN_USERNAME);
 });

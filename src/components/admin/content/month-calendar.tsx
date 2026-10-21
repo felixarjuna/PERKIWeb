@@ -5,16 +5,13 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "~/components/ui/button";
+import { monthOf } from "~/lib/months";
 import { localDay, localTime } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { QueryMessage } from "../admin-controls";
 
 const ZONE = "Europe/Berlin";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
-
-/** `yyyy-MM`, the month a calendar shows. */
-export const monthOf = (date: Date) =>
-  DateTime.fromJSDate(date).setZone(ZONE).toFormat("yyyy-MM");
 
 const typeLabel = (type: "church_service" | "bible_study") =>
   type === "church_service" ? "Church service" : "Bible study";

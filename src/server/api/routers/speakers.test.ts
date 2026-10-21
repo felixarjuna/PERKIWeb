@@ -121,7 +121,7 @@ describe("speakers router", () => {
     expect(
       (await anonymousCaller().speakers.active()).map((speaker) => speaker.id)
     ).toEqual([riggruben?.id]);
-    const [schedule] = await anonymousCaller().schedules.getSchedules();
+    const [schedule] = (await anonymousCaller().schedules.list({})).items;
     expect(schedule?.team.find((slot) => slot.role === "preacher")).toEqual({
       image: "/images/riggrubben.jpg",
       name: "Ev. Riggrubben",

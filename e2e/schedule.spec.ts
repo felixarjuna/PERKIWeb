@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { format } from "date-fns";
 
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { adminLogin, selectOption, toast } from "./helpers";
+import { adminLogin, loadUntilVisible, selectOption, toast } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
@@ -71,7 +71,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   await createSchedule(page, title, date);
 
   const header = scheduleHeader(page, title);
-  await expect(header).toBeVisible();
+  await loadUntilVisible(page, header);
   const card = header;
   await expect(card).toContainText("Pdt. John Kusuma");
   await expect(card).toContainText("Psalm 23:1");
@@ -95,7 +95,7 @@ test("creates, edits and deletes a schedule", async ({ page }) => {
   // Reload: the list is served from a stale cache (see the test below).
   await page.reload();
   const editedHeader = scheduleHeader(page, editedTitle);
-  await expect(editedHeader).toBeVisible();
+  await loadUntilVisible(page, editedHeader);
   await expect(editedHeader.locator("../..")).toContainText("Psalm 23:2");
   await expect(
     page.getByRole("heading", { exact: true, name: title })
@@ -133,7 +133,7 @@ test("schedule list shows a new schedule right after adding it", async ({
   await expect(page).toHaveURL("/admin/schedules/new");
   await createSchedule(page, title, scheduleDate());
 
-  await expect(scheduleHeader(page, title)).toBeVisible();
+  await loadUntilVisible(page, scheduleHeader(page, title));
 });
 
 test("validates required schedule fields", async ({ page }) => {

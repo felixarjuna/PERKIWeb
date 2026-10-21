@@ -153,24 +153,24 @@ for (const width of widths) {
         page,
       }) => {
         await page.goto("/takeaway");
-        const filter = page.getByRole("combobox", { name: "Fellowship type" });
-        await expect(filter).toHaveText("All fellowships");
+        const filter = page.getByRole("combobox", { name: "Gathering type" });
+        await expect(filter).toHaveText("All gatherings");
         await filter.focus();
         await page.keyboard.press("Enter");
         await expect(
-          page.getByRole("option", { name: "All fellowships" })
+          page.getByRole("option", { name: "All gatherings" })
         ).toHaveAttribute("aria-selected", "true");
         await expect(
-          page.getByRole("option", { name: "All fellowships" })
+          page.getByRole("option", { name: "All gatherings" })
         ).toBeFocused();
         await page.keyboard.press("End");
         await expect(
-          page.getByRole("option", { name: "Bible study" })
+          page.getByRole("option", { name: "Bible studies" })
         ).toBeFocused();
         await page.keyboard.press("Enter");
-        await expect(filter).toHaveText("Bible study");
-        await selectOption(page, "Fellowship type", "All fellowships");
-        await expect(filter).toHaveText("All fellowships");
+        await expect(filter).toHaveText("Bible studies");
+        await selectOption(page, "Gathering type", "All gatherings");
+        await expect(filter).toHaveText("All gatherings");
       });
     });
   });

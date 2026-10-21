@@ -78,7 +78,7 @@ describe("takeaways router", () => {
       )
     );
 
-    const list = await anonymousCaller().takeaways.getTakeaways();
+    const list = (await anonymousCaller().takeaways.getTakeaways({})).items;
 
     expect(list.map((row) => row.schedules.title)).toEqual([
       "Newest",
@@ -360,7 +360,7 @@ describe("takeaways router", () => {
       await expect(
         member.takeaways.addTakeaway(sample(schedule.id))
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
-      await expect(member.takeaways.getManageable()).rejects.toMatchObject({
+      await expect(member.takeaways.getManageable({})).rejects.toMatchObject({
         code: "FORBIDDEN",
       });
       expect(await rows()).toEqual([]);
@@ -373,7 +373,7 @@ describe("takeaways router", () => {
       const { id } = await onlyTakeaway();
       const visitor = anonymousCaller();
 
-      const list = await visitor.takeaways.getTakeaways();
+      const list = (await visitor.takeaways.getTakeaways({})).items;
       const single = await visitor.takeaways.getTakeawayById({ id });
 
       expect(list).toHaveLength(1);
@@ -398,21 +398,26 @@ describe("takeaways router", () => {
       const flags = (
         list: Awaited<
           ReturnType<ReturnType<typeof callerFor>["takeaways"]["getManageable"]>
-        >
+        >["items"]
       ) =>
         Object.fromEntries(
           list.map((row) => [row.takeaways.keypoints, row.canManage])
         );
 
-      const asWriter = await callerFor(mine.id).takeaways.getManageable();
+      const asWriter = (await callerFor(mine.id).takeaways.getManageable({}))
+        .items;
       expect(flags(asWriter)).toEqual({
         Legacy: false,
         Mine: true,
         Theirs: false,
       });
-      const asOwner = await callerFor(
-        (await insertUser({ role: "owner" })).id
-      ).takeaways.getManageable();
+      const asOwner = (
+        await callerFor(
+          (
+            await insertUser({ role: "owner" })
+          ).id
+        ).takeaways.getManageable({})
+      ).items;
       expect(flags(asOwner)).toEqual({
         Legacy: true,
         Mine: true,

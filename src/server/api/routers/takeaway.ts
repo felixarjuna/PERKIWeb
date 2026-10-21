@@ -1,12 +1,23 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { monthsOf } from "~/lib/months";
 import { db } from "~/server";
 import { isAdmin } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
 import {
+  afterCursor,
+  byCursor,
+  inWindow,
+  matchesWords,
+  type Order,
+  toPage,
+} from "../paging";
+import {
   addTakeawaySchema,
+  manageableTakeawaySchema,
   queryByIdSchema,
+  takeawayListSchema,
   updateTakeawaySchema,
 } from "../schema/schema";
 import { createTRPCRouter, publicProcedure, takeawayProcedure } from "../trpc";
@@ -40,6 +51,38 @@ const publicSelection = {
   schedules: getTableColumns(schedules),
   takeaways: publicTakeawayColumns,
 };
+
+/**
+ * Filters and orders a takeaway list by its schedule's date (then the
+ * takeaway's id), so `toPage`'s cursor is `(schedules.date, takeaways.id)`.
+ */
+const listFilter = (
+  input: {
+    before?: Date;
+    cursor?: { date: Date; id: number } | null;
+    from?: Date;
+    q: string;
+    type: "all" | "church_service" | "bible_study";
+  },
+  order: Order,
+  searched: Parameters<typeof matchesWords>[0]
+) => ({
+  orderBy: byCursor(schedules.date, takeaways.id, order),
+  where: and(
+    input.type === "all" ? undefined : eq(schedules.type, input.type),
+    inWindow(schedules.date, input),
+    matchesWords(searched, input.q),
+    afterCursor(schedules.date, takeaways.id, input.cursor, order)
+  ),
+});
+
+const cursorOf = (row: {
+  schedules: { date: Date };
+  takeaways: { id: number };
+}) => ({
+  date: row.schedules.date,
+  id: row.takeaways.id,
+});
 
 /** The one rule: staff manage every takeaway, writers only their own. */
 const mayManage = (authorId: string | null, userId: string, staff: boolean) =>
@@ -107,23 +150,40 @@ export const takeawayRouter = createTRPCRouter({
         "Takeaway"
       );
     }),
-  /** Takeaways with whether the viewer may edit each; authors stay private. */
-  getManageable: takeawayProcedure.query(async ({ ctx }) => {
-    const viewer = ctx.session.user.id;
-    const staff = await isAdmin(viewer);
-    const rows = await db
-      .select()
-      .from(takeaways)
-      .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-      .orderBy(desc(schedules.date));
-    return rows.map(
-      ({ takeaways: { authorId, ...note }, schedules: schedule }) => ({
-        canManage: mayManage(authorId, viewer, staff),
-        schedules: schedule,
-        takeaways: note,
-      })
-    );
-  }),
+  /**
+   * A page of takeaways with whether the viewer may edit each, searched by
+   * title and keypoints; authors stay private.
+   */
+  getManageable: takeawayProcedure
+    .input(manageableTakeawaySchema)
+    .query(async ({ ctx, input }) => {
+      const viewer = ctx.session.user.id;
+      const { orderBy, where } = listFilter(input, input.order, [
+        schedules.title,
+        takeaways.keypoints,
+      ]);
+      const [staff, rows] = await Promise.all([
+        isAdmin(viewer),
+        db
+          .select()
+          .from(takeaways)
+          .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+          .where(where)
+          .orderBy(...orderBy)
+          .limit(input.limit + 1),
+      ]);
+      const page = toPage(rows, input.limit, cursorOf);
+      return {
+        items: page.items.map(
+          ({ takeaways: { authorId, ...note }, schedules: schedule }) => ({
+            canManage: mayManage(authorId, viewer, staff),
+            schedules: schedule,
+            takeaways: note,
+          })
+        ),
+        nextCursor: page.nextCursor,
+      };
+    }),
   getTakeawayById: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ input }) => {
@@ -143,13 +203,39 @@ export const takeawayRouter = createTRPCRouter({
 
       return takeaway;
     }),
-  getTakeaways: publicProcedure.query(
-    async () =>
-      await db
+  /**
+   * A page of takeaways, newest first, searched by title, passage, preacher,
+   * keypoints and contributors.
+   */
+  getTakeaways: publicProcedure
+    .input(takeawayListSchema)
+    .query(async ({ input }) => {
+      const { orderBy, where } = listFilter(input, "desc", [
+        schedules.title,
+        schedules.bibleVerse,
+        schedules.preacher,
+        takeaways.keypoints,
+        sql`${takeaways.contributors}::text`,
+      ]);
+      const rows = await db
         .select(publicSelection)
         .from(takeaways)
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-        .orderBy(desc(schedules.date))
+        .where(where)
+        .orderBy(...orderBy)
+        .limit(input.limit + 1);
+      return toPage(rows, input.limit, cursorOf);
+    }),
+  /** The Aachen months (`yyyy-MM`) with takeaways, newest first, for filters. */
+  months: publicProcedure.query(async () =>
+    monthsOf(
+      (
+        await db
+          .selectDistinct({ date: schedules.date })
+          .from(takeaways)
+          .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+      ).map((row) => row.date)
+    )
   ),
   updateTakeaway: takeawayProcedure
     .input(updateTakeawaySchema)
