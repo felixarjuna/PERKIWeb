@@ -98,9 +98,7 @@ test("malformed query state and unknown members remain recoverable", async ({
 
 test("directory handles a failed query and retry", async ({ page }) => {
   await adminLogin(page);
-  await page.route("**/api/trpc/*profiles.getUserProfiles*", (route) =>
-    route.abort()
-  );
+  await page.route("**/api/trpc/*profiles.members*", (route) => route.abort());
   await page.goto("/admin/members");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible({
     timeout: 20_000,
@@ -111,7 +109,7 @@ test("directory handles a failed query and retry", async ({ page }) => {
   await expect(
     page.getByRole("button", { exact: true, name: "Location" })
   ).toBeVisible();
-  await page.unroute("**/api/trpc/*profiles.getUserProfiles*");
+  await page.unroute("**/api/trpc/*profiles.members*");
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("table")).toBeVisible();
 });

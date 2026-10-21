@@ -10,33 +10,29 @@ const viewports = [
 ] as const;
 
 for (const viewport of viewports) {
-  test(`member reminder leaves account actions usable at ${viewport.width}px`, async ({
+  test(`profile reminder leaves page actions usable and snoozes at ${viewport.width}px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await page.goto("/account");
+    await page.goto("/prayers");
 
     const reminder = page.getByRole("complementary", {
-      name: "Member registration",
+      name: "Complete your profile",
     });
     await expect(reminder).toBeVisible();
     await expect(
-      reminder.getByRole("link", { name: "Register as a member" })
-    ).toHaveAttribute("href", "/member/join");
+      reminder.getByRole("link", { name: "Finish my profile" })
+    ).toHaveAttribute("href", "/account");
 
-    // Check actual pointer accessibility without signing out or dismissing
-    // the reminder first. A floating reminder used to cover this button.
-    await page.getByRole("button", { name: "Sign out" }).click({ trial: true });
-
-    await page.goto("/member/join");
-    await expect(page.getByLabel("Address", { exact: true })).toBeVisible();
+    // Hidden on the profile page itself, which keeps its actions usable.
+    await page.goto("/account");
     await waitForSession(page);
     await page.waitForLoadState("networkidle");
     await expect(reminder).toBeHidden();
-    await page.goto("/account");
-    await expect(reminder).toBeVisible();
+    await page.getByRole("button", { name: "Sign out" }).click({ trial: true });
 
-    await reminder.getByRole("button", { name: "Dismiss" }).click();
+    await page.goto("/prayers");
+    await reminder.getByRole("button", { name: "Remind me later" }).click();
     await expect(reminder).toBeHidden();
     await page.reload();
     // Wait for hydration and the profile query so initial loading cannot
@@ -44,5 +40,9 @@ for (const viewport of viewports) {
     await waitForSession(page);
     await page.waitForLoadState("networkidle");
     await expect(reminder).toBeHidden();
+    // The Account tab keeps its dot while the reminder is snoozed.
+    await expect(
+      page.getByRole("button", { name: "Account, profile incomplete" })
+    ).toBeVisible();
   });
 }

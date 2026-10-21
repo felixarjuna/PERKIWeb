@@ -12,14 +12,20 @@ export const toast = (page: Page, text: string | RegExp): Locator =>
     .filter({ hasText: text });
 
 /** Creates an isolated Google-linked fixture and an authenticated browser session. */
-export const createSignedInUser = async (page: Page, label: string) => {
-  const user = await createTestAccount(label);
+export const createSignedInUser = async (
+  page: Page,
+  label: string,
+  options?: { welcome?: boolean }
+) => {
+  const user = await createTestAccount(label, options);
   await setTestSession(page, user);
   await page.goto("/");
   return user;
 };
 
 const SIGN_IN_PATH = /\/auth\/signin$/;
+/** "Account", or "Account, profile incomplete" while details are missing. */
+const ACCOUNT_BUTTON = /^Account(, profile incomplete)?$/;
 
 export const signOut = async (page: Page) => {
   await page.goto("/account");
@@ -44,7 +50,7 @@ export const signOut = async (page: Page) => {
  */
 export const waitForSession = async (page: Page) => {
   await expect(
-    page.getByRole("button", { exact: true, name: "Account" })
+    page.getByRole("button", { name: ACCOUNT_BUTTON })
   ).toBeVisible();
 };
 

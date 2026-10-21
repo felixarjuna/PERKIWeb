@@ -105,6 +105,11 @@ export default function Navigation({ revealAfter }: NavigationProps) {
             })}
             <li>
               <button
+                // Label spans are flex items, so a hidden suffix would read
+                // as "Account , profile …"; name the state outright instead.
+                aria-label={
+                  unfinished ? "Account, profile incomplete" : undefined
+                }
                 className={itemClass}
                 onClick={
                   session
@@ -128,9 +133,6 @@ export default function Navigation({ revealAfter }: NavigationProps) {
                 <span className="sr-only sm:not-sr-only">
                   {session ? "Account" : "Sign in"}
                 </span>
-                {unfinished ? (
-                  <span className="sr-only">, profile incomplete</span>
-                ) : null}
               </button>
             </li>
           </ul>

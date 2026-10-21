@@ -24,11 +24,9 @@ test("offers Google as the only authentication provider", async ({
 test("legacy signup links preserve the member destination", async ({
   page,
 }) => {
-  await page.goto(
-    "/auth/signup?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter"
-  );
+  await page.goto("/auth/signup?callbackUrl=%2Faccount%3Fsource%3Dfooter");
   await expect(page).toHaveURL(
-    "/auth/signin?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter"
+    "/auth/signin?callbackUrl=%2Faccount%3Fsource%3Dfooter"
   );
   await expect(page.getByRole("button", { name: GOOGLE_BUTTON })).toBeVisible();
 });
@@ -45,9 +43,7 @@ test("Google sign-in sets the requested destination before leaving for Google", 
       contentType: "text/html",
     })
   );
-  await page.goto(
-    "/auth/signin?callbackUrl=%2Fmember%2Fjoin%3Fsource%3Dfooter"
-  );
+  await page.goto("/auth/signin?callbackUrl=%2Faccount%3Fsource%3Dfooter");
   await page.getByRole("button", { name: GOOGLE_BUTTON }).click();
   await expect(page).toHaveURL((url) => url.hostname === "accounts.google.com");
   const googleUrl = new URL(page.url());
@@ -58,7 +54,7 @@ test("Google sign-in sets the requested destination before leaving for Google", 
   );
   expect(
     new URL(decodeURIComponent(callbackCookie?.value ?? "")).pathname
-  ).toBe("/member/join");
+  ).toBe("/account");
   expect(new URL(decodeURIComponent(callbackCookie?.value ?? "")).search).toBe(
     "?source=footer"
   );
@@ -75,7 +71,7 @@ test("Google sign-in sets the requested destination before leaving for Google", 
   ).toContainText("Google sign-in could not be completed");
   await setTestSession(page, MEMBER);
   await page.reload();
-  await expect(page).toHaveURL("/member/join?source=footer");
+  await expect(page).toHaveURL("/account?source=footer");
 });
 
 test("signs out a Google account and protects member pages again", async ({
@@ -83,8 +79,8 @@ test("signs out a Google account and protects member pages again", async ({
 }) => {
   await createSignedInUser(page, "logout");
   await signOut(page);
-  await page.goto("/member/join");
-  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Fmember%2Fjoin");
+  await page.goto("/account");
+  await expect(page).toHaveURL("/auth/signin?callbackUrl=%2Faccount");
 });
 
 test("navigation preserves the last page including query and fragment", async ({
@@ -106,8 +102,8 @@ test("authenticated Google users follow safe destinations without another login"
   await setTestSession(page, MEMBER);
   await page.goto("/auth/signin?callbackUrl=%2Faccount");
   await expect(page).toHaveURL("/account");
-  await page.goto("/auth/signup?callbackUrl=%2Fmember%2Fjoin");
-  await expect(page).toHaveURL("/member/join");
+  await page.goto("/auth/signup?callbackUrl=%2Faccount");
+  await expect(page).toHaveURL("/account");
 });
 
 test("unsafe callback destinations stay on the application", async ({
@@ -126,7 +122,7 @@ test("OAuth error retries preserve the saved member destination", async ({
     {
       name: "authjs.callback-url",
       url: BASE_URL,
-      value: `${BASE_URL}/member/join`,
+      value: `${BASE_URL}/account`,
     },
   ]);
   await page.goto("/auth/signin?error=OAuthCallbackError");
@@ -138,7 +134,7 @@ test("OAuth error retries preserve the saved member destination", async ({
   await expect(page.getByRole("button", { name: GOOGLE_BUTTON })).toBeEnabled();
   await setTestSession(page, MEMBER);
   await page.reload();
-  await expect(page).toHaveURL("/member/join");
+  await expect(page).toHaveURL("/account");
 });
 
 test("removed password mutations are not available over HTTP", async ({

@@ -16,7 +16,7 @@ const publicRoutes = [
   "/legal-notice",
   "/privacy",
 ] as const;
-const memberRoutes = ["/account", "/member/join", "/prayers"] as const;
+const memberRoutes = ["/account", "/prayers"] as const;
 
 test.afterEach(async ({ page }, testInfo) => {
   await page.screenshot({
