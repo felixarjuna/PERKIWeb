@@ -1,7 +1,7 @@
 import type React from "react";
 import { cn } from "~/lib/utils";
 import Navigation from "./home/navigation";
-import MemberPrompt from "./member-prompt";
+import ProfileReminder from "./profile-reminder";
 import WelcomeGate from "./welcome-gate";
 
 interface ITemplateProps {
@@ -41,7 +41,7 @@ export default function Template(props: ITemplateProps) {
           ) : null}
         </header>
 
-        <MemberPrompt />
+        <ProfileReminder />
         <div className="mt-8 flex w-full flex-col sm:mt-10">
           {props.children}
         </div>
