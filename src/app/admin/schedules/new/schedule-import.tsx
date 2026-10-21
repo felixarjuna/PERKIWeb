@@ -66,11 +66,11 @@ function Row({
         {time ? `${formatDay(day)} · ${time}` : formatDay(day)}
       </p>
       <p className="type-body mt-0.5 break-words">{title}</p>
-      {verse ? (
+      {verse === undefined ? null : (
         <p className="type-body-sm mt-0.5 break-words text-muted-foreground">
-          {verse}
+          {verse || "No Bible verse in the sheet"}
         </p>
-      ) : null}
+      )}
       {children}
     </li>
   );
