@@ -92,6 +92,13 @@
       "when": 1792576421887,
       "tag": "0012_name_links",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792579685126,
+      "tag": "0013_speakers",
+      "breakpoints": true
     }
   ]
 }

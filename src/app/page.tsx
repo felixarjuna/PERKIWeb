@@ -7,8 +7,13 @@ import Navigation from "~/components/home/navigation";
 import OurPastors from "~/components/home/our-pastors";
 import VisitUs from "~/components/home/visit-us";
 import WhatWeDo from "~/components/home/what-we-do";
+import { api } from "~/trpc/server";
 
-export default function Home() {
+export default async function Home() {
+  // Speakers are managed in the workspace, so the page renders per request.
+  // The home page must never fail on them: without the table (a deploy before
+  // its migration, or e2e before setup) it renders without "Our pastors".
+  const pastors = await api.speakers.active().catch(() => []);
   return (
     <>
       <Navigation revealAfter="hero" />
@@ -26,7 +31,7 @@ export default function Home() {
           <AboutUs />
         </div>
         <WhatWeDo />
-        <OurPastors />
+        <OurPastors pastors={pastors} />
         <VisitUs />
       </main>
       <Footer />

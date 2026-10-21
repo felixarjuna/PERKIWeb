@@ -211,6 +211,10 @@ export const scheduleAssignments = pgTable(
     scheduleId: integer("scheduleId")
       .notNull()
       .references(() => schedules.id, { onDelete: "cascade" }),
+    /** The guest speaker behind a preacher slot. */
+    speakerId: integer("speakerId").references(() => speakers.id, {
+      onDelete: "set null",
+    }),
     userId: text("userId").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -227,6 +231,36 @@ export const scheduleAssignments = pgTable(
     ),
   ]
 );
+
+/**
+ * Guest pastors who preach at services. They don't sign in, so they live
+ * here rather than in `user`; the landing page's "Our pastors" lists the
+ * active ones.
+ */
+export const speakers = pgTable("speakers", {
+  active: boolean("active").default(true).notNull(),
+  /** Other spellings on the schedule, normalised with `nameKey()`. */
+  aliases: text("aliases").array().default(sql`'{}'::text[]`).notNull(),
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+  favoriteVerse: text("favoriteVerse"),
+  id: serial("id").primaryKey().notNull(),
+  /** As shown, title included: "Pdt. John Kusuma". */
+  name: text("name").notNull().unique(),
+  /** A site path ("/images/john.jpg") or a full image URL. */
+  photoUrl: text("photoUrl"),
+  story: text("story"),
+  updatedAt: timestamp("updatedAt", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
 
 /** One period (about six months) of cooking and cleaning groups. */
 export const groupTerms = pgTable("group_terms", {

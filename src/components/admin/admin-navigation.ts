@@ -3,6 +3,7 @@ import {
   HandHeart,
   LayoutDashboard,
   Link2,
+  Mic,
   NotebookPen,
   UsersRound,
 } from "lucide-react";
@@ -32,6 +33,12 @@ export const adminNavigation = [
     icon: CalendarDays,
     title: "Schedules",
     url: "/admin/schedules",
+  },
+  {
+    group: "Content",
+    icon: Mic,
+    title: "Speakers",
+    url: "/admin/speakers",
   },
   {
     group: "Content",

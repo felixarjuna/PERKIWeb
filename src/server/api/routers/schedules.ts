@@ -1,6 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { asc, desc, eq } from "drizzle-orm";
-import { scheduleAssignments, schedules, users } from "~/lib/db/schema/schema";
+import {
+  scheduleAssignments,
+  schedules,
+  speakers,
+  users,
+} from "~/lib/db/schema/schema";
 import type { Person } from "~/lib/people";
 import {
   localDay,
@@ -85,9 +90,11 @@ export const scheduleRouter = createTRPCRouter({
           name: scheduleAssignments.name,
           role: scheduleAssignments.role,
           scheduleId: scheduleAssignments.scheduleId,
+          speakerPhoto: speakers.photoUrl,
         })
         .from(scheduleAssignments)
         .leftJoin(users, eq(users.id, scheduleAssignments.userId))
+        .leftJoin(speakers, eq(speakers.id, scheduleAssignments.speakerId))
         .orderBy(asc(scheduleAssignments.position)),
       loadGroupTerms(withPhotos),
     ]);
@@ -97,7 +104,9 @@ export const scheduleRouter = createTRPCRouter({
       const team: (Slot & Person)[] =
         own.length > 0
           ? own.map((a) => ({
-              image: withPhotos ? a.image : null,
+              // A speaker's photo is public (it's on the landing page); a
+              // member's only reaches signed-in viewers.
+              image: a.speakerPhoto ?? (withPhotos ? a.image : null),
               name: a.name,
               role: a.role as ServingRole,
             }))

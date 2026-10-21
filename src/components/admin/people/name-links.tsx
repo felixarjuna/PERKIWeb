@@ -190,8 +190,7 @@ export default function NameLinks() {
     return <QueryMessage>Loading names…</QueryMessage>;
   }
 
-  const members = unlinked.data.filter((entry) => !entry.preacherOnly);
-  const preachers = unlinked.data.filter((entry) => entry.preacherOnly);
+  const members = unlinked.data;
   const onLink = (name: string, account: Account) =>
     link.mutate({ name, userId: account.id });
   const pending = link.isPending || unlink.isPending;
@@ -228,29 +227,6 @@ export default function NameLinks() {
           </>
         )}
       </section>
-
-      {preachers.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="type-subheading">
-            Preachers{" "}
-            <span className="text-muted-foreground">{preachers.length}</span>
-          </h2>
-          <p className="type-body-sm text-muted-foreground">
-            Only ever written as preacher, so most are guest pastors. Link the
-            ones who are members.
-          </p>
-          <ul className="grid gap-2">
-            {preachers.map((entry) => (
-              <UnlinkedRow
-                entry={entry}
-                key={entry.key}
-                onLink={onLink}
-                pending={pending}
-              />
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       <section className="space-y-3">
         <h2 className="type-subheading">
