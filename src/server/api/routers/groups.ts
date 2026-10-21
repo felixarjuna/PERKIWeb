@@ -1,22 +1,38 @@
-import { asc } from "drizzle-orm";
-import { groupMembers, groups, groupTerms } from "~/lib/db/schema/schema";
+import { asc, eq } from "drizzle-orm";
+import {
+  groupMembers,
+  groups,
+  groupTerms,
+  users,
+} from "~/lib/db/schema/schema";
+import type { Person } from "~/lib/people";
 import { localDay, termOn } from "~/lib/schedule-team";
 import { db } from "~/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export interface GroupTerm {
-  groups: { members: string[]; name: string }[];
+  groups: { members: Person[]; name: string }[];
   startsOn: string;
 }
 
-/** Every group term with its groups and member names (never account ids). */
-export async function loadGroupTerms(): Promise<GroupTerm[]> {
+/**
+ * Every group term with its groups and members (never account ids). Photos
+ * of linked members are included only for signed-in viewers.
+ */
+export async function loadGroupTerms(
+  withPhotos: boolean
+): Promise<GroupTerm[]> {
   const [terms, groupRows, memberRows] = await Promise.all([
     db.select().from(groupTerms),
     db.select().from(groups).orderBy(asc(groups.name)),
     db
-      .select({ groupId: groupMembers.groupId, name: groupMembers.name })
+      .select({
+        groupId: groupMembers.groupId,
+        image: users.image,
+        name: groupMembers.name,
+      })
       .from(groupMembers)
+      .leftJoin(users, eq(users.id, groupMembers.userId))
       .orderBy(asc(groupMembers.position), asc(groupMembers.id)),
   ]);
   return terms.map((term) => ({
@@ -25,7 +41,10 @@ export async function loadGroupTerms(): Promise<GroupTerm[]> {
       .map((group) => ({
         members: memberRows
           .filter((member) => member.groupId === group.id)
-          .map((member) => member.name),
+          .map((member) => ({
+            image: withPhotos ? member.image : null,
+            name: member.name,
+          })),
         name: group.name,
       })),
     startsOn: term.startsOn,
@@ -35,6 +54,10 @@ export async function loadGroupTerms(): Promise<GroupTerm[]> {
 export const groupRouter = createTRPCRouter({
   /** The cooking and cleaning groups in force today; null before the first term. */
   getCurrent: publicProcedure.query(
-    async () => termOn(await loadGroupTerms(), localDay(new Date())) ?? null
+    async ({ ctx }) =>
+      termOn(
+        await loadGroupTerms(Boolean(ctx.session?.user)),
+        localDay(new Date())
+      ) ?? null
   ),
 });

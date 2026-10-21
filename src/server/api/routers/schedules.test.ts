@@ -262,10 +262,10 @@ describe("schedules router", () => {
 
     const [schedule] = await anonymousCaller().schedules.getSchedules();
     expect(schedule?.team).toEqual([
-      { name: "Liturgist", role: "liturgist" },
-      { name: "Musician", role: "musician" },
-      { name: "Tech", role: "multimedia" },
-      { name: "Writer", role: "note_writer" },
+      { image: null, name: "Liturgist", role: "liturgist" },
+      { image: null, name: "Musician", role: "musician" },
+      { image: null, name: "Tech", role: "multimedia" },
+      { image: null, name: "Writer", role: "note_writer" },
     ]);
   });
 
@@ -321,8 +321,14 @@ describe("schedules router", () => {
     const schedules = await anonymousCaller().schedules.getSchedules();
 
     expect(schedules.map((s) => s.groupMembers)).toEqual([
-      { cleaning: ["Cleo"], cooking: null },
-      { cleaning: ["Ana", "Ben"], cooking: null },
+      { cleaning: [{ image: null, name: "Cleo" }], cooking: null },
+      {
+        cleaning: [
+          { image: null, name: "Ana" },
+          { image: null, name: "Ben" },
+        ],
+        cooking: null,
+      },
       { cleaning: null, cooking: null },
     ]);
   });

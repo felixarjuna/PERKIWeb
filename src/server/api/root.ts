@@ -2,6 +2,7 @@ import { prayerRouter } from "~/server/api/routers/prayers";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { botRouter } from "./routers/bot";
 import { groupRouter } from "./routers/groups";
+import { peopleRouter } from "./routers/people";
 import { profileRouter } from "./routers/profile";
 import { rolesRouter } from "./routers/roles";
 import { scheduleImportRouter } from "./routers/schedule-import";
@@ -17,6 +18,7 @@ import { userRouter } from "./routers/users";
 export const appRouter = createTRPCRouter({
   bot: botRouter,
   groups: groupRouter,
+  people: peopleRouter,
   prayers: prayerRouter,
   profiles: profileRouter,
   roles: rolesRouter,

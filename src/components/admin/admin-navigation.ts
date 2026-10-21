@@ -2,6 +2,7 @@ import {
   CalendarDays,
   HandHeart,
   LayoutDashboard,
+  Link2,
   NotebookPen,
   UsersRound,
 } from "lucide-react";
@@ -19,6 +20,12 @@ export const adminNavigation = [
     icon: UsersRound,
     title: "Members",
     url: "/admin/members",
+  },
+  {
+    group: "Community",
+    icon: Link2,
+    title: "Name links",
+    url: "/admin/names",
   },
   {
     group: "Content",
