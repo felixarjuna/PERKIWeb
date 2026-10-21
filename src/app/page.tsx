@@ -11,7 +11,9 @@ import { api } from "~/trpc/server";
 
 export default async function Home() {
   // Speakers are managed in the workspace, so the page renders per request.
-  const pastors = await api.speakers.active();
+  // The home page must never fail on them: without the table (a deploy before
+  // its migration, or e2e before setup) it renders without "Our pastors".
+  const pastors = await api.speakers.active().catch(() => []);
   return (
     <>
       <Navigation revealAfter="hero" />
