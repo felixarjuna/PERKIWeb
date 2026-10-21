@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import Template from "~/components/template";
 import {
   Accordion,
@@ -5,33 +6,50 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
-import { groups } from "~/lib/data";
+import { api } from "~/trpc/server";
 
-export default function Group() {
+export default async function Group() {
+  const term = await api.groups.getCurrent();
+  const since = term
+    ? DateTime.fromISO(term.startsOn).toFormat("LLLL yyyy")
+    : null;
   return (
-    <Template subtitle="Cleaning and cooking groups" title="Groups">
+    <Template
+      subtitle={
+        since
+          ? `Cleaning and cooking groups since ${since}`
+          : "Cleaning and cooking groups"
+      }
+      title="Groups"
+    >
       <div className="w-full">
-        <Accordion className="grid gap-2" collapsible type="single">
-          {groups.map((group) => (
-            <AccordionItem
-              className="rounded-xl bg-card px-4 transition-colors duration-150 hover:bg-accent/40"
-              key={group.name}
-              value={group.name}
-            >
-              <AccordionTrigger>{group.name}</AccordionTrigger>
-              <AccordionContent className="flex flex-wrap gap-2">
-                {group.members.map((member) => (
-                  <div
-                    className="type-caption w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground"
-                    key={member}
-                  >
-                    {member}
-                  </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        {term && term.groups.length > 0 ? (
+          <Accordion className="grid gap-2" collapsible type="single">
+            {term.groups.map((group) => (
+              <AccordionItem
+                className="rounded-xl bg-card px-4 transition-colors duration-150 hover:bg-accent/40"
+                key={group.name}
+                value={group.name}
+              >
+                <AccordionTrigger>{group.name}</AccordionTrigger>
+                <AccordionContent className="flex flex-wrap gap-2">
+                  {group.members.map((member) => (
+                    <div
+                      className="type-caption w-fit rounded-full bg-paper px-3 py-1 text-paper-foreground"
+                      key={member}
+                    >
+                      {member}
+                    </div>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <p className="type-body text-center text-muted-foreground">
+            The groups for this term haven't been set yet.
+          </p>
+        )}
       </div>
     </Template>
   );

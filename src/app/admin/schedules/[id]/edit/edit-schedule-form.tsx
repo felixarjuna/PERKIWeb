@@ -35,7 +35,6 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import {
   accommodation,
-  groupNames,
   liturgos,
   multimedia,
   musicians,
@@ -45,8 +44,10 @@ import {
 import { cn } from "~/lib/utils";
 import { updateScheduleSchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
+import { useGroupNames } from "../../use-group-names";
 
 export default function EditScheduleForm() {
+  const groupNames = useGroupNames();
   const router = useRouter();
 
   const { id } = useParams<{ id: string }>();
