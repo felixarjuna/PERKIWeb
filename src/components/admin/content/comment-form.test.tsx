@@ -4,6 +4,30 @@ import { describe, expect, it } from "vitest";
 import { CommentForm } from "./comment-form";
 
 describe("comment form", () => {
+  it("inserts a selected quote, preserves the comment draft and focuses its field", () => {
+    const submit = async () => {
+      await Promise.resolve();
+    };
+    const view = render(<CommentForm onSubmit={submit} />);
+    fireEvent.change(screen.getByLabelText("Comment"), {
+      target: { value: "My feedback" },
+    });
+    view.rerender(
+      <CommentForm
+        onSubmit={submit}
+        quoteRequest={{ text: "Abraham believed God" }}
+      />
+    );
+    expect(
+      screen.getByLabelText<HTMLTextAreaElement>("Quoted passage (optional)")
+        .value
+    ).toBe("Abraham believed God");
+    expect(screen.getByLabelText<HTMLTextAreaElement>("Comment").value).toBe(
+      "My feedback"
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText("Comment"));
+  });
+
   it("keeps the draft on failure and clears it after a successful retry", async () => {
     let attempts = 0;
     const submitted: { body: string; quote: string }[] = [];

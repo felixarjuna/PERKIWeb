@@ -17,10 +17,26 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
   await setTestSession(page, WRITER_2);
   await page.goto(`/admin/takeaways/${id}`);
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
-  await page.getByLabel("Quoted passage (optional)").fill(quote);
   await page
     .getByLabel("Comment", { exact: true })
     .fill("Could you add the verse reference?");
+  await page.locator(".takeaway-prose p").evaluate((element, text) => {
+    const node = element.firstChild;
+    if (!node) {
+      throw new Error("Passage text missing");
+    }
+    const range = document.createRange();
+    range.setStart(node, 0);
+    range.setEnd(node, text.length);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+  }, quote);
+  await page.getByRole("button", { name: "Quote selection" }).click();
+  await expect(page.getByLabel("Quoted passage (optional)")).toHaveValue(quote);
+  await expect(page.getByLabel("Comment", { exact: true })).toBeFocused();
+  await expect(page.getByLabel("Comment", { exact: true })).toHaveValue(
+    "Could you add the verse reference?"
+  );
   await page.getByRole("button", { name: "Add comment" }).click();
   const thread = page.getByRole("region", { name: "Review comments" });
   await expect(thread.getByText("1 open · 0 resolved")).toBeVisible();

@@ -63,7 +63,13 @@ function CommentItem({
   );
 }
 
-export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
+export function TakeawayComments({
+  takeawayId,
+  quoteRequest,
+}: {
+  takeawayId: number;
+  quoteRequest?: { text: string } | null;
+}) {
   const headingId = useId();
   const utils = api.useUtils();
   const thread = api.takeawayComments.list.useQuery(
@@ -141,6 +147,7 @@ export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
                 await refresh();
                 toast.success("Comment added.");
               }}
+              quoteRequest={quoteRequest}
             />
           ) : (
             <p className="text-muted-foreground text-sm">
