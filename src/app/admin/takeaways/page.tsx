@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import AdminShell from "~/components/admin/admin-shell";
 import TakeawayManager from "~/components/admin/content/takeaway-manager";
@@ -11,6 +12,9 @@ export default async function ManagementPage() {
       {...(await adminShellProps(role))}
       actions={
         <Link className={buttonVariants()} href="/admin/takeaways/new">
+          <Plus aria-hidden="true" data-icon="inline-start">
+            <title>Add takeaway</title>
+          </Plus>
           Add takeaway
         </Link>
       }

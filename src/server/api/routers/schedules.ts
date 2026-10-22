@@ -69,10 +69,16 @@ async function withTeams(rows: Schedule[], withPhotos: boolean) {
       .where(inArray(scheduleAssignments.scheduleId, ids))
       .orderBy(asc(scheduleAssignments.position)),
     loadGroupTerms(withPhotos),
+    // Only published notes: drafts and reviews stay in the admin area.
     db
       .select({ id: takeaways.id, scheduleId: takeaways.scheduleId })
       .from(takeaways)
-      .where(inArray(takeaways.scheduleId, ids))
+      .where(
+        and(
+          inArray(takeaways.scheduleId, ids),
+          eq(takeaways.status, "published")
+        )
+      )
       .orderBy(asc(takeaways.id)),
   ]);
   return rows.map((schedule) => {

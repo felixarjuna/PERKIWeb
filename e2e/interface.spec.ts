@@ -130,7 +130,7 @@ for (const width of widths) {
         await page.goto("/admin/takeaways/new");
         await selectOption(page, "Schedule", title);
         await page.getByLabel("Key points", { exact: true }).fill(keypoints);
-        await page.getByRole("button", { name: "Add takeaway" }).click();
+        await page.getByRole("button", { name: "Save draft" }).click();
         await expect(page).toHaveURL("/admin/takeaways");
         await page
           .getByRole("listitem")

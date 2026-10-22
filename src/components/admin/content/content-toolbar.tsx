@@ -24,10 +24,13 @@ export default function ContentToolbar({
   filters,
   onChange,
   schedules = false,
+  children,
 }: {
   filters: ContentFilters;
   onChange: (value: ContentFilters) => void;
   schedules?: boolean;
+  /** Extra controls of the page, placed after the shared ones. */
+  children?: React.ReactNode;
 }) {
   const defaults: ContentFilters = {
     order: schedules ? "asc" : "desc",
@@ -83,6 +86,7 @@ export default function ContentToolbar({
         options={ORDERS}
         value={filters.order}
       />
+      {children}
       {isFiltered ? (
         <Button
           className="h-10"

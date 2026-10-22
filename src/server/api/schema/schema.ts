@@ -1,16 +1,28 @@
 import { z } from "zod";
 import { REQUESTABLE_ROLES } from "~/lib/access";
-import { eventTypeEnum } from "~/lib/db/schema/schema";
+import { eventTypeEnum, TAKEAWAY_STATUSES } from "~/lib/db/schema/schema";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
+import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 
-export const addTakeawaySchema = z.object({
+const takeawayFieldsSchema = z.object({
   contributors: z.array(z.string()),
-  keypoints: z.string(),
+  keypoints: takeawayKeypointsSchema,
   scheduleId: z.number(),
 });
 
-export const updateTakeawaySchema = addTakeawaySchema.extend({
+/** New takeaways start as a draft or go straight to review; staff publish later. */
+export const addTakeawaySchema = takeawayFieldsSchema.extend({
+  status: z.enum(["draft", "in_review"]).default("draft"),
+});
+
+/** Editing the text never changes the status; `setStatus` does. */
+export const updateTakeawaySchema = takeawayFieldsSchema.extend({
   id: z.number(),
+});
+
+export const takeawayStatusSchema = z.object({
+  id: z.number(),
+  status: z.enum(TAKEAWAY_STATUSES),
 });
 
 export const addScheduleSchema = z.object({
@@ -164,6 +176,7 @@ export const takeawayListSchema = pageSchema;
 
 export const manageableTakeawaySchema = pageSchema.extend({
   order: orderSchema,
+  status: z.enum([...TAKEAWAY_STATUSES, "all"]).default("all"),
 });
 
 export const inviteSchema = z.object({

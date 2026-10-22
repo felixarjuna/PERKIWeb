@@ -119,14 +119,16 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await page.goto("/admin/takeaways/new");
   await selectOption(page, "Schedule", scheduleTitle);
   await page.getByLabel("Key points", { exact: true }).fill(keypoints);
-  await page.getByRole("button", { name: "Add takeaway" }).click();
-  await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(toast(page, "Your draft has been saved.")).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
 
   const own = page.getByRole("listitem").filter({ hasText: keypoints });
   await loadUntilVisible(page, own);
-  await own.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
+  await own
+    .getByRole("link", { exact: true, name: `Edit ${scheduleTitle}` })
+    .click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   // Wait for the takeaway to load into the editor before replacing it.
   const editor = page.getByLabel("Key points", { exact: true });

@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
@@ -31,34 +32,34 @@ export default function EditTakeawayForm() {
     id: Number.parseInt(id, 10),
   });
 
-  const contributors = React.useMemo(() => {
-    if (takeaway) {
-      const _contributors = takeaway.takeaways.contributors as string[];
-      return _contributors.includes(username)
-        ? [..._contributors]
-        : [..._contributors, username];
-    }
-  }, [takeaway, username]);
-
   /** form definition. */
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
   });
 
-  /** load form data. */
+  /**
+   * Load the takeaway into the form once. Resetting again when the session
+   * arrives or the query refetches would wipe what the writer just typed.
+   */
+  const loadedId = React.useRef<number | null>(null);
   React.useEffect(() => {
+    if (!takeaway || loadedId.current === takeaway.takeaways.id) {
+      return;
+    }
+    loadedId.current = takeaway.takeaways.id;
     form.reset({
-      ...takeaway?.takeaways,
-      contributors,
+      ...takeaway.takeaways,
+      contributors: takeaway.takeaways.contributors as string[],
     });
-  }, [contributors, form, takeaway]);
+  }, [form, takeaway]);
 
   /** edit takeaway action. */
   const utils = api.useUtils();
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
-      await Promise.all([utils.takeaways.invalidate()]);
+      await utils.takeaways.getManageable.cancel();
+      await utils.takeaways.invalidate();
       toast.success("Your changes has been saved successfully!", {
         description: "Thanks for your contribution!",
       });
@@ -66,22 +67,28 @@ export default function EditTakeawayForm() {
     },
   });
 
+  /** Credits whoever saves, once the session has their name. */
   function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
-    updateTakeaway.mutate(values);
+    const contributors =
+      username && !values.contributors.includes(username)
+        ? [...values.contributors, username]
+        : values.contributors;
+    updateTakeaway.mutate({ ...values, contributors });
   }
 
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-8"
-        onSubmit={form.handleSubmit(onSubmit, (error) => {
-          toast.error("Uh oh! Something went wrong.", {
-            description: JSON.stringify(error),
-          });
-        })}
+        className="flex w-full max-w-3xl flex-col gap-8"
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="space-y-4">
-          <h2 className="type-heading">Fellowship Information</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="type-heading">Fellowship Information</h2>
+            {takeaway ? (
+              <TakeawayStatusBadge value={takeaway.takeaways.status} />
+            ) : null}
+          </div>
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="takeaway-schedule">Schedule</Label>
@@ -99,20 +106,30 @@ export default function EditTakeawayForm() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            disabled={updateTakeaway.isPending}
-            type="submit"
-            variant={"default"}
-          >
-            Save changes
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              disabled={updateTakeaway.isPending}
+              type="submit"
+              variant="default"
+            >
+              <Save aria-hidden="true" data-icon="inline-start">
+                <title>Save changes</title>
+              </Save>
+              Save changes
+            </Button>
+            <p className="type-caption text-muted-foreground">
+              Saving keeps the status. Change it from the takeaways list.
+            </p>
+          </div>
           <Button
             className="flex gap-x-2"
             onClick={() => router.push("/admin/takeaways")}
             type="button"
             variant="secondary"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" data-icon="inline-start">
+              <title>Back</title>
+            </ArrowLeft>
             Back
           </Button>
         </div>

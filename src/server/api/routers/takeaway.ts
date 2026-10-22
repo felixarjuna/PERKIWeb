@@ -1,10 +1,17 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, getTableColumns, sql } from "drizzle-orm";
-import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
+import {
+  schedules,
+  type TakeawayStatus,
+  takeaways,
+} from "~/lib/db/schema/schema";
 import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
+import { canWriteTakeaways, isStaffRole, type Role } from "~/lib/roles";
+import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
+import { mayEditTakeaway, statusActions } from "~/lib/takeaway-status";
 import { db } from "~/server";
-import { isAdmin } from "~/server/authz";
+import { getRole } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
 import {
   afterCursor,
@@ -19,6 +26,7 @@ import {
   manageableTakeawaySchema,
   queryByIdSchema,
   takeawayListSchema,
+  takeawayStatusSchema,
   updateTakeawaySchema,
 } from "../schema/schema";
 import { createTRPCRouter, publicProcedure, takeawayProcedure } from "../trpc";
@@ -36,15 +44,17 @@ const rethrowMissingSchedule = (error: unknown): never => {
 };
 
 /**
- * Public takeaway columns: everything except `authorId`, so anonymous
- * visitors never see author ids (and these pages work before migration 0010).
+ * Public takeaway columns: everything except `authorId` and `publishedById`,
+ * so visitors never see account ids.
  */
 const publicTakeawayColumns = {
   contributors: takeaways.contributors,
   createdAt: takeaways.createdAt,
   id: takeaways.id,
   keypoints: takeaways.keypoints,
+  publishedAt: takeaways.publishedAt,
   scheduleId: takeaways.scheduleId,
+  status: takeaways.status,
   updatedAt: takeaways.updatedAt,
 };
 
@@ -61,6 +71,8 @@ const publicSelection = {
   schedules: getTableColumns(schedules),
   takeaways: publicTakeawayColumns,
 };
+
+const isPublished = eq(takeaways.status, "published");
 
 /**
  * Filters and orders a takeaway list by its schedule's date (then the
@@ -94,99 +106,207 @@ const cursorOf = (row: {
   id: row.takeaways.id,
 });
 
-/** The one rule: staff manage every takeaway, writers only their own. */
-const mayManage = (authorId: string | null, userId: string, staff: boolean) =>
-  staff || authorId === userId;
+/** What a viewer is to a takeaway, read from the database on every call. */
+interface Viewer {
+  id: string;
+  role: Role;
+  staff: boolean;
+  writer: boolean;
+}
 
-/** Whether the takeaway is missing, or `userId` may or may not manage it. */
-const manageAccess = async (
-  takeawayId: number,
-  userId: string
-): Promise<"allowed" | "forbidden" | "missing"> => {
+const viewerFor = async (userId: string | undefined): Promise<Viewer> => {
+  const role = userId ? await getRole(userId) : "member";
+  return {
+    id: userId ?? "",
+    role,
+    staff: isStaffRole(role),
+    writer: canWriteTakeaways(role),
+  };
+};
+
+interface Ownership {
+  authorId: string | null;
+  status: TakeawayStatus;
+}
+
+/** The edit rule (`mayEditTakeaway`): author and staff, until published. */
+const mayManage = (takeaway: Ownership, viewer: Viewer) =>
+  mayEditTakeaway(takeaway, viewer);
+
+/**
+ * The read rule from #36: published is public, staff and the author read
+ * every status, other writers read takeaways that are in review.
+ */
+const mayRead = (takeaway: Ownership, viewer: Viewer) =>
+  takeaway.status === "published" ||
+  viewer.staff ||
+  (viewer.writer &&
+    (takeaway.authorId === viewer.id || takeaway.status === "in_review"));
+
+/** The status rule (`statusActions`): exactly the moves the list offers. */
+const maySetStatus = (
+  takeaway: Ownership,
+  viewer: Viewer,
+  next: TakeawayStatus
+) => statusActions(takeaway, viewer).some((action) => action.to === next);
+
+/** Why `viewer` may not make this move, for the FORBIDDEN message. */
+const statusRefusal = (current: TakeawayStatus, next: TakeawayStatus) => {
+  if (next === "published") {
+    return "Only mita can publish a takeaway.";
+  }
+  if (current === "published") {
+    return "Only mita can unpublish a takeaway.";
+  }
+  if (next === "in_review") {
+    return "Only the writer of this takeaway can send it to review.";
+  }
+  return "Only its writer or mita can take this takeaway out of review.";
+};
+
+const loadOwnership = async (
+  takeawayId: number
+): Promise<(Ownership & { keypoints: string }) | undefined> => {
   const [takeaway] = await db
-    .select({ authorId: takeaways.authorId })
+    .select({
+      authorId: takeaways.authorId,
+      keypoints: takeaways.keypoints,
+      status: takeaways.status,
+    })
     .from(takeaways)
     .where(eq(takeaways.id, takeawayId))
     .limit(1);
-  if (!takeaway) {
-    return "missing";
-  }
-  return mayManage(takeaway.authorId, userId, await isAdmin(userId))
-    ? "allowed"
-    : "forbidden";
+  return takeaway;
 };
 
 export const canManageTakeaway = async (
   takeawayId: number,
   userId: string
-): Promise<boolean> => (await manageAccess(takeawayId, userId)) === "allowed";
+): Promise<boolean> => {
+  const takeaway = await loadOwnership(takeawayId);
+  return takeaway !== undefined && mayManage(takeaway, await viewerFor(userId));
+};
+
+const notFound = () =>
+  new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
 
 /** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not manageable. */
 const assertCanManage = async (takeawayId: number, userId: string) => {
-  const access = await manageAccess(takeawayId, userId);
-  if (access === "missing") {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
+  const takeaway = await loadOwnership(takeawayId);
+  if (!takeaway) {
+    throw notFound();
   }
-  if (access === "forbidden") {
+  const viewer = await viewerFor(userId);
+  if (!mayManage(takeaway, viewer)) {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: "You can only change your own takeaways.",
+      message:
+        takeaway.status === "published"
+          ? "Published takeaways can't be changed. Ask mita to unpublish it first."
+          : "You can only change your own takeaways.",
     });
   }
+  // Recheck ownership and status in the write itself, so a takeaway
+  // published meanwhile is never changed.
+  return and(
+    eq(takeaways.id, takeawayId),
+    inArray(takeaways.status, ["draft", "in_review"]),
+    viewer.staff ? undefined : eq(takeaways.authorId, userId)
+  );
 };
 
+/**
+ * The publication columns for a status change: set when a takeaway becomes
+ * published, kept while it stays published, cleared when it leaves.
+ */
+const publicationFor = (
+  current: TakeawayStatus,
+  next: TakeawayStatus,
+  viewerId: string
+) => {
+  if (next !== "published") {
+    return { publishedAt: null, publishedById: null };
+  }
+  if (current === "published") {
+    return {};
+  }
+  return { publishedAt: new Date(), publishedById: viewerId };
+};
+
+/** The rows `viewer` may see in the admin list (see `mayRead`). */
+const readableBy = (viewer: Viewer) =>
+  viewer.staff
+    ? undefined
+    : or(
+        eq(takeaways.authorId, viewer.id),
+        inArray(takeaways.status, ["in_review", "published"])
+      );
+
 export const takeawayRouter = createTRPCRouter({
-  addTakeaway: takeawayProcedure.input(addTakeawaySchema).mutation(
-    async ({ ctx, input }) =>
-      await db
+  addTakeaway: takeawayProcedure
+    .input(addTakeawaySchema)
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
         .insert(takeaways)
         .values({
           authorId: ctx.session.user.id,
           contributors: input.contributors,
           keypoints: input.keypoints,
           scheduleId: input.scheduleId,
+          status: input.status,
         })
-        .catch(rethrowMissingSchedule)
-  ),
+        .returning({ id: takeaways.id, status: takeaways.status })
+        .catch(rethrowMissingSchedule);
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
+      return row;
+    }),
   deleteTakeaway: takeawayProcedure
     .input(queryByIdSchema)
     .mutation(async ({ ctx, input }) => {
-      await assertCanManage(input.id, ctx.session.user.id);
+      const where = await assertCanManage(input.id, ctx.session.user.id);
       return affectedRow(
-        await db
-          .delete(takeaways)
-          .where(eq(takeaways.id, input.id))
-          .returning({ id: takeaways.id }),
+        await db.delete(takeaways).where(where).returning({ id: takeaways.id }),
         "Takeaway"
       );
     }),
   /**
-   * A page of takeaways with whether the viewer may edit each, searched by
-   * title and keypoints; authors stay private.
+   * A page of the takeaways the viewer may read, with whether they may edit
+   * or publish each, searched by title and keypoints; authors stay private.
    */
   getManageable: takeawayProcedure
     .input(manageableTakeawaySchema)
     .query(async ({ ctx, input }) => {
-      const viewer = ctx.session.user.id;
+      const viewer = await viewerFor(ctx.session.user.id);
       const { orderBy, where } = listFilter(input, input.order, [
         schedules.title,
         takeaways.keypoints,
       ]);
-      const [staff, rows] = await Promise.all([
-        isAdmin(viewer),
-        db
-          .select()
-          .from(takeaways)
-          .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-          .where(where)
-          .orderBy(...orderBy)
-          .limit(input.limit + 1),
-      ]);
+      const rows = await db
+        .select()
+        .from(takeaways)
+        .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+        .where(
+          and(
+            where,
+            readableBy(viewer),
+            input.status === "all"
+              ? undefined
+              : eq(takeaways.status, input.status)
+          )
+        )
+        .orderBy(...orderBy)
+        .limit(input.limit + 1);
       const page = toPage(rows, input.limit, cursorOf);
       return {
         items: page.items.map(
-          ({ takeaways: { authorId, ...note }, schedules: schedule }) => ({
-            canManage: mayManage(authorId, viewer, staff),
+          ({
+            takeaways: { authorId, publishedById: _publisher, ...note },
+            schedules: schedule,
+          }) => ({
+            actions: statusActions({ authorId, status: note.status }, viewer),
+            canManage: mayManage({ authorId, status: note.status }, viewer),
             schedules: schedule,
             takeaways: withPreview(note),
           })
@@ -194,28 +314,35 @@ export const takeawayRouter = createTRPCRouter({
         nextCursor: page.nextCursor,
       };
     }),
+  /**
+   * One takeaway with its schedule. Unpublished ones are only found by those
+   * who may read them (`mayRead`); everyone else gets NOT_FOUND.
+   */
   getTakeawayById: publicProcedure
     .input(queryByIdSchema)
-    .query(async ({ input }) => {
-      const takeaway = await db
-        .select(publicSelection)
+    .query(async ({ ctx, input }) => {
+      const [takeaway] = await db
+        .select({ ...publicSelection, authorId: takeaways.authorId })
         .from(takeaways)
         .where(eq(takeaways.id, input.id))
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-        .then((data) => data.at(0));
-
-      if (takeaway === undefined) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Error occurs when loading takeaway from database.",
-        });
+        .limit(1);
+      if (!takeaway) {
+        throw notFound();
       }
-
-      return takeaway;
+      const readable = mayRead(
+        { authorId: takeaway.authorId, status: takeaway.takeaways.status },
+        await viewerFor(ctx.session?.user.id)
+      );
+      if (!readable) {
+        throw notFound();
+      }
+      const { authorId: _author, ...visible } = takeaway;
+      return visible;
     }),
   /**
-   * A page of takeaways, newest first, searched by title, passage, preacher,
-   * keypoints and contributors.
+   * A page of published takeaways, newest first, searched by title, passage,
+   * preacher, keypoints and contributors.
    */
   getTakeaways: publicProcedure
     .input(takeawayListSchema)
@@ -231,7 +358,7 @@ export const takeawayRouter = createTRPCRouter({
         .select(publicSelection)
         .from(takeaways)
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-        .where(where)
+        .where(and(where, isPublished))
         .orderBy(...orderBy)
         .limit(input.limit + 1);
       const page = toPage(rows, input.limit, cursorOf);
@@ -243,7 +370,7 @@ export const takeawayRouter = createTRPCRouter({
         nextCursor: page.nextCursor,
       };
     }),
-  /** The Aachen months (`yyyy-MM`) with takeaways, newest first, for filters. */
+  /** The Aachen months (`yyyy-MM`) with published takeaways, for filters. */
   months: publicProcedure.query(async () =>
     monthsOf(
       (
@@ -251,18 +378,71 @@ export const takeawayRouter = createTRPCRouter({
           .selectDistinct({ date: schedules.date })
           .from(takeaways)
           .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
+          .where(isPublished)
       ).map((row) => row.date)
     )
   ),
+  /**
+   * Moves a takeaway between draft, in review and published. Publishing
+   * records who did it and when; leaving published clears that again.
+   */
+  setStatus: takeawayProcedure
+    .input(takeawayStatusSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [takeaway, viewer] = await Promise.all([
+        loadOwnership(input.id),
+        viewerFor(ctx.session.user.id),
+      ]);
+      if (!takeaway) {
+        throw notFound();
+      }
+      if (input.status === "published" && takeaway.status === "draft") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Send this draft to review before publishing it.",
+        });
+      }
+      if (!maySetStatus(takeaway, viewer, input.status)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: statusRefusal(takeaway.status, input.status),
+        });
+      }
+      if (input.status !== "draft") {
+        const content = takeawayKeypointsSchema.safeParse(takeaway.keypoints);
+        if (!content.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: content.error.issues[0]?.message,
+          });
+        }
+      }
+      return affectedRow(
+        await db
+          .update(takeaways)
+          .set({
+            status: input.status,
+            ...publicationFor(takeaway.status, input.status, viewer.id),
+          })
+          .where(
+            and(
+              eq(takeaways.id, input.id),
+              eq(takeaways.status, takeaway.status)
+            )
+          )
+          .returning({ id: takeaways.id, status: takeaways.status }),
+        "Takeaway"
+      );
+    }),
   updateTakeaway: takeawayProcedure
     .input(updateTakeawaySchema)
     .mutation(async ({ ctx, input }) => {
-      await assertCanManage(input.id, ctx.session.user.id);
+      const where = await assertCanManage(input.id, ctx.session.user.id);
       return affectedRow(
         await db
           .update(takeaways)
           .set({ ...input })
-          .where(eq(takeaways.id, input.id))
+          .where(where)
           .returning({ id: takeaways.id })
           .catch(rethrowMissingSchedule),
         "Takeaway"

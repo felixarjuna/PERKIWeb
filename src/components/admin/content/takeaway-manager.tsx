@@ -2,26 +2,51 @@
 
 import { keepPreviousData } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 import LoadMore from "~/components/load-more";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
+import { TAKEAWAY_STATUSES, type TakeawayStatus } from "~/lib/db/schema/schema";
+import { statusLabels } from "~/lib/takeaway-status";
 import { api } from "~/trpc/react";
-import { QueryMessage } from "../admin-controls";
+import { AdminSelect, QueryMessage } from "../admin-controls";
 import { type ContentFilters, takeawayQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
-import RecordActions from "./record-actions";
+import { TakeawayActions } from "./takeaway-actions";
+import { TakeawayStatusBadge } from "./takeaway-status-badge";
 
 const PAGE_SIZE = 20;
 
+const STATUS_OPTIONS = [
+  { label: "All statuses", value: "all" },
+  ...TAKEAWAY_STATUSES.map((status) => ({
+    label: statusLabels[status],
+    value: status,
+  })),
+] as const;
+
+const isStatus = (value: string): value is TakeawayStatus =>
+  TAKEAWAY_STATUSES.some((status) => status === value);
+
 export default function TakeawayManager() {
-  const utils = api.useUtils();
   const [filters, setFilters] = useState<ContentFilters>({
     order: "desc",
     q: "",
     type: "all",
   });
-  const input = takeawayQuery({ ...filters, q: useDebouncedValue(filters.q) });
+  const [status, setStatus] = useState<TakeawayStatus | "all">("all");
+  const input = {
+    ...takeawayQuery({ ...filters, q: useDebouncedValue(filters.q) }),
+    status,
+  };
   const query = api.takeaways.getManageable.useInfiniteQuery(
     { ...input, limit: PAGE_SIZE },
     {
@@ -29,17 +54,20 @@ export default function TakeawayManager() {
       placeholderData: keepPreviousData,
     }
   );
-  const remove = api.takeaways.deleteTakeaway.useMutation({
-    onError: (error) => toast.error(error.message),
-    onSuccess: async () => {
-      await utils.takeaways.invalidate();
-      toast.success("Takeaway deleted.");
-    },
-  });
   const records = query.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <div className="flex flex-col gap-5">
-      <ContentToolbar filters={filters} onChange={setFilters} />
+      <ContentToolbar filters={filters} onChange={setFilters}>
+        <AdminSelect
+          className="w-[calc(50%-0.25rem)] sm:w-40"
+          hideLabel
+          id="content-status"
+          label="Status"
+          onChange={(next) => setStatus(isStatus(next) ? next : "all")}
+          options={STATUS_OPTIONS}
+          value={status}
+        />
+      </ContentToolbar>
       {query.isLoading ? <QueryMessage>Loading takeaways…</QueryMessage> : null}
       {query.isError ? (
         <QueryMessage
@@ -53,53 +81,77 @@ export default function TakeawayManager() {
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
             {records.length} takeaways{query.hasNextPage ? " so far" : ""} ·
-            Changes appear on the public website immediately
+            Only published takeaways appear on the website
           </p>
           {records.length ? (
             <ul className="grid gap-3">
               {records.map(
-                ({ canManage, schedules: schedule, takeaways: note }) => (
-                  <li
-                    className="flex flex-col gap-4 rounded-xl bg-card p-5 lg:flex-row lg:items-start lg:gap-6"
-                    key={note.id}
-                  >
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <p className="type-caption text-muted-foreground">
-                        {schedule.type === "church_service"
-                          ? "Church service"
-                          : "Bible study"}{" "}
-                        ·{" "}
-                        {DateTime.fromJSDate(schedule.date)
-                          .setZone("Europe/Berlin")
-                          .toFormat("d LLL yyyy")}
-                      </p>
-                      <h2 className="type-subheading break-words">
-                        {schedule.title}
-                      </h2>
-                      <p className="type-body-sm line-clamp-3 whitespace-pre-line break-words text-muted-foreground">
-                        {note.preview}
-                      </p>
-                      <p className="type-caption text-muted-foreground">
-                        {Array.isArray(note.contributors)
-                          ? note.contributors.join(", ")
-                          : "No contributors listed"}
-                      </p>
-                    </div>
-                    {canManage ? (
-                      <RecordActions
-                        editUrl={`/admin/takeaways/${note.id}/edit`}
-                        name={schedule.title}
-                        onDelete={() => remove.mutate({ id: note.id })}
-                        pending={remove.isPending}
-                      />
-                    ) : null}
+                ({
+                  actions,
+                  canManage,
+                  schedules: schedule,
+                  takeaways: note,
+                }) => (
+                  <li key={note.id}>
+                    <Card className="relative hover:bg-accent/40">
+                      <CardHeader className="gap-2 p-5 pb-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="type-caption min-w-0 text-muted-foreground">
+                            {schedule.type === "church_service"
+                              ? "Church service"
+                              : "Bible study"}{" "}
+                            ·{" "}
+                            {DateTime.fromJSDate(schedule.date)
+                              .setZone("Europe/Berlin")
+                              .toFormat("d LLL yyyy")}
+                          </p>
+                          <TakeawayStatusBadge value={note.status} />
+                        </div>
+                        <CardTitle>
+                          <h2 className="type-subheading break-words">
+                            <Link
+                              aria-label={`${canManage ? "Edit" : "Review"} ${schedule.title}`}
+                              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
+                              href={
+                                canManage
+                                  ? `/admin/takeaways/${note.id}/edit`
+                                  : `/admin/takeaways/${note.id}`
+                              }
+                            >
+                              {schedule.title}
+                            </Link>
+                          </h2>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-2 p-5 pt-2">
+                        <CardDescription>
+                          <p className="type-body-sm line-clamp-3 whitespace-pre-line break-words text-muted-foreground">
+                            {note.preview}
+                          </p>
+                        </CardDescription>
+                        <p className="type-caption text-muted-foreground">
+                          {Array.isArray(note.contributors)
+                            ? note.contributors.join(", ")
+                            : "No contributors listed"}
+                        </p>
+                      </CardContent>
+                      <CardFooter className="px-5 pb-5">
+                        <TakeawayActions
+                          actions={actions}
+                          canManage={canManage}
+                          id={note.id}
+                          name={schedule.title}
+                          status={note.status}
+                        />
+                      </CardFooter>
+                    </Card>
                   </li>
                 )
               )}
             </ul>
           ) : (
             <QueryMessage>
-              No takeaways match. Try a different search or gathering type.
+              No takeaways match. Try a different search, type or status.
             </QueryMessage>
           )}
           <LoadMore

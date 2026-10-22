@@ -23,7 +23,9 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type Ref,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -72,6 +74,7 @@ interface MarkdownEditorProps {
   readonly id?: string;
   readonly onBlur?: () => void;
   readonly onChange: (markdown: string) => void;
+  readonly ref?: Ref<{ focus: () => void }>;
   readonly value: string | undefined;
 }
 
@@ -89,11 +92,15 @@ export function MarkdownEditor({
   id,
   onBlur,
   onChange,
+  ref,
   value = "",
 }: MarkdownEditorProps) {
-  // The Markdown this editor last saw, so a new `value` from outside
-  // (the edit form loading its takeaway) replaces the content once.
-  const current = useRef(value);
+  // The Markdown this editor last showed or reported, so a new `value` from
+  // outside (the edit form loading its takeaway) replaces the content once.
+  // Null until the first value is shown: the editor starts empty and the
+  // effect below fills it, so the text never shows before this is in step
+  // (otherwise the first keystrokes could be overwritten by that effect).
+  const current = useRef<string | null>(null);
   // The editable element is the form control: it carries the field's id,
   // label, description and error state.
   const attributes: Record<string, string> = {
@@ -106,7 +113,7 @@ export function MarkdownEditor({
     role: "textbox",
   };
   const editor = useEditor({
-    content: tidyMarkdown(value),
+    content: "",
     contentType: "markdown",
     editable: !disabled,
     editorProps: { attributes },
@@ -122,6 +129,16 @@ export function MarkdownEditor({
       }
     },
   });
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => {
+        editor?.commands.focus();
+      },
+    }),
+    [editor]
+  );
 
   useEffect(() => {
     if (editor && value !== current.current) {

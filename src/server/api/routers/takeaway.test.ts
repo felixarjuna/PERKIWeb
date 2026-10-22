@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { describe, expect, it, vi } from "vitest";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { getRole } from "~/server/authz";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
+
+vi.mock("~/server/authz", { spy: true });
 
 const MISSING_ID = 404;
 
@@ -30,6 +34,22 @@ const insertSchedule = async (title: string, date: Date) => {
 const signedIn = async () =>
   callerFor((await insertUser({ role: "admin" })).id);
 const signedInMember = async () => callerFor((await insertUser()).id);
+const staff = async () => callerFor((await insertUser({ role: "mita" })).id);
+
+/**
+ * Takes the takeaway through the real flow so the public can read it: its
+ * writer (or mita, for an authorless one) sends it to review, mita publishes.
+ */
+const publish = async (id: number) => {
+  const mita = await staff();
+  const [row] = await testDb
+    .select({ authorId: takeaways.authorId })
+    .from(takeaways)
+    .where(eq(takeaways.id, id));
+  const writer = row?.authorId ? callerFor(row.authorId) : mita;
+  await writer.takeaways.setStatus({ id, status: "in_review" });
+  await mita.takeaways.setStatus({ id, status: "published" });
+};
 
 const onlyTakeaway = async () => {
   const rows = await testDb.select().from(takeaways);
@@ -52,6 +72,7 @@ describe("takeaways router", () => {
       scheduleId: schedule.id,
     });
     const { id } = await onlyTakeaway();
+    await publish(id);
 
     const result = await anonymousCaller().takeaways.getTakeawayById({ id });
     expect(result.takeaways).toMatchObject({
@@ -77,6 +98,10 @@ describe("takeaways router", () => {
         })
       )
     );
+    for (const row of await testDb.select().from(takeaways)) {
+      // biome-ignore lint/performance/noAwaitInLoops: fixtures, one at a time.
+      await publish(row.id);
+    }
 
     const list = (await anonymousCaller().takeaways.getTakeaways({})).items;
 
@@ -100,6 +125,7 @@ describe("takeaways router", () => {
       scheduleId: schedule.id,
     });
 
+    await publish((await onlyTakeaway()).id);
     const [listed] = (await anonymousCaller().takeaways.getTakeaways({})).items;
     const [managed] = (await api.takeaways.getManageable({})).items;
 
@@ -323,13 +349,15 @@ describe("takeaways router", () => {
       expect((await rows()).map((row) => row.keypoints)).toEqual(["Theirs"]);
     });
 
-    it("lets mita and the owner manage every takeaway, including authorless ones", async () => {
+    it("lets mita and the owner manage every unpublished takeaway, including authorless ones", async () => {
       const writer = await insertUser({ role: "writer" });
       const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
       await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
-      await testDb
-        .insert(takeaways)
-        .values({ ...sample(schedule.id, "Legacy"), authorId: null });
+      await testDb.insert(takeaways).values({
+        ...sample(schedule.id, "Legacy"),
+        authorId: null,
+        status: "draft",
+      });
 
       const mita = callerFor((await insertUser({ role: "mita" })).id);
       const owner = callerFor((await insertUser({ role: "owner" })).id);
@@ -389,6 +417,7 @@ describe("takeaways router", () => {
       const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
       await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
       const { id } = await onlyTakeaway();
+      await publish(id);
       const visitor = anonymousCaller();
 
       const list = (await visitor.takeaways.getTakeaways({})).items;
@@ -411,9 +440,11 @@ describe("takeaways router", () => {
       await callerFor(mine.id).takeaways.addTakeaway(
         sample(schedule.id, "Mine")
       );
-      await callerFor(other.id).takeaways.addTakeaway(
-        sample(schedule.id, "Theirs")
-      );
+      // Another writer's takeaway is only listed once it is in review.
+      await callerFor(other.id).takeaways.addTakeaway({
+        ...sample(schedule.id, "Theirs"),
+        status: "in_review",
+      });
       await testDb.insert(takeaways).values(sample(schedule.id, "Legacy"));
       const flags = (
         list: Awaited<
@@ -438,8 +469,9 @@ describe("takeaways router", () => {
           ).id
         ).takeaways.getManageable({})
       ).items;
+      // Legacy is published (the column's default), so nobody edits it.
       expect(flags(asOwner)).toEqual({
-        Legacy: true,
+        Legacy: false,
         Mine: true,
         Theirs: true,
       });
@@ -447,6 +479,377 @@ describe("takeaways router", () => {
         expect(row.takeaways).not.toHaveProperty("authorId");
         expect(row.schedules.title).toBe("Faith");
       }
+    });
+  });
+
+  describe("status", () => {
+    const sample = (scheduleId: number, keypoints = "Notes") => ({
+      contributors: [],
+      keypoints,
+      scheduleId,
+    });
+    const rows = () => testDb.select().from(takeaways).orderBy(takeaways.id);
+    /** A writer, their takeaway (as `status`) and the schedule it belongs to. */
+    const draftBy = async (
+      role: "writer" | "mita" = "writer",
+      status: "draft" | "in_review" = "draft"
+    ) => {
+      const author = await insertUser({ role });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(author.id).takeaways.addTakeaway({
+        ...sample(schedule.id),
+        status,
+      });
+      const { id } = await onlyTakeaway();
+      return { author, id, schedule };
+    };
+    const statusOf = async (id: number) =>
+      (await rows()).find((row) => row.id === id)?.status;
+
+    it.each([
+      "",
+      " \n\t",
+      "## \n\n---",
+      "> \n\n- ",
+      "![Omitted](https://example.test/a.png)",
+      "[^unused]: Hidden note",
+    ])(
+      "rejects empty note content %j for drafts, reviews and edits",
+      async (keypoints) => {
+        const { author, id, schedule } = await draftBy();
+        const api = callerFor(author.id).takeaways;
+        for (const status of ["draft", "in_review"] as const) {
+          // biome-ignore lint/performance/noAwaitInLoops: assert each save separately.
+          await expect(
+            api.addTakeaway({ ...sample(schedule.id, keypoints), status })
+          ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        }
+        await expect(
+          api.updateTakeaway({ ...sample(schedule.id, keypoints), id })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await onlyTakeaway()).toMatchObject({
+          id,
+          keypoints: "Notes",
+          status: "draft",
+        });
+      }
+    );
+
+    it("accepts a note whose text is in a referenced footnote", async () => {
+      const { author, schedule } = await draftBy();
+      await expect(
+        callerFor(author.id).takeaways.addTakeaway({
+          ...sample(schedule.id, "[^faith]\n\n[^faith]: Faith in Christ."),
+        })
+      ).resolves.toMatchObject({ status: "draft" });
+    });
+
+    it.each(["mita", "owner"] as const)(
+      "requires review before a %s can publish a draft",
+      async (role) => {
+        const { id } = await draftBy();
+        const api = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          api.setStatus({ id, status: "published" })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await statusOf(id)).toBe("draft");
+      }
+    );
+
+    it("lets only the writer send a draft to review, not mita or the owner", async () => {
+      const { author, id } = await draftBy();
+      for (const role of ["mita", "owner"] as const) {
+        // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
+        const api = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          api.setStatus({ id, status: "in_review" })
+        ).rejects.toMatchObject({
+          code: "FORBIDDEN",
+          message: "Only the writer of this takeaway can send it to review.",
+        });
+      }
+      await callerFor(author.id).takeaways.setStatus({
+        id,
+        status: "in_review",
+      });
+      expect(await statusOf(id)).toBe("in_review");
+    });
+
+    it("lets mita, not the owner, publish, request changes and unpublish", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      const owner = callerFor(
+        (await insertUser({ role: "owner" })).id
+      ).takeaways;
+      const mita = (await staff()).takeaways;
+
+      await expect(
+        owner.setStatus({ id, status: "published" })
+      ).rejects.toMatchObject({
+        code: "FORBIDDEN",
+        message: "Only mita can publish a takeaway.",
+      });
+      await expect(
+        owner.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(await statusOf(id)).toBe("in_review");
+
+      // Request changes: back to the writer as a draft.
+      await mita.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+
+      await publish(id);
+      await expect(
+        owner.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({
+        code: "FORBIDDEN",
+        message: "Only mita can unpublish a takeaway.",
+      });
+      expect(await statusOf(id)).toBe("published");
+      await mita.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+    });
+
+    it.each(["draft", "in_review"] as const)(
+      "prevents an existing empty %s from progressing",
+      async (status) => {
+        const { id } = await draftBy("writer", status);
+        await testDb
+          .update(takeaways)
+          .set({ keypoints: " \n" })
+          .where(eq(takeaways.id, id));
+        // The writer moves a draft on; mita moves a review on.
+        const { authorId } = await onlyTakeaway();
+        const api =
+          status === "draft" && authorId
+            ? callerFor(authorId).takeaways
+            : (await staff()).takeaways;
+        await expect(
+          api.setStatus({
+            id,
+            status: status === "draft" ? "in_review" : "published",
+          })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await statusOf(id)).toBe(status);
+      }
+    );
+
+    it.each(["edit", "delete", "status"] as const)(
+      "rejects a writer's stale %s when staff publishes during authorization",
+      async (action) => {
+        const { author, id, schedule } = await draftBy();
+        const publisher = await insertUser({ role: "mita" });
+        const publishedAt = new Date("2026-10-22T12:00:00Z");
+        // Pause at the role lookup, after ownership was read, to publish first.
+        vi.mocked(getRole).mockImplementationOnce(async () => {
+          await testDb
+            .update(takeaways)
+            .set({
+              publishedAt,
+              publishedById: publisher.id,
+              status: "published",
+            })
+            .where(eq(takeaways.id, id));
+          return "writer";
+        });
+        const api = callerFor(author.id).takeaways;
+        const changes = {
+          delete: () => api.deleteTakeaway({ id }),
+          edit: () =>
+            api.updateTakeaway({ ...sample(schedule.id, "Changed"), id }),
+          status: () => api.setStatus({ id, status: "in_review" }),
+        };
+        const change = changes[action]();
+        await expect(change).rejects.toMatchObject({ code: "NOT_FOUND" });
+        expect(await onlyTakeaway()).toMatchObject({
+          id,
+          keypoints: "Notes",
+          publishedAt,
+          publishedById: publisher.id,
+          status: "published",
+        });
+      }
+    );
+
+    it("starts a new takeaway as a draft that only its author and staff can read", async () => {
+      const { author, id, schedule } = await draftBy();
+      const visitor = anonymousCaller();
+      const member = await signedInMember();
+      const otherWriter = callerFor((await insertUser({ role: "writer" })).id);
+
+      expect(await statusOf(id)).toBe("draft");
+      expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
+      expect(await visitor.takeaways.months()).toEqual([]);
+      for (const api of [visitor, member, otherWriter]) {
+        // biome-ignore lint/performance/noAwaitInLoops: assertions in order.
+        await expect(
+          api.takeaways.getTakeawayById({ id })
+        ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      }
+      const gathering = await visitor.schedules.getGathering({
+        id: schedule.id,
+      });
+      expect(gathering.takeawayIds).toEqual([]);
+      expect((await otherWriter.takeaways.getManageable({})).items).toEqual([]);
+
+      const mine = await callerFor(author.id).takeaways.getTakeawayById({ id });
+      expect(mine.takeaways).toMatchObject({ id, status: "draft" });
+      const staffView = await (await staff()).takeaways.getTakeawayById({ id });
+      expect(staffView.takeaways.status).toBe("draft");
+      const manageable = (
+        await callerFor(author.id).takeaways.getManageable({})
+      ).items;
+      expect(manageable.map((row) => row.takeaways.status)).toEqual(["draft"]);
+    });
+
+    it("lets a writer send their own draft to review and withdraw it, not publish it", async () => {
+      const { author, id } = await draftBy();
+      const api = callerFor(author.id);
+
+      await api.takeaways.setStatus({ id, status: "in_review" });
+      expect(await statusOf(id)).toBe("in_review");
+      await expect(
+        api.takeaways.setStatus({ id, status: "published" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(await statusOf(id)).toBe("in_review");
+      await api.takeaways.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+    });
+
+    it("can be created straight into review, never straight to published", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      expect(await statusOf(id)).toBe("in_review");
+
+      const writer = callerFor((await insertUser({ role: "writer" })).id);
+      const schedule = await insertSchedule("Hope", new Date("2026-04-01"));
+      await expect(
+        writer.takeaways.addTakeaway({
+          ...sample(schedule.id),
+          status: "published",
+        } as never)
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    });
+
+    it("shows a takeaway in review to other writers, read-only", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      const other = callerFor((await insertUser({ role: "writer" })).id);
+
+      const single = await other.takeaways.getTakeawayById({ id });
+      expect(single.takeaways.status).toBe("in_review");
+      const list = (await other.takeaways.getManageable({})).items;
+      expect(list.map((row) => row.takeaways.status)).toEqual(["in_review"]);
+      expect(list[0]).toMatchObject({ actions: [], canManage: false });
+      await expect(
+        other.takeaways.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(
+        other.takeaways.updateTakeaway({ ...sample(1, "Hacked"), id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      // Members still can't see it.
+      await expect(
+        (await signedInMember()).takeaways.getTakeawayById({ id })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      expect(
+        (await anonymousCaller().takeaways.getTakeaways({})).items
+      ).toEqual([]);
+    });
+
+    it("lets mita publish, which records who and when, and unpublish, which clears it", async () => {
+      const { id, schedule } = await draftBy("writer", "in_review");
+      const mita = await insertUser({ role: "mita" });
+      const before = Date.now();
+
+      await callerFor(mita.id).takeaways.setStatus({ id, status: "published" });
+
+      const [published] = await rows();
+      expect(published).toMatchObject({
+        publishedById: mita.id,
+        status: "published",
+      });
+      expect(published?.publishedAt?.getTime()).toBeGreaterThanOrEqual(before);
+      const visitor = anonymousCaller();
+      const list = (await visitor.takeaways.getTakeaways({})).items;
+      expect(list.map((row) => row.takeaways.id)).toEqual([id]);
+      expect(list[0]?.takeaways).not.toHaveProperty("publishedById");
+      expect(await visitor.takeaways.months()).toEqual(["2026-03"]);
+      expect(
+        (await visitor.schedules.getGathering({ id: schedule.id })).takeawayIds
+      ).toEqual([id]);
+
+      await callerFor(mita.id).takeaways.setStatus({ id, status: "draft" });
+
+      const [unpublished] = await rows();
+      expect(unpublished).toMatchObject({
+        publishedAt: null,
+        publishedById: null,
+        status: "draft",
+      });
+      expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
+    });
+
+    it("keeps everyone from editing or deleting a published takeaway", async () => {
+      const { author, id, schedule } = await draftBy();
+      await publish(id);
+      const api = callerFor(author.id);
+
+      await expect(
+        api.takeaways.updateTakeaway({ ...sample(schedule.id, "Later"), id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(api.takeaways.deleteTakeaway({ id })).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      await expect(
+        api.takeaways.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      const [row] = (await api.takeaways.getManageable({})).items;
+      expect(row).toMatchObject({ actions: [], canManage: false });
+
+      // Staff can't either: mita unpublishes first, so the site has one gate.
+      for (const role of ["mita", "owner"] as const) {
+        // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
+        const staffApi = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          staffApi.updateTakeaway({ ...sample(schedule.id, "Later"), id })
+        ).rejects.toMatchObject({
+          code: "FORBIDDEN",
+          message:
+            "Published takeaways can't be changed. Ask mita to unpublish it first.",
+        });
+        await expect(staffApi.deleteTakeaway({ id })).rejects.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        const [listed] = (await staffApi.getManageable({})).items;
+        expect(listed?.canManage).toBe(false);
+        expect(listed?.actions.map((action) => action.label)).toEqual(
+          role === "mita" ? ["Unpublish"] : []
+        );
+      }
+      expect(await onlyTakeaway()).toMatchObject({
+        keypoints: "Notes",
+        status: "published",
+      });
+    });
+
+    it("filters the manageable list by status and returns NOT_FOUND for a missing takeaway", async () => {
+      const { author, schedule } = await draftBy();
+      const api = callerFor(author.id);
+      await api.takeaways.addTakeaway({
+        ...sample(schedule.id, "Review me"),
+        status: "in_review",
+      });
+
+      const drafts = (await api.takeaways.getManageable({ status: "draft" }))
+        .items;
+      expect(drafts.map((row) => row.takeaways.preview)).toEqual(["Notes"]);
+      const inReview = (
+        await api.takeaways.getManageable({ status: "in_review" })
+      ).items;
+      expect(inReview.map((row) => row.takeaways.preview)).toEqual([
+        "Review me",
+      ]);
+      expect((await api.takeaways.getManageable({})).items).toHaveLength(2);
+      await expect(
+        api.takeaways.setStatus({ id: MISSING_ID, status: "in_review" })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
   });
 });
