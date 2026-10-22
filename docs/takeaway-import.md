@@ -48,8 +48,19 @@ overwrite existing notes, infer authors from speaker names, publish records or
 send broadcasts. All new rows are drafts without an assigned author. Staff can
 review them locally; the generated report shows every notes/TL;DR pair together.
 
-There is no production import command in this change. Review local results and
-settle historical authorship and publication status before planning a live import.
+## Production
+
+Migration `0021_historical_takeaways` brings the same 40 notes and TL;DRs to
+production; CI's `deploy:migrate` applies it once after merge. It matches each
+entry to its gathering by Aachen date and type (never by id), adds a published
+takeaway with no author or contributors only where the gathering has none yet,
+and does nothing where the gatherings don't exist (tests, a fresh database).
+Before merging, production's public schedule API showed exactly these 40
+gatherings, each without a takeaway. The migration's SQL was generated from the
+reviewed local rows; its text matched the local copy byte for byte.
+
+To import a later batch, run the local importer and review it the same way, then
+add a new data migration rather than editing this one.
 
 ## Local verification
 
