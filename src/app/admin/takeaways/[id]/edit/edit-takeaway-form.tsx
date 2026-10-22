@@ -32,27 +32,26 @@ export default function EditTakeawayForm() {
     id: Number.parseInt(id, 10),
   });
 
-  const contributors = React.useMemo(() => {
-    if (takeaway) {
-      const _contributors = takeaway.takeaways.contributors as string[];
-      return _contributors.includes(username)
-        ? [..._contributors]
-        : [..._contributors, username];
-    }
-  }, [takeaway, username]);
-
   /** form definition. */
   const form = useForm<z.infer<typeof updateTakeawaySchema>>({
     resolver: zodResolver(updateTakeawaySchema),
   });
 
-  /** load form data. */
+  /**
+   * Load the takeaway into the form once. Resetting again when the session
+   * arrives or the query refetches would wipe what the writer just typed.
+   */
+  const loadedId = React.useRef<number | null>(null);
   React.useEffect(() => {
+    if (!takeaway || loadedId.current === takeaway.takeaways.id) {
+      return;
+    }
+    loadedId.current = takeaway.takeaways.id;
     form.reset({
-      ...takeaway?.takeaways,
-      contributors,
+      ...takeaway.takeaways,
+      contributors: takeaway.takeaways.contributors as string[],
     });
-  }, [contributors, form, takeaway]);
+  }, [form, takeaway]);
 
   /** edit takeaway action. */
   const utils = api.useUtils();
@@ -68,8 +67,13 @@ export default function EditTakeawayForm() {
     },
   });
 
+  /** Credits whoever saves, once the session has their name. */
   function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
-    updateTakeaway.mutate(values);
+    const contributors =
+      username && !values.contributors.includes(username)
+        ? [...values.contributors, username]
+        : values.contributors;
+    updateTakeaway.mutate({ ...values, contributors });
   }
 
   return (
