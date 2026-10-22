@@ -13,9 +13,7 @@ describe("shared Badge composition", () => {
         </Badge>
       </button>
     );
-    expect(
-      screen.getByRole("button", { exact: true, name: "Verified" })
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Verified" })).toBeTruthy();
   });
 
   it.each(["draft", "review"] as const)(
