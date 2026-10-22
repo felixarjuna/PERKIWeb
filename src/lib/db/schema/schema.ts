@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   date,
+  index,
   integer,
   json,
   pgEnum,
@@ -107,6 +108,42 @@ export const takeaways = pgTable(
       sql`${t.status} in ('draft', 'in_review', 'published')`
     ),
   ]
+);
+
+/**
+ * The review thread on a takeaway (#57): internal to writers and staff, never
+ * returned by the public takeaway queries.
+ */
+export const takeawayComments = pgTable(
+  "takeaway_comments",
+  {
+    /** Who wrote the comment; null once their account is deleted. */
+    authorId: text("authorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    body: text("body").notNull(),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    id: serial("id").primaryKey().notNull(),
+    /** The passage of the notes the comment is about, if any. */
+    quote: text("quote"),
+    /** When the comment was resolved; null while it is open. */
+    resolvedAt: timestamp("resolvedAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    resolvedById: text("resolvedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    takeawayId: integer("takeawayId")
+      .notNull()
+      .references(() => takeaways.id, { onDelete: "cascade" }),
+  },
+  (t) => [index("takeaway_comments_takeaway_idx").on(t.takeawayId)]
 );
 
 export const prayers = pgTable("prayers", {

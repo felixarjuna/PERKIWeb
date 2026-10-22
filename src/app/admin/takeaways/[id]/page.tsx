@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
+import { TakeawayReview } from "~/components/admin/content/takeaway-review";
 import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
 import { buttonVariants } from "~/components/ui/button";
@@ -58,7 +59,7 @@ export default async function ReviewPage({
         </Link>
       }
       section="Takeaways"
-      subtitle="You have read-only access to this takeaway."
+      subtitle="Read the takeaway and review its feedback below."
       title="Review takeaway"
     >
       <article className="flex min-w-0 flex-col gap-5">
@@ -66,7 +67,9 @@ export default async function ReviewPage({
           <h2 className="type-heading break-words">{schedule.title}</h2>
           <TakeawayStatusBadge value={note.status} />
         </div>
-        <TakeawayMarkdown markdown={note.keypoints} />
+        <TakeawayReview takeawayId={takeawayId}>
+          <TakeawayMarkdown markdown={note.keypoints} />
+        </TakeawayReview>
         <TakeawayActions
           actions={[]}
           canManage={false}

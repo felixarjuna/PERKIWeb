@@ -148,6 +148,13 @@
       "when": 1792679495417,
       "tag": "0020_takeaway_tldr",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792688994630,
+      "tag": "0021_takeaway_comments",
+      "breakpoints": true
     }
   ]
 }
