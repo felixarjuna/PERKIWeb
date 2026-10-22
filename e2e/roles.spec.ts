@@ -125,8 +125,8 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await page.reload();
 
   await expect(
-    page.getByRole("combobox", { exact: true, name: "View" })
-  ).toHaveText("My takeaways");
+    page.getByRole("radio", { exact: true, name: "My takeaways" })
+  ).toBeChecked();
   const own = page
     .getByRole("region", { name: "Drafts" })
     .getByRole("listitem")
@@ -144,7 +144,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   ).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
-  await selectOption(page, "View", "All takeaways");
+  await page.getByRole("radio", { exact: true, name: "All takeaways" }).click();
   const revised = page.getByRole("listitem").filter({ hasText: edited });
   await loadUntilVisible(page, revised);
   await expect(revised).toHaveCount(1);

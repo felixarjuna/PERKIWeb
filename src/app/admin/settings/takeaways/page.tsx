@@ -9,7 +9,7 @@ export default async function TakeawaySettingsPage() {
     <AdminShell {...(await adminShellProps(role))} section="Settings">
       <SettingsLayout
         active="takeaways"
-        description="Set when writers should submit their notes after a gathering."
+        description="Choose when writers’ notes are due."
         title="Takeaways"
       >
         <TakeawayDeadlineSettings />
