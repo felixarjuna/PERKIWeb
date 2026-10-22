@@ -5,6 +5,14 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { useState } from "react";
 import LoadMore from "~/components/load-more";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { TAKEAWAY_STATUSES, type TakeawayStatus } from "~/lib/db/schema/schema";
 import { statusLabels } from "~/lib/takeaway-status";
@@ -84,47 +92,54 @@ export default function TakeawayManager() {
                   schedules: schedule,
                   takeaways: note,
                 }) => (
-                  <li
-                    className="relative flex flex-col gap-4 rounded-xl bg-card p-5 hover:bg-accent/40 lg:flex-row lg:items-start lg:gap-6"
-                    key={note.id}
-                  >
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <TakeawayStatusBadge value={note.status} />
+                  <li key={note.id}>
+                    <Card className="relative hover:bg-accent/40">
+                      <CardHeader className="gap-2 p-5 pb-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="type-caption min-w-0 text-muted-foreground">
+                            {schedule.type === "church_service"
+                              ? "Church service"
+                              : "Bible study"}{" "}
+                            ·{" "}
+                            {DateTime.fromJSDate(schedule.date)
+                              .setZone("Europe/Berlin")
+                              .toFormat("d LLL yyyy")}
+                          </p>
+                          <TakeawayStatusBadge value={note.status} />
+                        </div>
+                        <CardTitle>
+                          <h2 className="type-subheading break-words">
+                            <Link
+                              aria-label={`Read ${schedule.title}`}
+                              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
+                              href={`/takeaway/${note.id}`}
+                            >
+                              {schedule.title}
+                            </Link>
+                          </h2>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-2 p-5 pt-2">
+                        <CardDescription>
+                          <p className="type-body-sm line-clamp-3 whitespace-pre-line break-words text-muted-foreground">
+                            {note.preview}
+                          </p>
+                        </CardDescription>
                         <p className="type-caption text-muted-foreground">
-                          {schedule.type === "church_service"
-                            ? "Church service"
-                            : "Bible study"}{" "}
-                          ·{" "}
-                          {DateTime.fromJSDate(schedule.date)
-                            .setZone("Europe/Berlin")
-                            .toFormat("d LLL yyyy")}
+                          {Array.isArray(note.contributors)
+                            ? note.contributors.join(", ")
+                            : "No contributors listed"}
                         </p>
-                      </div>
-                      <h2 className="type-subheading break-words">
-                        <Link
-                          aria-label={`Read ${schedule.title}`}
-                          className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
-                          href={`/takeaway/${note.id}`}
-                        >
-                          {schedule.title}
-                        </Link>
-                      </h2>
-                      <p className="type-body-sm line-clamp-3 whitespace-pre-line break-words text-muted-foreground">
-                        {note.preview}
-                      </p>
-                      <p className="type-caption text-muted-foreground">
-                        {Array.isArray(note.contributors)
-                          ? note.contributors.join(", ")
-                          : "No contributors listed"}
-                      </p>
-                    </div>
-                    <TakeawayActions
-                      id={note.id}
-                      name={schedule.title}
-                      rights={{ canManage, canPublish }}
-                      status={note.status}
-                    />
+                      </CardContent>
+                      <CardFooter className="px-5 pb-5">
+                        <TakeawayActions
+                          id={note.id}
+                          name={schedule.title}
+                          rights={{ canManage, canPublish }}
+                          status={note.status}
+                        />
+                      </CardFooter>
+                    </Card>
                   </li>
                 )
               )}
