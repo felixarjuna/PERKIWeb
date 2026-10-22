@@ -26,17 +26,6 @@ export const dateTimeFormatter = (date: string) => {
 export const getUsernameFromName = (name: string) =>
   name.replace(/\s/g, "").toLowerCase();
 
-/**
- * The given weekday (0 = Sunday … 6 = Saturday) within `date`'s Sunday–Saturday
- * week, keeping `date`'s time of day. The result can be in the past.
- */
-export function getWeekdayInCurrentWeek(date: Date, dayOfWeek: number) {
-  const resultDate = new Date(date.getTime());
-  resultDate.setDate(date.getDate() + ((dayOfWeek - date.getDay()) % 7));
-
-  return resultDate;
-}
-
 export const countBirthdaysThisMonth = (
   profiles: RouterOutputs["profiles"]["members"]
 ) => {

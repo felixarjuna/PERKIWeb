@@ -4,7 +4,9 @@ import {
   onPickedDay,
   openSlots,
   slotsFromSchedule,
+  startOn,
   termOn,
+  weekOf,
 } from "./schedule-team";
 
 describe("slotsFromSchedule", () => {
@@ -97,5 +99,30 @@ describe("openSlots", () => {
         type: "bible_study",
       })
     ).toEqual(["Note writer", "Cleaning group"]);
+  });
+});
+
+describe("weekOf", () => {
+  // Thursday 22 October 2026, 10:00 in Aachen.
+  const thursday = new Date("2026-10-22T08:00:00Z");
+
+  it("spans Sunday to Saturday in Aachen as whole days", () => {
+    expect(weekOf(thursday)).toEqual({
+      before: new Date("2026-10-24T22:00:00Z"),
+      from: new Date("2026-10-17T22:00:00Z"),
+    });
+  });
+
+  it("includes Saturday's gathering before it starts", () => {
+    const { before, from } = weekOf(thursday);
+    const saturday = startOn({ day: 24, month: 10, year: 2026 });
+    expect(saturday >= from && saturday < before).toBe(true);
+  });
+
+  it("starts a new week on Sunday in Aachen", () => {
+    // Sunday 25 October 2026, 01:30 in Aachen, the night the clocks go back.
+    expect(weekOf(new Date("2026-10-24T23:30:00Z")).from).toEqual(
+      new Date("2026-10-24T22:00:00Z")
+    );
   });
 });

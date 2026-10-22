@@ -82,6 +82,20 @@ export const localTime = (date: Date) =>
 export const localDay = (date: Date) =>
   DateTime.fromJSDate(date).setZone(ZONE).toISODate() ?? "";
 
+/**
+ * The Sunday-to-Saturday week around `now` in Aachen, as whole days:
+ * `from` is Sunday 00:00 and `before` the next Sunday 00:00.
+ */
+export function weekOf(now: Date) {
+  const today = DateTime.fromJSDate(now).setZone(ZONE).startOf("day");
+  // Luxon numbers Monday 1 to Sunday 7, so Sunday is 0 days into the week.
+  const sunday = today.minus({ days: today.weekday % 7 });
+  return {
+    before: sunday.plus({ weeks: 1 }).toJSDate(),
+    from: sunday.toJSDate(),
+  };
+}
+
 /** The group term in force on a day: the latest one that started on or before it. */
 export function termOn<T extends { startsOn: string }>(
   terms: T[],
