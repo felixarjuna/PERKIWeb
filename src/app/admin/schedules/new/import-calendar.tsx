@@ -7,8 +7,8 @@ import {
   CalendarStatus,
   gatheringLine,
   MonthCalendar,
-  monthOf,
 } from "~/components/admin/content/month-calendar";
+import { monthOf } from "~/lib/months";
 import type { FieldChange } from "~/lib/schedule-import";
 import { startOn } from "~/lib/schedule-team";
 import type { RouterOutputs } from "~/trpc/react";

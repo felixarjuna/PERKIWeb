@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Sparkles, Utensils } from "lucide-react";
+import { BookOpen, ChevronDown, Sparkles, Utensils } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
@@ -21,7 +21,7 @@ import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
 
-type Schedule = RouterOutputs["schedules"]["getSchedules"][number];
+type Schedule = RouterOutputs["schedules"]["inRange"][number];
 
 /** Descriptions longer than this are clamped to three lines. */
 const LONG_DESCRIPTION = 180;
@@ -156,8 +156,42 @@ function DutyDrawer({ duty }: { duty: ReturnType<typeof duties>[number] }) {
   );
 }
 
-/** One gathering on the schedule timeline: the date on a rail, details beside it. */
-export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
+/**
+ * The gathering's notes: one takeaway opens directly, several open the
+ * gathering's page, where they're listed.
+ */
+function TakeawayLink({ schedule }: { schedule: Schedule }) {
+  const [first, ...rest] = schedule.takeawayIds;
+  if (first === undefined) {
+    return null;
+  }
+  return (
+    <Link
+      className={buttonVariants({ size: "sm", variant: "secondary" })}
+      href={
+        rest.length > 0
+          ? `/schedule/${schedule.id}#takeaways`
+          : `/takeaway/${first}`
+      }
+    >
+      <BookOpen aria-hidden="true" className="size-4" />
+      {rest.length > 0 ? `Read ${rest.length + 1} takeaways` : "Read takeaway"}
+    </Link>
+  );
+}
+
+/**
+ * One gathering on the schedule timeline: the date on a rail, details beside
+ * it. The title links to the gathering's own page; on that page (`standalone`)
+ * the page heading already names it.
+ */
+export default function ScheduleCard({
+  schedule,
+  standalone = false,
+}: {
+  schedule: Schedule;
+  standalone?: boolean;
+}) {
   const date = formatDate(schedule.date);
   return (
     <article className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
@@ -181,12 +215,22 @@ export default function ScheduleCard({ schedule }: { schedule: Schedule }) {
         <p className="type-body-sm text-muted-foreground tabular-nums">
           {[date.time, schedule.bibleVerse].filter(Boolean).join(" · ")}
         </p>
-        <h3 className="type-heading mt-1 break-words">{schedule.title}</h3>
+        {standalone ? null : (
+          <h3 className="type-heading mt-1 break-words">
+            <Link
+              className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              href={`/schedule/${schedule.id}`}
+            >
+              {schedule.title}
+            </Link>
+          </h3>
+        )}
         <PreachedBy className="mt-1.5" team={schedule.team} />
         <Description text={schedule.description} />
 
         <TeamList className="mt-4" team={schedule.team} />
         <div className="mt-3 flex flex-wrap gap-2">
+          {standalone ? null : <TakeawayLink schedule={schedule} />}
           {duties(schedule).map((duty) => (
             <DutyDrawer duty={duty} key={duty.label} />
           ))}

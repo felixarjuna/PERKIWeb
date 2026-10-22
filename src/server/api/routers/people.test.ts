@@ -156,8 +156,8 @@ describe("people router", () => {
     await api.people.link({ name: "Jco", userId: jericho.id });
     const member = callerFor((await insertUser()).id);
 
-    const [signedIn] = await member.schedules.getSchedules();
-    const [signedOut] = await anonymousCaller().schedules.getSchedules();
+    const [signedIn] = (await member.schedules.list({})).items;
+    const [signedOut] = (await anonymousCaller().schedules.list({})).items;
 
     const musician = (schedule: typeof signedIn) =>
       schedule?.team.find((slot) => slot.role === "musician");

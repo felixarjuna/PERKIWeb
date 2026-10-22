@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import Loader from "~/components/loader";
 import Template from "~/components/template";
 import ScheduleList from "./schedule-list";
 
@@ -15,7 +17,10 @@ export default function SchedulePage() {
       }
       title="Schedule"
     >
-      <ScheduleList />
+      {/* The filters read the URL, which needs a Suspense boundary. */}
+      <Suspense fallback={<Loader message="Loading the schedule…" />}>
+        <ScheduleList />
+      </Suspense>
     </Template>
   );
 }

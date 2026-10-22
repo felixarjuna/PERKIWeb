@@ -97,3 +97,29 @@ export const setDashboardPageSize = async (page: Page, size: number) => {
   await selectOption(page, "Rows per page", String(size));
   await expect(page.getByRole("table")).toBeVisible();
 };
+
+const LOAD_MORE = /^Load more/;
+/** Most "Load more" clicks a spec waits through before giving up. */
+const MAX_PAGES = 20;
+
+/**
+ * Clicks a list's "Load more" until `target` shows up, since specs share one
+ * database and parallel specs can push an item past the first page. Pages
+ * with several lists name theirs, e.g. "Load more upcoming gatherings".
+ */
+export const loadUntilVisible = async (
+  page: Page,
+  target: Locator,
+  button: string | RegExp = LOAD_MORE
+) => {
+  const more = page.getByRole("button", { name: button });
+  for (let pages = 0; pages < MAX_PAGES; pages += 1) {
+    // biome-ignore lint/performance/noAwaitInLoops: each page waits for the last.
+    await expect(target.or(more).first()).toBeVisible();
+    if (await target.first().isVisible()) {
+      return;
+    }
+    await more.click();
+  }
+  await expect(target.first()).toBeVisible();
+};

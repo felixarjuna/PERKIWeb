@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { setTestSession } from "./auth-fixtures";
 import { insertSchedule, insertTakeaway } from "./db";
 import { ADMIN, MEMBER, uniqueSuffix } from "./fixtures";
-import { adminLogin } from "./helpers";
+import { adminLogin, loadUntilVisible } from "./helpers";
 
 for (const signedIn of [false, true]) {
   test(`public content stays read-only when signed in = ${signedIn}`, async ({
@@ -16,9 +16,12 @@ for (const signedIn of [false, true]) {
     const scheduleId = await insertSchedule(title);
     await insertTakeaway(scheduleId, summary);
     await page.goto("/schedule");
-    await expect(
-      page.getByRole("heading", { exact: true, name: title })
-    ).toBeVisible();
+    // Seeded 30 days ahead, so it's under "Upcoming".
+    await loadUntilVisible(
+      page,
+      page.getByRole("heading", { exact: true, name: title }),
+      "Load more upcoming gatherings"
+    );
     await expect(page.getByRole("link", { name: "Add schedule" })).toHaveCount(
       0
     );
@@ -29,9 +32,10 @@ for (const signedIn of [false, true]) {
       page.getByRole("button", { exact: true, name: "Delete" })
     ).toHaveCount(0);
     await page.goto("/takeaway");
-    await expect(
+    await loadUntilVisible(
+      page,
       page.getByRole("article").filter({ hasText: summary })
-    ).toBeVisible();
+    );
     await expect(page.getByRole("link", { name: "Add takeaway" })).toHaveCount(
       0
     );

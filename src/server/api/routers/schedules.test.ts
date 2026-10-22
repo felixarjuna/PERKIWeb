@@ -46,7 +46,7 @@ describe("schedules router", () => {
       { ...validSchedule, date: new Date("2026-06-01"), title: "Newer" },
     ]);
 
-    const schedules = await anonymousCaller().schedules.getSchedules();
+    const schedules = (await anonymousCaller().schedules.list({})).items;
 
     expect(schedules.map((s) => s.title)).toEqual(["Newer", "Older"]);
   });
@@ -172,7 +172,7 @@ describe("schedules router", () => {
 
     await api.schedules.deleteSchedule({ id });
 
-    expect(await anonymousCaller().schedules.getSchedules()).toEqual([]);
+    expect((await anonymousCaller().schedules.list({})).items).toEqual([]);
   });
 
   it("deletes a schedule's takeaways along with it", async () => {
@@ -260,7 +260,7 @@ describe("schedules router", () => {
       type: "church_service",
     });
 
-    const [schedule] = await anonymousCaller().schedules.getSchedules();
+    const [schedule] = (await anonymousCaller().schedules.list({})).items;
     expect(schedule?.team).toEqual([
       { image: null, name: "Liturgist", role: "liturgist" },
       { image: null, name: "Musician", role: "musician" },
@@ -272,7 +272,7 @@ describe("schedules router", () => {
   it("falls back to the name columns for schedules without assignments", async () => {
     await testDb.insert(schedulesTable).values(validSchedule);
 
-    const [schedule] = await anonymousCaller().schedules.getSchedules();
+    const [schedule] = (await anonymousCaller().schedules.list({})).items;
 
     expect(schedule?.team.map((slot) => slot.role)).toEqual([
       "leader",
@@ -286,7 +286,7 @@ describe("schedules router", () => {
     await insertUser({ name: "Leader" });
     await api.schedules.addSchedule(validSchedule);
 
-    const [schedule] = await anonymousCaller().schedules.getSchedules();
+    const [schedule] = (await anonymousCaller().schedules.list({})).items;
 
     expect(JSON.stringify(schedule?.team)).not.toContain("userId");
   });
@@ -318,7 +318,7 @@ describe("schedules router", () => {
       { ...validSchedule, cookingGroup: "Group 9" },
     ]);
 
-    const schedules = await anonymousCaller().schedules.getSchedules();
+    const schedules = (await anonymousCaller().schedules.list({})).items;
 
     expect(schedules.map((s) => s.groupMembers)).toEqual([
       { cleaning: [{ image: null, name: "Cleo" }], cooking: null },

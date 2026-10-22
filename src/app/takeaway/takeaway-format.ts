@@ -84,26 +84,6 @@ export function readingMinutes(text: string) {
   return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
 }
 
-const DIACRITICS = /\p{Diacritic}/gu;
-
-/** Lowercase without accents, so "pelayanan" finds "Pelayanan" and "Pélayanan". */
-function fold(text: string) {
-  return text.normalize("NFD").replace(DIACRITICS, "").toLowerCase();
-}
-
-/** Whether every word of `query` appears somewhere in `fields`. */
-export function matchesQuery(
-  fields: readonly (string | null | undefined)[],
-  query: string
-) {
-  const terms = fold(query).split(SPACES).filter(Boolean);
-  if (terms.length === 0) {
-    return true;
-  }
-  const haystack = fold(fields.filter(Boolean).join(" "));
-  return terms.every((term) => haystack.includes(term));
-}
-
 /** List preview: blank lines dropped so the 3-line clamp never ends on a gap. */
 export function preview(text: string) {
   return paragraphs(text).join("\n");

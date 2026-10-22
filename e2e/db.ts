@@ -11,7 +11,10 @@ const DAY_MS = 86_400_000;
  * Inserts a schedule straight into the e2e database so specs that only need
  * one to exist (e.g. takeaways) don't depend on the schedule form.
  */
-export const insertSchedule = async (title: string) => {
+export const insertSchedule = async (
+  title: string,
+  date = new Date(Date.now() + DAYS_AHEAD * DAY_MS)
+) => {
   assertLocalDatabase(e2eEnv.DATABASE_URL);
   const client = postgres(e2eEnv.DATABASE_URL, {
     max: 1,
@@ -23,7 +26,7 @@ export const insertSchedule = async (title: string) => {
       .values({
         bibleVerse: "John 3:16",
         cleaningGroup: "Group A",
-        date: new Date(Date.now() + DAYS_AHEAD * DAY_MS),
+        date,
         description: `Seeded schedule ${title}`,
         leader: "Danny Kurniawan",
         musician: "Felix Arjuna",
