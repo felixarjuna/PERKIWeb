@@ -35,11 +35,14 @@ function AssignmentCard({ item, staff }: { item: Item; staff: boolean }) {
     <li className="rounded-xl bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="type-caption text-muted-foreground">{date(item.date)}</p>
-        {item.status === "not_started" ? (
-          <Badge variant="secondary">Not started</Badge>
-        ) : (
-          <TakeawayStatusBadge value={item.status} />
-        )}
+        <div className="ms-auto flex flex-wrap justify-end gap-2">
+          {item.status === "not_started" ? (
+            <Badge variant="secondary">Not started</Badge>
+          ) : (
+            <TakeawayStatusBadge value={item.status} />
+          )}
+          {item.overdue ? <Badge variant="destructive">Overdue</Badge> : null}
+        </div>
       </div>
       <h3 className="type-subheading mt-2 break-words">{item.title}</h3>
       {staff ? (
@@ -52,7 +55,6 @@ function AssignmentCard({ item, staff }: { item: Item; staff: boolean }) {
         Due {date(item.dueAt)} · end of day in Aachen
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        {item.overdue ? <Badge variant="destructive">Overdue</Badge> : null}
         <Link
           className={buttonVariants({ size: "sm", variant: "secondary" })}
           href={

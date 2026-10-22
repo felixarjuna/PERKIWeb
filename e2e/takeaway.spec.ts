@@ -56,7 +56,7 @@ const createTakeaway = async (
 /** Narrows /admin/takeaways to one takeaway by its schedule title. */
 const findInList = async (page: Page, scheduleTitle: string) => {
   await page.goto("/admin/takeaways");
-  await selectOption(page, "View", "All takeaways");
+  await page.getByRole("radio", { exact: true, name: "All takeaways" }).click();
   await page.getByLabel("Search takeaways").fill(scheduleTitle);
   const article = takeawayArticle(page, scheduleTitle);
   await expect(article).toHaveCount(1);
@@ -354,7 +354,7 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await expectHiddenFromPublic();
   await loginAs(page, WRITER_2);
   await page.goto("/admin/takeaways");
-  await selectOption(page, "View", "All takeaways");
+  await page.getByRole("radio", { exact: true, name: "All takeaways" }).click();
   await page.getByLabel("Search takeaways").fill(scheduleTitle);
   await expect(page.getByRole("status")).toContainText("No takeaways match");
 
