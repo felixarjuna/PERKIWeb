@@ -1,4 +1,4 @@
-import { ArrowUpRight, Plug, UserRound } from "lucide-react";
+import { ArrowUpRight, NotebookPen, Plug, UserRound } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
@@ -17,6 +17,12 @@ const SECTIONS = [
         title: "Integrations",
         url: "/admin/settings/integrations",
       },
+      {
+        icon: NotebookPen,
+        id: "takeaways",
+        title: "Takeaways",
+        url: "/admin/settings/takeaways",
+      },
     ],
   },
   {
@@ -33,7 +39,7 @@ const SECTIONS = [
   },
 ] as const;
 
-export type SettingsSection = "integrations";
+export type SettingsSection = "integrations" | "takeaways";
 
 function SectionNav({ active }: { active: SettingsSection }) {
   return (

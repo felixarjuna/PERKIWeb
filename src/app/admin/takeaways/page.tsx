@@ -1,8 +1,9 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import AdminShell from "~/components/admin/admin-shell";
-import TakeawayManager from "~/components/admin/content/takeaway-manager";
+import TakeawayViews from "~/components/admin/content/takeaway-views";
 import { buttonVariants } from "~/components/ui/button";
+import { isStaffRole } from "~/lib/roles";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 
 export default async function ManagementPage() {
@@ -21,7 +22,7 @@ export default async function ManagementPage() {
       section="Takeaways"
       subtitle="Share reflections and notes from your gatherings."
     >
-      <TakeawayManager />
+      <TakeawayViews staff={isStaffRole(role)} />
     </AdminShell>
   );
 }

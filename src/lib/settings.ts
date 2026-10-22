@@ -5,6 +5,7 @@ export const SETTING_KEYS = {
   emailEnabled: "email_enabled",
   emailSender: "email_sender",
   scheduleSheetId: "schedule_sheet_id",
+  takeawayDeadlineWeekday: "takeaway_deadline_weekday",
   whatsappGroupUrl: "whatsapp_group_url",
 } as const;
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import type { ComponentProps } from "react";
 import { navigationFor } from "~/components/admin/admin-navigation";
 import { BotStatus } from "~/components/admin/bot-status";
+import { AssignmentReminder } from "~/components/admin/content/assignment-reminder";
 import { NavUser } from "~/components/nav-user";
 import {
   Sidebar,
@@ -104,6 +105,9 @@ export function AppSidebar({
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.url === "/admin/takeaways" ? (
+                      <AssignmentReminder />
+                    ) : null}
                   </SidebarMenuItem>
                 );
               })}

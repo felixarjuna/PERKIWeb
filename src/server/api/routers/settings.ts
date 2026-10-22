@@ -15,7 +15,7 @@ import {
 import { db } from "~/server";
 import { sheetTitle } from "~/server/google-sheets";
 import { emailSettings } from "~/server/invite-email";
-import { setSetting } from "~/server/settings";
+import { setSetting, takeawayDeadlineWeekday } from "~/server/settings";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 const linkInput = z.object({ link: z.string().max(500).nullable() });
@@ -187,6 +187,15 @@ export const settingsRouter = createTRPCRouter({
       );
       return { title };
     }),
+  setTakeawayDeadline: adminProcedure
+    .input(z.object({ weekday: z.number().int().min(1).max(7) }))
+    .mutation(async ({ ctx, input }) => {
+      await setSetting(
+        SETTING_KEYS.takeawayDeadlineWeekday,
+        String(input.weekday),
+        ctx.session.user.id
+      );
+    }),
   /** Hides the WhatsApp card on /account with `null`. */
   setWhatsappGroup: adminProcedure
     .input(linkInput)
@@ -199,4 +208,5 @@ export const settingsRouter = createTRPCRouter({
       }
       await setSetting(SETTING_KEYS.whatsappGroupUrl, url, ctx.session.user.id);
     }),
+  takeawayDeadline: adminProcedure.query(takeawayDeadlineWeekday),
 });
