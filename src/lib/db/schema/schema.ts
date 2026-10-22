@@ -92,6 +92,8 @@ export const takeaways = pgTable(
     status: text("status", { enum: TAKEAWAY_STATUSES })
       .default("published")
       .notNull(),
+    /** Short broadcast summary; null for older takeaways without one. */
+    tldr: text("tldr"),
     updatedAt: timestamp("updatedAt", {
       mode: "date",
       withTimezone: true,
