@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import RoleRow from "./role-row";
+import RoleCard from "./role-card";
 
 const state = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -20,31 +20,40 @@ vi.mock("~/trpc/react", () => ({
   },
 }));
 
-const renderRow = () =>
-  render(
-    <ul>
-      <RoleRow />
-    </ul>
-  );
-
-describe("Your role row", () => {
+describe("Your role card", () => {
   beforeEach(() => {
     state.mutate.mockReset();
     state.request = null;
     state.role = "member";
   });
 
-  it("shows the role read-only, with no action for staff or writers", () => {
-    state.role = "mita";
-    renderRow();
-    expect(screen.getByText("Your role")).toBeTruthy();
-    expect(screen.getByText("Mita")).toBeTruthy();
-    expect(screen.queryByRole("button")).toBeNull();
-  });
+  it.each([
+    ["writer", "Your role: Writer", "You can write takeaways"],
+    [
+      "mita",
+      "Your role: Mita",
+      "You can manage the website and write takeaways",
+    ],
+    ["owner", "Your role: Dev", "Full access"],
+  ])(
+    "tells a %s what their role allows, with no action",
+    (role, title, line) => {
+      state.role = role;
+      render(<RoleCard />);
+      expect(screen.getByRole("heading", { name: title })).toBeTruthy();
+      expect(screen.getByText(line)).toBeTruthy();
+      expect(screen.queryByRole("button")).toBeNull();
+    }
+  );
 
   it("lets a member ask to become a writer", () => {
-    renderRow();
-    expect(screen.getByText("Member")).toBeTruthy();
+    render(<RoleCard />);
+    expect(
+      screen.getByRole("heading", { name: "Your role: Member" })
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Want to write the takeaways from our services?")
+    ).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: "Ask to become a writer" })
     );
@@ -53,32 +62,34 @@ describe("Your role row", () => {
 
   it("says the request is waiting for a mita", () => {
     state.request = { status: "pending" };
-    renderRow();
+    render(<RoleCard />);
     expect(screen.getByText("Request sent, waiting for a mita")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("tells a member their request was declined and lets them ask again", () => {
     state.request = { status: "declined" };
-    renderRow();
+    render(<RoleCard />);
     expect(
       screen.getByText("Your request to become a writer was declined")
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ask again" })).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ask again to become a writer" })
+    );
+    expect(state.mutate).toHaveBeenCalledWith({ role: "writer" });
   });
 
   it("tells a new writer their request was approved", () => {
     state.role = "writer";
     state.request = { status: "approved" };
-    renderRow();
-    expect(screen.getByText("Writer")).toBeTruthy();
+    render(<RoleCard />);
     expect(
-      screen.getByText("Your request to become a writer was approved")
+      screen.getByText("Your request was approved. You can write takeaways")
     ).toBeTruthy();
   });
 
   it("is the target of the takeaway page's hint", () => {
-    const { container } = renderRow();
+    const { container } = render(<RoleCard />);
     expect(container.querySelector("#your-role")).toBeTruthy();
   });
 });

@@ -14,7 +14,7 @@ test("a member asks to become a writer from /takeaway and a mita approves", asyn
   await page.getByRole("link", { name: "Ask to become a writer" }).click();
   await expect(page).toHaveURL(ROLE_ROW_URL);
   const row = page.locator("#your-role");
-  await expect(row).toContainText("Member");
+  await expect(row).toContainText("Your role: Member");
   await row.getByRole("button", { name: "Ask to become a writer" }).click();
   await expect(row).toContainText("Request sent, waiting for a mita");
 
@@ -25,10 +25,8 @@ test("a member asks to become a writer from /takeaway and a mita approves", asyn
 
   await setTestSession(page, member);
   await page.goto("/account");
-  await expect(row).toContainText("Writer");
-  await expect(row).toContainText(
-    "Your request to become a writer was approved"
-  );
+  await expect(row).toContainText("Your role: Writer");
+  await expect(row).toContainText("Your request was approved");
   await page.goto("/takeaway");
   await expect(
     page.getByRole("link", { name: "Ask to become a writer" })

@@ -15,8 +15,6 @@ const incomplete = {
   phoneNumber: null,
 };
 
-// The role row has its own test.
-vi.mock("./role-row", () => ({ default: () => null }));
 vi.mock("~/trpc/react", () => ({
   api: {
     profiles: {

@@ -251,8 +251,8 @@ export default function AccessManager() {
         </h2>
         {requests.data.length === 0 ? (
           <p className="type-body-sm text-muted-foreground">
-            No open requests. Members can ask to write sermon summaries from
-            their profile page.
+            No open requests. Members can ask to write takeaways from their
+            profile page.
           </p>
         ) : (
           <ul className="grid gap-2">

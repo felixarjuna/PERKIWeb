@@ -33,7 +33,6 @@ import {
   profileFieldReasons,
 } from "~/lib/profile-completion";
 import { api } from "~/trpc/react";
-import RoleRow from "./role-row";
 
 const shown = (value: string | Date | null | undefined) => {
   if (value instanceof Date) {
@@ -238,7 +237,6 @@ export default function ProfileSummary() {
         </LockedRow>
         <LockedRow label="Name" value={account?.name} />
         <LockedRow label="Email" value={account?.email} />
-        <RoleRow />
       </ul>
       <section className="flex flex-col gap-2 rounded-xl bg-card p-4 sm:p-6">
         <div className="flex items-baseline justify-between gap-3">
