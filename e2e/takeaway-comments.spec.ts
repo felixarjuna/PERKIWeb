@@ -56,6 +56,27 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
   await expect(page.locator(".tiptap .bg-accent")).toHaveText(quote);
   await page.keyboard.press("Escape");
   await expect(composer).not.toBeVisible();
+  // A different selection must not silently replace the saved draft's quote.
+  await page.locator(".tiptap p").evaluate((element) => {
+    const node = element.firstChild;
+    if (!node) {
+      throw new Error("Passage text missing");
+    }
+    const range = document.createRange();
+    range.setStart(
+      node,
+      "Abraham believed God, and it was counted to him as ".length
+    );
+    range.setEnd(node, node.textContent?.length ?? 0);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+  });
+  await page.getByRole("button", { name: "Resume passage comment" }).click();
+  await expect(composer.getByRole("blockquote")).toHaveText(quote);
+  await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
+    "Could you add the verse reference?"
+  );
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Resume comment" }).click();
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"

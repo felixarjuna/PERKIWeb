@@ -117,12 +117,16 @@ export function QuoteablePassage({
       outsideDismiss.current = false;
       const { from, to } = editor.state.selection;
       const text = passageText(editor.state.doc, from, to);
-      if (!text || text.length > QUOTE_MAX_LENGTH) {
+      const captured = draft && passage ? passage : { from, text, to };
+      if (!captured.text || captured.text.length > QUOTE_MAX_LENGTH) {
         return;
       }
-      const captured = { from, text, to };
       setPassage(captured);
       highlight.current = captured;
+      editor.commands.setTextSelection({
+        from: captured.from,
+        to: captured.to,
+      });
     } else {
       highlight.current = null;
     }
@@ -137,9 +141,10 @@ export function QuoteablePassage({
       <div hidden={!ready}>
         <EditorContent editor={editor} />
       </div>
-      {draft && passage && !open ? (
+      {draft && passage ? (
         <Button
           className="mt-3"
+          hidden={open}
           onClick={() => {
             editor?.commands.setTextSelection({
               from: passage.from,
@@ -178,8 +183,10 @@ export function QuoteablePassage({
           <Popover onOpenChange={changeOpen} open={open}>
             <PopoverTrigger asChild>
               <Button
-                aria-label="Comment on selection"
-                disabled={tooLong}
+                aria-label={
+                  draft ? "Resume passage comment" : "Comment on selection"
+                }
+                disabled={tooLong && !draft}
                 onPointerDown={(event) => event.preventDefault()}
                 size="sm"
                 type="button"
@@ -188,10 +195,10 @@ export function QuoteablePassage({
                 <MessageSquarePlus data-icon="inline-start">
                   <title>Comment</title>
                 </MessageSquarePlus>
-                Comment
+                {draft ? "Resume comment" : "Comment"}
               </Button>
             </PopoverTrigger>
-            {tooLong ? (
+            {tooLong && !draft ? (
               <p
                 className="max-w-52 px-2 py-1 text-muted-foreground text-xs"
                 role="status"
@@ -205,13 +212,27 @@ export function QuoteablePassage({
               className="w-80 max-w-[calc(100vw-1.5rem)]"
               collisionPadding={12}
               onCloseAutoFocus={(event) => {
-                if (resumeButton.current && !outsideDismiss.current) {
-                  event.preventDefault();
+                // The selection trigger can be detached while the closing
+                // animation finishes. Never let it steal focus from a newly
+                // reopened composer or an outside input.
+                event.preventDefault();
+                if (
+                  resumeButton.current &&
+                  !resumeButton.current.hidden &&
+                  !outsideDismiss.current
+                ) {
                   resumeButton.current.focus({ preventScroll: true });
                 }
               }}
               onInteractOutside={(event) => {
-                if (pending) {
+                // Radix defers outside-pointer dismissal until click. During
+                // its exit animation, Resume can reopen this same composer;
+                // that click must not immediately dismiss it a second time.
+                if (
+                  pending ||
+                  (event.target instanceof Node &&
+                    resumeButton.current?.contains(event.target))
+                ) {
                   event.preventDefault();
                 } else {
                   outsideDismiss.current = true;
