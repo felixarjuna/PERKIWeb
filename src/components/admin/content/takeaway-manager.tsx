@@ -2,10 +2,11 @@
 
 import { keepPreviousData } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import LoadMore from "~/components/load-more";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { TAKEAWAY_STATUSES, type TakeawayStatus } from "~/lib/db/schema/schema";
 import { statusActions, statusLabels } from "~/lib/takeaway-status";
@@ -172,6 +173,13 @@ export default function TakeawayManager() {
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
+                      <Link
+                        aria-label={`Read ${schedule.title}`}
+                        className={buttonVariants({ variant: "secondary" })}
+                        href={`/takeaway/${note.id}`}
+                      >
+                        Read
+                      </Link>
                       <StatusActions
                         id={note.id}
                         name={schedule.title}

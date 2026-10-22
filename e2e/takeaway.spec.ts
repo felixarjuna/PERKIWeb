@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { insertSchedule, insertTakeaway } from "./db";
 import {
   ADMIN,
+  MEMBER,
   MEMBER_STORAGE_STATE,
   uniqueSuffix,
   WRITER,
@@ -351,6 +352,8 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     peerView.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
   await expect(peerView.getByRole("button")).toHaveCount(0);
+  await peerView.getByRole("link", { name: `Read ${scheduleTitle}` }).click();
+  await expect(page.getByText(keypoints, { exact: true })).toBeVisible();
 
   // Mita publishes it, and it appears on /takeaway.
   await loginAs(page, ADMIN);
@@ -376,6 +379,7 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
 });
 
 test("a draft takeaway is a 404 for members", async ({ page }) => {
+  await loginAs(page, MEMBER);
   const suffix = uniqueSuffix();
   const scheduleId = await insertSchedule(`Hidden draft ${suffix}`);
   const id = await insertTakeaway(

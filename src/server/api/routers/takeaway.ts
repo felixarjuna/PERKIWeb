@@ -182,7 +182,8 @@ const assertCanManage = async (takeawayId: number, userId: string) => {
   if (!takeaway) {
     throw notFound();
   }
-  if (!mayManage(takeaway, await viewerFor(userId))) {
+  const viewer = await viewerFor(userId);
+  if (!mayManage(takeaway, viewer)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
@@ -191,6 +192,16 @@ const assertCanManage = async (takeawayId: number, userId: string) => {
           : "You can only change your own takeaways.",
     });
   }
+  // Recheck writer ownership and status in the write itself.
+  return and(
+    eq(takeaways.id, takeawayId),
+    viewer.staff
+      ? undefined
+      : and(
+          eq(takeaways.authorId, userId),
+          inArray(takeaways.status, ["draft", "in_review"])
+        )
+  );
 };
 
 /**
@@ -243,12 +254,9 @@ export const takeawayRouter = createTRPCRouter({
   deleteTakeaway: takeawayProcedure
     .input(queryByIdSchema)
     .mutation(async ({ ctx, input }) => {
-      await assertCanManage(input.id, ctx.session.user.id);
+      const where = await assertCanManage(input.id, ctx.session.user.id);
       return affectedRow(
-        await db
-          .delete(takeaways)
-          .where(eq(takeaways.id, input.id))
-          .returning({ id: takeaways.id }),
+        await db.delete(takeaways).where(where).returning({ id: takeaways.id }),
         "Takeaway"
       );
     }),
@@ -393,7 +401,12 @@ export const takeawayRouter = createTRPCRouter({
             status: input.status,
             ...publicationFor(takeaway.status, input.status, viewer.id),
           })
-          .where(eq(takeaways.id, input.id))
+          .where(
+            and(
+              eq(takeaways.id, input.id),
+              eq(takeaways.status, takeaway.status)
+            )
+          )
           .returning({ id: takeaways.id, status: takeaways.status }),
         "Takeaway"
       );
@@ -401,12 +414,12 @@ export const takeawayRouter = createTRPCRouter({
   updateTakeaway: takeawayProcedure
     .input(updateTakeawaySchema)
     .mutation(async ({ ctx, input }) => {
-      await assertCanManage(input.id, ctx.session.user.id);
+      const where = await assertCanManage(input.id, ctx.session.user.id);
       return affectedRow(
         await db
           .update(takeaways)
           .set({ ...input })
-          .where(eq(takeaways.id, input.id))
+          .where(where)
           .returning({ id: takeaways.id })
           .catch(rethrowMissingSchedule),
         "Takeaway"

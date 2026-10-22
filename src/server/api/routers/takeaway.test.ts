@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { describe, expect, it, vi } from "vitest";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { isAdmin } from "~/server/authz";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
+
+vi.mock("~/server/authz", { spy: true });
 
 const MISSING_ID = 404;
 
@@ -111,6 +115,7 @@ describe("takeaways router", () => {
       scheduleId: schedule.id,
     });
 
+    await publish((await onlyTakeaway()).id);
     const [listed] = (await anonymousCaller().takeaways.getTakeaways({})).items;
     const [managed] = (await api.takeaways.getManageable({})).items;
 
@@ -488,6 +493,43 @@ describe("takeaways router", () => {
     const statusOf = async (id: number) =>
       (await rows()).find((row) => row.id === id)?.status;
 
+    it.each(["edit", "delete", "status"] as const)(
+      "rejects a writer's stale %s when staff publishes during authorization",
+      async (action) => {
+        const { author, id, schedule } = await draftBy();
+        const publisher = await insertUser({ role: "mita" });
+        const publishedAt = new Date("2026-10-22T12:00:00Z");
+        // Pause at the role lookup, after ownership was read, to publish first.
+        vi.mocked(isAdmin).mockImplementationOnce(async () => {
+          await testDb
+            .update(takeaways)
+            .set({
+              publishedAt,
+              publishedById: publisher.id,
+              status: "published",
+            })
+            .where(eq(takeaways.id, id));
+          return false;
+        });
+        const api = callerFor(author.id).takeaways;
+        const changes = {
+          delete: () => api.deleteTakeaway({ id }),
+          edit: () =>
+            api.updateTakeaway({ ...sample(schedule.id, "Changed"), id }),
+          status: () => api.setStatus({ id, status: "in_review" }),
+        };
+        const change = changes[action]();
+        await expect(change).rejects.toMatchObject({ code: "NOT_FOUND" });
+        expect(await onlyTakeaway()).toMatchObject({
+          id,
+          keypoints: "Notes",
+          publishedAt,
+          publishedById: publisher.id,
+          status: "published",
+        });
+      }
+    );
+
     it("starts a new takeaway as a draft that only its author and staff can read", async () => {
       const { author, id, schedule } = await draftBy();
       const visitor = anonymousCaller();
@@ -639,11 +681,11 @@ describe("takeaways router", () => {
 
       const drafts = (await api.takeaways.getManageable({ status: "draft" }))
         .items;
-      expect(drafts.map((row) => row.takeaways.keypoints)).toEqual(["Notes"]);
+      expect(drafts.map((row) => row.takeaways.preview)).toEqual(["Notes"]);
       const inReview = (
         await api.takeaways.getManageable({ status: "in_review" })
       ).items;
-      expect(inReview.map((row) => row.takeaways.keypoints)).toEqual([
+      expect(inReview.map((row) => row.takeaways.preview)).toEqual([
         "Review me",
       ]);
       expect((await api.takeaways.getManageable({})).items).toHaveLength(2);
