@@ -9,6 +9,7 @@ import {
   verificationTokens,
 } from "~/lib/db/schema/schema";
 import { db } from ".";
+import { claimInvite } from "./invites";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -41,6 +42,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   },
   debug: env.NODE_ENV === "development",
+  events: {
+    // Someone invited by email gets their role on their first sign-in.
+    createUser: async ({ user }) => {
+      if (user.id) {
+        await claimInvite({ email: user.email, id: user.id });
+      }
+    },
+  },
   pages: {
     error: "/auth/signin",
     signIn: "/auth/signin",

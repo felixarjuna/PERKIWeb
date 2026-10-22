@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   HandHeart,
+  KeyRound,
   LayoutDashboard,
   Link2,
   Mic,
@@ -22,6 +23,12 @@ export const adminNavigation = [
     icon: UsersRound,
     title: "Members",
     url: "/admin/members",
+  },
+  {
+    group: "Community",
+    icon: KeyRound,
+    title: "Access",
+    url: "/admin/access",
   },
   {
     group: "Community",

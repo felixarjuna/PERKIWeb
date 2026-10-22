@@ -127,6 +127,13 @@
       "when": 1792600320791,
       "tag": "0017_profile_nickname",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792668829221,
+      "tag": "0018_invites_and_requests",
+      "breakpoints": true
     }
   ]
 }

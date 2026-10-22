@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { REQUESTABLE_ROLES } from "~/lib/access";
 import { eventTypeEnum } from "~/lib/db/schema/schema";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
 
@@ -163,4 +164,18 @@ export const takeawayListSchema = pageSchema;
 
 export const manageableTakeawaySchema = pageSchema.extend({
   order: orderSchema,
+});
+
+export const inviteSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email().max(320)),
+  role: z.enum(ASSIGNABLE_ROLES),
+});
+
+export const accessRequestSchema = z.object({
+  role: z.enum(REQUESTABLE_ROLES),
+});
+
+export const decideRequestSchema = z.object({
+  approve: z.boolean(),
+  id: z.number().int(),
 });

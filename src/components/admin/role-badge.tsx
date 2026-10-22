@@ -15,6 +15,14 @@ const roleStyles: Record<Role, { className: string; icon: LucideIcon }> = {
   writer: { className: "bg-accent text-foreground", icon: PenLine },
 };
 
+/** The icon each role is shown with, also on the account page. */
+export const roleIcons: Record<Role, LucideIcon> = {
+  member: roleStyles.member.icon,
+  mita: roleStyles.mita.icon,
+  owner: roleStyles.owner.icon,
+  writer: roleStyles.writer.icon,
+};
+
 /**
  * A role pill sized to its label. The dev (stored as `owner`) gets a code
  * icon and mita a serving one rather than marks of rank; members get the

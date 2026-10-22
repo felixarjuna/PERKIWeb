@@ -156,11 +156,83 @@ export const roleChanges = pgTable("role_changes", {
     .notNull(),
   fromRole: text("fromRole").notNull(),
   id: serial("id").primaryKey().notNull(),
+  /** How the change came about: `invite`, `request`, or null (set by hand). */
+  source: text("source"),
   toRole: text("toRole").notNull(),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 });
+
+/**
+ * A role waiting for someone who has no account yet. It is given when that
+ * email first signs in, unless it was revoked or has expired.
+ */
+export const roleInvites = pgTable(
+  "role_invites",
+  {
+    acceptedAt: timestamp("acceptedAt", { mode: "date", withTimezone: true }),
+    acceptedUserId: text("acceptedUserId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("createdAt", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    /** Lowercased and trimmed. */
+    email: text("email").notNull(),
+    expiresAt: timestamp("expiresAt", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    id: serial("id").primaryKey().notNull(),
+    invitedById: text("invitedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    revokedAt: timestamp("revokedAt", { mode: "date", withTimezone: true }),
+    role: text("role").notNull(),
+  },
+  (t) => [
+    check(
+      "role_invites_role_check",
+      sql`${t.role} in ('mita', 'writer', 'member')`
+    ),
+    uniqueIndex("role_invites_open_email")
+      .on(t.email)
+      .where(sql`${t.acceptedAt} is null and ${t.revokedAt} is null`),
+  ]
+);
+
+/** A member asking for a role; mita approve or decline it. */
+export const accessRequests = pgTable(
+  "access_requests",
+  {
+    createdAt: timestamp("createdAt", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    decidedAt: timestamp("decidedAt", { mode: "date", withTimezone: true }),
+    decidedById: text("decidedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    id: serial("id").primaryKey().notNull(),
+    role: text("role").notNull(),
+    status: text("status", { enum: ["pending", "approved", "declined"] })
+      .default("pending")
+      .notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    check("access_requests_role_check", sql`${t.role} in ('writer')`),
+    check(
+      "access_requests_status_check",
+      sql`${t.status} in ('pending', 'approved', 'declined')`
+    ),
+    uniqueIndex("access_requests_open_user")
+      .on(t.userId)
+      .where(sql`${t.status} = 'pending'`),
+  ]
+);
 
 export const profiles = pgTable("profiles", {
   address: text("address"),

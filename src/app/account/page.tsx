@@ -9,6 +9,7 @@ import { auth } from "~/server/auth";
 import { getRole } from "~/server/authz";
 import AccountActions from "./account-actions";
 import ProfileSummary from "./profile-summary";
+import RoleCard from "./role-card";
 import WhatsappCard from "./whatsapp-card";
 
 export default async function AccountPage({
@@ -32,6 +33,7 @@ export default async function AccountPage({
     >
       <div className="flex w-full flex-col gap-4">
         <ProfileSummary />
+        <RoleCard />
         <WhatsappCard />
         <AccountActions canDelete={canDelete} />
       </div>
