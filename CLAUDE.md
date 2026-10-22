@@ -29,7 +29,7 @@ Tests never touch a real database: integration tests use PGlite and e2e uses its
   - `server`: tRPC routers against **PGlite** (in-process Postgres built from `src/lib/db/migrations`, truncated after each test). `src/test/setup-server.ts` mocks `~/server` and `~/server/auth`; call procedures with `callerFor(userId)` / `anonymousCaller()` from `src/test/caller.ts`.
   - `dom`: jsdom + Testing Library for `*.test.tsx`.
 - `pnpm test:e2e:db` then `pnpm test:e2e` (Playwright, `e2e/`): builds and starts the app on :3100 against a throwaway Docker Postgres (`compose.test.yml`, port 54329, tmpfs). `e2e/global-setup.ts` recreates the schema from the migrations and seeds the `MEMBER` account; `auth.setup.ts` saves its signed-in state. `playwright.config.ts` refuses any non-local `DATABASE_URL`. Set `E2E_SKIP_BUILD=1` to reuse an existing build. Specs share one DB and run in parallel, so create data with `uniqueSuffix()`.
-- PR screenshots: write `e2e/screenshots/current.shots.ts` (gitignored; `@seed` tests run once, the rest once per screen size), run `pnpm screenshots` (phone 390px + desktop, into `screenshots/`), then `pnpm screenshots:publish` to store them on the orphan `pr-screenshots` branch and print the PR markdown. The `ship-it` skill (`.claude/skills/ship-it/`) runs this whole check → screenshot → PR flow.
+- PR screenshots: write `e2e/screenshots/current.shots.ts` (gitignored; `@seed` tests run once, the rest once per screen size), run `pnpm screenshots` (phone 390px + desktop, into `screenshots/`), then `pnpm screenshots:publish` to store them on the orphan `pr-screenshots` branch and print the PR markdown. The it-stack `ship-it` skill runs this whole check → screenshot → PR flow (facts in `## it-stack` below).
 - Known gaps are pinned with `it.fails` / `test.fail()` and a `// BUG:` or `// SECURITY:` comment. Fixing the gap makes that test fail, so remove the marker when you fix it.
 - Hand-written SQL in a migration must end each statement with `--> statement-breakpoint`, or fresh databases (tests, CI) can't apply it.
 - CI (`.github/workflows/ci.yml`) runs on PRs and pushes to `main`. Jobs are named by stage (`check:lint`, `check:migrations`, `check:types`, `build`, `test:unit`, `test:integration`, `test:e2e`, `deploy:migrate`) and run in parallel. Ordering: `test:e2e` needs `build` (reuses the uploaded `.next` output, `E2E_SKIP_BUILD=1`); `deploy:migrate` runs only on pushes to `main`, after every check, in the `Production` GitHub environment (restricted to `main`, secret `DATABASE_URL`), and is never cancelled mid-run. Shared setup lives in `.github/actions/setup`. Vercel's GitHub integration deploys the app itself.
@@ -71,6 +71,16 @@ General app pages, including the admin login, render inside `src/components/temp
 - Branch from `main` and open a PR into `main`. Merged branches are deleted automatically.
 - Work that resolves an issue must put `Closes #<n>` in the **PR description** (one line per issue; `.github/pull_request_template.md` has the slot). GitHub then closes the issue when the PR merges into `main`. A closing keyword in a commit message works too, but the PR description is where it's checked.
 - The repo is public. Security problems are tracked in private draft security advisories, never in public issues, PRs or commit messages, until they're fixed.
+
+## it-stack
+
+Facts for the [it-stack](https://github.com/felixarjuna/it-stack) skills (`ship-it`, `build-it`, `run-it`, …). Open PRs without asking; never merge until the owner says "merge".
+
+- **check:** `pnpm check` (lint, typecheck, unit + integration tests). Must pass before any PR.
+- **screenshots:** `pnpm test:e2e:db`, then write `e2e/screenshots/current.shots.ts` (gitignored, one per change). Seed data only in a test titled `seed @seed` (it runs once); every other test runs once per screen size. Sign in with `setTestSession(page, MEMBER)` from `e2e/auth-fixtures.ts` (`ADMIN` for staff pages, `WRITER` for takeaway writing; accounts in `e2e/fixtures.ts`), seed with `e2e/db.ts` helpers or drizzle the same way, go to the page and call `shoot(page, "<kebab-name>")` from `e2e/screenshots/shoot.ts`. Run `pnpm screenshots` (add `E2E_SKIP_BUILD=1` when `.next` is a build of this code). After pushing, `pnpm screenshots:publish` prints the PR's Screenshots table. `MEMBER` has no profile, so member pages show the profile reminder; leave it unless it hides what the PR is about.
+- **migrations:** `src/lib/db/migrations/`, made with `pnpm db:generate` (drizzle). Only one open PR may add a migration; after rebasing onto a new one, delete yours and regenerate (see Commands). A migration must work with the previous release too.
+- **merge:** `--merge --delete-branch`. After merge, `deploy:migrate` applies migrations to production; until it finishes, the new release can fail on new columns. Vercel deploys the app.
+- **private:** screenshots show e2e seed data only, never the dev or production database. Security problems go to private advisories, never public issues, PRs or commits.
 
 ## Gotchas
 
