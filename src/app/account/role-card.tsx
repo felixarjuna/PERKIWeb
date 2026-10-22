@@ -115,7 +115,7 @@ export default function RoleCard() {
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary">
           <Icon aria-hidden="true" className="size-4" />
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <h2 className="type-body">Your role: {roleLabels[role]}</h2>
           <p
             className="type-body-sm text-muted-foreground outline-none"
