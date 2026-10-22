@@ -1,4 +1,4 @@
-import { ArrowUpRight, Plug, UserRound } from "lucide-react";
+import { ArrowUpRight, NotebookPen, Plug, UserRound } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
@@ -17,6 +17,12 @@ const SECTIONS = [
         title: "Integrations",
         url: "/admin/settings/integrations",
       },
+      {
+        icon: NotebookPen,
+        id: "takeaways",
+        title: "Takeaways",
+        url: "/admin/settings/takeaways",
+      },
     ],
   },
   {
@@ -33,12 +39,12 @@ const SECTIONS = [
   },
 ] as const;
 
-export type SettingsSection = "integrations";
+export type SettingsSection = "integrations" | "takeaways";
 
 function SectionNav({ active }: { active: SettingsSection }) {
   return (
-    <nav aria-label="Settings sections">
-      <ul className="flex @3xl:flex-col @3xl:gap-4 gap-1 @3xl:overflow-visible overflow-x-auto @3xl:pb-0 pb-1">
+    <nav aria-label="Settings sections" className="min-w-0">
+      <ul className="flex @3xl:flex-col flex-wrap @3xl:gap-4 gap-1 @3xl:pb-0 pb-1">
         {SECTIONS.map((section) => (
           <li className="@3xl:block contents" key={section.group}>
             <p className="type-eyebrow mb-1 @3xl:block hidden px-2 text-muted-foreground">

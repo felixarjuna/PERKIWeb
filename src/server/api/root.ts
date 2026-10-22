@@ -12,6 +12,7 @@ import { settingsRouter } from "./routers/settings";
 import { speakerRouter } from "./routers/speakers";
 import { takeawayRouter } from "./routers/takeaway";
 import { userRouter } from "./routers/users";
+import { writerAssignmentsRouter } from "./routers/writer-assignments";
 
 /**
  * This is the primary router for your server.
@@ -32,6 +33,7 @@ export const appRouter = createTRPCRouter({
   speakers: speakerRouter,
   takeaways: takeawayRouter,
   users: userRouter,
+  writerAssignments: writerAssignmentsRouter,
 });
 
 // export type definition of API

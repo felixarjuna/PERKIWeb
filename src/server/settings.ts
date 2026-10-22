@@ -5,7 +5,15 @@ import {
   SETTING_KEYS,
   type SettingKey,
 } from "~/lib/settings";
+import { DEFAULT_TAKEAWAY_WEEKDAY } from "~/lib/takeaway-deadline";
 import { db } from "~/server";
+
+export async function takeawayDeadlineWeekday() {
+  const value = Number(await getSetting(SETTING_KEYS.takeawayDeadlineWeekday));
+  return Number.isInteger(value) && value >= 1 && value <= 7
+    ? value
+    : DEFAULT_TAKEAWAY_WEEKDAY;
+}
 
 export async function getSettings<K extends SettingKey>(
   keys: readonly K[]

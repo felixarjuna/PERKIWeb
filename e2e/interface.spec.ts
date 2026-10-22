@@ -66,6 +66,7 @@ for (const width of widths) {
         "/admin/names",
         "/admin/schedules",
         "/admin/settings/integrations",
+        "/admin/settings/takeaways",
         "/admin/speakers",
         "/admin/takeaways",
         "/admin/schedules/new",
@@ -89,6 +90,31 @@ for (const width of widths) {
         await expect(page.getByLabel("Rows per page")).toHaveAccessibleName(
           "Rows per page"
         );
+      });
+
+      test("settings navigation fits and keeps the last link reachable by keyboard", async ({
+        page,
+      }) => {
+        await adminLogin(page);
+        await page.goto("/admin/settings/takeaways");
+        const nav = page.getByRole("navigation", { name: "Settings sections" });
+        await nav
+          .getByRole("link", { exact: true, name: "Integrations" })
+          .focus();
+        await page.keyboard.press("Tab");
+        await expect(
+          nav.getByRole("link", { exact: true, name: "Takeaways" })
+        ).toBeFocused();
+        await page.keyboard.press("Tab");
+        const account = nav.getByRole("link", { exact: true, name: "Account" });
+        await expect(account).toBeFocused();
+        const bounds = await account.boundingBox();
+        expect(bounds).not.toBeNull();
+        expect(bounds?.x).toBeGreaterThanOrEqual(0);
+        expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(
+          width
+        );
+        await expectUsablePage(page);
       });
 
       test("schedule edit form fits the viewport", async ({ page }) => {
