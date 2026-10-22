@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { useState } from "react";
 import LoadMore from "~/components/load-more";
+import { Badge } from "~/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -15,13 +16,13 @@ import {
 } from "~/components/ui/card";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { TAKEAWAY_STATUSES, type TakeawayStatus } from "~/lib/db/schema/schema";
+import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
 import { statusLabels } from "~/lib/takeaway-status";
 import { api } from "~/trpc/react";
 import { AdminSelect, QueryMessage } from "../admin-controls";
 import { type ContentFilters, takeawayQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
 import { TakeawayActions } from "./takeaway-actions";
-import { TakeawayStatusBadge } from "./takeaway-status-badge";
 
 const PAGE_SIZE = 20;
 
@@ -105,7 +106,13 @@ export default function TakeawayManager() {
                               .setZone("Europe/Berlin")
                               .toFormat("d LLL yyyy")}
                           </p>
-                          <TakeawayStatusBadge value={note.status} />
+                          <Badge
+                            data-slot="takeaway-status"
+                            size="status"
+                            {...takeawayBadgeStyles[note.status]}
+                          >
+                            {statusLabels[note.status]}
+                          </Badge>
                         </div>
                         <CardTitle>
                           <h2 className="type-subheading break-words">
