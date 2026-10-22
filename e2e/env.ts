@@ -24,6 +24,8 @@ export const e2eEnv = {
   // Never contact the real bot from tests; nothing listens on port 9.
   PERKI_BOT_URL: "http://127.0.0.1:9",
   PORT: String(E2E_PORT),
+  // Browser tests never send real emails, even with a local credential set.
+  RESEND_API_KEY: "",
 };
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);

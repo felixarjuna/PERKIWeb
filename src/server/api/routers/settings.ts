@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { settings, users } from "~/lib/db/schema/schema";
 import {
@@ -14,6 +14,7 @@ import {
 } from "~/lib/settings";
 import { db } from "~/server";
 import { sheetTitle } from "~/server/google-sheets";
+import { emailSettings } from "~/server/invite-email";
 import { setSetting } from "~/server/settings";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
@@ -62,6 +63,7 @@ function driveFolderOf(
 }
 
 export const settingsRouter = createTRPCRouter({
+  email: adminProcedure.query(emailSettings),
   /** Everything on Settings → Integrations, with where each value comes from. */
   integrations: adminProcedure.query(async () => {
     const row = await loadIntegrationRows();
@@ -109,6 +111,45 @@ export const settingsRouter = createTRPCRouter({
         throw invalid("Paste a Google Drive link (drive.google.com/…).");
       }
       await setSetting(SETTING_KEYS.driveFolderUrl, url, ctx.session.user.id);
+    }),
+  setEmail: adminProcedure
+    .input(
+      z
+        .object({
+          enabled: z.boolean(),
+          sender: z
+            .string()
+            .trim()
+            .pipe(z.union([z.email(), z.literal("")])),
+        })
+        .refine((input) => !input.enabled || input.sender.length > 0, {
+          message: "Set a sender address before turning email on.",
+          path: ["sender"],
+        })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .insert(settings)
+        .values(
+          (
+            [
+              [SETTING_KEYS.emailEnabled, String(input.enabled)],
+              [SETTING_KEYS.emailSender, input.sender],
+            ] as const
+          ).map(([key, value]) => ({
+            key,
+            updatedById: ctx.session.user.id,
+            value,
+          }))
+        )
+        .onConflictDoUpdate({
+          set: {
+            updatedAt: new Date(),
+            updatedById: ctx.session.user.id,
+            value: sql`excluded.value`,
+          },
+          target: settings.key,
+        });
     }),
   /**
    * Sets the schedule sheet from a pasted link or id. It's only saved once

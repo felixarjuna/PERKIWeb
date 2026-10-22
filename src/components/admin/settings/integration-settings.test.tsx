@@ -12,6 +12,13 @@ const { mutation, setWhatsappGroup } = vi.hoisted(() => ({
 vi.mock("~/trpc/react", () => ({
   api: {
     settings: {
+      email: {
+        useQuery: () => ({
+          data: { connected: false, enabled: false, sender: "" },
+          isError: false,
+          isPending: false,
+        }),
+      },
       integrations: {
         useQuery: () => ({
           data: {
@@ -31,6 +38,7 @@ vi.mock("~/trpc/react", () => ({
       },
       setDiscordInvite: mutation(),
       setDriveFolder: mutation(),
+      setEmail: mutation(),
       setScheduleSheet: mutation(),
       setWhatsappGroup: mutation(setWhatsappGroup),
     },

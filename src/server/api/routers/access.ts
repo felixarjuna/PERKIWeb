@@ -16,6 +16,7 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { getRole } from "~/server/authz";
+import { sendInviteEmail } from "~/server/invite-email";
 import { openInvite } from "~/server/invites";
 import {
   accessRequestSchema,
@@ -102,7 +103,7 @@ export const accessRouter = createTRPCRouter({
           message: `${input.email} already has an account. Change their role in Members.`,
         });
       }
-      return await db.transaction(async (tx) => {
+      const created = await db.transaction(async (tx) => {
         // A new invite replaces any earlier one for the same email.
         await tx
           .update(roleInvites)
@@ -133,6 +134,7 @@ export const accessRouter = createTRPCRouter({
         }
         return { ...invite, role: input.role };
       });
+      return { ...created, emailStatus: await sendInviteEmail(created) };
     }),
   /** Invites still waiting for their person, newest first. */
   invites: adminProcedure.query(async () => {
