@@ -477,7 +477,7 @@ for (const action of ["Save draft", "Send to review"] as const) {
   });
 }
 
-test("cards keep one next step, equal badges and keyboard-accessible menus at 320px", async ({
+test("cards keep one next step, compact badges and keyboard-accessible menus at 320px", async ({
   page,
 }) => {
   const suffix = uniqueSuffix();
@@ -509,7 +509,6 @@ test("cards keep one next step, equal badges and keyboard-accessible menus at 32
       }))
     );
   expect(sizes).toHaveLength(3);
-  expect(new Set(sizes.map((size) => size.width)).size).toBe(1);
   expect(new Set(sizes.map((size) => size.height)).size).toBe(1);
   const draft = cards.filter({ hasText: `Card draft ${suffix}` });
   const review = cards.filter({ hasText: `Card in_review ${suffix}` });

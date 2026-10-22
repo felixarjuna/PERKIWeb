@@ -28,7 +28,7 @@ export function TakeawayStatusBadge({
   return (
     <span
       className={cn(
-        "type-caption inline-flex min-h-7 min-w-28 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-1",
+        "type-caption inline-flex min-h-7 w-fit shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-1",
         tone,
         className
       )}
