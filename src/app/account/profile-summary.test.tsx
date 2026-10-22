@@ -8,6 +8,7 @@ const { saveMine } = vi.hoisted(() => ({ saveMine: vi.fn() }));
 let profile: Record<string, string | Date | null>;
 const incomplete = {
   address: "Roermonder Str. 110",
+  bio: null,
   birthday: new Date("2000-03-12T00:00:00.000Z"),
   location: "Aachen",
   major: "Informatik",
@@ -132,9 +133,12 @@ describe("profile summary", () => {
   it("keeps the optional nickname at the bottom of the details", async () => {
     render(<ProfileSummary />);
     const rows = screen.getAllByRole("listitem");
-    expect(rows.at(-1)?.textContent).toContain("Nickname");
+    expect(rows.at(-2)?.textContent).toContain("Nickname");
     // Optional is quiet text, not the cream chip that marks what's missing.
-    const optional = screen.getByText("Optional");
+    const [optional] = screen.getAllByText("Optional");
+    if (!optional) {
+      throw new Error("No optional row");
+    }
     expect(optional.classList).not.toContain("bg-paper");
     expect(optional.classList).toContain("text-muted-foreground");
     await userEvent.click(
@@ -145,6 +149,24 @@ describe("profile summary", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(saveMine).toHaveBeenCalledWith(
       { nickname: "Mimi" },
+      expect.anything()
+    );
+  });
+
+  it("lets members write a few lines about themselves, last", async () => {
+    render(<ProfileSummary />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.at(-1)?.textContent).toContain("About me");
+    await userEvent.click(
+      screen.getByRole("button", { name: "About me Optional" })
+    );
+    const dialog = screen.getByRole("dialog");
+    const input = within(dialog).getByLabelText("About me");
+    expect(input.tagName).toBe("TEXTAREA");
+    await userEvent.type(input, "Studying in Aachen.{Enter}I love hiking.");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(saveMine).toHaveBeenCalledWith(
+      { bio: "Studying in Aachen.\nI love hiking." },
       expect.anything()
     );
   });

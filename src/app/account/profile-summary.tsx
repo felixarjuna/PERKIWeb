@@ -45,10 +45,12 @@ const shown = (value: string | Date | null | undefined) => {
 
 const labels: Record<EditableField, string> = {
   ...profileFieldLabels,
+  bio: "About me",
   nickname: "Nickname",
 };
 const reasons: Record<EditableField, string> = {
   ...profileFieldReasons,
+  bio: "A few lines so others in the fellowship get to know you. Staff and signed-in members can read it.",
   nickname:
     "What you'd like to be called. Your name from Google stays as it is.",
 };
@@ -145,7 +147,7 @@ function EditableRow({
         onClick={onEdit}
         type="button"
       >
-        <span className="type-body-sm flex-1">{label}</span>{" "}
+        <span className="type-body-sm flex-1 whitespace-nowrap">{label}</span>{" "}
         {value ? (
           <span className="type-body-sm min-w-0 truncate text-muted-foreground">
             {value}
@@ -293,6 +295,12 @@ export default function ProfileSummary() {
           onEdit={() => setEditing("nickname")}
           optional
           value={shown(profile?.nickname)}
+        />
+        <EditableRow
+          label={labels.bio}
+          onEdit={() => setEditing("bio")}
+          optional
+          value={shown(profile?.bio)}
         />
       </ul>
       <Dialog
