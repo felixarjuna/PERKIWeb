@@ -26,6 +26,7 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NODE_ENV: process.env.NODE_ENV,
     PERKI_BOT_URL: process.env.PERKI_BOT_URL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
@@ -53,6 +54,8 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]),
     /** perki.bot status URL; defaults to the Fly.io deployment. */
     PERKI_BOT_URL: z.string().url().optional(),
+    /** Resend credential, used only by the server to send invite emails. */
+    RESEND_API_KEY: z.string().trim().optional(),
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

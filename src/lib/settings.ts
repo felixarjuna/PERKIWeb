@@ -2,6 +2,8 @@
 export const SETTING_KEYS = {
   discordInviteUrl: "discord_invite_url",
   driveFolderUrl: "drive_folder_url",
+  emailEnabled: "email_enabled",
+  emailSender: "email_sender",
   scheduleSheetId: "schedule_sheet_id",
   whatsappGroupUrl: "whatsapp_group_url",
 } as const;
