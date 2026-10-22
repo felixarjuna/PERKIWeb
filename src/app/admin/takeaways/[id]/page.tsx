@@ -1,0 +1,79 @@
+import { TRPCError } from "@trpc/server";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import AdminShell from "~/components/admin/admin-shell";
+import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
+import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
+import { TakeawayMarkdown } from "~/components/takeaway-markdown";
+import { buttonVariants } from "~/components/ui/button";
+import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
+import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
+import { api } from "~/trpc/server";
+
+async function loadReview(id: number) {
+  try {
+    // Applies the same ownership/status read rules as every other note view.
+    return await api.takeaways.getTakeawayById({ id });
+  } catch (error) {
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
+      notFound();
+    }
+    throw error;
+  }
+}
+
+/** A workspace reading view for writers who cannot edit this takeaway. */
+export default async function ReviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<PageSearchParams>;
+}) {
+  const { id } = await params;
+  const { role } = await requireTakeawayAccess(
+    requestedPath(
+      `/admin/takeaways/${encodeURIComponent(id)}`,
+      await searchParams
+    )
+  );
+  const takeawayId = Number(id);
+  if (!(Number.isSafeInteger(takeawayId) && takeawayId > 0)) {
+    notFound();
+  }
+  const { schedules: schedule, takeaways: note } = await loadReview(takeawayId);
+  return (
+    <AdminShell
+      {...(await adminShellProps(role))}
+      actions={
+        <Link
+          className={buttonVariants({ variant: "secondary" })}
+          href="/admin/takeaways"
+        >
+          <ArrowLeft aria-hidden="true" data-icon="inline-start">
+            <title>Back to takeaways</title>
+          </ArrowLeft>
+          Back to takeaways
+        </Link>
+      }
+      section="Takeaways"
+      subtitle="You have read-only access to this takeaway."
+      title="Review takeaway"
+    >
+      <article className="flex min-w-0 flex-col gap-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h2 className="type-heading break-words">{schedule.title}</h2>
+          <TakeawayStatusBadge value={note.status} />
+        </div>
+        <TakeawayMarkdown markdown={note.keypoints} />
+        <TakeawayActions
+          id={note.id}
+          name={schedule.title}
+          rights={{ canManage: false, canPublish: false }}
+          status={note.status}
+        />
+      </article>
+    </AdminShell>
+  );
+}

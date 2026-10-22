@@ -26,6 +26,10 @@ const SEARCH_URL = /[?&]q=PELAYANAN/;
 const SEND_REVIEW = /^Send to review:/;
 const PUBLISH_ACTION = /^Publish:/;
 const MORE_ACTIONS = /^More actions/;
+const REVIEW_TAKEAWAY_URL = /\/admin\/takeaways\/\d+$/;
+const PUBLIC_PAGE = /^View public page:/;
+const PUBLIC_TAKEAWAY_HREF = /\/takeaway\/\d+$/;
+const COMPACT_BUTTON_HEIGHT = 36;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
@@ -387,8 +391,23 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     peerView.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
   await expect(peerView.getByRole("button")).toHaveCount(0);
-  await peerView.getByRole("link", { name: `Read ${scheduleTitle}` }).click();
+  await expect(peerView.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(
+    0
+  );
+  await peerView.getByRole("link", { name: `Review ${scheduleTitle}` }).click();
+  await expect(page).toHaveURL(REVIEW_TAKEAWAY_URL);
+  await expect(
+    page.getByRole("heading", { exact: true, name: "Review takeaway" })
+  ).toBeVisible();
   await expect(page.getByText(keypoints, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save changes" })).toHaveCount(
+    0
+  );
+  await expect(page.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
+
+  const peerReviewPath = new URL(page.url()).pathname;
+  const forbiddenEdit = await page.goto(`${peerReviewPath}/edit`);
+  expect(forbiddenEdit?.status()).toBe(404);
 
   // Mita publishes it, and it appears on /takeaway.
   await loginAs(page, ADMIN);
@@ -412,6 +431,7 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     locked.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
   await expect(locked.getByRole("button")).toHaveCount(0);
+  await expect(locked.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(1);
   // Staff can send it back, but must put it through review again to republish.
   await loginAs(page, ADMIN);
   const sentBack = await findInList(page, scheduleTitle);
@@ -439,6 +459,9 @@ test("a draft takeaway is a 404 for members", async ({ page }) => {
 
   const response = await page.goto(`/takeaway/${id}`);
   expect(response?.status()).toBe(404);
+  await loginAs(page, WRITER_2);
+  const peerResponse = await page.goto(`/admin/takeaways/${id}`);
+  expect(peerResponse?.status()).toBe(404);
 });
 
 for (const action of ["Save draft", "Send to review"] as const) {
@@ -512,6 +535,12 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   expect(new Set(sizes.map((size) => size.height)).size).toBe(1);
   const draft = cards.filter({ hasText: `Card draft ${suffix}` });
   const review = cards.filter({ hasText: `Card in_review ${suffix}` });
+  const publishedCard = cards.filter({ hasText: `Card published ${suffix}` });
+  await expect(draft.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
+  await expect(review.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
+  const publicPage = publishedCard.getByRole("link", { name: PUBLIC_PAGE });
+  await expect(publicPage).toHaveCount(1);
+  await expect(publicPage).toHaveAttribute("href", PUBLIC_TAKEAWAY_HREF);
   const send = draft.getByRole("button", { name: SEND_REVIEW });
   const publish = review.getByRole("button", { name: PUBLISH_ACTION });
   await expect(draft.getByRole("button")).toHaveCount(2);
@@ -521,6 +550,11 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   expect((await send.boundingBox())?.height).toBe(
     (await publish.boundingBox())?.height
   );
+  expect((await send.boundingBox())?.height).toBe(COMPACT_BUTTON_HEIGHT);
+  expect(
+    (await page.getByRole("link", { name: "Add takeaway" }).boundingBox())
+      ?.height
+  ).toBe(COMPACT_BUTTON_HEIGHT);
   await expect(send.locator("svg")).toHaveCount(1);
   await expect(publish.locator("svg")).toHaveCount(1);
   const more = draft.getByRole("button", { name: MORE_ACTIONS });
@@ -559,17 +593,28 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
     document.documentElement.style.zoom = "";
   });
   await page.keyboard.press("Tab");
-  const read = draft.getByRole("link", { name: `Read Card draft ${suffix}` });
-  await read.focus();
+  const edit = draft.getByRole("link", { name: `Edit Card draft ${suffix}` });
+  await edit.focus();
   expect(
-    await read.evaluate(
+    await edit.evaluate(
       (element) => getComputedStyle(element, "::after").boxShadow
     )
   ).not.toBe("none");
   // A click on the card body follows its stretched native title link.
   await draft.click();
+  await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   await expect(
-    page.getByRole("heading", { level: 1, name: `Card draft ${suffix}` })
+    page.getByRole("heading", { level: 1, name: "Edit takeaway" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save changes" })
+  ).toBeVisible();
+  await page.goto("/admin/takeaways");
+  await page.getByLabel("Search takeaways").fill(suffix);
+  await publicPage.click();
+  await expect(page).toHaveURL(PUBLIC_TAKEAWAY_HREF);
+  await expect(
+    page.getByRole("heading", { level: 1, name: `Card published ${suffix}` })
   ).toBeVisible();
 });
 

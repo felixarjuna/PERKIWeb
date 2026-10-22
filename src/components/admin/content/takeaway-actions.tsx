@@ -2,6 +2,7 @@
 
 import {
   Check,
+  ExternalLink,
   MoreHorizontal,
   PencilLine,
   Send,
@@ -29,6 +30,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import type { TakeawayStatus } from "~/lib/db/schema/schema";
 import { type StatusRights, statusActions } from "~/lib/takeaway-status";
 import { api } from "~/trpc/react";
@@ -76,7 +82,8 @@ export function TakeawayActions({
   const secondary = actions.filter((action) => !action.primary);
   const pending = change.isPending || remove.isPending;
   const PrimaryIcon = primary?.to === "published" ? Check : Send;
-  if (!(primary || rights.canManage || secondary.length)) {
+  const showMenu = rights.canManage || secondary.length > 0;
+  if (!(primary || showMenu || status === "published")) {
     return null;
   }
   return (
@@ -94,97 +101,116 @@ export function TakeawayActions({
           {primary.label}
         </Button>
       ) : null}
-      <AlertDialog onOpenChange={setConfirmDelete} open={confirmDelete}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={`More actions for ${name}`}
-              disabled={pending}
-              ref={trigger}
-              size="icon"
-              type="button"
-              variant="secondary"
-            >
-              <MoreHorizontal aria-hidden="true">
-                <title>More actions</title>
-              </MoreHorizontal>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="overscroll-contain">
-            {rights.canManage ? (
-              <DropdownMenuItem asChild>
-                <Link
-                  aria-label={`Edit ${name}`}
-                  href={`/admin/takeaways/${id}/edit`}
-                >
-                  <PencilLine aria-hidden="true">
-                    <title>Edit</title>
-                  </PencilLine>
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            {secondary.map((action) => (
-              <DropdownMenuItem
-                key={action.to}
-                onSelect={() => change.mutate({ id, status: action.to })}
+      {status === "published" ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild size="icon" variant="secondary">
+              <Link
+                aria-label={`View public page: ${name}`}
+                href={`/takeaway/${id}`}
               >
-                <Undo2 aria-hidden="true">
-                  <title>{action.label}</title>
-                </Undo2>
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-            {rights.canManage ? (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  aria-label={`Delete ${name}`}
-                  className="text-destructive-text focus:text-destructive-text"
-                  onSelect={() => setConfirmDelete(true)}
-                >
-                  <Trash2 aria-hidden="true">
-                    <title>Delete</title>
-                  </Trash2>
-                  Delete
+                <ExternalLink aria-hidden="true" data-icon="inline-start">
+                  <title>View public page</title>
+                </ExternalLink>
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>View public page</TooltipContent>
+        </Tooltip>
+      ) : null}
+      {showMenu ? (
+        <AlertDialog onOpenChange={setConfirmDelete} open={confirmDelete}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label={`More actions for ${name}`}
+                disabled={pending}
+                ref={trigger}
+                size="icon"
+                type="button"
+                variant="secondary"
+              >
+                <MoreHorizontal aria-hidden="true" data-icon="inline-start">
+                  <title>More actions</title>
+                </MoreHorizontal>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="overscroll-contain">
+              {rights.canManage ? (
+                <DropdownMenuItem asChild>
+                  <Link
+                    aria-label={`Edit ${name}`}
+                    href={`/admin/takeaways/${id}/edit`}
+                  >
+                    <PencilLine aria-hidden="true">
+                      <title>Edit</title>
+                    </PencilLine>
+                    Edit
+                  </Link>
                 </DropdownMenuItem>
-              </>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <AlertDialogContent
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            trigger.current?.focus();
-          }}
-        >
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes this takeaway. This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={remove.isPending}>
-              Keep takeaway
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className={buttonVariants({ variant: "destructive" })}
-              disabled={remove.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                remove.mutate({ id });
-              }}
-            >
-              <Trash2 aria-hidden="true" data-icon="inline-start">
-                <title>Delete takeaway</title>
-              </Trash2>
-              {remove.isPending ? "Deleting…" : "Delete takeaway"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              ) : null}
+              {secondary.map((action) => (
+                <DropdownMenuItem
+                  key={action.to}
+                  onSelect={() => change.mutate({ id, status: action.to })}
+                >
+                  <Undo2 aria-hidden="true">
+                    <title>{action.label}</title>
+                  </Undo2>
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
+              {rights.canManage ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    aria-label={`Delete ${name}`}
+                    className="text-destructive-text focus:text-destructive-text"
+                    onSelect={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 aria-hidden="true">
+                      <title>Delete</title>
+                    </Trash2>
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AlertDialogContent
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              trigger.current?.focus();
+            }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently removes this takeaway. This action cannot be
+                undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={remove.isPending}>
+                Keep takeaway
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className={buttonVariants({ variant: "destructive" })}
+                disabled={remove.isPending}
+                onClick={(event) => {
+                  event.preventDefault();
+                  remove.mutate({ id });
+                }}
+              >
+                <Trash2 aria-hidden="true" data-icon="inline-start">
+                  <title>Delete takeaway</title>
+                </Trash2>
+                {remove.isPending ? "Deleting…" : "Delete takeaway"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </div>
   );
 }
