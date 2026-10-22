@@ -1,5 +1,11 @@
 # Throwaway Postgres for end-to-end tests. Data lives in tmpfs and disappears
 # with the container. Start with `pnpm test:e2e:db`.
+#
+# Parallel checkouts (worktrees) each need their own container: set
+# E2E_DB_PORT to a free port (and E2E_PORT for the app) before `test:e2e:db`,
+# `test:e2e` and `screenshots`. The project name follows the port, so two
+# containers never share a name or a port.
+name: perkiweb-e2e-${E2E_DB_PORT:-54329}
 services:
   postgres:
     image: postgres:18-alpine
@@ -8,7 +14,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
     ports:
-      - "127.0.0.1:54329:5432"
+      - "127.0.0.1:${E2E_DB_PORT:-54329}:5432"
     tmpfs:
       - /var/lib/postgresql
     healthcheck:
