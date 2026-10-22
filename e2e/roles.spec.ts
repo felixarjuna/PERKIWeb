@@ -119,8 +119,8 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await page.goto("/admin/takeaways/new");
   await selectOption(page, "Schedule", scheduleTitle);
   await page.getByLabel("Key points", { exact: true }).fill(keypoints);
-  await page.getByRole("button", { name: "Add takeaway" }).click();
-  await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(toast(page, "Your draft has been saved.")).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
 

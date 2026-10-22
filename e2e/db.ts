@@ -65,10 +65,12 @@ export const insertProfiledUser = async (name: string, role: string) => {
   }
 };
 
+/** Inserts a takeaway; published unless `status` says otherwise. */
 export const insertTakeaway = async (
   scheduleId: number,
   keypoints: string,
-  authorId?: string
+  authorId?: string,
+  status: "draft" | "in_review" | "published" = "published"
 ) => {
   assertLocalDatabase(e2eEnv.DATABASE_URL);
   const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
@@ -80,6 +82,7 @@ export const insertTakeaway = async (
         contributors: ["Test Author"],
         keypoints,
         scheduleId,
+        status,
       })
       .returning({ id: takeaways.id });
     if (!row) {

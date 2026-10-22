@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,6 +26,8 @@ import {
 } from "~/components/ui/select";
 import { api } from "~/trpc/react";
 import { KeypointsField } from "../keypoints-field";
+
+type NewStatus = "draft" | "in_review";
 
 const addTakeawayFormSchema = z.object({
   contributors: z.array(z.string()),
@@ -49,21 +52,36 @@ export default function AddTakeawayForm({ username }: { username: string }) {
     resolver: zodResolver(addTakeawayFormSchema),
   });
 
+  /** Which button submitted: a draft only the writer sees, or one for review. */
+  const [status, setStatus] = useState<NewStatus>("draft");
+
   /** add takeaway action. */
   const utils = api.useUtils();
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       await Promise.all([utils.takeaways.invalidate()]);
-      toast.success("Your takeaway has been submitted!", {
-        description: "Thanks for sharing!",
-      });
+      toast.success(
+        created.status === "in_review"
+          ? "Your takeaway is in review."
+          : "Your draft has been saved.",
+        {
+          description:
+            created.status === "in_review"
+              ? "Mita or the owner will publish it."
+              : "Send it to review when it is ready.",
+        }
+      );
       router.push("/admin/takeaways");
     },
   });
 
   function onSubmit(values: z.infer<typeof addTakeawayFormSchema>) {
-    addTakeaway.mutate({ ...values, scheduleId: +values.scheduleId });
+    addTakeaway.mutate({
+      ...values,
+      scheduleId: +values.scheduleId,
+      status,
+    });
   }
 
   return (
@@ -125,13 +143,24 @@ export default function AddTakeawayForm({ username }: { username: string }) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            disabled={addTakeaway.isPending}
-            type="submit"
-            variant={"default"}
-          >
-            Add takeaway
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={addTakeaway.isPending}
+              onClick={() => setStatus("draft")}
+              type="submit"
+              variant="default"
+            >
+              Save draft
+            </Button>
+            <Button
+              disabled={addTakeaway.isPending}
+              onClick={() => setStatus("in_review")}
+              type="submit"
+              variant="secondary"
+            >
+              Send to review
+            </Button>
+          </div>
           <Button
             className="flex gap-x-2"
             onClick={() => router.push("/admin/takeaways")}

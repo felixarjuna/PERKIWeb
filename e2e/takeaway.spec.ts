@@ -1,7 +1,19 @@
 import { expect, type Page, test } from "@playwright/test";
 import { insertSchedule, insertTakeaway } from "./db";
-import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { adminLogin, loadUntilVisible, selectOption, toast } from "./helpers";
+import {
+  ADMIN,
+  MEMBER_STORAGE_STATE,
+  uniqueSuffix,
+  WRITER,
+  WRITER_2,
+} from "./fixtures";
+import {
+  adminLogin,
+  loadUntilVisible,
+  loginAs,
+  selectOption,
+  toast,
+} from "./helpers";
 
 /** Usernames are derived from the display name ("E2E Member"). */
 /** Takeaways are written in the admin area, so they credit the seeded admin. */
@@ -19,7 +31,7 @@ test.beforeEach(async ({ page }) => {
 const takeawayArticle = (page: Page, text: string) =>
   page.getByRole("listitem").filter({ hasText: text });
 
-/** Fills and submits /admin/takeaways/new; ends back on /admin/takeaways. */
+/** Fills /admin/takeaways/new and saves a draft; ends back on /admin/takeaways. */
 const createTakeaway = async (
   page: Page,
   scheduleTitle: string,
@@ -27,10 +39,34 @@ const createTakeaway = async (
 ) => {
   await selectOption(page, "Schedule", scheduleTitle);
   await page.getByLabel("Key points", { exact: true }).fill(keypoints);
-  await page.getByRole("button", { name: "Add takeaway" }).click();
+  await page.getByRole("button", { name: "Save draft" }).click();
 
-  await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
+  await expect(toast(page, "Your draft has been saved.")).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
+};
+
+/** Narrows /admin/takeaways to one takeaway by its schedule title. */
+const findInList = async (page: Page, scheduleTitle: string) => {
+  await page.goto("/admin/takeaways");
+  await page.getByLabel("Search takeaways").fill(scheduleTitle);
+  const article = takeawayArticle(page, scheduleTitle);
+  await expect(article).toHaveCount(1);
+  return article;
+};
+
+/** Changes a takeaway's status from the list and waits for the toast. */
+const changeStatus = async (
+  page: Page,
+  scheduleTitle: string,
+  action: string,
+  confirmation: string
+) => {
+  const article = await findInList(page, scheduleTitle);
+  await article
+    .getByRole("button", { exact: true, name: `${action}: ${scheduleTitle}` })
+    .click();
+  await expect(toast(page, confirmation)).toBeVisible();
+  return article;
 };
 
 /** Opens /admin/takeaways/new through the list page's "Add takeaway" link. */
@@ -62,6 +98,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
     article.getByRole("heading", { name: scheduleTitle })
   ).toBeVisible();
   await expect(article).toContainText("Bible study");
+  await expect(article).toContainText("Draft");
   await expect(article).toContainText(ADMIN_USERNAME);
 
   // Edit
@@ -183,8 +220,10 @@ test("a writer formats a takeaway in the editor and readers see it formatted", a
   await expect(editor.getByRole("heading", { level: 2 })).toHaveText(
     `Integritas Nuh ${suffix}`
   );
-  await page.getByRole("button", { name: "Add takeaway" }).click();
-  await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(toast(page, "Your draft has been saved.")).toBeVisible();
+  // The admin (mita) publishes it from the list.
+  await changeStatus(page, scheduleTitle, "Publish", "Takeaway published.");
 
   await page.goto("/takeaway");
   const card = page.getByRole("link", { exact: true, name: scheduleTitle });
@@ -265,4 +304,87 @@ test("a takeaway created from a direct link credits its author", async ({
   await loadUntilVisible(page, article);
   await expect(article).toHaveCount(1);
   await expect(article).toContainText(ADMIN_USERNAME);
+});
+
+test("a writer drafts a takeaway, sends it to review and mita publishes it", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const scheduleTitle = `Reviewed takeaway ${suffix}`;
+  const keypoints = `Reviewed insight ${suffix}`;
+  await insertSchedule(scheduleTitle);
+  const publicCard = () =>
+    page.getByRole("link", { exact: true, name: scheduleTitle });
+  const expectHiddenFromPublic = async () => {
+    await page.goto(`/takeaway?q=${encodeURIComponent(scheduleTitle)}`);
+    await expect(page.getByRole("status")).toContainText("No takeaways match");
+    await expect(publicCard()).toHaveCount(0);
+  };
+
+  // The writer saves a draft: only they see it, and it is not public.
+  await loginAs(page, WRITER);
+  await page.goto("/admin/takeaways/new");
+  await createTakeaway(page, scheduleTitle, keypoints);
+  await expectHiddenFromPublic();
+  await loginAs(page, WRITER_2);
+  await page.goto("/admin/takeaways");
+  await page.getByLabel("Search takeaways").fill(scheduleTitle);
+  await expect(page.getByRole("status")).toContainText("No takeaways match");
+
+  // The writer sends it to review: other writers can read it, not edit it.
+  await loginAs(page, WRITER);
+  const inReview = await changeStatus(
+    page,
+    scheduleTitle,
+    "Send to review",
+    "Takeaway sent to review."
+  );
+  await expect(inReview).toContainText("In review");
+  await expect(
+    inReview.getByRole("button", { name: `Publish: ${scheduleTitle}` })
+  ).toHaveCount(0);
+  await expectHiddenFromPublic();
+  await loginAs(page, WRITER_2);
+  const peerView = await findInList(page, scheduleTitle);
+  await expect(peerView).toContainText("In review");
+  await expect(
+    peerView.getByRole("link", { name: `Edit ${scheduleTitle}` })
+  ).toHaveCount(0);
+  await expect(peerView.getByRole("button")).toHaveCount(0);
+
+  // Mita publishes it, and it appears on /takeaway.
+  await loginAs(page, ADMIN);
+  const published = await changeStatus(
+    page,
+    scheduleTitle,
+    "Publish",
+    "Takeaway published."
+  );
+  await expect(published).toContainText("Published");
+  await page.goto(`/takeaway?q=${encodeURIComponent(scheduleTitle)}`);
+  await expect(publicCard()).toBeVisible();
+  await publicCard().click();
+  await expect(page.getByText(keypoints, { exact: true })).toBeVisible();
+
+  // Once published, the writer can no longer edit it.
+  await loginAs(page, WRITER);
+  const locked = await findInList(page, scheduleTitle);
+  await expect(locked).toContainText("Published");
+  await expect(
+    locked.getByRole("link", { name: `Edit ${scheduleTitle}` })
+  ).toHaveCount(0);
+});
+
+test("a draft takeaway is a 404 for members", async ({ page }) => {
+  const suffix = uniqueSuffix();
+  const scheduleId = await insertSchedule(`Hidden draft ${suffix}`);
+  const id = await insertTakeaway(
+    scheduleId,
+    `Hidden notes ${suffix}`,
+    WRITER.id,
+    "draft"
+  );
+
+  const response = await page.goto(`/takeaway/${id}`);
+  expect(response?.status()).toBe(404);
 });

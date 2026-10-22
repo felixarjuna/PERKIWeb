@@ -8,6 +8,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
@@ -81,7 +82,12 @@ export default function EditTakeawayForm() {
         })}
       >
         <div className="space-y-4">
-          <h2 className="type-heading">Fellowship Information</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="type-heading">Fellowship Information</h2>
+            {takeaway ? (
+              <TakeawayStatusBadge value={takeaway.takeaways.status} />
+            ) : null}
+          </div>
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="takeaway-schedule">Schedule</Label>
@@ -99,13 +105,18 @@ export default function EditTakeawayForm() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            disabled={updateTakeaway.isPending}
-            type="submit"
-            variant={"default"}
-          >
-            Save changes
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              disabled={updateTakeaway.isPending}
+              type="submit"
+              variant="default"
+            >
+              Save changes
+            </Button>
+            <p className="type-caption text-muted-foreground">
+              Saving keeps the status. Change it from the takeaways list.
+            </p>
+          </div>
           <Button
             className="flex gap-x-2"
             onClick={() => router.push("/admin/takeaways")}
