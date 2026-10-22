@@ -54,6 +54,76 @@ const insertTakeaway = async (status: TakeawayStatus, authorId: string) => {
 const writer = (name = "Writer") => insertUser({ name, role: "writer" });
 
 describe("takeaway comments", () => {
+  it("includes the author's profile image without exposing their email", async () => {
+    const image = "https://example.com/reviewer.png";
+    const author = await insertUser({
+      image,
+      name: "Reviewer",
+      role: "writer",
+    });
+    const { id } = await insertTakeaway("draft", author.id);
+    const api = callerFor(author.id).takeawayComments;
+    await api.add({ body: "Feedback", takeawayId: id });
+    const thread = await api.list({ takeawayId: id });
+    expect(thread.comments.at(0)?.author).toEqual({ image, name: "Reviewer" });
+    expect(JSON.stringify(thread)).not.toContain(author.email);
+  });
+
+  it("lets reviewers delete only their own comments, including resolved ones", async () => {
+    const author = await writer();
+    const reviewer = await writer("Reviewer");
+    const staff = await insertUser({ role: "mita" });
+    const { id } = await insertTakeaway("in_review", author.id);
+    const api = callerFor(reviewer.id).takeawayComments;
+    const comment = await api.add({ body: "Feedback", takeawayId: id });
+    await Promise.all(
+      [author, staff].map((user) =>
+        expect(
+          callerFor(user.id).takeawayComments.remove({ id: comment.id })
+        ).rejects.toMatchObject({ code: "FORBIDDEN" })
+      )
+    );
+    await api.setResolved({ id: comment.id, resolved: true });
+    await api.remove({ id: comment.id });
+    expect((await api.list({ takeawayId: id })).comments).toEqual([]);
+    await expect(api.remove({ id: comment.id })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("rechecks thread access and role before deleting a comment", async () => {
+    const author = await writer();
+    const reviewer = await writer("Reviewer");
+    const staff = await insertUser({ role: "mita" });
+    const { id } = await insertTakeaway("in_review", author.id);
+    const api = callerFor(author.id).takeawayComments;
+    const own = await api.add({ body: "My note", takeawayId: id });
+    const other = await callerFor(reviewer.id).takeawayComments.add({
+      body: "Review",
+      takeawayId: id,
+    });
+    await callerFor(staff.id).takeaways.setStatus({ id, status: "published" });
+    await expect(api.remove({ id: own.id })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(
+      callerFor(reviewer.id).takeawayComments.remove({ id: other.id })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await testDb
+      .update(users)
+      .set({ role: "member" })
+      .where(eq(users.id, author.id));
+    await expect(api.remove({ id: own.id })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(
+      await testDb
+        .select()
+        .from(takeawayComments)
+        .where(eq(takeawayComments.takeawayId, id))
+    ).toHaveLength(2);
+  });
+
   it("rechecks role and status for existing callers and comments", async () => {
     const author = await writer();
     const reviewer = await writer("Reviewer");

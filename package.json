@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
+    "@floating-ui/dom": "^1.8.0",
     "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-accordion": "^1.2.21",
     "@radix-ui/react-alert-dialog": "^1.1.24",
@@ -56,6 +57,8 @@
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-query": "^5.104.1",
     "@tanstack/react-table": "^9.2.6",
+    "@tiptap/extension-bubble-menu": "3.32.0",
+    "@tiptap/extension-floating-menu": "3.32.0",
     "@tiptap/extension-table": "^3.32.0",
     "@tiptap/markdown": "^3.32.0",
     "@tiptap/pm": "^3.32.0",
