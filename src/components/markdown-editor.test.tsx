@@ -1,6 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { linkHref, MarkdownEditor } from "./markdown-editor";
+
+// jsdom has no layout; ProseMirror measures text when it scrolls to the cursor.
+const noRects = () => [] as unknown as DOMRectList;
+Range.prototype.getClientRects ??= noRects;
+Range.prototype.getBoundingClientRect ??= () => new DOMRect();
 
 describe("MarkdownEditor", () => {
   const setup = (value: string) => {
@@ -46,6 +52,25 @@ describe("MarkdownEditor", () => {
       ).toHaveLength(2)
     );
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("puts the cursor in the editor when its label is clicked", async () => {
+    render(
+      <>
+        <label htmlFor="notes" id="label">
+          Key points
+        </label>
+        <MarkdownEditor
+          aria-labelledby="label"
+          id="notes"
+          onChange={vi.fn()}
+          value="Halo"
+        />
+      </>
+    );
+    const box = await screen.findByRole("textbox", { name: "Key points" });
+    await userEvent.click(screen.getByText("Key points"));
+    await waitFor(() => expect(document.activeElement).toBe(box));
   });
 
   it("offers the formatting tools by name", async () => {

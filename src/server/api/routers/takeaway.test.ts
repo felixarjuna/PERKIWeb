@@ -87,7 +87,25 @@ describe("takeaways router", () => {
     ]);
     for (const row of list) {
       expect(row.takeaways.scheduleId).toBe(row.schedules.id);
-      expect(row.takeaways.keypoints).toBe(`Notes for ${row.schedules.title}`);
+      expect(row.takeaways.preview).toBe(`Notes for ${row.schedules.title}`);
+    }
+  });
+
+  it("lists a plain-text preview instead of the Markdown", async () => {
+    const api = await signedIn();
+    const schedule = await insertSchedule("Nuh", new Date("2026-03-01"));
+    await api.takeaways.addTakeaway({
+      contributors: [],
+      keypoints: "## Integritas Nuh\n\nNuh **taat**.\n\n- Mezbah",
+      scheduleId: schedule.id,
+    });
+
+    const [listed] = (await anonymousCaller().takeaways.getTakeaways({})).items;
+    const [managed] = (await api.takeaways.getManageable({})).items;
+
+    for (const row of [listed, managed]) {
+      expect(row?.takeaways.preview).toBe("Integritas Nuh\nNuh taat.\nMezbah");
+      expect(row?.takeaways).not.toHaveProperty("keypoints");
     }
   });
 
@@ -379,9 +397,11 @@ describe("takeaways router", () => {
       expect(list).toHaveLength(1);
       for (const row of [...list, single]) {
         expect(row.takeaways).not.toHaveProperty("authorId");
-        expect(row.takeaways).toMatchObject({ id, keypoints: "Notes" });
+        expect(row.takeaways).toMatchObject({ id });
         expect(row.schedules.title).toBe("Faith");
       }
+      expect(list[0]?.takeaways.preview).toBe("Notes");
+      expect(single.takeaways.keypoints).toBe("Notes");
     });
 
     it("marks canManage per viewer and never sends authorId", async () => {
@@ -401,7 +421,7 @@ describe("takeaways router", () => {
         >["items"]
       ) =>
         Object.fromEntries(
-          list.map((row) => [row.takeaways.keypoints, row.canManage])
+          list.map((row) => [row.takeaways.preview, row.canManage])
         );
 
       const asWriter = (await callerFor(mine.id).takeaways.getManageable({}))

@@ -1,3 +1,4 @@
+import { TableKit } from "@tiptap/extension-table";
 import { MarkdownManager } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 import type { Nodes } from "mdast";
@@ -12,6 +13,8 @@ export const editorExtensions = [
     link: { autolink: true, defaultProtocol: "https", openOnClick: false },
     underline: false,
   }),
+  // No toolbar button: a table pasted as Markdown survives editing.
+  TableKit.configure({ table: { resizable: false } }),
 ];
 
 let manager: MarkdownManager | undefined;

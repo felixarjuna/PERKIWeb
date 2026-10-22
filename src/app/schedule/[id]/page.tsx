@@ -6,11 +6,11 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
+import { markdownToPlainText } from "~/lib/markdown";
 import { api } from "~/trpc/server";
 import {
   contributorNames,
   fellowshipLabel,
-  preview,
   serviceDate,
 } from "../../takeaway/takeaway-format";
 import ScheduleCard from "../schedule-card";
@@ -97,7 +97,7 @@ export default async function GatheringPage({ params }: GatheringPageProps) {
                 <li key={note.id}>
                   <article className="relative rounded-xl bg-card p-4 transition-colors duration-150 hover:bg-accent/40 sm:p-6">
                     <p className="type-body line-clamp-3 whitespace-pre-line text-pretty">
-                      {preview(note.keypoints)}
+                      {markdownToPlainText(note.keypoints)}
                     </p>
                     <div className="type-body-sm mt-4 flex items-center justify-between gap-3 text-muted-foreground">
                       <p className="min-w-0">

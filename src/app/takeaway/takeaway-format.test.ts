@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   contributorNames,
   fellowshipLabel,
-  preview,
-  readingMinutes,
   serviceDate,
 } from "./takeaway-format";
 
@@ -31,29 +29,6 @@ describe("serviceDate", () => {
   it("reads the date in Aachen time", () => {
     expect(serviceDate(lateEvening)).toBe("16 Oct 2026");
     expect(serviceDate(lateEvening, "long")).toBe("Friday, 16 October 2026");
-  });
-});
-
-describe("preview", () => {
-  it("is the plain text, without blank lines or Markdown syntax", () => {
-    expect(preview("One.\n\nTwo.\nThree.")).toBe("One.\nTwo.\nThree.");
-    expect(preview("## Judul\n\n- **Satu**\n- Dua")).toBe("Judul\nSatu\nDua");
-  });
-});
-
-describe("readingMinutes", () => {
-  const words = (count: number) => new Array(count).fill("kata").join(" ");
-
-  it("estimates at 200 words a minute, at least one minute", () => {
-    expect(readingMinutes("")).toBe(1);
-    expect(readingMinutes(words(50))).toBe(1);
-    expect(readingMinutes(words(1000))).toBe(5);
-    expect(readingMinutes(`${words(700)}\n\n${words(500)}`)).toBe(6);
-  });
-
-  it("doesn't count Markdown syntax as words", () => {
-    // 300 one-word list items: 300 words, not 600 with the "-" markers.
-    expect(readingMinutes("- kata\n".repeat(300))).toBe(2);
   });
 });
 

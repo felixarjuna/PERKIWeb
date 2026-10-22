@@ -9,10 +9,10 @@ import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
 import { markdownToPlainText } from "~/lib/markdown";
 import { api } from "~/trpc/server";
+import { readingMinutes } from "../reading-time";
 import {
   contributorNames,
   fellowshipLabel,
-  readingMinutes,
   serviceDate,
 } from "../takeaway-format";
 import ShareButton from "./share-button";

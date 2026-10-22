@@ -22,9 +22,9 @@ describe("editorRoundTrip", () => {
     expect(out).toContain("b. Satu pelanggaran");
   });
 
-  it("drops tables, which the editor can't show", () => {
-    const table = "| a | b |\n| - | - |\n| 1 | 2 |";
-    expect(rendersTheSame(table, editorRoundTrip(table))).toBe(false);
+  it("keeps a pasted table", () => {
+    const table = "| Ayat | Isi |\n| - | - |\n| Kej 8:20 | Mezbah |";
+    expect(rendersTheSame(table, editorRoundTrip(table))).toBe(true);
   });
 });
 
