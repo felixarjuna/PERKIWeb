@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
+import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
 import { db } from "~/server";
 import { isAdmin } from "~/server/authz";
@@ -46,6 +47,15 @@ const publicTakeawayColumns = {
   scheduleId: takeaways.scheduleId,
   updatedAt: takeaways.updatedAt,
 };
+
+/**
+ * A list row's notes as their plain-text preview: lists show three lines, so
+ * they get the text without Markdown instead of the whole note to parse.
+ */
+const withPreview = <T extends { keypoints: string }>({
+  keypoints,
+  ...note
+}: T) => ({ ...note, preview: markdownToPlainText(keypoints) });
 
 const publicSelection = {
   schedules: getTableColumns(schedules),
@@ -178,7 +188,7 @@ export const takeawayRouter = createTRPCRouter({
           ({ takeaways: { authorId, ...note }, schedules: schedule }) => ({
             canManage: mayManage(authorId, viewer, staff),
             schedules: schedule,
-            takeaways: note,
+            takeaways: withPreview(note),
           })
         ),
         nextCursor: page.nextCursor,
@@ -224,7 +234,14 @@ export const takeawayRouter = createTRPCRouter({
         .where(where)
         .orderBy(...orderBy)
         .limit(input.limit + 1);
-      return toPage(rows, input.limit, cursorOf);
+      const page = toPage(rows, input.limit, cursorOf);
+      return {
+        items: page.items.map((row) => ({
+          schedules: row.schedules,
+          takeaways: withPreview(row.takeaways),
+        })),
+        nextCursor: page.nextCursor,
+      };
     }),
   /** The Aachen months (`yyyy-MM`) with takeaways, newest first, for filters. */
   months: publicProcedure.query(async () =>

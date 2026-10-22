@@ -21,7 +21,6 @@ import { api, type RouterOutputs } from "~/trpc/react";
 import {
   contributorNames,
   fellowshipLabel,
-  preview,
   serviceDate,
 } from "./takeaway-format";
 
@@ -136,7 +135,7 @@ function TakeawayCard({ item }: { item: Takeaway }) {
         {[schedule.bibleVerse, schedule.preacher].filter(Boolean).join(" · ")}
       </p>
       <p className="type-body mt-3 line-clamp-3 whitespace-pre-line text-pretty">
-        {preview(takeaway.keypoints)}
+        {takeaway.preview}
       </p>
       <div className="type-body-sm mt-4 flex items-center justify-between gap-3 text-muted-foreground">
         <p className="min-w-0">

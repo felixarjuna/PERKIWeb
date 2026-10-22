@@ -19,7 +19,8 @@ const PADDED_MARKER = /^([ \t]*(?:[-*+]|\d{1,9}[.)]))[ \t]{2,}(?=\S)/gm;
 const LETTER_MARKER =
   /^([ \t]*(?:[a-zA-Z]{1,2}|[ivxlcdmIVXLCDM]+))([.)])(?=[ \t])/gm;
 
-const parser = unified().use(remarkParse).use(remarkPlugins);
+let parser: ReturnType<typeof createParser> | undefined;
+const createParser = () => unified().use(remarkParse).use(remarkPlugins);
 
 /**
  * Takeaway text as the renderer and the editor read it. Older takeaways were
@@ -36,6 +37,7 @@ export function tidyMarkdown(text: string) {
 }
 
 export function parseMarkdown(markdown: string): Root {
+  parser ??= createParser();
   return parser.runSync(parser.parse(tidyMarkdown(markdown))) as Root;
 }
 

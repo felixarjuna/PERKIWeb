@@ -83,7 +83,7 @@ describe("takeaway paging", () => {
     });
 
     expect(
-      [...first.items, ...second.items].map((row) => row.takeaways.keypoints)
+      [...first.items, ...second.items].map((row) => row.takeaways.preview)
     ).toEqual(["Second", "First"]);
     expect(second.nextCursor).toBeNull();
   });

@@ -1,11 +1,8 @@
 import { DateTime } from "luxon";
 import type { EventTypeEnum } from "~/lib/db/schema/schema";
-import { markdownToPlainText } from "~/lib/markdown";
 
 /** Gatherings happen in Aachen, so dates read in its zone for everyone. */
 const ZONE = "Europe/Berlin";
-
-const SPACES = /\s+/;
 
 const names = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
 
@@ -32,27 +29,4 @@ export function contributorNames(contributors: unknown) {
         .filter(Boolean)
     : [];
   return list.length > 0 ? names.format(list) : null;
-}
-
-/**
- * Adults read English non-fiction at ~238 words a minute (Brysbaert 2019).
- * Notes are mostly Indonesian, whose affixed words run longer, and are read
- * on phones, so estimate a little slower.
- */
-const WORDS_PER_MINUTE = 200;
-
-/** Estimated reading time of a takeaway, in whole minutes, at least 1. */
-export function readingMinutes(markdown: string) {
-  const words = markdownToPlainText(markdown)
-    .split(SPACES)
-    .filter(Boolean).length;
-  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
-}
-
-/**
- * List preview: the Markdown's plain text, one line per paragraph or list
- * item, so the 3-line clamp never ends on a gap.
- */
-export function preview(markdown: string) {
-  return markdownToPlainText(markdown);
 }
