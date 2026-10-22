@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
+import { TakeawayComments } from "~/components/admin/content/takeaway-comments";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 import { canManageTakeaway } from "~/server/api/routers/takeaway";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
@@ -35,6 +36,7 @@ export default async function EditorPage({
       title="Edit takeaway"
     >
       <EditTakeawayForm />
+      <TakeawayComments takeawayId={takeawayId} />
     </AdminShell>
   );
 }

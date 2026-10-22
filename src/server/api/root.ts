@@ -11,6 +11,7 @@ import { scheduleRouter } from "./routers/schedules";
 import { settingsRouter } from "./routers/settings";
 import { speakerRouter } from "./routers/speakers";
 import { takeawayRouter } from "./routers/takeaway";
+import { takeawayCommentsRouter } from "./routers/takeaway-comments";
 import { userRouter } from "./routers/users";
 
 /**
@@ -30,6 +31,7 @@ export const appRouter = createTRPCRouter({
   schedules: scheduleRouter,
   settings: settingsRouter,
   speakers: speakerRouter,
+  takeawayComments: takeawayCommentsRouter,
   takeaways: takeawayRouter,
   users: userRouter,
 });
