@@ -174,7 +174,7 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
     <div
       aria-controls={editor.view.dom.id || undefined}
       aria-label="Formatting"
-      className="flex flex-wrap items-center gap-1 border-background border-b p-1"
+      className="flex items-center gap-1 overflow-x-auto border-background border-b p-1"
       role="toolbar"
     >
       <Tool

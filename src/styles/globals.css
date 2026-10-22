@@ -441,34 +441,43 @@
  * (components/markdown-editor.tsx), so what writers see is what readers
  * get. Headings start at h2 below the page title. Tight and loose lists
  * read alike: the editor saves every list tight.
+ *
+ * Spacing: blocks sit one gap apart; a heading has about three times more
+ * room above than below, so it reads as the start of what follows; list
+ * items sit closer than paragraphs, so a list reads as one block.
  */
 @layer components {
   .takeaway-prose {
+    --prose-gap: 1.125rem;
     overflow-wrap: anywhere;
     @apply type-body;
   }
 
   .takeaway-prose > * + * {
-    margin-top: 1.25rem;
+    margin-top: var(--prose-gap);
   }
 
   .takeaway-prose h2 {
-    @apply type-subheading;
+    @apply type-heading;
   }
 
   .takeaway-prose h3 {
-    @apply type-lead;
+    @apply type-subheading;
   }
 
   .takeaway-prose > h2:not(:first-child) {
-    margin-top: 2.5rem;
+    margin-top: 2.25rem;
   }
 
   .takeaway-prose > h3:not(:first-child) {
-    margin-top: 2rem;
+    margin-top: 1.75rem;
   }
 
-  .takeaway-prose > :is(h2, h3) + * {
+  .takeaway-prose > h2 + * {
+    margin-top: 0.75rem;
+  }
+
+  .takeaway-prose > h3 + * {
     margin-top: 0.5rem;
   }
 
@@ -494,13 +503,18 @@
     padding-inline-start: 0.25rem;
   }
 
-  .takeaway-prose li::marker {
+  .takeaway-prose ul > li::marker {
     color: var(--color-muted-foreground);
+  }
+
+  /* Numbers are content (point 1, point 2), so they read at full strength. */
+  .takeaway-prose ol > li::marker {
+    font-variant-numeric: tabular-nums;
   }
 
   .takeaway-prose li + li,
   .takeaway-prose li > * + * {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
   }
 
   .takeaway-prose blockquote {
@@ -543,7 +557,7 @@
   }
 
   .takeaway-prose > hr {
-    margin-block: 2.5rem;
+    margin-block: 2.25rem;
   }
 
   .takeaway-prose table {
