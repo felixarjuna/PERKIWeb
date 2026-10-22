@@ -1,5 +1,6 @@
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { BusFront, Clock3, MapPin } from "lucide-react";
+import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
 import MapEmbed from "./map-embed";
 import Section from "./section";
@@ -50,11 +51,15 @@ export default function VisitUs({ discordUrl }: { discordUrl: string }) {
                 Stop Bendplatz / Jupp-Müller-Straße
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {busLines.map((line) => (
-                    <li
-                      className="type-caption rounded-full bg-paper-foreground px-2 py-1 text-paper tabular-nums"
-                      key={line}
-                    >
-                      Line {line}
+                    <li key={line}>
+                      <Badge
+                        className="tabular-nums"
+                        icon={BusFront}
+                        size="status"
+                        variant="inverse"
+                      >
+                        Line {line}
+                      </Badge>
                     </li>
                   ))}
                 </ul>

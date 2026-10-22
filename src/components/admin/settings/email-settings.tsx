@@ -1,5 +1,6 @@
 "use client";
 
+import { Plug, Unplug } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { QueryMessage } from "~/components/admin/admin-controls";
@@ -37,7 +38,11 @@ function EmailForm({ config }: { config: RouterOutputs["settings"]["email"] }) {
         }
         title="Email"
       >
-        <Badge variant="secondary">
+        <Badge
+          icon={config.connected ? Plug : Unplug}
+          size="status"
+          variant="secondary"
+        >
           {config.connected ? "Connected" : "Not connected"}
         </Badge>
       </SettingRow>

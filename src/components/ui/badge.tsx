@@ -27,18 +27,20 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         draft: "border-transparent bg-secondary text-muted-foreground",
+        inverse: "border-transparent bg-paper-foreground text-paper",
         outline: "text-foreground",
         published: "border-transparent bg-paper text-paper-foreground",
         review: "border-transparent bg-accent text-foreground",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        surface: "border-transparent bg-background text-foreground shadow-lg",
       },
     },
   }
 );
 
 export interface BadgeProps
-  extends ComponentProps<"div">,
+  extends ComponentProps<"span">,
     VariantProps<typeof badgeVariants> {
   icon?: LucideIcon;
 }
@@ -51,16 +53,20 @@ function Badge({
   variant,
   ...props
 }: BadgeProps) {
-  const content = Icon ? <span>{children}</span> : children;
+  const content = Icon ? <span className="min-w-0">{children}</span> : children;
   return (
-    <div className={cn(badgeVariants({ size, variant }), className)} {...props}>
+    <span
+      className={cn(badgeVariants({ size, variant }), className)}
+      data-slot="badge"
+      {...props}
+    >
       {Icon ? (
         <Icon aria-hidden="true" data-icon="inline-start">
           <title>Badge icon</title>
         </Icon>
       ) : null}
       {content}
-    </div>
+    </span>
   );
 }
 

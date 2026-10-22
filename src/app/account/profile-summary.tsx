@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, CircleCheck, Lock } from "lucide-react";
+import { ChevronRight, CircleCheck, Lock, Plus } from "lucide-react";
 import { DateTime } from "luxon";
 import type React from "react";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import ProfileFieldInput, {
   type EditableField,
   saveInputOf,
 } from "~/components/profile-field-input";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -136,9 +137,9 @@ function EditableRow({
   const placeholder = optional ? (
     <span className="type-body-sm text-muted-foreground">Optional</span>
   ) : (
-    <span className="type-caption rounded-full bg-paper px-2 py-1 text-paper-foreground">
+    <Badge icon={Plus} size="status" variant="published">
       Add
-    </span>
+    </Badge>
   );
   return (
     <li>

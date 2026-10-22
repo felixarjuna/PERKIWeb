@@ -3,7 +3,8 @@
 import { toast } from "sonner";
 import RecordActions from "~/components/admin/content/record-actions";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
-import PrayerStatus from "~/components/prayer/prayer-status";
+import { Badge } from "~/components/ui/badge";
+import { prayerBadgeStyles } from "~/lib/prayer-badge-styles";
 import { timeAgo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
@@ -29,16 +30,16 @@ export default function OwnPrayers() {
       <ul aria-labelledby="own-prayers" className="grid gap-3">
         {query.data.map((prayer) => {
           const published = prayer.visibility === "published";
+          const { label, ...badge } = prayerBadgeStyles[prayer.visibility];
           return (
             <li
               className="flex flex-col gap-3 rounded-xl bg-card p-4 sm:p-6"
               key={prayer.id}
             >
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <PrayerStatus
-                  privateLabel="Waiting for review"
-                  published={published}
-                />
+                <Badge size="status" {...badge}>
+                  {published ? label : "Waiting for review"}
+                </Badge>
                 <span className="type-caption text-muted-foreground">
                   {[
                     prayer.isAnonymous ? "Anonymous" : "",
