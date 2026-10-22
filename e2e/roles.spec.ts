@@ -127,9 +127,8 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   const own = page.getByRole("listitem").filter({ hasText: keypoints });
   await loadUntilVisible(page, own);
   await own
-    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
+    .getByRole("link", { exact: true, name: `Edit ${scheduleTitle}` })
     .click();
-  await page.getByRole("menuitem", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   // Wait for the takeaway to load into the editor before replacing it.
   const editor = page.getByLabel("Key points", { exact: true });
