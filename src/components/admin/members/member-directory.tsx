@@ -275,50 +275,45 @@ export default function MemberDirectory() {
     />
   );
 
-  if (query.isLoading || query.isError) {
-    return (
-      <div className="flex min-w-0 flex-col gap-3">
-        {toolbar}
-        {query.isError ? (
-          <QueryMessage
-            error
-            onRetry={() => {
-              query.refetch();
-            }}
-          />
-        ) : (
-          <QueryMessage>Loading the member directory…</QueryMessage>
-        )}
-        {details}
-      </div>
-    );
-  }
+  const status = query.isError ? (
+    <QueryMessage
+      error
+      onRetry={() => {
+        query.refetch();
+      }}
+    />
+  ) : (
+    <QueryMessage>Loading the member directory…</QueryMessage>
+  );
 
   return (
-    <>
-      <DataTable
-        empty={
-          records.length
-            ? "No members match these filters. Try another search or reset the filters."
-            : "No member profiles yet. Registrations will appear here."
-        }
-        footer={
-          <DataTablePagination
-            pageSizeOptions={PAGE_SIZES}
-            summary={
-              isFiltered
-                ? `${filtered} of ${records.length} members`
-                : `${records.length} members`
-            }
-            table={table}
-          />
-        }
-        label="Fellowship members"
-        table={table}
-      >
-        {toolbar}
-      </DataTable>
+    <div className="flex min-w-0 flex-col gap-3">
+      {toolbar}
+      {query.isLoading || query.isError ? (
+        status
+      ) : (
+        <DataTable
+          empty={
+            records.length
+              ? "No members match these filters. Try another search or reset the filters."
+              : "No member profiles yet. Registrations will appear here."
+          }
+          footer={
+            <DataTablePagination
+              pageSizeOptions={PAGE_SIZES}
+              summary={
+                isFiltered
+                  ? `${filtered} of ${records.length} members`
+                  : `${records.length} members`
+              }
+              table={table}
+            />
+          }
+          label="Fellowship members"
+          table={table}
+        />
+      )}
       {details}
-    </>
+    </div>
   );
 }

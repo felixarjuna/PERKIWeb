@@ -6,6 +6,7 @@ const SECOND_PAGE = /page=2/;
 const MEMBER_PARAM = /member=/;
 const NAME_DESC = /sort=name\.desc/;
 const BIRTHDAY_PARAM = /birthday=/;
+const LOADING_SEARCH_PARAM = /q=Dash\+Seed\+06/;
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
 const NOT_FOUND = 404;
@@ -81,6 +82,56 @@ test("directory supports search, sort, pagination, URL state and details", async
     ""
   );
   await expect(rows.filter({ hasText: "Dash Seed 12" })).toHaveCount(1);
+});
+
+test("directory keeps the focused search and filters when members finish loading", async ({
+  page,
+}) => {
+  await adminLogin(page);
+  const responseGate = Promise.withResolvers<void>();
+  await page.route("**/api/trpc/*profiles.members*", async (route) => {
+    await responseGate.promise;
+    await route.continue();
+  });
+  await page.goto("/admin/members?birthday=10");
+  const loading = page
+    .getByRole("status")
+    .filter({ hasText: "Loading the member directory…" });
+  const search = page.getByRole("searchbox", { name: "Search members" });
+  await expect(loading).toBeVisible();
+  const originalInput = await search.evaluateHandle((input) => input);
+  try {
+    await search.fill("Dash Seed 06");
+    await expect(search).toHaveValue("Dash Seed 06");
+    await expect(page).toHaveURL(LOADING_SEARCH_PARAM);
+    await expect(page).toHaveURL(BIRTHDAY_PARAM);
+    await expect(loading).toBeVisible();
+  } finally {
+    responseGate.resolve();
+  }
+  await expect(page.getByRole("table")).toBeVisible();
+  expect(
+    await search.evaluate(
+      (input, original) => input === original,
+      originalInput
+    )
+  ).toBe(true);
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue("Dash Seed 06");
+  await expect(page).toHaveURL(LOADING_SEARCH_PARAM);
+  await expect(page).toHaveURL(BIRTHDAY_PARAM);
+  await expect(
+    page.getByRole("button", { name: "Birthday October" })
+  ).toBeVisible();
+  const rows = page.getByRole("table").getByRole("row");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(1)).toContainText("Dash Seed 06");
+  await search.press("End");
+  await search.press("x");
+  await expect(search).toHaveValue("Dash Seed 06x");
+  await expect(
+    page.getByText("No members match these filters.", { exact: false })
+  ).toBeVisible();
 });
 
 test("malformed query state and unknown members remain recoverable", async ({
