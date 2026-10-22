@@ -14,7 +14,10 @@ const badgeVariants = cva(
       size: {
         default: "px-2.5 py-0.5 font-semibold text-xs",
         status:
-          "type-caption min-h-7 w-fit shrink-0 gap-1 whitespace-nowrap px-2 py-1 font-medium [&_svg]:size-3 [&_svg]:shrink-0",
+          // Trim the label to its letters (cap height to baseline), so the
+          // flex centering lines the letters up with the icon. Without it,
+          // Satoshi's metrics leave the text about 1.5px high.
+          "type-caption min-h-7 w-fit shrink-0 gap-1 whitespace-nowrap px-2 py-1 font-medium [&>span]:[text-box:trim-both_cap_alphabetic] [&_svg]:size-3 [&_svg]:shrink-0",
       },
       variant: {
         default:
