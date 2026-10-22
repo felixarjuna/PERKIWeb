@@ -30,6 +30,12 @@ const insertSchedule = async (title: string, date: Date) => {
 const signedIn = async () =>
   callerFor((await insertUser({ role: "admin" })).id);
 const signedInMember = async () => callerFor((await insertUser()).id);
+const staff = async () => callerFor((await insertUser({ role: "mita" })).id);
+
+/** Publishes the takeaway as a staff member, so the public can read it. */
+const publish = async (id: number) => {
+  await (await staff()).takeaways.setStatus({ id, status: "published" });
+};
 
 const onlyTakeaway = async () => {
   const rows = await testDb.select().from(takeaways);
@@ -52,6 +58,7 @@ describe("takeaways router", () => {
       scheduleId: schedule.id,
     });
     const { id } = await onlyTakeaway();
+    await publish(id);
 
     const result = await anonymousCaller().takeaways.getTakeawayById({ id });
     expect(result.takeaways).toMatchObject({
@@ -77,6 +84,10 @@ describe("takeaways router", () => {
         })
       )
     );
+    for (const row of await testDb.select().from(takeaways)) {
+      // biome-ignore lint/performance/noAwaitInLoops: fixtures, one at a time.
+      await publish(row.id);
+    }
 
     const list = (await anonymousCaller().takeaways.getTakeaways({})).items;
 
@@ -389,6 +400,7 @@ describe("takeaways router", () => {
       const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
       await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
       const { id } = await onlyTakeaway();
+      await publish(id);
       const visitor = anonymousCaller();
 
       const list = (await visitor.takeaways.getTakeaways({})).items;
@@ -411,9 +423,11 @@ describe("takeaways router", () => {
       await callerFor(mine.id).takeaways.addTakeaway(
         sample(schedule.id, "Mine")
       );
-      await callerFor(other.id).takeaways.addTakeaway(
-        sample(schedule.id, "Theirs")
-      );
+      // Another writer's takeaway is only listed once it is in review.
+      await callerFor(other.id).takeaways.addTakeaway({
+        ...sample(schedule.id, "Theirs"),
+        status: "in_review",
+      });
       await testDb.insert(takeaways).values(sample(schedule.id, "Legacy"));
       const flags = (
         list: Awaited<
@@ -447,6 +461,195 @@ describe("takeaways router", () => {
         expect(row.takeaways).not.toHaveProperty("authorId");
         expect(row.schedules.title).toBe("Faith");
       }
+    });
+  });
+
+  describe("status", () => {
+    const sample = (scheduleId: number, keypoints = "Notes") => ({
+      contributors: [],
+      keypoints,
+      scheduleId,
+    });
+    const rows = () => testDb.select().from(takeaways).orderBy(takeaways.id);
+    /** A writer, their takeaway (as `status`) and the schedule it belongs to. */
+    const draftBy = async (
+      role: "writer" | "mita" = "writer",
+      status: "draft" | "in_review" = "draft"
+    ) => {
+      const author = await insertUser({ role });
+      const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
+      await callerFor(author.id).takeaways.addTakeaway({
+        ...sample(schedule.id),
+        status,
+      });
+      const { id } = await onlyTakeaway();
+      return { author, id, schedule };
+    };
+    const statusOf = async (id: number) =>
+      (await rows()).find((row) => row.id === id)?.status;
+
+    it("starts a new takeaway as a draft that only its author and staff can read", async () => {
+      const { author, id, schedule } = await draftBy();
+      const visitor = anonymousCaller();
+      const member = await signedInMember();
+      const otherWriter = callerFor((await insertUser({ role: "writer" })).id);
+
+      expect(await statusOf(id)).toBe("draft");
+      expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
+      expect(await visitor.takeaways.months()).toEqual([]);
+      for (const api of [visitor, member, otherWriter]) {
+        // biome-ignore lint/performance/noAwaitInLoops: assertions in order.
+        await expect(
+          api.takeaways.getTakeawayById({ id })
+        ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      }
+      const gathering = await visitor.schedules.getGathering({
+        id: schedule.id,
+      });
+      expect(gathering.takeawayIds).toEqual([]);
+      expect((await otherWriter.takeaways.getManageable({})).items).toEqual([]);
+
+      const mine = await callerFor(author.id).takeaways.getTakeawayById({ id });
+      expect(mine.takeaways).toMatchObject({ id, status: "draft" });
+      const staffView = await (await staff()).takeaways.getTakeawayById({ id });
+      expect(staffView.takeaways.status).toBe("draft");
+      const manageable = (
+        await callerFor(author.id).takeaways.getManageable({})
+      ).items;
+      expect(manageable.map((row) => row.takeaways.status)).toEqual(["draft"]);
+    });
+
+    it("lets a writer send their own draft to review and withdraw it, not publish it", async () => {
+      const { author, id } = await draftBy();
+      const api = callerFor(author.id);
+
+      await api.takeaways.setStatus({ id, status: "in_review" });
+      expect(await statusOf(id)).toBe("in_review");
+      await expect(
+        api.takeaways.setStatus({ id, status: "published" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(await statusOf(id)).toBe("in_review");
+      await api.takeaways.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+    });
+
+    it("can be created straight into review, never straight to published", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      expect(await statusOf(id)).toBe("in_review");
+
+      const writer = callerFor((await insertUser({ role: "writer" })).id);
+      const schedule = await insertSchedule("Hope", new Date("2026-04-01"));
+      await expect(
+        writer.takeaways.addTakeaway({
+          ...sample(schedule.id),
+          status: "published",
+        } as never)
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    });
+
+    it("shows a takeaway in review to other writers, read-only", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      const other = callerFor((await insertUser({ role: "writer" })).id);
+
+      const single = await other.takeaways.getTakeawayById({ id });
+      expect(single.takeaways.status).toBe("in_review");
+      const list = (await other.takeaways.getManageable({})).items;
+      expect(list.map((row) => row.takeaways.status)).toEqual(["in_review"]);
+      expect(list[0]).toMatchObject({ canManage: false, canPublish: false });
+      await expect(
+        other.takeaways.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(
+        other.takeaways.updateTakeaway({ ...sample(1, "Hacked"), id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      // Members still can't see it.
+      await expect(
+        (await signedInMember()).takeaways.getTakeawayById({ id })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      expect(
+        (await anonymousCaller().takeaways.getTakeaways({})).items
+      ).toEqual([]);
+    });
+
+    it("lets staff publish, which records who and when, and send back, which clears it", async () => {
+      const { id, schedule } = await draftBy("writer", "in_review");
+      const mita = await insertUser({ role: "mita" });
+      const before = Date.now();
+
+      await callerFor(mita.id).takeaways.setStatus({ id, status: "published" });
+
+      const [published] = await rows();
+      expect(published).toMatchObject({
+        publishedById: mita.id,
+        status: "published",
+      });
+      expect(published?.publishedAt?.getTime()).toBeGreaterThanOrEqual(before);
+      const visitor = anonymousCaller();
+      const list = (await visitor.takeaways.getTakeaways({})).items;
+      expect(list.map((row) => row.takeaways.id)).toEqual([id]);
+      expect(list[0]?.takeaways).not.toHaveProperty("publishedById");
+      expect(await visitor.takeaways.months()).toEqual(["2026-03"]);
+      expect(
+        (await visitor.schedules.getGathering({ id: schedule.id })).takeawayIds
+      ).toEqual([id]);
+
+      await callerFor(mita.id).takeaways.setStatus({ id, status: "draft" });
+
+      const [sentBack] = await rows();
+      expect(sentBack).toMatchObject({
+        publishedAt: null,
+        publishedById: null,
+        status: "draft",
+      });
+      expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
+    });
+
+    it("keeps a writer from editing or deleting their own published takeaway", async () => {
+      const { author, id, schedule } = await draftBy();
+      await publish(id);
+      const api = callerFor(author.id);
+
+      await expect(
+        api.takeaways.updateTakeaway({ ...sample(schedule.id, "Later"), id })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(api.takeaways.deleteTakeaway({ id })).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      await expect(
+        api.takeaways.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      const [row] = (await api.takeaways.getManageable({})).items;
+      expect(row).toMatchObject({ canManage: false, canPublish: false });
+
+      // Staff still can.
+      await (await staff()).takeaways.updateTakeaway({
+        ...sample(schedule.id, "Later"),
+        id,
+      });
+      expect((await onlyTakeaway()).keypoints).toBe("Later");
+    });
+
+    it("filters the manageable list by status and returns NOT_FOUND for a missing takeaway", async () => {
+      const { author, schedule } = await draftBy();
+      const api = callerFor(author.id);
+      await api.takeaways.addTakeaway({
+        ...sample(schedule.id, "Review me"),
+        status: "in_review",
+      });
+
+      const drafts = (await api.takeaways.getManageable({ status: "draft" }))
+        .items;
+      expect(drafts.map((row) => row.takeaways.keypoints)).toEqual(["Notes"]);
+      const inReview = (
+        await api.takeaways.getManageable({ status: "in_review" })
+      ).items;
+      expect(inReview.map((row) => row.takeaways.keypoints)).toEqual([
+        "Review me",
+      ]);
+      expect((await api.takeaways.getManageable({})).items).toHaveLength(2);
+      await expect(
+        api.takeaways.setStatus({ id: MISSING_ID, status: "in_review" })
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
   });
 });

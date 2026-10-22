@@ -134,6 +134,13 @@
       "when": 1792668829221,
       "tag": "0018_invites_and_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792672249353,
+      "tag": "0019_takeaway_status",
+      "breakpoints": true
     }
   ]
 }

@@ -55,28 +55,57 @@ export const schedules = pgTable("schedules", {
     .$onUpdate(() => new Date()),
 });
 
-export const takeaways = pgTable("takeaways", {
-  /** Who wrote the takeaway; null for takeaways created before authorship. */
-  authorId: text("authorId").references(() => users.id, {
-    onDelete: "set null",
-  }),
-  contributors: json("contributors").notNull(),
-  createdAt: timestamp("createdAt", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  id: serial("id").primaryKey().notNull(),
-  keypoints: text("keypoints").notNull(),
-  scheduleId: integer("scheduleId")
-    .notNull()
-    .references(() => schedules.id, { onDelete: "cascade" }),
-  updatedAt: timestamp("updatedAt", {
-    mode: "date",
-    withTimezone: true,
-  })
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const TAKEAWAY_STATUSES = ["draft", "in_review", "published"] as const;
+export type TakeawayStatus = (typeof TAKEAWAY_STATUSES)[number];
+
+export const takeaways = pgTable(
+  "takeaways",
+  {
+    /** Who wrote the takeaway; null for takeaways created before authorship. */
+    authorId: text("authorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    contributors: json("contributors").notNull(),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    id: serial("id").primaryKey().notNull(),
+    keypoints: text("keypoints").notNull(),
+    /** When the takeaway was (last) published; null while it is not. */
+    publishedAt: timestamp("publishedAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    /** Who published it; null while it is not published. */
+    publishedById: text("publishedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    scheduleId: integer("scheduleId")
+      .notNull()
+      .references(() => schedules.id, { onDelete: "cascade" }),
+    /**
+     * draft → in_review → published. The database default is `published` so
+     * the release before #56 (which never sets it) keeps publishing as it
+     * did; the app always sets the status explicitly.
+     */
+    status: text("status", { enum: TAKEAWAY_STATUSES })
+      .default("published")
+      .notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    check(
+      "takeaways_status_check",
+      sql`${t.status} in ('draft', 'in_review', 'published')`
+    ),
+  ]
+);
 
 export const prayers = pgTable("prayers", {
   /** Who submitted the prayer; null for prayers created before authorship. */
