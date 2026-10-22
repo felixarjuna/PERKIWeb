@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { REQUESTABLE_ROLES } from "~/lib/access";
 import { eventTypeEnum, TAKEAWAY_STATUSES } from "~/lib/db/schema/schema";
+import { BIO_MAX_LENGTH } from "~/lib/profile-completion";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 
@@ -90,6 +91,8 @@ const profileText = z.string().trim().max(200);
 /** The caller's own member details; omitted fields stay as they are. */
 export const saveProfileSchema = z.object({
   address: profileText.optional(),
+  /** "About me": a few lines, outside profile completion. */
+  bio: z.string().trim().max(BIO_MAX_LENGTH).optional(),
   birthday: z.date().nullable().optional(),
   location: profileText.optional(),
   major: profileText.optional(),
