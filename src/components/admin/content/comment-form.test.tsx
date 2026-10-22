@@ -4,33 +4,16 @@ import { describe, expect, it } from "vitest";
 import { CommentForm } from "./comment-form";
 
 describe("comment form", () => {
-  it("inserts a selected quote, preserves the comment draft and focuses its field", () => {
-    const submit = async () => {
-      await Promise.resolve();
-    };
-    const view = render(<CommentForm onSubmit={submit} />);
-    fireEvent.change(screen.getByLabelText("Comment"), {
-      target: { value: "My feedback" },
-    });
-    view.rerender(
-      <CommentForm
-        onSubmit={submit}
-        quoteRequest={{ text: "Abraham believed God" }}
-      />
-    );
-    expect(
-      screen.getByLabelText<HTMLTextAreaElement>("Quoted passage (optional)")
-        .value
-    ).toBe("Abraham believed God");
-    expect(screen.getByLabelText<HTMLTextAreaElement>("Comment").value).toBe(
-      "My feedback"
-    );
-    expect(document.activeElement).toBe(screen.getByLabelText("Comment"));
+  it("offers one general-comment field without a manual quote input", () => {
+    render(<CommentForm onSubmit={async () => Promise.resolve()} />);
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(screen.queryByLabelText("Quoted passage (optional)")).toBeNull();
+    expect(screen.getByPlaceholderText("Share your feedback…")).toBeTruthy();
   });
 
   it("keeps the draft on failure and clears it after a successful retry", async () => {
     let attempts = 0;
-    const submitted: { body: string; quote: string }[] = [];
+    const submitted: { body: string }[] = [];
     render(
       <CommentForm
         onSubmit={async (input) => {
@@ -48,10 +31,6 @@ describe("comment form", () => {
       screen.getByLabelText("Comment"),
       "Add the verse reference."
     );
-    await user.type(
-      screen.getByLabelText("Quoted passage (optional)"),
-      "Abraham believed God"
-    );
     await user.click(screen.getByRole("button", { name: "Add comment" }));
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Please try again."
@@ -65,9 +44,7 @@ describe("comment form", () => {
         ""
       )
     );
-    expect(submitted).toEqual([
-      { body: "Add the verse reference.", quote: "Abraham believed God" },
-    ]);
+    expect(submitted).toEqual([{ body: "Add the verse reference." }]);
   });
 
   it("does not submit whitespace-only comments", () => {

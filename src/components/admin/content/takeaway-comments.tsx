@@ -3,73 +3,11 @@
 import { useId } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import { CommentForm } from "./comment-form";
+import { CommentItem } from "./comment-item";
 
-type Comment = RouterOutputs["takeawayComments"]["list"]["comments"][number];
-
-function CommentItem({
-  comment,
-  canComment,
-  pending,
-  onResolve,
-}: {
-  comment: Comment;
-  canComment: boolean;
-  pending: boolean;
-  onResolve: (id: number, resolved: boolean) => void;
-}) {
-  return (
-    <li className="space-y-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <p className="font-medium">
-          {comment.author?.name ?? "Deleted account"}
-          {comment.mine ? " (you)" : ""}
-        </p>
-        <time
-          className="text-muted-foreground"
-          dateTime={comment.createdAt.toISOString()}
-        >
-          {comment.createdAt.toLocaleString("en-GB", {
-            timeZone: "Europe/Berlin",
-          })}
-        </time>
-      </div>
-      {comment.quote ? (
-        <blockquote className="whitespace-pre-wrap break-words border-l-2 pl-3 text-muted-foreground text-sm">
-          {comment.quote}
-        </blockquote>
-      ) : null}
-      <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-muted-foreground text-sm">
-          {comment.resolvedAt
-            ? `Resolved by ${comment.resolvedBy?.name ?? "Deleted account"}`
-            : "Open"}
-        </p>
-        {canComment ? (
-          <Button
-            disabled={pending}
-            onClick={() => onResolve(comment.id, !comment.resolvedAt)}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {comment.resolvedAt ? "Reopen" : "Resolve"}
-          </Button>
-        ) : null}
-      </div>
-    </li>
-  );
-}
-
-export function TakeawayComments({
-  takeawayId,
-  quoteRequest,
-}: {
-  takeawayId: number;
-  quoteRequest?: { text: string } | null;
-}) {
+export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
   const headingId = useId();
   const utils = api.useUtils();
   const thread = api.takeawayComments.list.useQuery(
@@ -80,6 +18,7 @@ export function TakeawayComments({
     await utils.takeawayComments.list.invalidate({ takeawayId });
   };
   const add = api.takeawayComments.add.useMutation();
+  const remove = api.takeawayComments.remove.useMutation();
   const resolve = api.takeawayComments.setResolved.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: refresh,
@@ -112,7 +51,7 @@ export function TakeawayComments({
           <Button
             onClick={() => thread.refetch()}
             type="button"
-            variant="outline"
+            variant="secondary"
           >
             Try again
           </Button>
@@ -130,8 +69,13 @@ export function TakeawayComments({
                   canComment={data.canComment}
                   comment={comment}
                   key={comment.id}
+                  onDelete={async (id) => {
+                    await remove.mutateAsync({ id });
+                    await refresh();
+                    toast.success("Comment deleted.");
+                  }}
                   onResolve={(id, resolved) => resolve.mutate({ id, resolved })}
-                  pending={resolve.isPending}
+                  pending={resolve.isPending || remove.isPending}
                 />
               ))}
             </ol>
@@ -147,7 +91,6 @@ export function TakeawayComments({
                 await refresh();
                 toast.success("Comment added.");
               }}
-              quoteRequest={quoteRequest}
             />
           ) : (
             <p className="text-muted-foreground text-sm">

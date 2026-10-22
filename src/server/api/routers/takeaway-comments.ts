@@ -89,7 +89,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
       const canComment = await authorizeThread(tx, input.takeawayId, viewer);
       const rows = await tx
         .select({
-          author: { name: author.name },
+          author: { id: author.id, image: author.image, name: author.name },
           authorId: takeawayComments.authorId,
           body: takeawayComments.body,
           createdAt: takeawayComments.createdAt,
@@ -107,11 +107,51 @@ export const takeawayCommentsRouter = createTRPCRouter({
         canComment,
         comments: rows.map(({ authorId, ...comment }) => ({
           ...comment,
+          author: comment.author
+            ? { image: comment.author.image, name: comment.author.name }
+            : null,
           mine: authorId === viewer.id,
         })),
       };
     });
   }),
+  remove: takeawayProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const viewer = {
+        id: ctx.session.user.id,
+        role: await getRole(ctx.session.user.id),
+      };
+      return await db.transaction(async (tx) => {
+        const [comment] = await tx
+          .select({
+            authorId: takeawayComments.authorId,
+            takeawayId: takeawayComments.takeawayId,
+          })
+          .from(takeawayComments)
+          .where(eq(takeawayComments.id, input.id));
+        if (!comment) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Comment not found.",
+          });
+        }
+        assertWritable(await authorizeThread(tx, comment.takeawayId, viewer));
+        if (comment.authorId !== viewer.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete your own comments.",
+          });
+        }
+        return affectedRow(
+          await tx
+            .delete(takeawayComments)
+            .where(eq(takeawayComments.id, input.id))
+            .returning({ id: takeawayComments.id }),
+          "Comment"
+        );
+      });
+    }),
   setResolved: takeawayProcedure
     .input(z.object({ id: z.number().int().positive(), resolved: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
