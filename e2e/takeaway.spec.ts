@@ -441,7 +441,7 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     page.getByRole("menuitem", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
-  // Only mita unpublishes, after confirming; it has to be reviewed again.
+  // Mita (or the dev) unpublishes after confirming; it is reviewed again.
   await loginAs(page, ADMIN);
   const sentBack = await findInList(page, scheduleTitle);
   await sentBack

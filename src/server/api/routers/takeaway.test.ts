@@ -575,38 +575,50 @@ describe("takeaways router", () => {
       expect(await statusOf(id)).toBe("in_review");
     });
 
-    it("lets mita, not the owner, publish, request changes and unpublish", async () => {
+    it.each(["mita", "owner"] as const)(
+      "lets a %s publish, request changes and unpublish",
+      async (role) => {
+        const { author, id } = await draftBy("writer", "in_review");
+        const gate = callerFor((await insertUser({ role })).id).takeaways;
+
+        // Request changes: back to the writer as a draft.
+        await gate.setStatus({ id, status: "draft" });
+        expect(await statusOf(id)).toBe("draft");
+
+        await callerFor(author.id).takeaways.setStatus({
+          id,
+          status: "in_review",
+        });
+        await gate.setStatus({ id, status: "published" });
+        expect(await statusOf(id)).toBe("published");
+        await gate.setStatus({ id, status: "draft" });
+        expect(await statusOf(id)).toBe("draft");
+      }
+    );
+
+    it("keeps other writers from publishing, requesting changes or unpublishing", async () => {
       const { id } = await draftBy("writer", "in_review");
-      const owner = callerFor(
-        (await insertUser({ role: "owner" })).id
+      const peer = callerFor(
+        (await insertUser({ role: "writer" })).id
       ).takeaways;
-      const mita = (await staff()).takeaways;
 
       await expect(
-        owner.setStatus({ id, status: "published" })
+        peer.setStatus({ id, status: "published" })
       ).rejects.toMatchObject({
         code: "FORBIDDEN",
-        message: "Only mita can publish a takeaway.",
+        message: "Only mita or the dev can publish a takeaway.",
       });
       await expect(
-        owner.setStatus({ id, status: "draft" })
+        peer.setStatus({ id, status: "draft" })
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
-      expect(await statusOf(id)).toBe("in_review");
-
-      // Request changes: back to the writer as a draft.
-      await mita.setStatus({ id, status: "draft" });
-      expect(await statusOf(id)).toBe("draft");
-
-      await publish(id);
+      await (await staff()).takeaways.setStatus({ id, status: "published" });
       await expect(
-        owner.setStatus({ id, status: "draft" })
+        peer.setStatus({ id, status: "draft" })
       ).rejects.toMatchObject({
         code: "FORBIDDEN",
-        message: "Only mita can unpublish a takeaway.",
+        message: "Only mita or the dev can unpublish a takeaway.",
       });
       expect(await statusOf(id)).toBe("published");
-      await mita.setStatus({ id, status: "draft" });
-      expect(await statusOf(id)).toBe("draft");
     });
 
     it.each(["draft", "in_review"] as const)(
@@ -803,7 +815,7 @@ describe("takeaways router", () => {
       const [row] = (await api.takeaways.getManageable({})).items;
       expect(row).toMatchObject({ actions: [], canManage: false });
 
-      // Staff can't either: mita unpublishes first, so the site has one gate.
+      // Staff can't either: they unpublish first, so changes go through review.
       for (const role of ["mita", "owner"] as const) {
         // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
         const staffApi = callerFor((await insertUser({ role })).id).takeaways;
@@ -811,17 +823,16 @@ describe("takeaways router", () => {
           staffApi.updateTakeaway({ ...sample(schedule.id, "Later"), id })
         ).rejects.toMatchObject({
           code: "FORBIDDEN",
-          message:
-            "Published takeaways can't be changed. Ask mita to unpublish it first.",
+          message: "Published takeaways can't be changed. Unpublish it first.",
         });
         await expect(staffApi.deleteTakeaway({ id })).rejects.toMatchObject({
           code: "FORBIDDEN",
         });
         const [listed] = (await staffApi.getManageable({})).items;
         expect(listed?.canManage).toBe(false);
-        expect(listed?.actions.map((action) => action.label)).toEqual(
-          role === "mita" ? ["Unpublish"] : []
-        );
+        expect(listed?.actions.map((action) => action.label)).toEqual([
+          "Unpublish",
+        ]);
       }
       expect(await onlyTakeaway()).toMatchObject({
         keypoints: "Notes",

@@ -153,15 +153,15 @@ const maySetStatus = (
 /** Why `viewer` may not make this move, for the FORBIDDEN message. */
 const statusRefusal = (current: TakeawayStatus, next: TakeawayStatus) => {
   if (next === "published") {
-    return "Only mita can publish a takeaway.";
+    return "Only mita or the dev can publish a takeaway.";
   }
   if (current === "published") {
-    return "Only mita can unpublish a takeaway.";
+    return "Only mita or the dev can unpublish a takeaway.";
   }
   if (next === "in_review") {
     return "Only the writer of this takeaway can send it to review.";
   }
-  return "Only its writer or mita can take this takeaway out of review.";
+  return "Only its writer, mita or the dev can take this takeaway out of review.";
 };
 
 const loadOwnership = async (
@@ -202,7 +202,7 @@ const assertCanManage = async (takeawayId: number, userId: string) => {
       code: "FORBIDDEN",
       message:
         takeaway.status === "published"
-          ? "Published takeaways can't be changed. Ask mita to unpublish it first."
+          ? "Published takeaways can't be changed. Unpublish it first."
           : "You can only change your own takeaways.",
     });
   }
