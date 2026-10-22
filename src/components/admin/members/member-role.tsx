@@ -8,7 +8,7 @@ import {
   roleLabels,
 } from "~/lib/roles";
 import { timeAgo } from "~/lib/utils";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSelect } from "../admin-controls";
 import { RoleBadge } from "../role-badge";
 import { type Member, memberName, memberRole } from "./member-model";
@@ -16,6 +16,24 @@ import { type Member, memberName, memberRole } from "./member-model";
 const HISTORY_LIMIT = 5;
 /** Rows written by `pnpm roles` have no `changedById`, so no name. */
 const SCRIPT_CHANGER = "setup script";
+type HistoryRow = RouterOutputs["roles"]["getHistory"][number];
+
+const SOURCE_VERBS = {
+  declined: "request declined by",
+  invite: "invited by",
+  request: "request approved by",
+} as const;
+
+/** "Writer · invited by Mia", "Writer request declined by Mia", … */
+export function historyLine(row: HistoryRow) {
+  const role = roleLabels[row.toRole as Role] ?? row.toRole;
+  const by = row.changedByName ?? SCRIPT_CHANGER;
+  if (row.source === "declined") {
+    return `${role} ${SOURCE_VERBS.declined} ${by}`;
+  }
+  return `${role} · ${row.source ? SOURCE_VERBS[row.source] : "changed by"} ${by}`;
+}
+
 type Assignable = (typeof ASSIGNABLE_ROLES)[number];
 const roleOptions = ASSIGNABLE_ROLES.map((role) => ({
   label: roleLabels[role],
@@ -77,9 +95,8 @@ export default function MemberRole({ member }: { member: Member }) {
           <h3 className="type-caption text-muted-foreground">Role history</h3>
           <ul className="type-body-sm flex flex-col gap-1">
             {rows.map((row) => (
-              <li key={`${row.createdAt.getTime()}-${row.toRole}`}>
-                {roleLabels[row.toRole as Role] ?? row.toRole} · changed by{" "}
-                {row.changedByName ?? SCRIPT_CHANGER} · {timeAgo(row.createdAt)}
+              <li key={row.key}>
+                {historyLine(row)} · {timeAgo(row.createdAt)}
               </li>
             ))}
           </ul>

@@ -17,13 +17,33 @@ vi.mock("~/trpc/react", () => ({
               changedByName: "Mia",
               createdAt: new Date(Date.now() - 2 * 86_400_000),
               fromRole: "member",
+              key: "change-2",
+              source: null,
               toRole: "mita",
             },
             {
               changedByName: null,
               createdAt: new Date(Date.now() - 3 * 86_400_000),
               fromRole: "member",
+              key: "change-1",
+              source: null,
               toRole: "writer",
+            },
+            {
+              changedByName: "Ana",
+              createdAt: new Date(Date.now() - 4 * 86_400_000),
+              fromRole: "writer",
+              key: "declined-1",
+              source: "declined",
+              toRole: "writer",
+            },
+            {
+              changedByName: "Ana",
+              createdAt: new Date(Date.now() - 5 * 86_400_000),
+              fromRole: "member",
+              key: "change-0",
+              source: "invite",
+              toRole: "member",
             },
           ],
           isLoading: false,
@@ -114,4 +134,12 @@ it("credits history rows without a changer to the setup script", () => {
   expect(
     screen.getByText("Writer · changed by setup script · 3 days ago")
   ).toBeTruthy();
+});
+
+it("names invites and declined requests in the history", () => {
+  render(<DetailHarness member={target("member")} />);
+  expect(
+    screen.getByText("Writer request declined by Ana · 4 days ago")
+  ).toBeTruthy();
+  expect(screen.getByText("Member · invited by Ana · 5 days ago")).toBeTruthy();
 });

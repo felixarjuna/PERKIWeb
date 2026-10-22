@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Loader from "~/components/loader";
 import Template from "~/components/template";
 import TakeawayList from "./takeaway-list";
+import WriterHint from "./writer-hint";
 
 export default function TakeawayPage() {
   return (
@@ -14,6 +15,7 @@ export default function TakeawayPage() {
       }
       title="Takeaways"
     >
+      <WriterHint />
       {/* The list reads the search from the URL, which needs a boundary. */}
       <Suspense fallback={<Loader message="Loading takeaways…" />}>
         <TakeawayList />
