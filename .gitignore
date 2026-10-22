@@ -67,3 +67,7 @@ request/*
 
 # brainstorm mockups
 .superpowers/
+
+# PR screenshots (pnpm screenshots); the shots file is written per change
+/screenshots/
+/e2e/screenshots/*.shots.ts
