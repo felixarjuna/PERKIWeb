@@ -14,6 +14,7 @@ import { saveProfileSchema } from "../schema/schema";
 
 const ownProfileColumns = {
   address: profiles.address,
+  bio: profiles.bio,
   birthday: profiles.birthday,
   location: profiles.location,
   major: profiles.major,

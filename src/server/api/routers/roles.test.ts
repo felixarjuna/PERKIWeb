@@ -153,6 +153,79 @@ describe("roles.myRole", () => {
   });
 });
 
+describe("roles.myHistory", () => {
+  const march = new Date("2025-03-04T10:00:00.000Z");
+  const may = new Date("2025-05-01T09:00:00.000Z");
+
+  it("gives the caller's join date and own role changes, newest first", async () => {
+    const mita = await insertUser({ name: "Mia", role: "mita" });
+    const member = await insertUser({ createdAt: may, role: "mita" });
+    await testDb
+      .insert(profiles)
+      .values({ createdAt: march, userId: member.id });
+    const other = await insertUser();
+    await testDb.insert(roleChanges).values([
+      {
+        changedById: mita.id,
+        createdAt: new Date("2025-06-01T00:00:00.000Z"),
+        fromRole: "member",
+        source: "request",
+        toRole: "writer",
+        userId: member.id,
+      },
+      {
+        createdAt: new Date("2025-09-01T00:00:00.000Z"),
+        fromRole: "writer",
+        toRole: "admin",
+        userId: member.id,
+      },
+      { fromRole: "member", toRole: "writer", userId: other.id },
+    ]);
+
+    const history = await callerFor(member.id).roles.myHistory();
+
+    expect(history.joined).toEqual({ at: march, exact: true });
+    expect(history.changes).toEqual([
+      expect.objectContaining({
+        fromRole: "writer",
+        source: null,
+        toRole: "mita",
+      }),
+      expect.objectContaining({
+        fromRole: "member",
+        source: "request",
+        toRole: "writer",
+      }),
+    ]);
+    // Who made the change stays with staff.
+    expect(history.changes[0]).not.toHaveProperty("changedByName");
+    expect(history.changes[0]).not.toHaveProperty("changedById");
+  });
+
+  it("counts an instant shared with other accounts as a backfill, not a date", async () => {
+    const backfill = new Date("2025-01-10T12:00:00.000Z");
+    const member = await insertUser({ createdAt: backfill });
+    await insertUser({ createdAt: backfill });
+
+    expect((await callerFor(member.id).roles.myHistory()).joined).toEqual({
+      at: backfill,
+      exact: false,
+    });
+
+    await testDb.insert(profiles).values({ createdAt: may, userId: member.id });
+    expect((await callerFor(member.id).roles.myHistory()).joined).toEqual({
+      at: may,
+      exact: true,
+    });
+  });
+
+  it("rejects signed-out visitors", async () => {
+    await expect(anonymousCaller().roles.myHistory()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+});
+
 describe("profiles.members", () => {
   it("shows the role in the member directory", async () => {
     const mita = await insertUser({ role: "mita" });

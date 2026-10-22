@@ -11,18 +11,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import type { ProfileField } from "~/lib/profile-completion";
+import { Textarea } from "~/components/ui/textarea";
+import { BIO_MAX_LENGTH, type ProfileField } from "~/lib/profile-completion";
 import { cn } from "~/lib/utils";
 import type { SaveProfileInput } from "~/server/api/schema/schema";
 
 /** Length of the `YYYY-MM-DD` prefix of an ISO timestamp. */
 const ISO_DATE_LENGTH = 10;
 
-/** A member detail, or the optional nickname next to the Google name. */
-export type EditableField = ProfileField | "nickname";
+/**
+ * A member detail, the optional nickname next to the Google name, or the
+ * optional "About me".
+ */
+export type EditableField = ProfileField | "nickname" | "bio";
 
 const placeholders: Record<EditableField, string> = {
   address: "Roermonder Str. 110",
+  bio: "Where you're from, what you enjoy, how you found PERKI",
   birthday: "",
   location: "Aachen",
   major: "Maschinenbau",
@@ -132,6 +137,18 @@ export default function ProfileFieldInput({
 }) {
   if (field === "birthday") {
     return <BirthdayPicker id={id} onChange={onChange} value={value} />;
+  }
+  if (field === "bio") {
+    return (
+      <Textarea
+        id={id}
+        maxLength={BIO_MAX_LENGTH}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholders.bio}
+        rows={5}
+        value={value}
+      />
+    );
   }
   if (field === "phoneNumber") {
     return (

@@ -45,7 +45,6 @@ describe("profiles.mine", () => {
     expect(mine.completion.state).toBe("complete");
     expect(mine.welcomeDue).toBe(false);
     expect(mine.profile).toMatchObject({ phoneNumber: "+49 123 456789" });
-    expect(mine.profile).not.toHaveProperty("bio");
   });
 
   it("never sends a session whose account was deleted to the welcome step", async () => {
@@ -154,6 +153,27 @@ describe("nickname", () => {
     const user = await insertUser();
     await expect(
       callerFor(user.id).profiles.saveMine({ nickname: "x".repeat(51) })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
+
+describe("bio", () => {
+  it("is optional, saved with its line breaks and left out of completion", async () => {
+    const user = await insertUser();
+    const bio = "Studying in Aachen.\nI love hiking.";
+
+    const saved = await callerFor(user.id).profiles.saveMine({ bio });
+
+    expect(saved.profile?.bio).toBe(bio);
+    expect(saved.completion).toMatchObject({ filled: 0, state: "incomplete" });
+    const cleared = await callerFor(user.id).profiles.saveMine({ bio: "" });
+    expect(cleared.profile?.bio).toBeNull();
+  });
+
+  it("rejects a bio longer than 500 characters", async () => {
+    const user = await insertUser();
+    await expect(
+      callerFor(user.id).profiles.saveMine({ bio: "a".repeat(501) })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

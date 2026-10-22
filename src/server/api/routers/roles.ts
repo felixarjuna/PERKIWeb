@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
-import { accessRequests, roleChanges, users } from "~/lib/db/schema/schema";
+import {
+  accessRequests,
+  profiles,
+  roleChanges,
+  users,
+} from "~/lib/db/schema/schema";
 import { canChangeRole, normalizeRole } from "~/lib/roles";
 import { db } from "~/server";
 import {
@@ -15,6 +20,57 @@ import { setRoleSchema } from "../schema/schema";
 /** How a history entry came about; null is a change made by hand. */
 const historySource = (stored: string | null): "invite" | "request" | null =>
   stored === "invite" || stored === "request" ? stored : null;
+
+const validTime = (date: Date | null | undefined) =>
+  date && Number.isFinite(date.getTime()) ? date : null;
+
+/**
+ * When someone joined, like `signedUpAt` on the dashboard: the earliest of
+ * their account and profile dates. An instant another row shares is the
+ * migration 0006 backfill, so it only says they joined by then.
+ */
+async function joinedAt(userId: string) {
+  const [[account], [profile]] = await Promise.all([
+    db
+      .select({ createdAt: users.createdAt })
+      .from(users)
+      .where(eq(users.id, userId)),
+    db
+      .select({ createdAt: profiles.createdAt })
+      .from(profiles)
+      .where(eq(profiles.userId, userId)),
+  ]);
+  const accountAt = validTime(account?.createdAt);
+  const profileAt = validTime(profile?.createdAt);
+  const [accountShared, profileShared] = await Promise.all([
+    accountAt
+      ? db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.createdAt, accountAt), ne(users.id, userId)))
+          .limit(1)
+      : [],
+    profileAt
+      ? db
+          .select({ id: profiles.id })
+          .from(profiles)
+          .where(
+            and(eq(profiles.createdAt, profileAt), ne(profiles.userId, userId))
+          )
+          .limit(1)
+      : [],
+  ]);
+  const dates = [
+    { at: accountAt, exact: accountShared.length === 0 },
+    { at: profileAt, exact: profileShared.length === 0 },
+  ].filter((date): date is { at: Date; exact: boolean } => date.at !== null);
+  const earliest = (list: typeof dates) =>
+    list.reduce<(typeof dates)[number] | null>(
+      (first, date) => (!first || date.at < first.at ? date : first),
+      null
+    );
+  return earliest(dates.filter((date) => date.exact)) ?? earliest(dates);
+}
 
 export const rolesRouter = createTRPCRouter({
   /**
@@ -79,6 +135,37 @@ export const rolesRouter = createTRPCRouter({
         )
         .map(({ id: _id, ...entry }) => entry);
     }),
+  /**
+   * The caller's own time in the fellowship: when they joined and every
+   * change of their role, newest first. Who made a change stays with staff.
+   */
+  myHistory: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const [joined, changes] = await Promise.all([
+      joinedAt(userId),
+      db
+        .select({
+          createdAt: roleChanges.createdAt,
+          fromRole: roleChanges.fromRole,
+          id: roleChanges.id,
+          source: roleChanges.source,
+          toRole: roleChanges.toRole,
+        })
+        .from(roleChanges)
+        .where(eq(roleChanges.userId, userId))
+        .orderBy(desc(roleChanges.createdAt), desc(roleChanges.id)),
+    ]);
+    return {
+      changes: changes.map((row) => ({
+        createdAt: row.createdAt,
+        fromRole: normalizeRole(row.fromRole),
+        id: row.id,
+        source: historySource(row.source),
+        toRole: normalizeRole(row.toRole),
+      })),
+      joined,
+    };
+  }),
   /** The signed-in user's current role. */
   myRole: protectedProcedure.query(
     async ({ ctx }) => await getRole(ctx.session.user.id)

@@ -6,6 +6,11 @@ import { OWNER, uniqueSuffix } from "./fixtures";
 import { createSignedInUser, toast, waitForSession } from "./helpers";
 
 const ACCOUNT_LOAD_TIMEOUT_MS = 15_000;
+/** A writer by request, newest first, then the day they joined. */
+const HISTORY = [
+  /^You became a writerYour request was approved · /,
+  /^You joined PERKI/,
+];
 
 test("Google name and email are locked; members choose a nickname", async ({
   page,
@@ -112,4 +117,38 @@ test("the owner can't delete their account", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Delete account" })
   ).toHaveCount(0);
+});
+
+test("members see their history and write a few lines about themselves", async ({
+  page,
+}) => {
+  const user = await createSignedInUser(page, "history");
+  await withDb(
+    (sql) => sql`
+      with promoted as (
+        update "user" set role = 'writer' where id = ${user.id}
+      )
+      insert into role_changes ("userId", "fromRole", "toRole", source)
+      values (${user.id}, 'member', 'writer', 'request')`
+  );
+  await page.goto("/account");
+
+  const history = page.getByRole("list", { name: "Your history" });
+  await expect(history.getByRole("listitem")).toHaveText(HISTORY, {
+    timeout: ACCOUNT_LOAD_TIMEOUT_MS,
+  });
+  await expect(
+    page.getByRole("heading", { name: "Your role: Writer" })
+  ).toBeVisible();
+
+  const bio = `Studying in Aachen ${uniqueSuffix()}`;
+  await page.getByRole("button", { name: "About me Optional" }).click();
+  const dialog = page.getByRole("dialog", { name: "About me" });
+  await dialog.getByLabel("About me").fill(bio);
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(toast(page, "About me saved")).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: `About me ${bio}` })
+  ).toBeVisible({ timeout: ACCOUNT_LOAD_TIMEOUT_MS });
 });

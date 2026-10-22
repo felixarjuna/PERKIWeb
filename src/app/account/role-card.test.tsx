@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoleCard from "./role-card";
 
 const state = vi.hoisted(() => ({
+  history: undefined as unknown,
   mutate: vi.fn(),
   request: undefined as { status: string } | null | undefined,
   role: undefined as string | undefined,
@@ -15,7 +16,10 @@ vi.mock("~/trpc/react", () => ({
         useMutation: () => ({ isPending: false, mutate: state.mutate }),
       },
     },
-    roles: { myRole: { useQuery: () => ({ data: state.role }) } },
+    roles: {
+      myHistory: { useQuery: () => ({ data: state.history }) },
+      myRole: { useQuery: () => ({ data: state.role }) },
+    },
     useUtils: () => ({ access: { myRequest: { invalidate: vi.fn() } } }),
   },
 }));
@@ -25,6 +29,7 @@ describe("Your role card", () => {
     state.mutate.mockReset();
     state.request = null;
     state.role = "member";
+    state.history = { changes: [], joined: null };
   });
 
   it.each([
@@ -91,5 +96,41 @@ describe("Your role card", () => {
   it("is the target of the takeaway page's hint", () => {
     const { container } = render(<RoleCard />);
     expect(container.querySelector("#your-role")).toBeTruthy();
+  });
+
+  it("lists the member's history, newest first, ending with when they joined", () => {
+    state.role = "mita";
+    state.history = {
+      changes: [
+        {
+          createdAt: new Date("2025-09-01T10:00:00.000Z"),
+          fromRole: "writer",
+          id: 2,
+          source: null,
+          toRole: "mita",
+        },
+        {
+          createdAt: new Date("2025-06-01T10:00:00.000Z"),
+          fromRole: "member",
+          id: 1,
+          source: "request",
+          toRole: "writer",
+        },
+      ],
+      joined: { at: new Date("2025-03-04T10:00:00.000Z"), exact: true },
+    };
+    render(<RoleCard />);
+    const list = screen.getByRole("list", { name: "Your history" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "You became a mita1 September 2025",
+      "You became a writerYour request was approved · 1 June 2025",
+      "You joined PERKI4 March 2025",
+    ]);
+  });
+
+  it("shows no history list before there is anything to show", () => {
+    render(<RoleCard />);
+    expect(screen.queryByRole("list", { name: "Your history" })).toBeNull();
   });
 });

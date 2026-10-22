@@ -56,3 +56,6 @@ export function profileCompletion(
   }
   return { filled, missing, state, total: PROFILE_FIELDS.length };
 }
+
+/** Longest "About me"; it never counts toward completion. */
+export const BIO_MAX_LENGTH = 500;
