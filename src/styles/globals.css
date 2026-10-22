@@ -431,3 +431,136 @@
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* 8. Takeaway notes                                                   */
+/* ------------------------------------------------------------------ */
+/*
+ * A takeaway's Markdown, styled once for the takeaway page
+ * (components/takeaway-markdown.tsx) and the writers' editor
+ * (components/markdown-editor.tsx), so what writers see is what readers
+ * get. Headings start at h2 below the page title. Tight and loose lists
+ * read alike: the editor saves every list tight.
+ */
+@layer components {
+  .takeaway-prose {
+    overflow-wrap: anywhere;
+    @apply type-body;
+  }
+
+  .takeaway-prose > * + * {
+    margin-top: 1.25rem;
+  }
+
+  .takeaway-prose h2 {
+    @apply type-subheading;
+  }
+
+  .takeaway-prose h3 {
+    @apply type-lead;
+  }
+
+  .takeaway-prose > h2:not(:first-child) {
+    margin-top: 2.5rem;
+  }
+
+  .takeaway-prose > h3:not(:first-child) {
+    margin-top: 2rem;
+  }
+
+  .takeaway-prose > :is(h2, h3) + * {
+    margin-top: 0.5rem;
+  }
+
+  /* Satoshi has one weight; bold in a note is the one place it's synthesised. */
+  .takeaway-prose strong {
+    font-weight: 700;
+    font-synthesis-weight: auto;
+  }
+
+  .takeaway-prose :is(ul, ol) {
+    padding-inline-start: 1.5rem;
+  }
+
+  .takeaway-prose ul {
+    list-style-type: disc;
+  }
+
+  .takeaway-prose ol {
+    list-style-type: decimal;
+  }
+
+  .takeaway-prose li {
+    padding-inline-start: 0.25rem;
+  }
+
+  .takeaway-prose li::marker {
+    color: var(--color-muted-foreground);
+  }
+
+  .takeaway-prose li + li,
+  .takeaway-prose li > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .takeaway-prose blockquote {
+    padding-inline-start: 1rem;
+    color: var(--color-muted-foreground);
+    border-inline-start: 2px solid var(--color-accent);
+  }
+
+  .takeaway-prose a {
+    text-decoration-line: underline;
+    text-underline-offset: 4px;
+    border-radius: 0.125rem;
+  }
+
+  .takeaway-prose a:hover {
+    color: var(--color-muted-foreground);
+  }
+
+  .takeaway-prose a:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  .takeaway-prose :not(pre) > code {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.9em;
+    background-color: var(--color-secondary);
+    border-radius: 0.25rem;
+  }
+
+  .takeaway-prose pre {
+    padding: 1rem;
+    overflow-x: auto;
+    background-color: var(--color-card);
+    border-radius: 0.75rem;
+  }
+
+  .takeaway-prose hr {
+    border-color: var(--color-accent);
+  }
+
+  .takeaway-prose > hr {
+    margin-block: 2.5rem;
+  }
+
+  .takeaway-prose table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    @apply type-body-sm;
+  }
+
+  .takeaway-prose :is(th, td) {
+    padding: 0.5rem 0.75rem;
+    vertical-align: top;
+    text-align: start;
+    border-bottom: 1px solid var(--color-accent);
+  }
+
+  .takeaway-prose th {
+    color: var(--color-muted-foreground);
+  }
+}
