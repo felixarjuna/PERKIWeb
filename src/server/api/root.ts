@@ -1,5 +1,6 @@
 import { prayerRouter } from "~/server/api/routers/prayers";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
+import { accessRouter } from "./routers/access";
 import { botRouter } from "./routers/bot";
 import { groupRouter } from "./routers/groups";
 import { peopleRouter } from "./routers/people";
@@ -18,6 +19,7 @@ import { userRouter } from "./routers/users";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  access: accessRouter,
   bot: botRouter,
   groups: groupRouter,
   people: peopleRouter,
