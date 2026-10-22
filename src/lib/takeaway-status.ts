@@ -80,8 +80,8 @@ const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
 
 /**
  * Who may change the text or delete the takeaway: its author and staff,
- * until it is published. A published takeaway changes only after mita
- * unpublishes it, so mita is the one gate to the public site.
+ * until it is published. A published takeaway changes only after mita or
+ * the dev unpublishes it, so they are the one gate to the public site.
  */
 export const mayEditTakeaway = (
   takeaway: TakeawaySubject,
@@ -94,26 +94,28 @@ export const mayEditTakeaway = (
  * The status moves a viewer may make, in button order. The server allows
  * exactly these (`takeaways.setStatus`):
  * - Draft: the author sends it to review.
- * - In review: mita publishes or requests changes; the author withdraws it.
- * - Published: mita unpublishes it.
+ * - In review: mita or the dev publishes or requests changes; the author
+ *   withdraws it.
+ * - Published: mita or the dev unpublishes it.
  */
 export const statusActions = (
   takeaway: TakeawaySubject,
   viewer: TakeawayViewer
 ): StatusAction[] => {
   const author = actsAsAuthor(takeaway, viewer);
-  const mita = viewer.role === "mita";
+  // Mita and the dev (`owner`) are the gate to the public site.
+  const gate = isStaffRole(viewer.role);
   if (takeaway.status === "draft") {
     return author ? [SEND_TO_REVIEW] : [];
   }
   if (takeaway.status === "in_review") {
-    const actions = mita ? [PUBLISH] : [];
+    const actions = gate ? [PUBLISH] : [];
     if (author) {
       actions.push(WITHDRAW);
-    } else if (mita) {
+    } else if (gate) {
       actions.push(REQUEST_CHANGES);
     }
     return actions;
   }
-  return mita ? [UNPUBLISH] : [];
+  return gate ? [UNPUBLISH] : [];
 };

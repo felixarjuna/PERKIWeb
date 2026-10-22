@@ -46,11 +46,12 @@ describe("statusActions", () => {
     expect(moves(takeaway("in_review"), author)).toEqual([
       "Withdraw from review > draft",
     ]);
-    expect(moves(takeaway("in_review"), viewer("mita"))).toEqual([
-      "Publish > published",
-      "Request changes > draft",
-    ]);
-    expect(moves(takeaway("in_review"), viewer("owner"))).toEqual([]);
+    for (const role of ["mita", "owner"] as const) {
+      expect(moves(takeaway("in_review"), viewer(role))).toEqual([
+        "Publish > published",
+        "Request changes > draft",
+      ]);
+    }
     expect(moves(takeaway("in_review"), viewer("writer"))).toEqual([]);
   });
 
@@ -61,13 +62,15 @@ describe("statusActions", () => {
     ]);
   });
 
-  it("lets only mita unpublish, after confirming", () => {
-    expect(moves(takeaway("published"), viewer("mita"))).toEqual([
-      "Unpublish > draft",
-    ]);
+  it("lets only mita and the dev unpublish, after confirming", () => {
+    for (const role of ["mita", "owner"] as const) {
+      expect(moves(takeaway("published"), viewer(role))).toEqual([
+        "Unpublish > draft",
+      ]);
+    }
     const [unpublish] = statusActions(takeaway("published"), viewer("mita"));
     expect(unpublish?.confirm).toBeDefined();
-    for (const who of [author, viewer("owner"), viewer("writer")]) {
+    for (const who of [author, viewer("writer")]) {
       expect(moves(takeaway("published"), who)).toEqual([]);
     }
   });
