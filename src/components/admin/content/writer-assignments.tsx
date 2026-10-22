@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleDashed, ClockAlert } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import { Badge } from "~/components/ui/badge";
@@ -37,11 +38,23 @@ function AssignmentCard({ item, staff }: { item: Item; staff: boolean }) {
         <p className="type-caption text-muted-foreground">{date(item.date)}</p>
         <div className="ms-auto flex flex-wrap justify-end gap-2">
           {item.status === "not_started" ? (
-            <Badge variant="secondary">Not started</Badge>
+            <Badge size="status" variant="secondary">
+              <CircleDashed aria-hidden="true" data-icon="inline-start">
+                <title>Takeaway status</title>
+              </CircleDashed>
+              <span>Not started</span>
+            </Badge>
           ) : (
             <TakeawayStatusBadge value={item.status} />
           )}
-          {item.overdue ? <Badge variant="destructive">Overdue</Badge> : null}
+          {item.overdue ? (
+            <Badge size="status" variant="destructive">
+              <ClockAlert aria-hidden="true" data-icon="inline-start">
+                <title>Deadline status</title>
+              </ClockAlert>
+              <span>Overdue</span>
+            </Badge>
+          ) : null}
         </div>
       </div>
       <h3 className="type-subheading mt-2 break-words">{item.title}</h3>
