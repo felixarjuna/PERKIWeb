@@ -157,21 +157,25 @@ test("a writer formats a takeaway in the editor and readers see it formatted", a
   await page.goto("/admin/takeaways/new");
   await selectOption(page, "Schedule", scheduleTitle);
   const editor = page.getByRole("textbox", { name: "Key points" });
-  const tool = (name: string) =>
-    page
+  // Type only once the editor has focus again, or keys are lost on slow CI.
+  const tool = async (name: string) => {
+    await page
       .getByRole("toolbar", { name: "Formatting" })
-      .getByRole("button", { exact: true, name });
+      .getByRole("button", { exact: true, name })
+      .click();
+    await expect(editor).toBeFocused();
+  };
   await editor.click();
-  await tool("Heading").click();
+  await tool("Heading");
   await page.keyboard.type(`Integritas Nuh ${suffix}`);
   await page.keyboard.press("Enter");
   await page.keyboard.type("Nuh ");
-  await tool("Bold").click();
+  await tool("Bold");
   await page.keyboard.type("taat");
-  await tool("Bold").click();
+  await tool("Bold");
   await page.keyboard.type(" kepada Allah.");
   await page.keyboard.press("Enter");
-  await tool("Bulleted list").click();
+  await tool("Bulleted list");
   await page.keyboard.type("Mezbah");
   await page.keyboard.press("Enter");
   await page.keyboard.type("Korban bakaran");
