@@ -70,7 +70,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
     .click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
-  await expect(keypointsInput).toHaveValue(keypoints);
+  await expect(keypointsInput).toHaveText(keypoints);
   await keypointsInput.fill(editedKeypoints);
   await page.getByRole("button", { name: "Save changes" }).click();
 
@@ -145,6 +145,61 @@ test("a takeaway card opens the full takeaway on its own page", async ({
   ).toBeVisible();
   await footer.getByRole("link", { name: "All takeaways" }).click();
   await expect(page).toHaveURL("/takeaway");
+});
+
+test("a writer formats a takeaway in the editor and readers see it formatted", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const scheduleTitle = `Formatted takeaway ${suffix}`;
+  await insertSchedule(scheduleTitle);
+
+  await page.goto("/admin/takeaways/new");
+  await selectOption(page, "Schedule", scheduleTitle);
+  const editor = page.getByRole("textbox", { name: "Key points" });
+  const tool = (name: string) =>
+    page
+      .getByRole("toolbar", { name: "Formatting" })
+      .getByRole("button", { exact: true, name });
+  await editor.click();
+  await tool("Heading").click();
+  await page.keyboard.type(`Integritas Nuh ${suffix}`);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Nuh ");
+  await tool("Bold").click();
+  await page.keyboard.type("taat");
+  await tool("Bold").click();
+  await page.keyboard.type(" kepada Allah.");
+  await page.keyboard.press("Enter");
+  await tool("Bulleted list").click();
+  await page.keyboard.type("Mezbah");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Korban bakaran");
+  // What the writer sees is already formatted.
+  await expect(editor.getByRole("heading", { level: 2 })).toHaveText(
+    `Integritas Nuh ${suffix}`
+  );
+  await page.getByRole("button", { name: "Add takeaway" }).click();
+  await expect(toast(page, "Your takeaway has been submitted!")).toBeVisible();
+
+  await page.goto("/takeaway");
+  const card = page.getByRole("link", { exact: true, name: scheduleTitle });
+  await loadUntilVisible(page, card);
+  // The preview is plain text: no "##" or "**".
+  await expect(page.getByRole("listitem").filter({ has: card })).toContainText(
+    `Integritas Nuh ${suffix}\nNuh taat kepada Allah.`
+  );
+  await card.click();
+
+  const notes = page.getByRole("article");
+  await expect(
+    notes.getByRole("heading", { level: 2, name: `Integritas Nuh ${suffix}` })
+  ).toBeVisible();
+  await expect(notes.locator("strong")).toHaveText("taat");
+  await expect(notes.getByRole("listitem")).toHaveText([
+    "Mezbah",
+    "Korban bakaran",
+  ]);
 });
 
 test("searching takeaways narrows the list and keeps the query in the URL", async ({
