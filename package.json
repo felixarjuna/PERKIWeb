@@ -17,6 +17,8 @@
     "format": "biome check --write .",
     "lint": "biome check .",
     "roles": "npx tsx scripts/roles.ts",
+    "screenshots": "playwright test -c playwright.screenshots.config.ts",
+    "screenshots:publish": "node scripts/pr-screenshots.ts",
     "start": "next start",
     "test": "vitest run",
     "test:e2e": "playwright test",
