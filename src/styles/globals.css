@@ -457,6 +457,11 @@
     margin-top: var(--prose-gap);
   }
 
+  /* About 70 characters a line; the column stays wide for tables. */
+  .takeaway-prose > :is(p, h2, h3, ul, ol, blockquote) {
+    max-width: 65ch;
+  }
+
   .takeaway-prose h2 {
     @apply type-heading;
   }

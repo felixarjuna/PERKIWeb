@@ -130,6 +130,20 @@ export function MarkdownEditor({
     editor?.setEditable(!disabled);
   }, [editor, disabled]);
 
+  // A label's `for` only focuses form elements, so clicking "Key points"
+  // would do nothing; put the cursor at the end of the note instead.
+  useEffect(() => {
+    const label = id
+      ? document.querySelector(`label[for="${CSS.escape(id)}"]`)
+      : null;
+    if (!(editor && label)) {
+      return;
+    }
+    const focus = () => editor.commands.focus("end");
+    label.addEventListener("click", focus);
+    return () => label.removeEventListener("click", focus);
+  }, [editor, id]);
+
   // Keep the attributes in step with the field, e.g. after a failed submit.
   const attributeKey = JSON.stringify(attributes);
   useEffect(() => {
@@ -174,7 +188,7 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
     <div
       aria-controls={editor.view.dom.id || undefined}
       aria-label="Formatting"
-      className="flex items-center gap-1 overflow-x-auto border-background border-b p-1"
+      className="flex items-center gap-0.5 overflow-x-auto border-background border-b p-1 sm:gap-1"
       role="toolbar"
     >
       <Tool
@@ -227,7 +241,9 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
         <Quote />
       </Tool>
       <LinkTool active={state.link} editor={editor} />
-      <span className="ms-auto flex gap-1">
+      {/* Phones undo with the system gesture, which the editor handles; the
+          eight formatting tools then fit one row at 390px. */}
+      <span className="ms-auto hidden gap-1 sm:flex">
         <Button
           aria-label="Undo"
           disabled={!state.canUndo}
