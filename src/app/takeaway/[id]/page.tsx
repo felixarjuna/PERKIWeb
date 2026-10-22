@@ -4,14 +4,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { TakeawayMarkdown } from "~/components/takeaway-markdown";
 import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
+import { markdownToPlainText } from "~/lib/markdown";
 import { api } from "~/trpc/server";
 import {
   contributorNames,
   fellowshipLabel,
   readingMinutes,
-  sections,
   serviceDate,
 } from "../takeaway-format";
 import ShareButton from "./share-button";
@@ -45,7 +46,9 @@ export async function generateMetadata({
   const { schedules: schedule, takeaways: takeaway } = await loadTakeaway(
     (await params).id
   );
-  const flat = takeaway.keypoints.replace(WHITESPACE, " ").trim();
+  const flat = markdownToPlainText(takeaway.keypoints)
+    .replace(WHITESPACE, " ")
+    .trim();
   const description =
     flat.length > DESCRIPTION_LENGTH
       ? `${flat.slice(0, DESCRIPTION_LENGTH - 1).trimEnd()}…`
@@ -115,22 +118,7 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
       </dl>
 
       <article className="mt-8">
-        {sections(takeaway.keypoints).map((section, index) => (
-          <section
-            className={section.heading ? "mt-10 first:mt-0" : "mt-5 first:mt-0"}
-            // Sections have no id and never reorder.
-            key={`${index.toString()}-${section.body.slice(0, 16)}`}
-          >
-            {section.heading ? (
-              <h2 className="type-subheading mb-2 text-balance">
-                {section.heading}
-              </h2>
-            ) : null}
-            <p className="type-body whitespace-pre-line text-pretty">
-              {section.body}
-            </p>
-          </section>
-        ))}
+        <TakeawayMarkdown markdown={takeaway.keypoints} />
       </article>
 
       {/* Actions wait until the end so nothing sits between the reader and the notes. */}

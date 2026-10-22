@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import LoadMore from "~/components/load-more";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
+import { markdownToPlainText } from "~/lib/markdown";
 import { api } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
 import { type ContentFilters, takeawayQuery } from "./content-filters";
@@ -76,8 +77,8 @@ export default function TakeawayManager() {
                       <h2 className="type-subheading break-words">
                         {schedule.title}
                       </h2>
-                      <p className="type-body-sm line-clamp-3 whitespace-pre-wrap break-words text-muted-foreground">
-                        {note.keypoints}
+                      <p className="type-body-sm line-clamp-3 whitespace-pre-line break-words text-muted-foreground">
+                        {markdownToPlainText(note.keypoints)}
                       </p>
                       <p className="type-caption text-muted-foreground">
                         {Array.isArray(note.contributors)

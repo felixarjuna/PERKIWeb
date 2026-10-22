@@ -9,20 +9,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "~/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
+import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
+import { KeypointsField } from "../../keypoints-field";
 
 export default function EditTakeawayForm() {
   const { data: session } = useSession();
@@ -100,23 +93,7 @@ export default function EditTakeawayForm() {
             </div>
 
             <div className="sm:col-span-2">
-              <FormField
-                control={form.control}
-                name="keypoints"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Key points</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        className="min-h-48"
-                        {...field}
-                        defaultValue={field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <KeypointsField control={form.control} name="keypoints" />
             </div>
           </section>
         </div>

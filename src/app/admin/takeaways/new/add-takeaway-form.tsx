@@ -23,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
 import { api } from "~/trpc/react";
+import { KeypointsField } from "../keypoints-field";
 
 const addTakeawayFormSchema = z.object({
   contributors: z.array(z.string()),
@@ -44,6 +44,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
   const form = useForm<z.infer<typeof addTakeawayFormSchema>>({
     defaultValues: {
       contributors: [username],
+      keypoints: "",
     },
     resolver: zodResolver(addTakeawayFormSchema),
   });
@@ -118,19 +119,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
             </div>
 
             <div className="sm:col-span-2">
-              <FormField
-                control={form.control}
-                name="keypoints"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Key points</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-48" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <KeypointsField control={form.control} name="keypoints" />
             </div>
           </section>
         </div>

@@ -138,7 +138,7 @@ for (const width of widths) {
           .getByRole("link", { exact: true, name: `Edit ${title}` })
           .click();
         const editor = page.getByLabel("Key points", { exact: true });
-        await expect(editor).toHaveValue(keypoints);
+        await expect(editor).toHaveText(keypoints);
         const editorWidth = await editor.evaluate(
           (element) => element.getBoundingClientRect().width
         );
