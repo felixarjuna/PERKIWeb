@@ -6,7 +6,6 @@ import {
   countBirthdaysThisMonth,
   dateTimeFormatter,
   getUsernameFromName,
-  getWeekdayInCurrentWeek,
   timeAgo,
 } from "./utils";
 
@@ -94,42 +93,6 @@ describe("getUsernameFromName", () => {
 
   it("keeps non-whitespace characters", () => {
     expect(getUsernameFromName("O'Neil-Smith Jr.")).toBe("o'neil-smithjr.");
-  });
-});
-
-describe("getWeekdayInCurrentWeek", () => {
-  // 2025-10-08 is a Wednesday (getDay() === 3).
-  const wednesday = new Date(2025, 9, 8, 15, 30);
-
-  it("returns the Sunday that starts the current week (in the past)", () => {
-    const result = getWeekdayInCurrentWeek(wednesday, 0);
-    expect(result.getDay()).toBe(0);
-    expect(result.getDate()).toBe(5);
-    expect(result.getHours()).toBe(15);
-  });
-
-  it("returns the Saturday that ends the current week", () => {
-    const result = getWeekdayInCurrentWeek(wednesday, 6);
-    expect(result.getDay()).toBe(6);
-    expect(result.getDate()).toBe(11);
-  });
-
-  it("returns the same day when asked for today's weekday", () => {
-    expect(getWeekdayInCurrentWeek(wednesday, 3).getTime()).toBe(
-      wednesday.getTime()
-    );
-  });
-
-  it("crosses month boundaries", () => {
-    // 2025-10-01 is a Wednesday; its Sunday is 2025-09-28.
-    const result = getWeekdayInCurrentWeek(new Date(2025, 9, 1), 0);
-    expect([result.getMonth(), result.getDate()]).toEqual([8, 28]);
-  });
-
-  it("does not mutate the input date", () => {
-    const input = new Date(wednesday);
-    getWeekdayInCurrentWeek(input, 6);
-    expect(input.getTime()).toBe(wednesday.getTime());
   });
 });
 

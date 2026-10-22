@@ -10,7 +10,7 @@ import LoadMore from "~/components/load-more";
 import Loader from "~/components/loader";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { filterQuery, isFiltered, NO_FILTERS } from "~/lib/gathering-filters";
-import { getWeekdayInCurrentWeek } from "~/lib/utils";
+import { weekOf } from "~/lib/schedule-team";
 import { api, type RouterOutputs } from "~/trpc/react";
 import ScheduleCard from "./schedule-card";
 
@@ -144,15 +144,9 @@ export default function ScheduleList() {
 /** This week in full, then upcoming and past gatherings a page at a time. */
 function Sections() {
   // Fixed per visit, so the query inputs (and their cache keys) stay stable.
-  const [week] = React.useState(() => ({
-    saturday: getWeekdayInCurrentWeek(new Date(), 6),
-    sunday: getWeekdayInCurrentWeek(new Date(), 0),
-  }));
+  const [week] = React.useState(() => weekOf(new Date()));
   // This week holds a gathering or two, so it loads in full.
-  const { data: thisWeek } = api.schedules.inRange.useQuery({
-    before: week.saturday,
-    from: week.sunday,
-  });
+  const { data: thisWeek } = api.schedules.inRange.useQuery(week);
 
   return (
     <>
@@ -173,14 +167,14 @@ function Sections() {
             once they’re planned.
           </EmptyMessage>
         }
-        input={{ from: week.saturday, limit: PAGE_SIZE, order: "asc" }}
+        input={{ from: week.before, limit: PAGE_SIZE, order: "asc" }}
         loadingMessage="Loading upcoming gatherings…"
         noun="upcoming gatherings"
         title="Upcoming"
       />
       <PagedSection
         empty={<EmptyMessage>Past gatherings will appear here.</EmptyMessage>}
-        input={{ before: week.sunday, limit: PAGE_SIZE, order: "desc" }}
+        input={{ before: week.from, limit: PAGE_SIZE, order: "desc" }}
         loadingMessage="Loading previous gatherings…"
         noun="past gatherings"
         title="Previous"
