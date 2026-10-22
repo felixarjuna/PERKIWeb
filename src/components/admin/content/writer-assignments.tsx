@@ -5,9 +5,10 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
+import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
+import { statusLabels } from "~/lib/takeaway-status";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
-import { TakeawayStatusBadge } from "./takeaway-status-badge";
 
 type Item = RouterOutputs["writerAssignments"]["mine"]["items"][number];
 const GROUPS = [
@@ -38,21 +39,21 @@ function AssignmentCard({ item, staff }: { item: Item; staff: boolean }) {
         <p className="type-caption text-muted-foreground">{date(item.date)}</p>
         <div className="ms-auto flex flex-wrap justify-end gap-2">
           {item.status === "not_started" ? (
-            <Badge size="status" variant="secondary">
-              <CircleDashed aria-hidden="true" data-icon="inline-start">
-                <title>Takeaway status</title>
-              </CircleDashed>
-              <span>Not started</span>
+            <Badge icon={CircleDashed} size="status" variant="secondary">
+              Not started
             </Badge>
           ) : (
-            <TakeawayStatusBadge value={item.status} />
+            <Badge
+              data-slot="takeaway-status"
+              size="status"
+              {...takeawayBadgeStyles[item.status]}
+            >
+              {statusLabels[item.status]}
+            </Badge>
           )}
           {item.overdue ? (
-            <Badge size="status" variant="destructive">
-              <ClockAlert aria-hidden="true" data-icon="inline-start">
-                <title>Deadline status</title>
-              </ClockAlert>
-              <span>Overdue</span>
+            <Badge icon={ClockAlert} size="status" variant="destructive">
+              Overdue
             </Badge>
           ) : null}
         </div>

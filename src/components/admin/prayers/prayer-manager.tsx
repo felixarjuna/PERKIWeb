@@ -4,8 +4,9 @@ import { EyeOff, Globe } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import EditPrayerDialog from "~/components/prayer/edit-prayer-dialog";
-import PrayerStatus from "~/components/prayer/prayer-status";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { prayerBadgeStyles } from "~/lib/prayer-badge-styles";
 import { timeAgo } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import {
@@ -123,13 +124,17 @@ export default function PrayerManager() {
             <ul className="flex flex-col gap-3">
               {records.map((prayer) => {
                 const published = prayer.visibility === "published";
+                const { label, ...badge } =
+                  prayerBadgeStyles[prayer.visibility];
                 return (
                   <li
                     className="flex flex-col gap-3 rounded-xl bg-card p-4 sm:p-5"
                     key={prayer.id}
                   >
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <PrayerStatus published={published} />
+                      <Badge size="status" {...badge}>
+                        {label}
+                      </Badge>
                       <span className="type-caption text-muted-foreground">
                         {prayerMeta(prayer)}
                       </span>

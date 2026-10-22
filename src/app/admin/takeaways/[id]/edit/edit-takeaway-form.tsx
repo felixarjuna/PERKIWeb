@@ -8,11 +8,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
+import { statusLabels } from "~/lib/takeaway-status";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
@@ -86,7 +88,13 @@ export default function EditTakeawayForm() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="type-heading">Fellowship Information</h2>
             {takeaway ? (
-              <TakeawayStatusBadge value={takeaway.takeaways.status} />
+              <Badge
+                data-slot="takeaway-status"
+                size="status"
+                {...takeawayBadgeStyles[takeaway.takeaways.status]}
+              >
+                {statusLabels[takeaway.takeaways.status]}
+              </Badge>
             ) : null}
           </div>
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">

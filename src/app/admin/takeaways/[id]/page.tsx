@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
 import { TakeawayReview } from "~/components/admin/content/takeaway-review";
-import { TakeawayStatusBadge } from "~/components/admin/content/takeaway-status-badge";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
+import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
+import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
+import { statusLabels } from "~/lib/takeaway-status";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import { api } from "~/trpc/server";
 
@@ -65,7 +67,13 @@ export default async function ReviewPage({
       <article className="flex min-w-0 flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="type-heading break-words">{schedule.title}</h2>
-          <TakeawayStatusBadge value={note.status} />
+          <Badge
+            data-slot="takeaway-status"
+            size="status"
+            {...takeawayBadgeStyles[note.status]}
+          >
+            {statusLabels[note.status]}
+          </Badge>
         </div>
         <TakeawayReview takeawayId={takeawayId}>
           <TakeawayMarkdown markdown={note.keypoints} />

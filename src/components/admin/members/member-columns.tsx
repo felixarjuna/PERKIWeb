@@ -4,10 +4,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Circle, CircleCheck, CircleDashed } from "lucide-react";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { DataTableFeatures } from "~/components/data-table/data-table-features";
+import { Badge } from "~/components/ui/badge";
 import type { ProfileState } from "~/lib/profile-completion";
-import { ROLES, type Role } from "~/lib/roles";
+import { roleBadgeStyles } from "~/lib/role-badge-styles";
+import { ROLES, type Role, roleLabels } from "~/lib/roles";
 import { cn } from "~/lib/utils";
-import { RoleBadge } from "../role-badge";
 import {
   birthdayMonth,
   birthdayOrder,
@@ -116,7 +117,11 @@ export function createMemberColumns(
     },
     {
       accessorFn: memberRole,
-      cell: ({ getValue }) => <RoleBadge value={getValue<Role>()} />,
+      cell: ({ getValue }) => (
+        <Badge size="status" {...roleBadgeStyles[getValue<Role>()]}>
+          {roleLabels[getValue<Role>()]}
+        </Badge>
+      ),
       filterFn: "arrHas",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} label="Role" />
@@ -133,10 +138,9 @@ export function createMemberColumns(
       cell: ({ row }) => {
         const Icon = PROFILE_ICONS[memberCompletion(row.original).state];
         return (
-          <span className="type-caption inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-paper px-2 py-1 text-paper-foreground">
-            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
+          <Badge icon={Icon} size="status" variant="published">
             {profileLabel(row.original)}
-          </span>
+          </Badge>
         );
       },
       filterFn: "arrHas",

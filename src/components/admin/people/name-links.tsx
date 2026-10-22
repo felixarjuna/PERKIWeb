@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronsUpDown, X } from "lucide-react";
+import { ChevronsUpDown, Tag, X } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { QueryMessage } from "~/components/admin/admin-controls";
 import { PersonAvatar } from "~/components/person-avatar";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -19,7 +20,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Account = RouterOutputs["people"]["accounts"][number];
@@ -260,30 +260,34 @@ export default function NameLinks() {
                   className="flex flex-wrap gap-1.5"
                 >
                   {entry.names.map((name) => (
-                    <li
-                      className={cn(
-                        "type-caption inline-flex h-6 items-center gap-1 rounded-full bg-secondary ps-2 text-secondary-foreground",
-                        name.saved ? "pe-0.5" : "pe-2"
-                      )}
-                      key={name.key}
-                    >
-                      <span className="break-words">{name.label}</span>
-                      <span className="text-muted-foreground tabular-nums">
-                        {name.count > 0 ? `×${name.count}` : "unused"}
-                      </span>
-                      {name.saved ? (
-                        <Button
-                          aria-label={`Unlink “${name.label}”`}
-                          className="size-5 rounded-full text-muted-foreground hover:text-foreground [&_svg]:size-3"
-                          disabled={pending}
-                          onClick={() => unlink.mutate({ name: name.key })}
-                          size="icon-sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <X aria-hidden="true" />
-                        </Button>
-                      ) : null}
+                    <li className="min-w-0 max-w-full" key={name.key}>
+                      <Badge
+                        className="max-w-full"
+                        icon={Tag}
+                        variant="secondary"
+                      >
+                        <span className="inline-flex max-w-full items-center gap-1">
+                          <span className="min-w-0 [overflow-wrap:anywhere]">
+                            {name.label}
+                          </span>
+                          <span className="shrink-0 text-muted-foreground tabular-nums">
+                            {name.count > 0 ? `×${name.count}` : "unused"}
+                          </span>
+                          {name.saved ? (
+                            <Button
+                              aria-label={`Unlink “${name.label}”`}
+                              className="size-5 rounded-full text-muted-foreground hover:text-foreground [&_svg]:size-3"
+                              disabled={pending}
+                              onClick={() => unlink.mutate({ name: name.key })}
+                              size="icon-sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <X aria-hidden="true" />
+                            </Button>
+                          ) : null}
+                        </span>
+                      </Badge>
                     </li>
                   ))}
                 </ul>

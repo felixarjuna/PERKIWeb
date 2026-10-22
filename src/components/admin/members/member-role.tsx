@@ -1,6 +1,8 @@
 "use client";
 
 import { toast } from "sonner";
+import { Badge } from "~/components/ui/badge";
+import { roleBadgeStyles } from "~/lib/role-badge-styles";
 import {
   ASSIGNABLE_ROLES,
   isStaffRole,
@@ -10,7 +12,6 @@ import {
 import { timeAgo } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSelect } from "../admin-controls";
-import { RoleBadge } from "../role-badge";
 import { type Member, memberName, memberRole } from "./member-model";
 
 const HISTORY_LIMIT = 5;
@@ -71,7 +72,9 @@ export default function MemberRole({ member }: { member: Member }) {
       {target === "owner" ? (
         <div className="flex flex-col gap-1">
           <p className="type-caption text-muted-foreground">Role</p>
-          <RoleBadge value="owner" />
+          <Badge size="status" {...roleBadgeStyles.owner}>
+            {roleLabels.owner}
+          </Badge>
           <p className="type-caption text-muted-foreground">
             The dev role can't be changed.
           </p>

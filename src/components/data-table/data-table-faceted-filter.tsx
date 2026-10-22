@@ -2,6 +2,7 @@
 
 import type { Column, RowData } from "@tanstack/react-table";
 import { Check, CirclePlus } from "lucide-react";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -60,17 +61,21 @@ export function DataTableFacetedFilter<TData extends RowData, TValue>({
               <Separator className="mx-0.5 h-4" orientation="vertical" />
               <span className="flex gap-1">
                 {chosen.length > MAX_BADGES ? (
-                  <span className="type-caption rounded-full bg-paper px-2 py-0.5 text-paper-foreground">
+                  <Badge icon={Check} size="status" variant="published">
                     {chosen.length} selected
-                  </span>
+                  </Badge>
                 ) : (
                   chosen.map((option) => (
-                    <span
-                      className="type-caption max-w-24 truncate rounded-full bg-paper px-2 py-0.5 text-paper-foreground"
+                    <Badge
+                      className="max-w-24"
+                      icon={Check}
                       key={option.value}
+                      size="status"
+                      title={option.label}
+                      variant="published"
                     >
-                      {option.label}
-                    </span>
+                      <span className="block truncate">{option.label}</span>
+                    </Badge>
                   ))
                 )}
               </span>

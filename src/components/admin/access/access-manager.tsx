@@ -4,8 +4,8 @@ import { Check, Copy, X } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
-import { RoleBadge } from "~/components/admin/role-badge";
 import { PersonAvatar } from "~/components/person-avatar";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -14,6 +14,7 @@ import {
   type InviteRole,
   inviteMessage,
 } from "~/lib/access";
+import { roleBadgeStyles } from "~/lib/role-badge-styles";
 import { ASSIGNABLE_ROLES, normalizeRole, roleLabels } from "~/lib/roles";
 import { timeAgo } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -158,7 +159,9 @@ function InviteRow({ invite }: { invite: Invite }) {
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="type-body break-words">{invite.email}</p>
         <div className="type-caption flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-          <RoleBadge value={invite.role} />
+          <Badge size="status" {...roleBadgeStyles[invite.role]}>
+            {roleLabels[invite.role]}
+          </Badge>
           <span>
             Invited by {invite.invitedByName ?? "a former mita"} ·{" "}
             {timeAgo(invite.createdAt)} · open until{" "}

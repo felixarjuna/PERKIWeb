@@ -4,6 +4,7 @@ import { ExternalLink, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 
 const PLACE = "Roermonderstraße 110, 52072 Aachen";
@@ -51,9 +52,9 @@ export default function MapEmbed() {
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-full flex-col items-center"
         >
-          <span className="type-caption rounded-full bg-background px-3 py-1 text-foreground shadow-lg">
+          <Badge size="status" variant="surface">
             Roermonderstraße 110
-          </span>
+          </Badge>
           <MapPin className="mt-1 size-8 fill-background text-foreground drop-shadow" />
         </div>
       </div>

@@ -2,8 +2,8 @@
 
 import { useRef } from "react";
 import { toast } from "sonner";
-import { roleIcons } from "~/components/admin/role-badge";
 import { Button } from "~/components/ui/button";
+import { roleBadgeStyles } from "~/lib/role-badge-styles";
 import { historyDate, joinedLine, roleChangeLine } from "~/lib/role-history";
 import { normalizeRole, type Role, roleLabels } from "~/lib/roles";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -104,7 +104,7 @@ export default function RoleCard() {
   const role = normalizeRole(stored);
   const status = myRequest?.status;
   const canAsk = role === "member" && status !== "pending";
-  const Icon = roleIcons[role];
+  const Icon = roleBadgeStyles[role].icon;
 
   return (
     <section
