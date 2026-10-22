@@ -54,8 +54,8 @@ settle historical authorship and publication status before planning a live impor
 ## Local verification
 
 The initial import inserted 40 drafts for the existing gatherings from 3 January
-through 10 October 2026. All 40 have both fields populated and no publication
-metadata. A repeat preview skipped all 40 without writes. Content comparison
+through 10 October 2026. At import, all 40 had both fields populated and no
+publication metadata. A repeat preview skipped all 40 without writes. Content comparison
 against the HTML exports passed for all 80 source entries, allowing whitespace
 and displayed list-marker differences. Original source headings were retained.
 Checksums confirmed that the previous 43 takeaways and all schedules were unchanged.
@@ -67,3 +67,11 @@ test configuration or unrelated source, `pnpm exec vitest run --maxWorkers=2`
 passed all 492 tests in 69 files, including the seven new import regressions.
 The dev server remained available on port 3000. This change adds storage and an
 import tool; it does not yet add a TL;DR form or change the drafting workflow.
+
+After reviewing the local import, the user explicitly requested publishing those
+40 historical records locally. A guarded transaction verified exactly 40 imported
+drafts before marking them Published, with a new backup in
+`request/takeaway-import/before-historical-publish.dump`. Checksums confirmed the
+note text, summaries, authorship and all older records were unchanged. Publication
+timestamps record the local approval; the historical publisher remains unknown.
+The importer still creates drafts by default, and no live database was accessed.
