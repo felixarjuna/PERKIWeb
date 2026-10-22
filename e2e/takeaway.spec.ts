@@ -109,13 +109,8 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(article).toContainText("Draft");
   await expect(article).toContainText(ADMIN_USERNAME);
 
-  // Edit from the card's actions menu.
-  await article
-    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
-    .click();
-  await page
-    .getByRole("menuitem", { exact: true, name: `Edit ${scheduleTitle}` })
-    .click();
+  // The card itself opens the editor.
+  await article.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveText(keypoints);
@@ -430,8 +425,13 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await expect(
     locked.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
-  await expect(locked.getByRole("button")).toHaveCount(0);
-  await expect(locked.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(1);
+  await expect(locked.getByRole("button")).toHaveCount(1);
+  await locked.getByRole("button", { name: MORE_ACTIONS }).click();
+  await expect(page.getByRole("menuitem", { name: PUBLIC_PAGE })).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: `Edit ${scheduleTitle}` })
+  ).toHaveCount(0);
+  await page.keyboard.press("Escape");
   // Staff can send it back, but must put it through review again to republish.
   await loginAs(page, ADMIN);
   const sentBack = await findInList(page, scheduleTitle);
@@ -538,9 +538,6 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   const publishedCard = cards.filter({ hasText: `Card published ${suffix}` });
   await expect(draft.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
   await expect(review.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
-  const publicPage = publishedCard.getByRole("link", { name: PUBLIC_PAGE });
-  await expect(publicPage).toHaveCount(1);
-  await expect(publicPage).toHaveAttribute("href", PUBLIC_TAKEAWAY_HREF);
   const send = draft.getByRole("button", { name: SEND_REVIEW });
   const publish = review.getByRole("button", { name: PUBLISH_ACTION });
   await expect(draft.getByRole("button")).toHaveCount(2);
@@ -560,9 +557,19 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   const more = draft.getByRole("button", { name: MORE_ACTIONS });
   await more.focus();
   await page.keyboard.press("Enter");
-  await expect(
-    page.getByRole("menuitem", { name: `Edit Card draft ${suffix}` })
-  ).toBeFocused();
+  const unavailable = page.getByRole("menuitem", {
+    name: `View public page: Card draft ${suffix}`,
+  });
+  await expect(unavailable).toBeFocused();
+  await expect(unavailable).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByRole("tooltip")).toContainText(
+    "This takeaway isn’t published yet."
+  );
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/admin/takeaways");
+  await expect(unavailable).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toBeHidden();
   await page.keyboard.press("Escape");
   await expect(more).toBeFocused();
   await more.click();
@@ -611,6 +618,11 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   ).toBeVisible();
   await page.goto("/admin/takeaways");
   await page.getByLabel("Search takeaways").fill(suffix);
+  await publishedCard.getByRole("button", { name: MORE_ACTIONS }).click();
+  const publicPage = page.getByRole("menuitem", {
+    name: `View public page: Card published ${suffix}`,
+  });
+  await expect(publicPage).toHaveAttribute("href", PUBLIC_TAKEAWAY_HREF);
   await publicPage.click();
   await expect(page).toHaveURL(PUBLIC_TAKEAWAY_HREF);
   await expect(

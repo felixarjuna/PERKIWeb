@@ -89,7 +89,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-8"
+        className="flex w-full max-w-3xl flex-col gap-8"
         onSubmit={(event) => {
           const { submitter } = event.nativeEvent as SubmitEvent;
           const status =

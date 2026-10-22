@@ -2,9 +2,8 @@
 
 import {
   Check,
-  ExternalLink,
+  Globe,
   MoreHorizontal,
-  PencilLine,
   Send,
   Trash2,
   Undo2,
@@ -82,8 +81,9 @@ export function TakeawayActions({
   const secondary = actions.filter((action) => !action.primary);
   const pending = change.isPending || remove.isPending;
   const PrimaryIcon = primary?.to === "published" ? Check : Send;
-  const showMenu = rights.canManage || secondary.length > 0;
-  if (!(primary || showMenu || status === "published")) {
+  const showMenu =
+    rights.canManage || secondary.length > 0 || status === "published";
+  if (!(primary || showMenu)) {
     return null;
   }
   return (
@@ -100,23 +100,6 @@ export function TakeawayActions({
           </PrimaryIcon>
           {primary.label}
         </Button>
-      ) : null}
-      {status === "published" ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button asChild size="icon" variant="secondary">
-              <Link
-                aria-label={`View public page: ${name}`}
-                href={`/takeaway/${id}`}
-              >
-                <ExternalLink aria-hidden="true" data-icon="inline-start">
-                  <title>View public page</title>
-                </ExternalLink>
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>View public page</TooltipContent>
-        </Tooltip>
       ) : null}
       {showMenu ? (
         <AlertDialog onOpenChange={setConfirmDelete} open={confirmDelete}>
@@ -135,20 +118,39 @@ export function TakeawayActions({
                 </MoreHorizontal>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="overscroll-contain">
-              {rights.canManage ? (
+            <DropdownMenuContent align="start" className="overscroll-contain">
+              {status === "published" ? (
                 <DropdownMenuItem asChild>
                   <Link
-                    aria-label={`Edit ${name}`}
-                    href={`/admin/takeaways/${id}/edit`}
+                    aria-label={`View public page: ${name}`}
+                    href={`/takeaway/${id}`}
                   >
-                    <PencilLine aria-hidden="true">
-                      <title>Edit</title>
-                    </PencilLine>
-                    Edit
+                    <Globe aria-hidden="true">
+                      <title>View public page</title>
+                    </Globe>
+                    View public page
                   </Link>
                 </DropdownMenuItem>
-              ) : null}
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem
+                      aria-disabled="true"
+                      aria-label={`View public page: ${name}`}
+                      className="aria-disabled:opacity-50"
+                      onSelect={(event) => event.preventDefault()}
+                    >
+                      <Globe aria-hidden="true">
+                        <title>View public page</title>
+                      </Globe>
+                      View public page
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    This takeaway isn’t published yet.
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {secondary.map((action) => (
                 <DropdownMenuItem
                   key={action.to}

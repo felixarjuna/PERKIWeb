@@ -75,7 +75,7 @@ export default function EditTakeawayForm() {
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-8"
+        className="flex w-full max-w-3xl flex-col gap-8"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="space-y-4">
