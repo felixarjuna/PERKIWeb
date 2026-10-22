@@ -50,11 +50,7 @@ function DeleteAccount() {
       open={open}
     >
       <AlertDialogTrigger asChild>
-        <Button
-          className="gap-2 text-destructive-text hover:text-destructive-text"
-          type="button"
-          variant="ghost"
-        >
+        <Button className="gap-2" type="button" variant="destructive">
           <Trash2 className="size-4" />
           Delete account
         </Button>
