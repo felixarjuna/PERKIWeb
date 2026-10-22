@@ -1,9 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 import { api } from "~/trpc/react";
 import { KeypointsField } from "../keypoints-field";
 
@@ -31,8 +31,8 @@ type NewStatus = "draft" | "in_review";
 
 const addTakeawayFormSchema = z.object({
   contributors: z.array(z.string()),
-  keypoints: z.string(),
-  scheduleId: z.string(),
+  keypoints: takeawayKeypointsSchema,
+  scheduleId: z.string().min(1, "Choose a gathering for this takeaway."),
 });
 
 /** `username` comes from the server session, so it is set on first render. */
@@ -48,19 +48,18 @@ export default function AddTakeawayForm({ username }: { username: string }) {
     defaultValues: {
       contributors: [username],
       keypoints: "",
+      scheduleId: "",
     },
     resolver: zodResolver(addTakeawayFormSchema),
   });
-
-  /** Which button submitted: a draft only the writer sees, or one for review. */
-  const [status, setStatus] = useState<NewStatus>("draft");
 
   /** add takeaway action. */
   const utils = api.useUtils();
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async (created) => {
-      await Promise.all([utils.takeaways.invalidate()]);
+      await utils.takeaways.getManageable.cancel();
+      await utils.takeaways.invalidate();
       toast.success(
         created.status === "in_review"
           ? "Your takeaway is in review."
@@ -76,7 +75,10 @@ export default function AddTakeawayForm({ username }: { username: string }) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof addTakeawayFormSchema>) {
+  function onSubmit(
+    values: z.infer<typeof addTakeawayFormSchema>,
+    status: NewStatus
+  ) {
     addTakeaway.mutate({
       ...values,
       scheduleId: +values.scheduleId,
@@ -88,11 +90,15 @@ export default function AddTakeawayForm({ username }: { username: string }) {
     <Form {...form}>
       <form
         className="flex flex-col gap-8"
-        onSubmit={form.handleSubmit(onSubmit, (error) => {
-          toast.error("Uh oh! Something went wrong.", {
-            description: JSON.stringify(error),
-          });
-        })}
+        onSubmit={(event) => {
+          const { submitter } = event.nativeEvent as SubmitEvent;
+          const status =
+            submitter instanceof HTMLButtonElement &&
+            submitter.value === "in_review"
+              ? "in_review"
+              : "draft";
+          return form.handleSubmit((values) => onSubmit(values, status))(event);
+        }}
       >
         <div className="space-y-4">
           <h2 className="type-heading">Fellowship Information</h2>
@@ -146,18 +152,26 @@ export default function AddTakeawayForm({ username }: { username: string }) {
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={addTakeaway.isPending}
-              onClick={() => setStatus("draft")}
+              name="intent"
               type="submit"
-              variant="default"
+              value="draft"
+              variant="secondary"
             >
+              <Save aria-hidden="true" data-icon="inline-start">
+                <title>Save draft</title>
+              </Save>
               Save draft
             </Button>
             <Button
               disabled={addTakeaway.isPending}
-              onClick={() => setStatus("in_review")}
+              name="intent"
               type="submit"
-              variant="secondary"
+              value="in_review"
+              variant="default"
             >
+              <Send aria-hidden="true" data-icon="inline-start">
+                <title>Send to review</title>
+              </Send>
               Send to review
             </Button>
           </div>
@@ -167,7 +181,9 @@ export default function AddTakeawayForm({ username }: { username: string }) {
             type="button"
             variant="secondary"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" data-icon="inline-start">
+              <title>Back</title>
+            </ArrowLeft>
             Back
           </Button>
         </div>

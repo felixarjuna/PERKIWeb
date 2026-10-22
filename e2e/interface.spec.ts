@@ -135,7 +135,10 @@ for (const width of widths) {
         await page
           .getByRole("listitem")
           .filter({ hasText: keypoints })
-          .getByRole("link", { exact: true, name: `Edit ${title}` })
+          .getByRole("button", { name: `More actions for ${title}` })
+          .click();
+        await page
+          .getByRole("menuitem", { exact: true, name: `Edit ${title}` })
           .click();
         const editor = page.getByLabel("Key points", { exact: true });
         await expect(editor).toHaveText(keypoints);

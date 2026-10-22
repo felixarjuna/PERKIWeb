@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
@@ -59,7 +59,8 @@ export default function EditTakeawayForm() {
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
-      await Promise.all([utils.takeaways.invalidate()]);
+      await utils.takeaways.getManageable.cancel();
+      await utils.takeaways.invalidate();
       toast.success("Your changes has been saved successfully!", {
         description: "Thanks for your contribution!",
       });
@@ -75,11 +76,7 @@ export default function EditTakeawayForm() {
     <Form {...form}>
       <form
         className="flex flex-col gap-8"
-        onSubmit={form.handleSubmit(onSubmit, (error) => {
-          toast.error("Uh oh! Something went wrong.", {
-            description: JSON.stringify(error),
-          });
-        })}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -111,6 +108,9 @@ export default function EditTakeawayForm() {
               type="submit"
               variant="default"
             >
+              <Save aria-hidden="true" data-icon="inline-start">
+                <title>Save changes</title>
+              </Save>
               Save changes
             </Button>
             <p className="type-caption text-muted-foreground">
@@ -123,7 +123,9 @@ export default function EditTakeawayForm() {
             type="button"
             variant="secondary"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" data-icon="inline-start">
+              <title>Back</title>
+            </ArrowLeft>
             Back
           </Button>
         </div>

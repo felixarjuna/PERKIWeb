@@ -28,7 +28,7 @@ const PUBLISH: StatusAction = {
 };
 const TO_REVIEW: StatusAction = {
   label: "Send to review",
-  primary: false,
+  primary: true,
   to: "in_review",
 };
 const SEND_BACK: StatusAction = {
@@ -44,7 +44,7 @@ const BACK_TO_DRAFT: StatusAction = {
 
 /**
  * The status changes a viewer may make, in the order the buttons appear.
- * Mirrors the server's rule (`setStatus`): staff move a takeaway anywhere,
+ * Mirrors the server's rule (`setStatus`): drafts must enter review first;
  * an author only between draft and review while it is unpublished.
  */
 export const statusActions = (
@@ -53,7 +53,7 @@ export const statusActions = (
 ): StatusAction[] => {
   if (rights.canPublish) {
     if (status === "draft") {
-      return [PUBLISH, TO_REVIEW];
+      return [TO_REVIEW];
     }
     if (status === "in_review") {
       return [PUBLISH, SEND_BACK];

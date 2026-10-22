@@ -2,10 +2,11 @@ import { z } from "zod";
 import { REQUESTABLE_ROLES } from "~/lib/access";
 import { eventTypeEnum, TAKEAWAY_STATUSES } from "~/lib/db/schema/schema";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
+import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 
 const takeawayFieldsSchema = z.object({
   contributors: z.array(z.string()),
-  keypoints: z.string(),
+  keypoints: takeawayKeypointsSchema,
   scheduleId: z.number(),
 });
 

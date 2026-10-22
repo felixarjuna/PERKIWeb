@@ -28,13 +28,16 @@ export function TakeawayStatusBadge({
   return (
     <span
       className={cn(
-        "type-caption inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5",
+        "type-caption inline-flex min-h-7 min-w-28 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-1",
         tone,
         className
       )}
+      data-slot="takeaway-status"
     >
-      <Icon aria-hidden="true" className="size-3.5 shrink-0" />
-      {statusLabels[value]}
+      <Icon aria-hidden="true" className="size-3.5 shrink-0">
+        <title>Takeaway status</title>
+      </Icon>
+      <span>{statusLabels[value]}</span>
     </span>
   );
 }

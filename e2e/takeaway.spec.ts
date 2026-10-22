@@ -23,6 +23,9 @@ const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
 /** "Share" with a native share sheet, "Copy link" without one. */
 const SHARE_BUTTON = /Share|Copy link/;
 const SEARCH_URL = /[?&]q=PELAYANAN/;
+const SEND_REVIEW = /^Send to review:/;
+const PUBLISH_ACTION = /^Publish:/;
+const MORE_ACTIONS = /^More actions/;
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
@@ -102,13 +105,21 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(article).toContainText("Draft");
   await expect(article).toContainText(ADMIN_USERNAME);
 
-  // Edit
+  // Edit from the card's actions menu.
   await article
-    .getByRole("link", { exact: true, name: `Edit ${scheduleTitle}` })
+    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
+    .click();
+  await page
+    .getByRole("menuitem", { exact: true, name: `Edit ${scheduleTitle}` })
     .click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveText(keypoints);
+  await keypointsInput.fill("");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
+  await expect(keypointsInput).toHaveAttribute("aria-invalid", "true");
+  await expect(keypointsInput).toBeFocused();
   await keypointsInput.fill(editedKeypoints);
   await page.getByRole("button", { name: "Save changes" }).click();
 
@@ -124,11 +135,14 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
 
   // Delete
   await edited
-    .getByRole("button", { exact: true, name: `Delete ${scheduleTitle}` })
+    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
+    .click();
+  await page
+    .getByRole("menuitem", { exact: true, name: `Delete ${scheduleTitle}` })
     .click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Delete entry" })
+    .getByRole("button", { name: "Delete takeaway" })
     .click();
   await expect(toast(page, "Takeaway deleted.")).toBeVisible();
   await expect(edited).toHaveCount(0);
@@ -223,7 +237,13 @@ test("a writer formats a takeaway in the editor and readers see it formatted", a
   );
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(toast(page, "Your draft has been saved.")).toBeVisible();
-  // The admin (mita) publishes it from the list.
+  // Even staff must send a draft to review before publishing.
+  await changeStatus(
+    page,
+    scheduleTitle,
+    "Send to review",
+    "Takeaway sent to review."
+  );
   await changeStatus(page, scheduleTitle, "Publish", "Takeaway published.");
 
   await page.goto("/takeaway");
@@ -345,6 +365,21 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     inReview.getByRole("button", { name: `Publish: ${scheduleTitle}` })
   ).toHaveCount(0);
   await expectHiddenFromPublic();
+  await loginAs(page, WRITER);
+  const ownReview = await findInList(page, scheduleTitle);
+  await ownReview
+    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
+    .click();
+  await page
+    .getByRole("menuitem", { exact: true, name: "Back to draft" })
+    .click();
+  await expect(ownReview.getByText("Draft", { exact: true })).toBeVisible();
+  await changeStatus(
+    page,
+    scheduleTitle,
+    "Send to review",
+    "Takeaway sent to review."
+  );
   await loginAs(page, WRITER_2);
   const peerView = await findInList(page, scheduleTitle);
   await expect(peerView).toContainText("In review");
@@ -376,6 +411,19 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await expect(
     locked.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
+  await expect(locked.getByRole("button")).toHaveCount(0);
+  // Staff can send it back, but must put it through review again to republish.
+  await loginAs(page, ADMIN);
+  const sentBack = await findInList(page, scheduleTitle);
+  await sentBack
+    .getByRole("button", { name: `More actions for ${scheduleTitle}` })
+    .click();
+  await page.getByRole("menuitem", { exact: true, name: "Send back" }).click();
+  await expect(sentBack.getByText("Draft", { exact: true })).toBeVisible();
+  await expect(
+    sentBack.getByRole("button", { name: `Publish: ${scheduleTitle}` })
+  ).toHaveCount(0);
+  await expectHiddenFromPublic();
 });
 
 test("a draft takeaway is a 404 for members", async ({ page }) => {
@@ -391,4 +439,187 @@ test("a draft takeaway is a 404 for members", async ({ page }) => {
 
   const response = await page.goto(`/takeaway/${id}`);
   expect(response?.status()).toBe(404);
+});
+
+for (const action of ["Save draft", "Send to review"] as const) {
+  test(`${action} blocks an empty note and focuses its inline error`, async ({
+    page,
+  }) => {
+    const scheduleTitle = `Empty note ${action} ${uniqueSuffix()}`;
+    await insertSchedule(scheduleTitle);
+    await page.goto("/admin/takeaways/new");
+    await selectOption(page, "Schedule", scheduleTitle);
+    const editor = page.getByRole("textbox", { name: "Key points" });
+    const submit = page.getByRole("button", { exact: true, name: action });
+    await expect(submit.locator("svg")).toHaveCount(1);
+    await submit.click();
+    await expect(page).toHaveURL("/admin/takeaways/new");
+    await expect(
+      page.getByText(
+        "Write some key points before saving or sending to review.",
+        { exact: true }
+      )
+    ).toBeVisible();
+    await expect(editor).toHaveAttribute("aria-invalid", "true");
+    await expect(editor).toBeFocused();
+    await editor.fill("   ");
+    await submit.click();
+    await expect(editor).toHaveAttribute("aria-invalid", "true");
+    await editor.fill(`Meaningful notes for ${scheduleTitle}`);
+    await submit.click();
+    await expect(page).toHaveURL("/admin/takeaways");
+    const card = await findInList(page, scheduleTitle);
+    await expect(
+      card.getByText(action === "Save draft" ? "Draft" : "In review", {
+        exact: true,
+      })
+    ).toBeVisible();
+  });
+}
+
+test("cards keep one next step, equal badges and keyboard-accessible menus at 320px", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  for (const status of ["draft", "in_review", "published"] as const) {
+    // biome-ignore lint/performance/noAwaitInLoops: isolated status fixtures in order.
+    const scheduleId = await insertSchedule(`Card ${status} ${suffix}`);
+    await insertTakeaway(
+      scheduleId,
+      `Full note ${status} ${suffix}`,
+      ADMIN.id,
+      status
+    );
+  }
+  await page.setViewportSize({ height: 844, width: 320 });
+  await page.goto("/admin/takeaways");
+  await page.getByLabel("Search takeaways").fill(suffix);
+  const cards = page
+    .getByRole("main")
+    .getByRole("listitem")
+    .filter({ hasText: suffix });
+  await expect(cards).toHaveCount(3);
+  await expect(page.locator('[data-slot="takeaway-status"]')).toHaveCount(3);
+  const sizes = await page
+    .locator('[data-slot="takeaway-status"]')
+    .evaluateAll((pills) =>
+      pills.map((pill) => ({
+        height: pill.getBoundingClientRect().height,
+        width: pill.getBoundingClientRect().width,
+      }))
+    );
+  expect(sizes).toHaveLength(3);
+  expect(new Set(sizes.map((size) => size.width)).size).toBe(1);
+  expect(new Set(sizes.map((size) => size.height)).size).toBe(1);
+  const draft = cards.filter({ hasText: `Card draft ${suffix}` });
+  const review = cards.filter({ hasText: `Card in_review ${suffix}` });
+  const send = draft.getByRole("button", { name: SEND_REVIEW });
+  const publish = review.getByRole("button", { name: PUBLISH_ACTION });
+  await expect(draft.getByRole("button")).toHaveCount(2);
+  await expect(draft.getByRole("button", { name: PUBLISH_ACTION })).toHaveCount(
+    0
+  );
+  expect((await send.boundingBox())?.height).toBe(
+    (await publish.boundingBox())?.height
+  );
+  await expect(send.locator("svg")).toHaveCount(1);
+  await expect(publish.locator("svg")).toHaveCount(1);
+  const more = draft.getByRole("button", { name: MORE_ACTIONS });
+  await more.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("menuitem", { name: `Edit Card draft ${suffix}` })
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(more).toBeFocused();
+  await more.click();
+  await page
+    .getByRole("menuitem", { name: `Delete Card draft ${suffix}` })
+    .click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.getByRole("button", { name: "Keep takeaway" }).click();
+  await expect(page.getByRole("alertdialog")).toBeHidden();
+  await expect(more).toBeFocused();
+  const dimensions = await page.evaluate(() => ({
+    content: document.documentElement.scrollWidth,
+    viewport: window.innerWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
+  // At 200% zoom, a 640px viewport has the same 320px layout width.
+  await page.setViewportSize({ height: 844, width: 640 });
+  await page.evaluate(() => {
+    document.documentElement.style.zoom = "2";
+  });
+  const zoomed = await page.evaluate(() => ({
+    content: document.documentElement.scrollWidth,
+    viewport: window.innerWidth,
+  }));
+  expect(zoomed.content).toBeLessThanOrEqual(zoomed.viewport);
+  await expect(send).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.style.zoom = "";
+  });
+  await page.keyboard.press("Tab");
+  const read = draft.getByRole("link", { name: `Read Card draft ${suffix}` });
+  await read.focus();
+  expect(
+    await read.evaluate(
+      (element) => getComputedStyle(element, "::after").boxShadow
+    )
+  ).not.toBe("none");
+  // A click on the card body follows its stretched native title link.
+  await draft.click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: `Card draft ${suffix}` })
+  ).toBeVisible();
+});
+
+test("sending to review replaces a stale search response already in flight", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const title = `Refresh review ${suffix}`;
+  await insertTakeaway(
+    await insertSchedule(title),
+    "A complete reflection",
+    ADMIN.id,
+    "draft"
+  );
+  await page.goto("/admin/takeaways");
+  const card = takeawayArticle(page, title);
+  await loadUntilVisible(page, card);
+  const captured = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  let delayFirst = true;
+  const pattern = "**/api/trpc/takeaways.getManageable?**";
+  await page.route(pattern, async (route) => {
+    if (!(delayFirst && route.request().url().includes(suffix))) {
+      await route.continue();
+      return;
+    }
+    delayFirst = false;
+    const response = await route.fetch();
+    captured.resolve();
+    await release.promise;
+    await route.fulfill({ response });
+  });
+  try {
+    await page.getByLabel("Search takeaways").fill(suffix);
+    await captured.promise;
+    const refetch = page.waitForRequest(
+      (request) =>
+        request.method() === "GET" &&
+        request.url().includes("takeaways.getManageable") &&
+        request.url().includes(suffix)
+    );
+    await card
+      .getByRole("button", { name: `Send to review: ${title}` })
+      .click();
+    await refetch;
+    release.resolve();
+    await expect(card.getByText("In review", { exact: true })).toBeVisible();
+  } finally {
+    release.resolve();
+    await page.unroute(pattern);
+  }
 });

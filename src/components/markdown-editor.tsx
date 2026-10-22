@@ -23,7 +23,9 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type Ref,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -72,6 +74,7 @@ interface MarkdownEditorProps {
   readonly id?: string;
   readonly onBlur?: () => void;
   readonly onChange: (markdown: string) => void;
+  readonly ref?: Ref<{ focus: () => void }>;
   readonly value: string | undefined;
 }
 
@@ -89,6 +92,7 @@ export function MarkdownEditor({
   id,
   onBlur,
   onChange,
+  ref,
   value = "",
 }: MarkdownEditorProps) {
   // The Markdown this editor last saw, so a new `value` from outside
@@ -122,6 +126,16 @@ export function MarkdownEditor({
       }
     },
   });
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => {
+        editor?.commands.focus();
+      },
+    }),
+    [editor]
+  );
 
   useEffect(() => {
     if (editor && value !== current.current) {

@@ -38,6 +38,7 @@ export function KeypointsField<T extends FieldValues>({
               disabled={field.disabled}
               onBlur={field.onBlur}
               onChange={field.onChange}
+              ref={field.ref}
               value={field.value}
             />
           </FormControl>

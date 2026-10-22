@@ -7,6 +7,7 @@ import {
 } from "~/lib/db/schema/schema";
 import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
+import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 import { db } from "~/server";
 import { canManageTakeaways, isAdmin } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
@@ -156,9 +157,13 @@ const maySetStatus = (
 
 const loadOwnership = async (
   takeawayId: number
-): Promise<Ownership | undefined> => {
+): Promise<(Ownership & { keypoints: string }) | undefined> => {
   const [takeaway] = await db
-    .select({ authorId: takeaways.authorId, status: takeaways.status })
+    .select({
+      authorId: takeaways.authorId,
+      keypoints: takeaways.keypoints,
+      status: takeaways.status,
+    })
     .from(takeaways)
     .where(eq(takeaways.id, takeawayId))
     .limit(1);
@@ -393,6 +398,21 @@ export const takeawayRouter = createTRPCRouter({
               ? "Only mita or the owner can publish a takeaway."
               : "You can only change your own unpublished takeaways.",
         });
+      }
+      if (input.status === "published" && takeaway.status === "draft") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Send this draft to review before publishing it.",
+        });
+      }
+      if (input.status !== "draft") {
+        const content = takeawayKeypointsSchema.safeParse(takeaway.keypoints);
+        if (!content.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: content.error.issues[0]?.message,
+          });
+        }
       }
       return affectedRow(
         await db

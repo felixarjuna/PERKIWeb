@@ -38,7 +38,9 @@ const staff = async () => callerFor((await insertUser({ role: "mita" })).id);
 
 /** Publishes the takeaway as a staff member, so the public can read it. */
 const publish = async (id: number) => {
-  await (await staff()).takeaways.setStatus({ id, status: "published" });
+  const api = (await staff()).takeaways;
+  await api.setStatus({ id, status: "in_review" });
+  await api.setStatus({ id, status: "published" });
 };
 
 const onlyTakeaway = async () => {
@@ -492,6 +494,78 @@ describe("takeaways router", () => {
     };
     const statusOf = async (id: number) =>
       (await rows()).find((row) => row.id === id)?.status;
+
+    it.each([
+      "",
+      " \n\t",
+      "## \n\n---",
+      "> \n\n- ",
+      "![Omitted](https://example.test/a.png)",
+      "[^unused]: Hidden note",
+    ])(
+      "rejects empty note content %j for drafts, reviews and edits",
+      async (keypoints) => {
+        const { author, id, schedule } = await draftBy();
+        const api = callerFor(author.id).takeaways;
+        for (const status of ["draft", "in_review"] as const) {
+          // biome-ignore lint/performance/noAwaitInLoops: assert each save separately.
+          await expect(
+            api.addTakeaway({ ...sample(schedule.id, keypoints), status })
+          ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        }
+        await expect(
+          api.updateTakeaway({ ...sample(schedule.id, keypoints), id })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await onlyTakeaway()).toMatchObject({
+          id,
+          keypoints: "Notes",
+          status: "draft",
+        });
+      }
+    );
+
+    it("accepts a note whose text is in a referenced footnote", async () => {
+      const { author, schedule } = await draftBy();
+      await expect(
+        callerFor(author.id).takeaways.addTakeaway({
+          ...sample(schedule.id, "[^faith]\n\n[^faith]: Faith in Christ."),
+        })
+      ).resolves.toMatchObject({ status: "draft" });
+    });
+
+    it.each(["mita", "owner"] as const)(
+      "requires review before a %s can publish a draft",
+      async (role) => {
+        const { id } = await draftBy();
+        const api = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          api.setStatus({ id, status: "published" })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await statusOf(id)).toBe("draft");
+        await api.setStatus({ id, status: "in_review" });
+        await api.setStatus({ id, status: "published" });
+        expect(await statusOf(id)).toBe("published");
+      }
+    );
+
+    it.each(["draft", "in_review"] as const)(
+      "prevents an existing empty %s from progressing",
+      async (status) => {
+        const { id } = await draftBy("writer", status);
+        await testDb
+          .update(takeaways)
+          .set({ keypoints: " \n" })
+          .where(eq(takeaways.id, id));
+        const api = (await staff()).takeaways;
+        await expect(
+          api.setStatus({
+            id,
+            status: status === "draft" ? "in_review" : "published",
+          })
+        ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+        expect(await statusOf(id)).toBe(status);
+      }
+    );
 
     it.each(["edit", "delete", "status"] as const)(
       "rejects a writer's stale %s when staff publishes during authorization",

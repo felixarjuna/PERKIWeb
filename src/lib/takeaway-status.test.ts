@@ -30,9 +30,8 @@ describe("statusActions", () => {
     ]);
   });
 
-  it("lets staff publish from any unpublished status and send back", () => {
+  it("requires staff to send drafts to review before publishing", () => {
     expect(names("draft", staff)).toEqual([
-      { label: "Publish", to: "published" },
       { label: "Send to review", to: "in_review" },
     ]);
     expect(names("in_review", staff)).toEqual([
