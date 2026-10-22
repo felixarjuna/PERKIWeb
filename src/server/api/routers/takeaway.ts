@@ -7,9 +7,11 @@ import {
 } from "~/lib/db/schema/schema";
 import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
+import { canWriteTakeaways, isStaffRole, type Role } from "~/lib/roles";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
+import { mayEditTakeaway, statusActions } from "~/lib/takeaway-status";
 import { db } from "~/server";
-import { canManageTakeaways, isAdmin } from "~/server/authz";
+import { getRole } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
 import {
   afterCursor,
@@ -107,19 +109,19 @@ const cursorOf = (row: {
 /** What a viewer is to a takeaway, read from the database on every call. */
 interface Viewer {
   id: string;
+  role: Role;
   staff: boolean;
   writer: boolean;
 }
 
 const viewerFor = async (userId: string | undefined): Promise<Viewer> => {
-  if (!userId) {
-    return { id: "", staff: false, writer: false };
-  }
-  const [staff, writer] = await Promise.all([
-    isAdmin(userId),
-    canManageTakeaways(userId),
-  ]);
-  return { id: userId, staff, writer };
+  const role = userId ? await getRole(userId) : "member";
+  return {
+    id: userId ?? "",
+    role,
+    staff: isStaffRole(role),
+    writer: canWriteTakeaways(role),
+  };
 };
 
 interface Ownership {
@@ -127,13 +129,9 @@ interface Ownership {
   status: TakeawayStatus;
 }
 
-/**
- * The edit rule from #36: staff edit every takeaway, a writer only their own
- * while it is a draft or in review. Once published, only staff change it.
- */
+/** The edit rule (`mayEditTakeaway`): author and staff, until published. */
 const mayManage = (takeaway: Ownership, viewer: Viewer) =>
-  viewer.staff ||
-  (takeaway.authorId === viewer.id && takeaway.status !== "published");
+  mayEditTakeaway(takeaway, viewer);
 
 /**
  * The read rule from #36: published is public, staff and the author read
@@ -145,15 +143,26 @@ const mayRead = (takeaway: Ownership, viewer: Viewer) =>
   (viewer.writer &&
     (takeaway.authorId === viewer.id || takeaway.status === "in_review"));
 
-/**
- * The status rule from #36: staff set any status; a writer moves their own
- * unpublished takeaway between draft and review. Only staff publish.
- */
+/** The status rule (`statusActions`): exactly the moves the list offers. */
 const maySetStatus = (
   takeaway: Ownership,
   viewer: Viewer,
   next: TakeawayStatus
-) => viewer.staff || (mayManage(takeaway, viewer) && next !== "published");
+) => statusActions(takeaway, viewer).some((action) => action.to === next);
+
+/** Why `viewer` may not make this move, for the FORBIDDEN message. */
+const statusRefusal = (current: TakeawayStatus, next: TakeawayStatus) => {
+  if (next === "published") {
+    return "Only mita can publish a takeaway.";
+  }
+  if (current === "published") {
+    return "Only mita can unpublish a takeaway.";
+  }
+  if (next === "in_review") {
+    return "Only the writer of this takeaway can send it to review.";
+  }
+  return "Only its writer or mita can take this takeaway out of review.";
+};
 
 const loadOwnership = async (
   takeawayId: number
@@ -193,19 +202,16 @@ const assertCanManage = async (takeawayId: number, userId: string) => {
       code: "FORBIDDEN",
       message:
         takeaway.status === "published"
-          ? "Published takeaways can only be changed by mita or the owner."
+          ? "Published takeaways can't be changed. Ask mita to unpublish it first."
           : "You can only change your own takeaways.",
     });
   }
-  // Recheck writer ownership and status in the write itself.
+  // Recheck ownership and status in the write itself, so a takeaway
+  // published meanwhile is never changed.
   return and(
     eq(takeaways.id, takeawayId),
-    viewer.staff
-      ? undefined
-      : and(
-          eq(takeaways.authorId, userId),
-          inArray(takeaways.status, ["draft", "in_review"])
-        )
+    inArray(takeaways.status, ["draft", "in_review"]),
+    viewer.staff ? undefined : eq(takeaways.authorId, userId)
   );
 };
 
@@ -299,8 +305,8 @@ export const takeawayRouter = createTRPCRouter({
             takeaways: { authorId, publishedById: _publisher, ...note },
             schedules: schedule,
           }) => ({
+            actions: statusActions({ authorId, status: note.status }, viewer),
             canManage: mayManage({ authorId, status: note.status }, viewer),
-            canPublish: viewer.staff,
             schedules: schedule,
             takeaways: withPreview(note),
           })
@@ -390,19 +396,16 @@ export const takeawayRouter = createTRPCRouter({
       if (!takeaway) {
         throw notFound();
       }
-      if (!maySetStatus(takeaway, viewer, input.status)) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            input.status === "published"
-              ? "Only mita or the owner can publish a takeaway."
-              : "You can only change your own unpublished takeaways.",
-        });
-      }
       if (input.status === "published" && takeaway.status === "draft") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Send this draft to review before publishing it.",
+        });
+      }
+      if (!maySetStatus(takeaway, viewer, input.status)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: statusRefusal(takeaway.status, input.status),
         });
       }
       if (input.status !== "draft") {

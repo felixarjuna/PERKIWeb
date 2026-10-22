@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
-import { isAdmin } from "~/server/authz";
+import { getRole } from "~/server/authz";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -36,11 +36,19 @@ const signedIn = async () =>
 const signedInMember = async () => callerFor((await insertUser()).id);
 const staff = async () => callerFor((await insertUser({ role: "mita" })).id);
 
-/** Publishes the takeaway as a staff member, so the public can read it. */
+/**
+ * Takes the takeaway through the real flow so the public can read it: its
+ * writer (or mita, for an authorless one) sends it to review, mita publishes.
+ */
 const publish = async (id: number) => {
-  const api = (await staff()).takeaways;
-  await api.setStatus({ id, status: "in_review" });
-  await api.setStatus({ id, status: "published" });
+  const mita = await staff();
+  const [row] = await testDb
+    .select({ authorId: takeaways.authorId })
+    .from(takeaways)
+    .where(eq(takeaways.id, id));
+  const writer = row?.authorId ? callerFor(row.authorId) : mita;
+  await writer.takeaways.setStatus({ id, status: "in_review" });
+  await mita.takeaways.setStatus({ id, status: "published" });
 };
 
 const onlyTakeaway = async () => {
@@ -341,13 +349,15 @@ describe("takeaways router", () => {
       expect((await rows()).map((row) => row.keypoints)).toEqual(["Theirs"]);
     });
 
-    it("lets mita and the owner manage every takeaway, including authorless ones", async () => {
+    it("lets mita and the owner manage every unpublished takeaway, including authorless ones", async () => {
       const writer = await insertUser({ role: "writer" });
       const schedule = await insertSchedule("Faith", new Date("2026-03-01"));
       await callerFor(writer.id).takeaways.addTakeaway(sample(schedule.id));
-      await testDb
-        .insert(takeaways)
-        .values({ ...sample(schedule.id, "Legacy"), authorId: null });
+      await testDb.insert(takeaways).values({
+        ...sample(schedule.id, "Legacy"),
+        authorId: null,
+        status: "draft",
+      });
 
       const mita = callerFor((await insertUser({ role: "mita" })).id);
       const owner = callerFor((await insertUser({ role: "owner" })).id);
@@ -459,8 +469,9 @@ describe("takeaways router", () => {
           ).id
         ).takeaways.getManageable({})
       ).items;
+      // Legacy is published (the column's default), so nobody edits it.
       expect(flags(asOwner)).toEqual({
-        Legacy: true,
+        Legacy: false,
         Mine: true,
         Theirs: true,
       });
@@ -542,11 +553,61 @@ describe("takeaways router", () => {
           api.setStatus({ id, status: "published" })
         ).rejects.toMatchObject({ code: "BAD_REQUEST" });
         expect(await statusOf(id)).toBe("draft");
-        await api.setStatus({ id, status: "in_review" });
-        await api.setStatus({ id, status: "published" });
-        expect(await statusOf(id)).toBe("published");
       }
     );
+
+    it("lets only the writer send a draft to review, not mita or the owner", async () => {
+      const { author, id } = await draftBy();
+      for (const role of ["mita", "owner"] as const) {
+        // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
+        const api = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          api.setStatus({ id, status: "in_review" })
+        ).rejects.toMatchObject({
+          code: "FORBIDDEN",
+          message: "Only the writer of this takeaway can send it to review.",
+        });
+      }
+      await callerFor(author.id).takeaways.setStatus({
+        id,
+        status: "in_review",
+      });
+      expect(await statusOf(id)).toBe("in_review");
+    });
+
+    it("lets mita, not the owner, publish, request changes and unpublish", async () => {
+      const { id } = await draftBy("writer", "in_review");
+      const owner = callerFor(
+        (await insertUser({ role: "owner" })).id
+      ).takeaways;
+      const mita = (await staff()).takeaways;
+
+      await expect(
+        owner.setStatus({ id, status: "published" })
+      ).rejects.toMatchObject({
+        code: "FORBIDDEN",
+        message: "Only mita can publish a takeaway.",
+      });
+      await expect(
+        owner.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(await statusOf(id)).toBe("in_review");
+
+      // Request changes: back to the writer as a draft.
+      await mita.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+
+      await publish(id);
+      await expect(
+        owner.setStatus({ id, status: "draft" })
+      ).rejects.toMatchObject({
+        code: "FORBIDDEN",
+        message: "Only mita can unpublish a takeaway.",
+      });
+      expect(await statusOf(id)).toBe("published");
+      await mita.setStatus({ id, status: "draft" });
+      expect(await statusOf(id)).toBe("draft");
+    });
 
     it.each(["draft", "in_review"] as const)(
       "prevents an existing empty %s from progressing",
@@ -556,7 +617,12 @@ describe("takeaways router", () => {
           .update(takeaways)
           .set({ keypoints: " \n" })
           .where(eq(takeaways.id, id));
-        const api = (await staff()).takeaways;
+        // The writer moves a draft on; mita moves a review on.
+        const { authorId } = await onlyTakeaway();
+        const api =
+          status === "draft" && authorId
+            ? callerFor(authorId).takeaways
+            : (await staff()).takeaways;
         await expect(
           api.setStatus({
             id,
@@ -574,7 +640,7 @@ describe("takeaways router", () => {
         const publisher = await insertUser({ role: "mita" });
         const publishedAt = new Date("2026-10-22T12:00:00Z");
         // Pause at the role lookup, after ownership was read, to publish first.
-        vi.mocked(isAdmin).mockImplementationOnce(async () => {
+        vi.mocked(getRole).mockImplementationOnce(async () => {
           await testDb
             .update(takeaways)
             .set({
@@ -583,7 +649,7 @@ describe("takeaways router", () => {
               status: "published",
             })
             .where(eq(takeaways.id, id));
-          return false;
+          return "writer";
         });
         const api = callerFor(author.id).takeaways;
         const changes = {
@@ -671,7 +737,7 @@ describe("takeaways router", () => {
       expect(single.takeaways.status).toBe("in_review");
       const list = (await other.takeaways.getManageable({})).items;
       expect(list.map((row) => row.takeaways.status)).toEqual(["in_review"]);
-      expect(list[0]).toMatchObject({ canManage: false, canPublish: false });
+      expect(list[0]).toMatchObject({ actions: [], canManage: false });
       await expect(
         other.takeaways.setStatus({ id, status: "draft" })
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -687,7 +753,7 @@ describe("takeaways router", () => {
       ).toEqual([]);
     });
 
-    it("lets staff publish, which records who and when, and send back, which clears it", async () => {
+    it("lets mita publish, which records who and when, and unpublish, which clears it", async () => {
       const { id, schedule } = await draftBy("writer", "in_review");
       const mita = await insertUser({ role: "mita" });
       const before = Date.now();
@@ -711,8 +777,8 @@ describe("takeaways router", () => {
 
       await callerFor(mita.id).takeaways.setStatus({ id, status: "draft" });
 
-      const [sentBack] = await rows();
-      expect(sentBack).toMatchObject({
+      const [unpublished] = await rows();
+      expect(unpublished).toMatchObject({
         publishedAt: null,
         publishedById: null,
         status: "draft",
@@ -720,7 +786,7 @@ describe("takeaways router", () => {
       expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
     });
 
-    it("keeps a writer from editing or deleting their own published takeaway", async () => {
+    it("keeps everyone from editing or deleting a published takeaway", async () => {
       const { author, id, schedule } = await draftBy();
       await publish(id);
       const api = callerFor(author.id);
@@ -735,14 +801,32 @@ describe("takeaways router", () => {
         api.takeaways.setStatus({ id, status: "draft" })
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
       const [row] = (await api.takeaways.getManageable({})).items;
-      expect(row).toMatchObject({ canManage: false, canPublish: false });
+      expect(row).toMatchObject({ actions: [], canManage: false });
 
-      // Staff still can.
-      await (await staff()).takeaways.updateTakeaway({
-        ...sample(schedule.id, "Later"),
-        id,
+      // Staff can't either: mita unpublishes first, so the site has one gate.
+      for (const role of ["mita", "owner"] as const) {
+        // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
+        const staffApi = callerFor((await insertUser({ role })).id).takeaways;
+        await expect(
+          staffApi.updateTakeaway({ ...sample(schedule.id, "Later"), id })
+        ).rejects.toMatchObject({
+          code: "FORBIDDEN",
+          message:
+            "Published takeaways can't be changed. Ask mita to unpublish it first.",
+        });
+        await expect(staffApi.deleteTakeaway({ id })).rejects.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        const [listed] = (await staffApi.getManageable({})).items;
+        expect(listed?.canManage).toBe(false);
+        expect(listed?.actions.map((action) => action.label)).toEqual(
+          role === "mita" ? ["Unpublish"] : []
+        );
+      }
+      expect(await onlyTakeaway()).toMatchObject({
+        keypoints: "Notes",
+        status: "published",
       });
-      expect((await onlyTakeaway()).keypoints).toBe("Later");
     });
 
     it("filters the manageable list by status and returns NOT_FOUND for a missing takeaway", async () => {

@@ -87,8 +87,8 @@ export default function TakeawayManager() {
             <ul className="grid gap-3">
               {records.map(
                 ({
+                  actions,
                   canManage,
-                  canPublish,
                   schedules: schedule,
                   takeaways: note,
                 }) => (
@@ -137,9 +137,10 @@ export default function TakeawayManager() {
                       </CardContent>
                       <CardFooter className="px-5 pb-5">
                         <TakeawayActions
+                          actions={actions}
+                          canManage={canManage}
                           id={note.id}
                           name={schedule.title}
-                          rights={{ canManage, canPublish }}
                           status={note.status}
                         />
                       </CardFooter>

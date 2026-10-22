@@ -2,6 +2,7 @@
 
 import {
   Check,
+  EyeOff,
   Globe,
   MoreHorizontal,
   Send,
@@ -35,38 +36,59 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import type { TakeawayStatus } from "~/lib/db/schema/schema";
-import { type StatusRights, statusActions } from "~/lib/takeaway-status";
+import type { StatusAction } from "~/lib/takeaway-status";
 import { api } from "~/trpc/react";
 
-const confirmations: Record<TakeawayStatus, string> = {
-  draft: "Takeaway sent back to draft.",
-  in_review: "Takeaway sent to review.",
-  published: "Takeaway published. It is now on the website.",
-};
+/** The menu icon for a move: unpublishing hides it, the rest go back. */
+function MoveIcon({ action }: { readonly action: StatusAction }) {
+  return action.confirm ? (
+    <EyeOff aria-hidden="true">
+      <title>{action.label}</title>
+    </EyeOff>
+  ) : (
+    <Undo2 aria-hidden="true">
+      <title>{action.label}</title>
+    </Undo2>
+  );
+}
 
-/** One next step, with editing and less frequent actions in a named menu. */
+/**
+ * One next step, with less frequent actions in a named menu. `actions` and
+ * `canManage` come from the server (`takeaways.getManageable`), which allows
+ * exactly these moves.
+ */
 export function TakeawayActions({
+  actions,
+  canManage,
   id,
   name,
-  rights,
   status,
 }: {
+  readonly actions: readonly StatusAction[];
+  readonly canManage: boolean;
   readonly id: number;
   readonly name: string;
-  readonly rights: StatusRights;
   readonly status: TakeawayStatus;
 }) {
   const utils = api.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmMove, setConfirmMove] = useState<StatusAction | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const change = api.takeaways.setStatus.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: async (row) => {
-      await utils.takeaways.getManageable.cancel();
-      await utils.takeaways.invalidate();
-      toast.success(confirmations[row.status]);
-    },
   });
+  const move = (action: StatusAction) =>
+    change.mutate(
+      { id, status: action.to },
+      {
+        onSuccess: async () => {
+          setConfirmMove(null);
+          await utils.takeaways.getManageable.cancel();
+          await utils.takeaways.invalidate();
+          toast.success(action.done);
+        },
+      }
+    );
   const remove = api.takeaways.deleteTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -76,13 +98,11 @@ export function TakeawayActions({
       toast.success("Takeaway deleted.");
     },
   });
-  const actions = statusActions(status, rights);
   const primary = actions.find((action) => action.primary);
   const secondary = actions.filter((action) => !action.primary);
   const pending = change.isPending || remove.isPending;
   const PrimaryIcon = primary?.to === "published" ? Check : Send;
-  const showMenu =
-    rights.canManage || secondary.length > 0 || status === "published";
+  const showMenu = canManage || secondary.length > 0 || status === "published";
   if (!(primary || showMenu)) {
     return null;
   }
@@ -92,7 +112,7 @@ export function TakeawayActions({
         <Button
           aria-label={`${primary.label}: ${name}`}
           disabled={pending}
-          onClick={() => change.mutate({ id, status: primary.to })}
+          onClick={() => move(primary)}
           type="button"
         >
           <PrimaryIcon aria-hidden="true" data-icon="inline-start">
@@ -153,16 +173,17 @@ export function TakeawayActions({
               )}
               {secondary.map((action) => (
                 <DropdownMenuItem
-                  key={action.to}
-                  onSelect={() => change.mutate({ id, status: action.to })}
+                  aria-label={`${action.label}: ${name}`}
+                  key={action.label}
+                  onSelect={() =>
+                    action.confirm ? setConfirmMove(action) : move(action)
+                  }
                 >
-                  <Undo2 aria-hidden="true">
-                    <title>{action.label}</title>
-                  </Undo2>
+                  <MoveIcon action={action} />
                   {action.label}
                 </DropdownMenuItem>
               ))}
-              {rights.canManage ? (
+              {canManage ? (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -213,6 +234,49 @@ export function TakeawayActions({
           </AlertDialogContent>
         </AlertDialog>
       ) : null}
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmMove(null);
+          }
+        }}
+        open={confirmMove !== null}
+      >
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            trigger.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmMove?.confirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmMove?.confirm?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={change.isPending}>
+              Keep it published
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={change.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmMove) {
+                  move(confirmMove);
+                }
+              }}
+            >
+              <EyeOff aria-hidden="true" data-icon="inline-start">
+                <title>{confirmMove?.confirm?.action}</title>
+              </EyeOff>
+              {change.isPending
+                ? "Unpublishing…"
+                : confirmMove?.confirm?.action}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

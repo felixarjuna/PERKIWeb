@@ -68,9 +68,10 @@ export default async function ReviewPage({
         </div>
         <TakeawayMarkdown markdown={note.keypoints} />
         <TakeawayActions
+          actions={[]}
+          canManage={false}
           id={note.id}
           name={schedule.title}
-          rights={{ canManage: false, canPublish: false }}
           status={note.status}
         />
       </article>

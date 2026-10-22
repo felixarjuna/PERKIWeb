@@ -370,8 +370,12 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     .getByRole("button", { name: `More actions for ${scheduleTitle}` })
     .click();
   await page
-    .getByRole("menuitem", { exact: true, name: "Back to draft" })
+    .getByRole("menuitem", {
+      exact: true,
+      name: `Withdraw from review: ${scheduleTitle}`,
+    })
     .click();
+  await expect(toast(page, "Takeaway withdrawn from review.")).toBeVisible();
   await expect(ownReview.getByText("Draft", { exact: true })).toBeVisible();
   await changeStatus(
     page,
@@ -432,13 +436,20 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     page.getByRole("menuitem", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
-  // Staff can send it back, but must put it through review again to republish.
+  // Only mita unpublishes, after confirming; it has to be reviewed again.
   await loginAs(page, ADMIN);
   const sentBack = await findInList(page, scheduleTitle);
   await sentBack
     .getByRole("button", { name: `More actions for ${scheduleTitle}` })
     .click();
-  await page.getByRole("menuitem", { exact: true, name: "Send back" }).click();
+  await page
+    .getByRole("menuitem", { exact: true, name: `Unpublish: ${scheduleTitle}` })
+    .click();
+  const confirm = page.getByRole("alertdialog", {
+    name: "Unpublish this takeaway?",
+  });
+  await confirm.getByRole("button", { exact: true, name: "Unpublish" }).click();
+  await expect(toast(page, "Takeaway unpublished.")).toBeVisible();
   await expect(sentBack.getByText("Draft", { exact: true })).toBeVisible();
   await expect(
     sentBack.getByRole("button", { name: `Publish: ${scheduleTitle}` })

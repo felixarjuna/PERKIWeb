@@ -1,4 +1,5 @@
 import type { TakeawayStatus } from "./db/schema/schema";
+import { canWriteTakeaways, isStaffRole, type Role } from "./roles";
 
 export const statusLabels: Record<TakeawayStatus, string> = {
   draft: "Draft",
@@ -6,68 +7,113 @@ export const statusLabels: Record<TakeawayStatus, string> = {
   published: "Published",
 };
 
-/** What the viewer may do with a takeaway, as `takeaways.getManageable` reports it. */
-export interface StatusRights {
-  /** May edit the text; for a writer, only their own unpublished takeaways. */
-  canManage: boolean;
-  /** Mita or owner: may publish and send back. */
-  canPublish: boolean;
+/** The takeaway fields the rules below depend on. */
+export interface TakeawaySubject {
+  authorId: string | null;
+  status: TakeawayStatus;
+}
+
+/** Who is asking, with their role read from the database. */
+export interface TakeawayViewer {
+  id: string;
+  role: Role;
 }
 
 export interface StatusAction {
+  /** Shown before the move runs; for moves that change the public site. */
+  confirm?: { action: string; description: string; title: string };
+  /** What the success toast says. */
+  done: string;
   label: string;
-  /** The primary action of the row (publishing), shown as the main button. */
+  /** The row's main next step, shown as its button; the rest sit in the menu. */
   primary: boolean;
   to: TakeawayStatus;
 }
 
-const PUBLISH: StatusAction = {
-  label: "Publish",
-  primary: true,
-  to: "published",
-};
-const TO_REVIEW: StatusAction = {
+const SEND_TO_REVIEW: StatusAction = {
+  done: "Takeaway sent to review.",
   label: "Send to review",
   primary: true,
   to: "in_review",
 };
-const SEND_BACK: StatusAction = {
-  label: "Send back",
+const WITHDRAW: StatusAction = {
+  done: "Takeaway withdrawn from review.",
+  label: "Withdraw from review",
   primary: false,
   to: "draft",
 };
-const BACK_TO_DRAFT: StatusAction = {
-  label: "Back to draft",
+const PUBLISH: StatusAction = {
+  done: "Takeaway published. It is now on the website.",
+  label: "Publish",
+  primary: true,
+  to: "published",
+};
+const REQUEST_CHANGES: StatusAction = {
+  done: "Changes requested. The takeaway is back with its writer.",
+  label: "Request changes",
+  primary: false,
+  to: "draft",
+};
+const UNPUBLISH: StatusAction = {
+  confirm: {
+    action: "Unpublish",
+    description:
+      "It disappears from the website and goes back to draft. It has to be reviewed and published again.",
+    title: "Unpublish this takeaway?",
+  },
+  done: "Takeaway unpublished. It is no longer on the website.",
+  label: "Unpublish",
   primary: false,
   to: "draft",
 };
 
 /**
- * The status changes a viewer may make, in the order the buttons appear.
- * Mirrors the server's rule (`setStatus`): drafts must enter review first;
- * an author only between draft and review while it is unpublished.
+ * The author owns the text, while they still may write takeaways.
+ * Takeaways written before authorship have no author, so staff act for them.
+ */
+const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
+  if (takeaway.authorId === null) {
+    return isStaffRole(viewer.role);
+  }
+  return takeaway.authorId === viewer.id && canWriteTakeaways(viewer.role);
+};
+
+/**
+ * Who may change the text or delete the takeaway: its author and staff,
+ * until it is published. A published takeaway changes only after mita
+ * unpublishes it, so mita is the one gate to the public site.
+ */
+export const mayEditTakeaway = (
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
+) =>
+  takeaway.status !== "published" &&
+  (isStaffRole(viewer.role) || actsAsAuthor(takeaway, viewer));
+
+/**
+ * The status moves a viewer may make, in button order. The server allows
+ * exactly these (`takeaways.setStatus`):
+ * - Draft: the author sends it to review.
+ * - In review: mita publishes or requests changes; the author withdraws it.
+ * - Published: mita unpublishes it.
  */
 export const statusActions = (
-  status: TakeawayStatus,
-  rights: StatusRights
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
 ): StatusAction[] => {
-  if (rights.canPublish) {
-    if (status === "draft") {
-      return [TO_REVIEW];
+  const author = actsAsAuthor(takeaway, viewer);
+  const mita = viewer.role === "mita";
+  if (takeaway.status === "draft") {
+    return author ? [SEND_TO_REVIEW] : [];
+  }
+  if (takeaway.status === "in_review") {
+    const actions = mita ? [PUBLISH] : [];
+    if (author) {
+      actions.push(WITHDRAW);
+    } else if (mita) {
+      actions.push(REQUEST_CHANGES);
     }
-    if (status === "in_review") {
-      return [PUBLISH, SEND_BACK];
-    }
-    return [SEND_BACK];
+    return actions;
   }
-  if (!rights.canManage) {
-    return [];
-  }
-  if (status === "draft") {
-    return [TO_REVIEW];
-  }
-  if (status === "in_review") {
-    return [BACK_TO_DRAFT];
-  }
-  return [];
+  return mita ? [UNPUBLISH] : [];
 };
