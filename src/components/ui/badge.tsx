@@ -14,7 +14,7 @@ const badgeVariants = cva(
       size: {
         default: "px-2.5 py-0.5 font-semibold text-xs",
         status:
-          "type-caption min-h-7 w-fit shrink-0 gap-1 whitespace-nowrap px-2 py-1 font-medium [&_svg]:size-3.5 [&_svg]:shrink-0",
+          "type-caption min-h-7 w-fit shrink-0 gap-1 whitespace-nowrap px-2 py-1 font-medium [&_svg]:size-3 [&_svg]:shrink-0",
       },
       variant: {
         default:
