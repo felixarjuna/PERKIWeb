@@ -6,6 +6,7 @@ import {
   requestedPath,
 } from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
+import { getRole } from "~/server/authz";
 import AccountActions from "./account-actions";
 import ProfileSummary from "./profile-summary";
 import WhatsappCard from "./whatsapp-card";
@@ -22,6 +23,8 @@ export default async function AccountPage({
     );
   }
 
+  const canDelete = (await getRole(session.user.id)) !== "owner";
+
   return (
     <Template
       subtitle="Your details help us care for you as a fellowship."
@@ -30,7 +33,7 @@ export default async function AccountPage({
       <div className="flex w-full flex-col gap-4">
         <ProfileSummary />
         <WhatsappCard />
-        <AccountActions />
+        <AccountActions canDelete={canDelete} />
       </div>
     </Template>
   );

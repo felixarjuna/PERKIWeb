@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { uniqueSuffix } from "./fixtures";
-import { createSignedInUser, toast } from "./helpers";
+import postgres from "postgres";
+import { setTestSession } from "./auth-fixtures";
+import { assertLocalDatabase, e2eEnv } from "./env";
+import { OWNER, uniqueSuffix } from "./fixtures";
+import { createSignedInUser, toast, waitForSession } from "./helpers";
 
 const ACCOUNT_LOAD_TIMEOUT_MS = 15_000;
 
@@ -52,4 +55,61 @@ test("old password settings bookmarks return to the account page", async ({
   await createSignedInUser(page, "old-password-link");
   await page.goto("/account/change-password");
   await expect(page).toHaveURL("/account");
+});
+
+/** Runs `query` against the e2e database. */
+const withDb = async <T>(query: (sql: postgres.Sql) => Promise<T>) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const sql = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    return await query(sql);
+  } finally {
+    await sql.end();
+  }
+};
+
+test("members delete their account after confirming on purpose", async ({
+  page,
+}) => {
+  const user = await createSignedInUser(page, "leaving");
+  const content = `Prayer before leaving ${uniqueSuffix()}`;
+  await withDb(
+    (sql) =>
+      sql`insert into prayers ("authorId", content, "prayerNames") values (${user.id}, ${content}, '[]')`
+  );
+
+  await page.goto("/account");
+  await waitForSession(page);
+  await page.getByRole("button", { name: "Delete account" }).click();
+  const dialog = page.getByRole("alertdialog", {
+    name: "Delete your account?",
+  });
+  await expect(dialog).toContainText("can't be undone");
+  const confirm = dialog.getByRole("button", { name: "Delete account" });
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel("Type “delete” to confirm").fill("delete");
+  await confirm.click();
+
+  await expect(toast(page, "Your account has been deleted.")).toBeVisible();
+  await expect(page).toHaveURL("/");
+  // Signed out: the sign-in page no longer forwards home.
+  await page.goto("/auth/signin");
+  await expect(page).toHaveURL("/auth/signin");
+
+  const left = await withDb(async (sql) => ({
+    prayers: await sql`select id from prayers where content = ${content}`,
+    users: await sql`select id from "user" where id = ${user.id}`,
+  }));
+  expect(left.users).toHaveLength(0);
+  expect(left.prayers).toHaveLength(0);
+});
+
+test("the owner can't delete their account", async ({ page }) => {
+  await setTestSession(page, OWNER);
+  await page.goto("/account");
+  await waitForSession(page);
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Delete account" })
+  ).toHaveCount(0);
 });
