@@ -124,11 +124,15 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
 
-  const own = page.getByRole("listitem").filter({ hasText: keypoints });
-  await loadUntilVisible(page, own);
-  await own
-    .getByRole("link", { exact: true, name: `Edit ${scheduleTitle}` })
-    .click();
+  await expect(
+    page.getByRole("combobox", { exact: true, name: "View" })
+  ).toHaveText("My takeaways");
+  const own = page
+    .getByRole("region", { name: "Drafts" })
+    .getByRole("listitem")
+    .filter({ hasText: scheduleTitle });
+  await expect(own).toBeVisible();
+  await own.getByRole("link", { exact: true, name: "Continue draft" }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   // Wait for the takeaway to load into the editor before replacing it.
   const editor = page.getByLabel("Key points", { exact: true });
@@ -140,6 +144,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   ).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
   await page.reload();
+  await selectOption(page, "View", "All takeaways");
   const revised = page.getByRole("listitem").filter({ hasText: edited });
   await loadUntilVisible(page, revised);
   await expect(revised).toHaveCount(1);

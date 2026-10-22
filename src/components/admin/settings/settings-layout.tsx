@@ -43,8 +43,8 @@ export type SettingsSection = "integrations" | "takeaways";
 
 function SectionNav({ active }: { active: SettingsSection }) {
   return (
-    <nav aria-label="Settings sections">
-      <ul className="flex @3xl:flex-col @3xl:gap-4 gap-1 @3xl:overflow-visible overflow-x-auto @3xl:pb-0 pb-1">
+    <nav aria-label="Settings sections" className="min-w-0">
+      <ul className="flex @3xl:flex-col flex-wrap @3xl:gap-4 gap-1 @3xl:pb-0 pb-1">
         {SECTIONS.map((section) => (
           <li className="@3xl:block contents" key={section.group}>
             <p className="type-eyebrow mb-1 @3xl:block hidden px-2 text-muted-foreground">
