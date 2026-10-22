@@ -1,7 +1,48 @@
 import { expect, test } from "@playwright/test";
 import { setTestSession } from "./auth-fixtures";
-import { insertProfiledUser } from "./db";
-import { ADMIN, WRITER } from "./fixtures";
+import { insertProfiledUser, insertSchedule, insertTakeaway } from "./db";
+import { ADMIN, uniqueSuffix, WRITER } from "./fixtures";
+
+for (const zoom of [1, 2]) {
+  test(`takeaway previews wrap unbroken text at ${zoom * 100}% zoom`, async ({
+    page,
+  }, testInfo) => {
+    const title = `Long preview ${uniqueSuffix()}`;
+    const preview = "x".repeat(1200);
+    await insertTakeaway(
+      await insertSchedule(title),
+      preview,
+      WRITER.id,
+      "in_review"
+    );
+    await page.setViewportSize({ height: 900, width: 320 * zoom });
+    await setTestSession(page, WRITER);
+    await page.goto("/admin/takeaways");
+    await page
+      .getByRole("radio", { exact: true, name: "All takeaways" })
+      .click();
+    await page.getByRole("searchbox", { name: "Search takeaways" }).fill(title);
+    const card = page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: title }) });
+    await expect(card.getByText(preview, { exact: true })).toBeVisible();
+    await page.evaluate((value) => {
+      document.documentElement.style.zoom = String(value);
+    }, zoom);
+    const bounds = await card.evaluate((element) => ({
+      cardRight: element.getBoundingClientRect().right,
+      cardWidth: element.getBoundingClientRect().width,
+      pageWidth: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    }));
+    await testInfo.attach("layout-bounds", {
+      body: JSON.stringify(bounds),
+      contentType: "application/json",
+    });
+    expect(bounds.pageWidth).toBeLessThanOrEqual(bounds.viewport);
+    expect(bounds.cardRight).toBeLessThanOrEqual(bounds.viewport);
+  });
+}
 
 for (const account of [WRITER, ADMIN]) {
   test(`${account.name} can see and use every takeaway view at 320px`, async ({

@@ -85,7 +85,7 @@ export default function TakeawayManager() {
             Only published takeaways appear on the website
           </p>
           {records.length ? (
-            <ul className="grid gap-3">
+            <ul className="grid grid-cols-1 gap-3">
               {records.map(
                 ({
                   actions,
