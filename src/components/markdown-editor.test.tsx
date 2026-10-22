@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { linkHref, MarkdownEditor } from "./markdown-editor";
@@ -71,6 +71,16 @@ describe("MarkdownEditor", () => {
     const box = await screen.findByRole("textbox", { name: "Key points" });
     await userEvent.click(screen.getByText("Key points"));
     await waitFor(() => expect(document.activeElement).toBe(box));
+  });
+
+  it("keeps focus in the editor when a tool is pressed", async () => {
+    setup("Halo");
+    const toolbar = await screen.findByRole("toolbar", { name: "Formatting" });
+    for (const tool of toolbar.querySelectorAll("button:enabled")) {
+      // A mousedown that isn't prevented moves focus to the button, and
+      // keys typed before the editor takes it back are lost.
+      expect(fireEvent.mouseDown(tool)).toBe(false);
+    }
   });
 
   it("offers the formatting tools by name", async () => {

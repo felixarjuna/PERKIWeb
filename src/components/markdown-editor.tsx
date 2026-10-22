@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
   useEffect,
   useRef,
@@ -38,6 +39,12 @@ import { Toggle } from "~/components/ui/toggle";
 import { tidyMarkdown } from "~/lib/markdown";
 import { editorExtensions } from "~/lib/takeaway-editor";
 import { cn } from "~/lib/utils";
+
+/**
+ * Toolbar buttons keep focus (and the selection) in the editor: a button that
+ * took focus would hand it back a frame later, losing keys typed meanwhile.
+ */
+const keepEditorFocus = (event: MouseEvent) => event.preventDefault();
 
 const HAS_SCHEME = /^[a-z][a-z\d+.-]*:/i;
 
@@ -248,6 +255,7 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
           aria-label="Undo"
           disabled={!state.canUndo}
           onClick={() => chain().undo().run()}
+          onMouseDown={keepEditorFocus}
           size="icon"
           title="Undo"
           type="button"
@@ -259,6 +267,7 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
           aria-label="Redo"
           disabled={!state.canRedo}
           onClick={() => chain().redo().run()}
+          onMouseDown={keepEditorFocus}
           size="icon"
           title="Redo"
           type="button"
@@ -285,6 +294,7 @@ function Tool({
   return (
     <Toggle
       aria-label={label}
+      onMouseDown={keepEditorFocus}
       onPressedChange={onPress}
       pressed={pressed}
       title={label}
@@ -334,7 +344,13 @@ function LinkTool({
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger asChild>
-        <Toggle aria-label="Link" pressed={active} title="Link" type="button">
+        <Toggle
+          aria-label="Link"
+          onMouseDown={keepEditorFocus}
+          pressed={active}
+          title="Link"
+          type="button"
+        >
           <Link2 />
         </Toggle>
       </PopoverTrigger>
