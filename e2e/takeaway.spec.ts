@@ -114,7 +114,12 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveText(keypoints);
-  await keypointsInput.fill("");
+  // A clear sent while the editor is still settling can be dropped, so
+  // retry until the editor is empty, as a person would.
+  await expect(async () => {
+    await keypointsInput.fill("");
+    await expect(keypointsInput).toHaveText("", { timeout: 500 });
+  }).toPass();
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   await expect(keypointsInput).toHaveAttribute("aria-invalid", "true");
