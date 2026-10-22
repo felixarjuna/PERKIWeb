@@ -17,6 +17,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
+import EmailSettings from "./email-settings";
 import { SettingRow, SettingsGroup } from "./settings-layout";
 
 interface Change {
@@ -306,6 +307,8 @@ export default function IntegrationSettings() {
           </Button>
         </SettingRow>
       </SettingsGroup>
+
+      <EmailSettings />
 
       <LinkDialog
         description="Paste the link from the browser. It's saved only if Google can open it, so the sheet must be shared with “Anyone with the link”."

@@ -51,21 +51,39 @@ async function copyInviteMessage(invite: {
   }
 }
 
+function deliveryMessage(email: string, status: "sent" | "skipped" | "failed") {
+  if (status === "sent") {
+    return `Invite email sent to ${email}.`;
+  }
+  if (status === "failed") {
+    return `Invite saved for ${email}, but the email couldn't be sent. Copy the invite message below and send it yourself.`;
+  }
+  return `Invite saved for ${email}. No email was sent; copy the invite message below and send it yourself.`;
+}
+
 function InviteForm() {
   const utils = api.useUtils();
   const [email, setEmail] = React.useState("");
   const [role, setRole] = React.useState<InviteRole>("writer");
+  const [delivery, setDelivery] = React.useState<{
+    email: string;
+    status: "sent" | "skipped" | "failed";
+  } | null>(null);
   const invite = api.access.invite.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async (created) => {
       setEmail("");
+      setDelivery({ email: created.email, status: created.emailStatus });
       await utils.access.invites.invalidate();
       toast.success(`Invited ${created.email}`, {
         action: {
           label: "Copy message",
           onClick: () => copyInviteMessage(created),
         },
-        description: `They become a ${roleLabels[created.role]} when they first sign in with Google.`,
+        description:
+          created.emailStatus === "sent"
+            ? "Invite email sent."
+            : "Copy the invite message to send it yourself.",
       });
     },
   });
@@ -107,9 +125,14 @@ function InviteForm() {
       </div>
       <p className="type-caption text-muted-foreground">
         The role waits for this email's first Google sign-in, for{" "}
-        {INVITE_LIFETIME_DAYS} days. No email is sent: copy the invite message
-        and send it on WhatsApp.
+        {INVITE_LIFETIME_DAYS} days. If invite emails are on in Settings, we'll
+        email them. You can always copy the message and send it yourself.
       </p>
+      {delivery ? (
+        <p className="type-body-sm text-muted-foreground" role="status">
+          {deliveryMessage(delivery.email, delivery.status)}
+        </p>
+      ) : null}
       <Button
         className="sm:self-start"
         disabled={invite.isPending}
