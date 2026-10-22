@@ -1,4 +1,6 @@
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
+/** Host port of the throwaway database; `compose.test.yml` reads the same variable. */
+const E2E_DB_PORT = Number(process.env.E2E_DB_PORT ?? 54_329);
 
 /** Base URL of the production build that Playwright drives. */
 export const BASE_URL = `http://localhost:${E2E_PORT}`;
@@ -11,7 +13,7 @@ export const e2eEnv = {
   AUTH_URL: BASE_URL,
   DATABASE_URL:
     process.env.E2E_DATABASE_URL ??
-    "postgres://postgres:postgres@127.0.0.1:54329/perkiweb_test",
+    `postgres://postgres:postgres@127.0.0.1:${E2E_DB_PORT}/perkiweb_test`,
   // A dummy folder so the sidebar renders its Drive items (hidden when unset).
   DRIVE_FOLDER_URL: "https://drive.example.test/e2e-folder",
   GOOGLE_CLIENT_ID: "e2e-google-client-id",
