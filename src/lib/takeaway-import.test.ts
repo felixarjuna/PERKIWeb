@@ -3,6 +3,7 @@ import {
   assertLocalImportDatabase,
   pairTakeawaySources,
   parseTakeawaySource,
+  planDocsImport,
   planTakeawayImport,
 } from "./takeaway-import";
 
@@ -106,5 +107,121 @@ describe("takeaway document import", () => {
     ]) {
       expect(() => assertLocalImportDatabase(url)).toThrow(LOCAL);
     }
+  });
+});
+
+describe("planDocsImport", () => {
+  const notes = parseTakeawaySource(
+    source("03-01-2026 New year", "Notes one.") +
+      source("10-01-2026 Second", "Notes two.") +
+      source("17-01-2026 Third", "Notes three.") +
+      source("24-01-2026 Fourth", "Notes four.") +
+      source("31-01-2026 No gathering", "Notes five.") +
+      source("07-02-2026 Twice", "Notes six.")
+  );
+  const tldr = parseTakeawaySource(
+    source("TL;DR 03.01.2026", "Short one.") +
+      source("TL;DR 10.01.2026", "Short two.") +
+      source("TL;DR 14.02.2026", "Lonely summary.")
+  );
+  const content = (date: string) =>
+    notes.entries.find((entry) => entry.date === date)?.content ?? "";
+  const schedules = [
+    { day: "2026-01-03", id: 1 },
+    { day: "2026-01-10", id: 2 },
+    { day: "2026-01-17", id: 3 },
+    { day: "2026-01-24", id: 4 },
+    { day: "2026-02-07", id: 6 },
+    { day: "2026-02-07", id: 7 },
+    { day: "2026-02-14", id: 8 },
+  ];
+
+  it("sorts every dated entry into new, changed, unchanged, published or skipped", () => {
+    const plan = planDocsImport(notes, tldr, schedules, [
+      // Imported before, still a draft, and the TL;DR has been written since.
+      {
+        id: 20,
+        keypoints: content("2026-01-10"),
+        scheduleId: 2,
+        status: "draft",
+        tldr: null,
+      },
+      // Unchanged: the doc has no TL;DR, so the stored one is kept.
+      {
+        id: 30,
+        keypoints: content("2026-01-17"),
+        scheduleId: 3,
+        status: "in_review",
+        tldr: "Written on the site.",
+      },
+      {
+        id: 40,
+        keypoints: "Edited and published.",
+        scheduleId: 4,
+        status: "published",
+        tldr: null,
+      },
+    ]);
+    expect(
+      plan.map((entry) => [
+        entry.day,
+        entry.status,
+        entry.changes,
+        entry.reason,
+      ])
+    ).toEqual([
+      ["2026-01-03", "new", [], null],
+      ["2026-01-10", "changed", ["tldr"], null],
+      ["2026-01-17", "unchanged", [], null],
+      ["2026-01-24", "published", [], null],
+      ["2026-01-31", "skipped", [], "No gathering on this date"],
+      ["2026-02-07", "skipped", [], "2 gatherings on this date"],
+      ["2026-02-14", "skipped", [], "A TL;DR without notes"],
+    ]);
+    expect(plan[0]).toMatchObject({
+      heading: "03-01-2026 New year",
+      notes: content("2026-01-03"),
+      scheduleId: 1,
+      takeawayId: null,
+      tldr: tldr.entries[0]?.content,
+    });
+    expect(plan[1]).toMatchObject({ scheduleId: 2, takeawayId: 20 });
+  });
+
+  it("reports an imported takeaway as unchanged once it is published", () => {
+    const [plan] = planDocsImport(
+      parseTakeawaySource(source("03-01-2026 New year", "Notes one.")),
+      parseTakeawaySource(source("TL;DR 03.01.2026", "Short one.")),
+      [{ day: "2026-01-03", id: 1 }],
+      [
+        {
+          id: 10,
+          keypoints: content("2026-01-03"),
+          scheduleId: 1,
+          status: "published",
+          tldr: tldr.entries[0]?.content ?? null,
+        },
+      ]
+    );
+    expect(plan?.status).toBe("unchanged");
+  });
+
+  it("leaves a gathering with several takeaways alone", () => {
+    const [plan] = planDocsImport(
+      parseTakeawaySource(source("03-01-2026 New year", "Notes one.")),
+      parseTakeawaySource(source("TL;DR 03.01.2026", "Short one.")),
+      [{ day: "2026-01-03", id: 1 }],
+      [10, 11].map((id) => ({
+        id,
+        keypoints: "Other",
+        scheduleId: 1,
+        status: "draft" as const,
+        tldr: null,
+      }))
+    );
+    expect(plan).toMatchObject({
+      reason: "The gathering has 2 takeaways",
+      status: "skipped",
+    });
   });
 });
