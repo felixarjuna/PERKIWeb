@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React from "react";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { TakeawaySuggestions } from "~/components/admin/content/takeaway-suggestions";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -136,33 +137,27 @@ export default function EditTakeawayForm() {
           </section>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             <Button
               disabled={updateTakeaway.isPending || saveTldr.isPending}
               type="submit"
-              variant="default"
             >
               <Save aria-hidden="true" data-icon="inline-start">
                 <title>Save changes</title>
               </Save>
               Save changes
             </Button>
-            <p className="type-caption text-muted-foreground">
-              Saving keeps the status. Change it from the takeaways list.
-            </p>
+            <Link
+              className={buttonVariants({ variant: "ghost" })}
+              href="/admin/takeaways"
+            >
+              Cancel
+            </Link>
           </div>
-          <Button
-            className="flex gap-x-2"
-            onClick={() => router.push("/admin/takeaways")}
-            type="button"
-            variant="secondary"
-          >
-            <ArrowLeft aria-hidden="true" data-icon="inline-start">
-              <title>Back</title>
-            </ArrowLeft>
-            Back
-          </Button>
+          <p className="type-caption text-muted-foreground">
+            Saving keeps the status. Change it from the takeaways list.
+          </p>
         </div>
       </form>
       {/* Accepting replaces the saved text, so unsaved edits come first. */}

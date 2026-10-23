@@ -1,12 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { Save, Send } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Form,
   FormControl,
@@ -168,44 +169,37 @@ export default function AddTakeawayForm({ username }: { username: string }) {
           </section>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={addTakeaway.isPending || saveTldr.isPending}
-              name="intent"
-              type="submit"
-              value="draft"
-              variant="secondary"
-            >
-              <Save aria-hidden="true" data-icon="inline-start">
-                <title>Save draft</title>
-              </Save>
-              Save draft
-            </Button>
-            <Button
-              disabled={addTakeaway.isPending || saveTldr.isPending}
-              name="intent"
-              type="submit"
-              value="in_review"
-              variant="default"
-            >
-              <Send aria-hidden="true" data-icon="inline-start">
-                <title>Send to review</title>
-              </Send>
-              Send to review
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
           <Button
-            className="flex gap-x-2"
-            onClick={() => router.push("/admin/takeaways")}
-            type="button"
+            disabled={addTakeaway.isPending || saveTldr.isPending}
+            name="intent"
+            type="submit"
+            value="draft"
             variant="secondary"
           >
-            <ArrowLeft aria-hidden="true" data-icon="inline-start">
-              <title>Back</title>
-            </ArrowLeft>
-            Back
+            <Save aria-hidden="true" data-icon="inline-start">
+              <title>Save draft</title>
+            </Save>
+            Save draft
           </Button>
+          <Button
+            disabled={addTakeaway.isPending || saveTldr.isPending}
+            name="intent"
+            type="submit"
+            value="in_review"
+            variant="default"
+          >
+            <Send aria-hidden="true" data-icon="inline-start">
+              <title>Send to review</title>
+            </Send>
+            Send to review
+          </Button>
+          <Link
+            className={buttonVariants({ variant: "ghost" })}
+            href="/admin/takeaways"
+          >
+            Cancel
+          </Link>
         </div>
       </form>
     </Form>

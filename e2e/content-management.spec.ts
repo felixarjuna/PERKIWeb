@@ -74,19 +74,16 @@ test("old editor links preserve the new destination through Google sign-in", asy
   );
 });
 
-// The schedule editor leaves with a "Cancel" link, the takeaway editor with "Back".
-for (const [section, role, name] of [
-  ["schedules", "link", "Cancel"],
-  ["takeaways", "button", "Back"],
-] as const) {
-  test(`${name} from a direct ${section} editor returns to management`, async ({
+// Both editors leave with a "Cancel" link beside their main action.
+for (const section of ["schedules", "takeaways"] as const) {
+  test(`Cancel from a direct ${section} editor returns to management`, async ({
     page,
   }) => {
     await setTestSession(page, MEMBER);
     await adminLogin(page);
     await page.goto("/schedule");
     await page.goto(`/admin/${section}/new`);
-    await page.getByRole(role, { exact: true, name }).click();
+    await page.getByRole("link", { exact: true, name: "Cancel" }).click();
     await expect(page).toHaveURL(`/admin/${section}`);
   });
 }
