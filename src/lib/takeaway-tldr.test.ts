@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTldr, tldrWords } from "./takeaway-tldr";
+import { countWords } from "./markdown";
+import { normalizeTldr } from "./takeaway-tldr";
 
 describe("takeaway TL;DR", () => {
   it("counts the words a reader sees", () => {
-    expect(tldrWords("## Faith\n\n- **Abraham** believed")).toBe(3);
-    expect(tldrWords("")).toBe(0);
+    expect(countWords("## Faith\n\n- **Abraham** believed")).toBe(3);
+    expect(countWords("")).toBe(0);
   });
 
   it("stores nothing for an empty TL;DR", () => {

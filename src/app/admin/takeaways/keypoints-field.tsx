@@ -1,6 +1,7 @@
 "use client";
 
 import type { Control, FieldValues, Path } from "react-hook-form";
+import { EditorWordCount } from "~/components/editor-word-count";
 import { MarkdownEditor } from "~/components/markdown-editor";
 import {
   FormControl,
@@ -42,6 +43,7 @@ export function KeypointsField<T extends FieldValues>({
               value={field.value}
             />
           </FormControl>
+          <EditorWordCount markdown={field.value ?? ""} />
           <FormMessage />
         </FormItem>
       )}
