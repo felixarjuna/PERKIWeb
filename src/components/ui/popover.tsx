@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Anchor as PopoverPrimitiveAnchor,
   Content as PopoverPrimitiveContent,
   Portal as PopoverPrimitivePortal,
   Root as PopoverPrimitiveRoot,
@@ -13,6 +14,8 @@ import { cn } from "~/lib/utils";
 const Popover = PopoverPrimitiveRoot;
 
 const PopoverTrigger = PopoverPrimitiveTrigger;
+
+const PopoverAnchor = PopoverPrimitiveAnchor;
 
 function PopoverContent({
   className,
@@ -36,4 +39,4 @@ function PopoverContent({
   );
 }
 
-export { Popover, PopoverContent, PopoverTrigger };
+export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };

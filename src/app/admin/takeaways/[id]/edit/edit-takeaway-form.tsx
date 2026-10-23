@@ -8,6 +8,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import { TakeawaySuggestions } from "~/components/admin/content/takeaway-suggestions";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
@@ -164,6 +165,18 @@ export default function EditTakeawayForm() {
           </Button>
         </div>
       </form>
+      {/* Accepting replaces the saved text, so unsaved edits come first. */}
+      <TakeawaySuggestions
+        acceptBlocked={
+          form.formState.isDirty
+            ? "Save your changes before accepting a suggestion."
+            : undefined
+        }
+        onAccepted={(keypoints) =>
+          form.reset({ ...form.getValues(), keypoints })
+        }
+        takeawayId={Number.parseInt(id, 10)}
+      />
     </Form>
   );
 }
