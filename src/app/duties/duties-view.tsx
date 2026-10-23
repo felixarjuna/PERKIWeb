@@ -1,142 +1,92 @@
 "use client";
 
-import { CalendarDays, ChevronDown, Sparkles, Utensils } from "lucide-react";
-import { DateTime } from "luxon";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
-import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import { type Duty, dutyLabel } from "~/lib/duties";
 import { weekOf } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
+import type { RouterOutputs } from "~/trpc/react";
+import ScheduleCard from "../schedule/schedule-card";
 
-/** Gatherings happen in Aachen, so times read in its zone for everyone. */
-const ZONE = "Europe/Berlin";
+export type DutyGathering =
+  RouterOutputs["schedules"]["myDuties"]["upcoming"][number];
 
-export interface DutyDay {
-  date: Date;
-  duties: Duty[];
-  id: number;
-  title: string;
-}
-
-const icons = { cleaning: Sparkles, cooking: Utensils } as const;
-
-function DutyBadge({ duty }: { duty: Duty }) {
-  return (
-    <Badge
-      icon={"group" in duty ? icons[duty.role] : undefined}
-      size="status"
-      variant="published"
-    >
-      {dutyLabel(duty)}
-    </Badge>
-  );
-}
-
-/** One gathering: the date beside its title, time and what the member does. */
-function DutyItem({ day, now }: { day: DutyDay; now: Date }) {
-  const local = DateTime.fromJSDate(day.date).setZone(ZONE);
-  const thisYear = local.year === DateTime.fromJSDate(now).setZone(ZONE).year;
-  return (
-    <li className="flex gap-4 rounded-xl bg-card p-4 sm:p-6">
-      <time
-        className="flex w-12 shrink-0 flex-col items-center text-center"
-        dateTime={local.toISO() ?? ""}
-      >
-        <span className="type-eyebrow text-muted-foreground">
-          {local.toFormat("ccc")}
-        </span>
-        <span className="type-heading tabular-nums">{local.toFormat("d")}</span>
-        <span className="type-caption whitespace-nowrap text-muted-foreground">
-          {local.toFormat(thisYear ? "LLL" : "LLL ''yy")}
-        </span>
-      </time>
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex min-w-0 flex-col">
-          <h3 className="type-body break-words">
-            <Link
-              className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              href={`/schedule/${day.id}`}
-            >
-              {day.title}
-            </Link>
-          </h3>
-          <p className="type-body-sm text-muted-foreground tabular-nums">
-            {local.toFormat("HH:mm")}
-          </p>
-        </div>
-        <ul aria-label="Your duties" className="flex flex-wrap gap-2">
-          {day.duties.map((duty) => (
-            <li key={dutyLabel(duty)}>
-              <DutyBadge duty={duty} />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </li>
-  );
-}
-
+/** A schedule section: the same heading and card rhythm as `/schedule`. */
 function DutySection({
-  days,
-  now,
+  gatherings,
   title,
 }: {
-  days: DutyDay[];
-  now: Date;
+  gatherings: DutyGathering[];
   title: string;
 }) {
   const id = useId();
-  if (days.length === 0) {
+  if (gatherings.length === 0) {
     return null;
   }
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-3">
-      <h2 className="type-eyebrow text-muted-foreground" id={id}>
+    <section aria-labelledby={id} className="space-y-4">
+      <h2 className="type-heading" id={id}>
         {title}
       </h2>
-      <ul className="flex flex-col gap-2">
-        {days.map((day) => (
-          <DutyItem day={day} key={day.id} now={now} />
+      <div>
+        {gatherings.map((gathering) => (
+          <ScheduleCard
+            key={gathering.id}
+            schedule={gathering}
+            yours={gathering.duties}
+          />
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
 
-function PastDuties({ days, now }: { days: DutyDay[]; now: Date }) {
+/** Past duties only grow, so they stay folded until asked for. */
+function PastDuties({ gatherings }: { gatherings: DutyGathering[] }) {
   const [open, setOpen] = useState(false);
-  if (days.length === 0) {
+  const id = useId();
+  if (gatherings.length === 0) {
     return null;
   }
+  const count =
+    gatherings.length === 1
+      ? "1 past duty"
+      : `${gatherings.length} past duties`;
   return (
-    <Collapsible onOpenChange={setOpen} open={open}>
-      <CollapsibleTrigger asChild>
-        <Button className="w-fit" type="button" variant="secondary">
-          Past duties ({days.length})
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "size-4 transition-transform duration-200 motion-reduce:transition-none",
-              open && "rotate-180"
-            )}
-          />
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-3">
-        <ul className="flex flex-col gap-2">
-          {days.map((day) => (
-            <DutyItem day={day} key={day.id} now={now} />
+    <section aria-labelledby={id} className="space-y-4">
+      <h2 className="type-heading" id={id}>
+        Previous
+      </h2>
+      <Collapsible onOpenChange={setOpen} open={open}>
+        <CollapsibleTrigger asChild>
+          <Button className="w-fit" type="button" variant="secondary">
+            {open ? "Hide past duties" : `Show ${count}`}
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                "size-4 transition-transform duration-200 motion-reduce:transition-none",
+                open && "rotate-180"
+              )}
+            />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-6">
+          {gatherings.map((gathering) => (
+            <ScheduleCard
+              key={gathering.id}
+              schedule={gathering}
+              yours={gathering.duties}
+            />
           ))}
-        </ul>
-      </CollapsibleContent>
-    </Collapsible>
+        </CollapsibleContent>
+      </Collapsible>
+    </section>
   );
 }
 
@@ -151,8 +101,8 @@ const scheduleLink = (
 );
 
 /**
- * The member's own duties: this week first, then later ones soonest first,
- * with past duties folded away below.
+ * The member's gatherings on the schedule's own timeline, each with their
+ * part marked: this week, then upcoming soonest first, then past ones folded.
  */
 export default function DutiesView({
   now,
@@ -160,8 +110,8 @@ export default function DutiesView({
   upcoming,
 }: {
   now: Date;
-  past: DutyDay[];
-  upcoming: DutyDay[];
+  past: DutyGathering[];
+  upcoming: DutyGathering[];
 }) {
   if (past.length === 0 && upcoming.length === 0) {
     return (
@@ -181,7 +131,7 @@ export default function DutiesView({
   }
   const { before } = weekOf(now);
   return (
-    <div className="flex flex-col gap-8">
+    <div className="space-y-8">
       {upcoming.length === 0 ? (
         <div className="flex flex-col items-start gap-4 rounded-xl bg-card p-4 sm:p-6">
           <p className="type-body-sm text-muted-foreground">
@@ -192,18 +142,18 @@ export default function DutiesView({
       ) : (
         <>
           <DutySection
-            days={upcoming.filter((day) => day.date < before)}
-            now={now}
+            gatherings={upcoming.filter((gathering) => gathering.date < before)}
             title="This week"
           />
           <DutySection
-            days={upcoming.filter((day) => day.date >= before)}
-            now={now}
-            title="Coming up"
+            gatherings={upcoming.filter(
+              (gathering) => gathering.date >= before
+            )}
+            title="Upcoming"
           />
         </>
       )}
-      <PastDuties days={past} now={now} />
+      <PastDuties gatherings={past} />
     </div>
   );
 }

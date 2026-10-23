@@ -32,17 +32,18 @@ test("a member sees their own serving slots and group days", async ({
     page.getByRole("heading", { level: 1, name: "Your duties" })
   ).toBeVisible();
 
-  const items = page
-    .getByRole("main")
-    .getByRole("listitem")
-    .filter({
-      has: page.getByRole("heading", { level: 3 }),
-    });
-  await expect(items).toHaveCount(2);
-  await expect(items.nth(0)).toContainText(serving);
-  await expect(items.nth(0)).toContainText("Musician");
-  await expect(items.nth(1)).toContainText(cleaning);
-  await expect(items.nth(1)).toContainText(`Cleaning · ${group}`);
+  // The same gathering cards as /schedule, each with the member's part.
+  const gatherings = page.getByRole("main").getByRole("article");
+  await expect(gatherings).toHaveCount(2);
+  await expect(gatherings.nth(0)).toContainText(serving);
+  await expect(
+    gatherings.nth(0).getByRole("list", { name: "Your part" })
+  ).toHaveText("Musician");
+  await expect(gatherings.nth(1)).toContainText(cleaning);
+  await expect(
+    gatherings.nth(1).getByRole("list", { name: "Your part" })
+  ).toHaveText("Your group cleans");
+  await expect(gatherings.nth(1)).toContainText(`Cleaning · ${group}`);
   await expect(page.getByText(notMine)).toHaveCount(0);
 
   await page.getByRole("link", { name: serving }).click();

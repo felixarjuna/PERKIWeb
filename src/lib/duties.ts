@@ -12,3 +12,14 @@ export function dutyLabel(duty: Duty) {
   }
   return servingRoleLabels[duty.role];
 }
+
+/**
+ * The member's part on a gathering card: "Musician", or "Your group cooks",
+ * since the card already names the group on its cooking or cleaning button.
+ */
+export function yourPartLabel(duty: Duty) {
+  if ("group" in duty) {
+    return duty.role === "cooking" ? "Your group cooks" : "Your group cleans";
+  }
+  return servingRoleLabels[duty.role];
+}

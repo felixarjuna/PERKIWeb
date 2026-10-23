@@ -16,12 +16,10 @@ import { db } from "~/server";
 /** Gatherings happen in Aachen, so "today" is read in its zone. */
 const ZONE = "Europe/Berlin";
 
+/** A gathering and what the member does at it. */
 export interface DutyDay {
-  date: Date;
   duties: Duty[];
-  id: number;
-  title: string;
-  type: Schedule["type"];
+  schedule: Schedule;
 }
 
 const groupKey = (name: string | null) => name?.trim().toLowerCase() ?? "";
@@ -104,13 +102,7 @@ export async function loadDuties(userId: string, now = new Date()) {
   const found = [...(await slotDuties(userId)), ...(await groupDuties(userId))];
   const byId = new Map<number, DutyDay>();
   for (const { duties, schedule } of found) {
-    const day = byId.get(schedule.id) ?? {
-      date: schedule.date,
-      duties: [],
-      id: schedule.id,
-      title: schedule.title,
-      type: schedule.type,
-    };
+    const day = byId.get(schedule.id) ?? { duties: [], schedule };
     day.duties.push(...duties);
     byId.set(schedule.id, day);
   }
@@ -119,11 +111,12 @@ export async function loadDuties(userId: string, now = new Date()) {
     day.duties.sort((a, b) => order(a) - order(b));
   }
   const today = DateTime.fromJSDate(now).setZone(ZONE).startOf("day");
+  const time = (day: DutyDay) => day.schedule.date.getTime();
   const upcoming = days
-    .filter((day) => day.date >= today.toJSDate())
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .filter((day) => time(day) >= today.toMillis())
+    .sort((a, b) => time(a) - time(b));
   const past = days
-    .filter((day) => day.date < today.toJSDate())
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
+    .filter((day) => time(day) < today.toMillis())
+    .sort((a, b) => time(b) - time(a));
   return { past, upcoming };
 }

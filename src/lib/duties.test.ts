@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dutyLabel } from "./duties";
+import { dutyLabel, yourPartLabel } from "./duties";
 
 describe("dutyLabel", () => {
   it("names a serving slot by its role", () => {
@@ -12,6 +12,18 @@ describe("dutyLabel", () => {
     );
     expect(dutyLabel({ group: "Group 3", role: "cleaning" })).toBe(
       "Cleaning · Group 3"
+    );
+  });
+});
+
+describe("yourPartLabel", () => {
+  it("names a slot by its role and a group duty by what the group does", () => {
+    expect(yourPartLabel({ role: "musician" })).toBe("Musician");
+    expect(yourPartLabel({ group: "Group 3", role: "cooking" })).toBe(
+      "Your group cooks"
+    );
+    expect(yourPartLabel({ group: "Group 3", role: "cleaning" })).toBe(
+      "Your group cleans"
     );
   });
 });

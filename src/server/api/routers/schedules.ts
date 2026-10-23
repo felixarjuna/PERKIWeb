@@ -243,12 +243,28 @@ export const scheduleRouter = createTRPCRouter({
     )
   ),
   /**
-   * The signed-in member's own serving slots and group cooking/cleaning
-   * days; the user id comes from the session only.
+   * The gatherings where the signed-in member serves or their group cooks
+   * or cleans, with the team as the public schedule shows it and the
+   * member's own `duties`. The user id comes from the session only.
    */
-  myDuties: protectedProcedure.query(({ ctx }) =>
-    loadDuties(ctx.session.user.id)
-  ),
+  myDuties: protectedProcedure.query(async ({ ctx }) => {
+    const { past, upcoming } = await loadDuties(ctx.session.user.id);
+    // The same gathering cards as the schedule, each with the member's part.
+    const withDuties = async (days: typeof past) => {
+      const gatherings = await withTeams(
+        days.map((day) => day.schedule),
+        true
+      );
+      return gatherings.map((gathering, index) => ({
+        ...gathering,
+        duties: days[index]?.duties ?? [],
+      }));
+    };
+    return {
+      past: await withDuties(past),
+      upcoming: await withDuties(upcoming),
+    };
+  }),
   /** Every schedule's id, title, verse and date, newest first, for pickers. */
   options: takeawayProcedure.query(() =>
     db

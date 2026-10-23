@@ -1,13 +1,39 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import DutiesView from "./duties-view";
+import type { Duty } from "~/lib/duties";
+import DutiesView, { type DutyGathering } from "./duties-view";
 
 const now = new Date("2026-10-21T12:00:00Z");
-const day = (id: number, date: string, title: string) => ({
+
+const gathering = (
+  id: number,
+  date: string,
+  title: string,
+  duties: Duty[]
+): DutyGathering => ({
+  accommodation: null,
+  bibleVerse: "Efesus 5:1-21",
+  cleaningGroup: "Group 3",
+  cookingGroup: null,
+  createdAt: null,
   date: new Date(date),
+  description: "",
+  duties,
+  groupMembers: { cleaning: null, cooking: null },
   id,
+  leader: "Ana Putri",
+  multimedia: null,
+  musician: "Toni Setiawan",
+  noteWriter: "Kezia Singgih",
+  preacher: null,
+  takeawayIds: [],
+  team: [
+    { image: null, name: "Ana Putri", role: "leader" },
+    { image: null, name: "Toni Setiawan", role: "musician" },
+  ],
   title,
-  type: "bible_study" as const,
+  type: "bible_study",
+  updatedAt: null,
 });
 
 describe("DutiesView", () => {
@@ -23,28 +49,21 @@ describe("DutiesView", () => {
     ).toBe("/schedule");
   });
 
-  it("puts this week first and keeps past duties behind a toggle", () => {
+  it("shows each gathering like the schedule, with the member's part marked", () => {
     render(
       <DutiesView
         now={now}
         past={[
-          {
-            ...day(1, "2026-10-03T13:30:00Z", "Recent"),
-            duties: [{ role: "musician" }],
-          },
+          gathering(1, "2026-10-03T13:30:00Z", "Recent", [
+            { role: "musician" },
+          ]),
         ]}
         upcoming={[
-          {
-            ...day(2, "2026-10-24T13:30:00Z", "Soon"),
-            duties: [
-              { role: "leader" },
-              { group: "Group 3", role: "cleaning" },
-            ],
-          },
-          {
-            ...day(3, "2026-11-07T14:30:00Z", "Later"),
-            duties: [{ role: "musician" }],
-          },
+          gathering(2, "2026-10-24T13:30:00Z", "Soon", [
+            { role: "leader" },
+            { group: "Group 3", role: "cleaning" },
+          ]),
+          gathering(3, "2026-11-07T14:30:00Z", "Later", [{ role: "musician" }]),
         ]}
       />
     );
@@ -53,13 +72,17 @@ describe("DutiesView", () => {
     expect(
       within(week).getByRole("link", { name: "Soon" }).getAttribute("href")
     ).toBe("/schedule/2");
-    expect(within(week).getByText("Leader")).toBeTruthy();
-    expect(within(week).getByText("Cleaning · Group 3")).toBeTruthy();
-    const later = screen.getByRole("region", { name: "Coming up" });
-    expect(within(later).getByRole("link", { name: "Later" })).toBeTruthy();
+    const part = within(week).getByRole("list", { name: "Your part" });
+    expect(within(part).getByText("Leader")).toBeTruthy();
+    expect(within(part).getByText("Your group cleans")).toBeTruthy();
+    // The rest of the team, as on the schedule.
+    expect(within(week).getByText("Toni Setiawan")).toBeTruthy();
+
+    const upcoming = screen.getByRole("region", { name: "Upcoming" });
+    expect(within(upcoming).getByRole("link", { name: "Later" })).toBeTruthy();
 
     expect(screen.queryByRole("link", { name: "Recent" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Past duties (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show 1 past duty" }));
     expect(screen.getByRole("link", { name: "Recent" })).toBeTruthy();
   });
 
@@ -68,10 +91,9 @@ describe("DutiesView", () => {
       <DutiesView
         now={now}
         past={[
-          {
-            ...day(1, "2026-10-03T13:30:00Z", "Recent"),
-            duties: [{ role: "musician" }],
-          },
+          gathering(1, "2026-10-03T13:30:00Z", "Recent", [
+            { role: "musician" },
+          ]),
         ]}
         upcoming={[]}
       />

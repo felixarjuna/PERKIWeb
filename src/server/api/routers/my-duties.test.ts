@@ -112,8 +112,9 @@ describe("schedules.myDuties", () => {
       "Recent",
       "Earlier",
     ]);
-    // Nothing about who else serves.
-    expect(JSON.stringify(duties)).not.toContain("Budi");
+    // The team is the public one: names, never account ids.
+    expect(JSON.stringify(duties)).not.toContain(budi.id);
+    expect(JSON.stringify(duties)).not.toContain(ana.id);
   });
 
   it("uses the group term in force on each gathering's day", async () => {
