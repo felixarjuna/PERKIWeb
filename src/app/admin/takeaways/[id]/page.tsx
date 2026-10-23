@@ -6,6 +6,7 @@ import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
 import { TakeawayReview } from "~/components/admin/content/takeaway-review";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
+import { TakeawayTldr } from "~/components/takeaway-tldr";
 import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
@@ -75,6 +76,7 @@ export default async function ReviewPage({
             {statusLabels[note.status]}
           </Badge>
         </div>
+        {note.tldr ? <TakeawayTldr markdown={note.tldr} /> : null}
         <TakeawayReview takeawayId={takeawayId}>
           <TakeawayMarkdown markdown={note.keypoints} />
         </TakeawayReview>

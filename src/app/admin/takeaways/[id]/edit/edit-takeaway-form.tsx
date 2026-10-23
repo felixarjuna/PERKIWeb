@@ -15,10 +15,17 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
 import { statusLabels } from "~/lib/takeaway-status";
+import { takeawayTldrSchema } from "~/lib/takeaway-tldr";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
 import { api } from "~/trpc/react";
 import { KeypointsField } from "../../keypoints-field";
+import { TldrField } from "../../tldr-field";
+
+const editTakeawayFormSchema = updateTakeawaySchema.extend({
+  tldr: takeawayTldrSchema,
+});
+type EditTakeawayValues = z.infer<typeof editTakeawayFormSchema>;
 
 export default function EditTakeawayForm() {
   const { data: session } = useSession();
@@ -35,8 +42,8 @@ export default function EditTakeawayForm() {
   });
 
   /** form definition. */
-  const form = useForm<z.infer<typeof updateTakeawaySchema>>({
-    resolver: zodResolver(updateTakeawaySchema),
+  const form = useForm<EditTakeawayValues>({
+    resolver: zodResolver(editTakeawayFormSchema),
   });
 
   /**
@@ -52,11 +59,15 @@ export default function EditTakeawayForm() {
     form.reset({
       ...takeaway.takeaways,
       contributors: takeaway.takeaways.contributors as string[],
+      tldr: takeaway.takeaways.tldr ?? "",
     });
   }, [form, takeaway]);
 
   /** edit takeaway action. */
   const utils = api.useUtils();
+  const saveTldr = api.takeawayTldr.save.useMutation({
+    onError: (error) => toast.error(error.message),
+  });
   const updateTakeaway = api.takeaways.updateTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -70,11 +81,18 @@ export default function EditTakeawayForm() {
   });
 
   /** Credits whoever saves, once the session has their name. */
-  function onSubmit(values: z.infer<typeof updateTakeawaySchema>) {
+  async function onSubmit({ tldr, ...values }: EditTakeawayValues) {
     const contributors =
       username && !values.contributors.includes(username)
         ? [...values.contributors, username]
         : values.contributors;
+    if (tldr !== (takeaway?.takeaways.tldr ?? "")) {
+      try {
+        await saveTldr.mutateAsync({ id: values.id, tldr });
+      } catch {
+        return;
+      }
+    }
     updateTakeaway.mutate({ ...values, contributors });
   }
 
@@ -108,6 +126,10 @@ export default function EditTakeawayForm() {
             </div>
 
             <div className="sm:col-span-2">
+              <TldrField control={form.control} name="tldr" />
+            </div>
+
+            <div className="sm:col-span-2">
               <KeypointsField control={form.control} name="keypoints" />
             </div>
           </section>
@@ -116,7 +138,7 @@ export default function EditTakeawayForm() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              disabled={updateTakeaway.isPending}
+              disabled={updateTakeaway.isPending || saveTldr.isPending}
               type="submit"
               variant="default"
             >

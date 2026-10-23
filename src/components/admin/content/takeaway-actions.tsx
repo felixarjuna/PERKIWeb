@@ -2,6 +2,7 @@
 
 import {
   Check,
+  Copy,
   EyeOff,
   Globe,
   MoreHorizontal,
@@ -12,6 +13,7 @@ import {
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { copyTldr } from "~/components/copy-tldr-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,12 +65,15 @@ export function TakeawayActions({
   id,
   name,
   status,
+  tldr = null,
 }: {
   readonly actions: readonly StatusAction[];
   readonly canManage: boolean;
   readonly id: number;
   readonly name: string;
   readonly status: TakeawayStatus;
+  /** Offered for copying once published, for the broadcast and posts. */
+  readonly tldr?: string | null;
 }) {
   const utils = api.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -171,6 +176,17 @@ export function TakeawayActions({
                   </TooltipContent>
                 </Tooltip>
               )}
+              {status === "published" && tldr ? (
+                <DropdownMenuItem
+                  aria-label={`Copy TL;DR: ${name}`}
+                  onSelect={() => copyTldr(tldr)}
+                >
+                  <Copy aria-hidden="true">
+                    <title>Copy TL;DR</title>
+                  </Copy>
+                  Copy TL;DR
+                </DropdownMenuItem>
+              ) : null}
               {secondary.map((action) => (
                 <DropdownMenuItem
                   aria-label={`${action.label}: ${name}`}

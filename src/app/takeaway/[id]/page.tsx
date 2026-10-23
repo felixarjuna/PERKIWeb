@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
+import { TakeawayTldr } from "~/components/takeaway-tldr";
 import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
 import { markdownToPlainText } from "~/lib/markdown";
@@ -116,6 +117,10 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
           </div>
         ))}
       </dl>
+
+      {takeaway.tldr ? (
+        <TakeawayTldr className="mt-8" markdown={takeaway.tldr} />
+      ) : null}
 
       <article className="mt-8">
         <TakeawayMarkdown markdown={takeaway.keypoints} />

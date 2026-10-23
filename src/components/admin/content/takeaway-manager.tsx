@@ -149,6 +149,7 @@ export default function TakeawayManager() {
                           id={note.id}
                           name={schedule.title}
                           status={note.status}
+                          tldr={note.tldr}
                         />
                       </CardFooter>
                     </Card>
