@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { profileCompletion } from "~/lib/profile-completion";
 import Navigation from "./navigation";
@@ -59,5 +59,16 @@ describe("navigation account item", () => {
     state.session = null;
     render(<Navigation />);
     expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
+  });
+
+  it("links members, not visitors, to their duties", () => {
+    render(<Navigation />);
+    expect(
+      screen.getByRole("link", { name: "Duties" }).getAttribute("href")
+    ).toBe("/duties");
+    cleanup();
+    state.session = null;
+    render(<Navigation />);
+    expect(screen.queryByRole("link", { name: "Duties" })).toBeNull();
   });
 });

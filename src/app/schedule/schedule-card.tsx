@@ -6,6 +6,7 @@ import Link from "next/link";
 import React from "react";
 import { PeopleGrid } from "~/components/person-avatar";
 import { PreachedBy, TeamList } from "~/components/schedule/team";
+import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Drawer,
@@ -17,6 +18,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "~/components/ui/drawer";
+import { type Duty, yourPartLabel } from "~/lib/duties";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 import RandomVerse from "./random-verse";
@@ -180,17 +182,37 @@ function TakeawayLink({ schedule }: { schedule: Schedule }) {
   );
 }
 
+/** The signed-in member's own part in a gathering, on their duties page. */
+function YourPart({ duties: own }: { duties: readonly Duty[] }) {
+  if (own.length === 0) {
+    return null;
+  }
+  return (
+    <ul aria-label="Your part" className="mt-2 flex flex-wrap gap-2">
+      {own.map((duty) => (
+        <li key={yourPartLabel(duty)}>
+          <Badge size="status" variant="published">
+            {yourPartLabel(duty)}
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * One gathering on the schedule timeline: the date on a rail, details beside
  * it. The title links to the gathering's own page; on that page (`standalone`)
- * the page heading already names it.
+ * the page heading already names it. `yours` marks what the viewer does there.
  */
 export default function ScheduleCard({
   schedule,
   standalone = false,
+  yours = [],
 }: {
   schedule: Schedule;
   standalone?: boolean;
+  yours?: readonly Duty[];
 }) {
   const date = formatDate(schedule.date);
   return (
@@ -225,6 +247,7 @@ export default function ScheduleCard({
             </Link>
           </h3>
         )}
+        <YourPart duties={yours} />
         <PreachedBy className="mt-1.5" team={schedule.team} />
         <Description text={schedule.description} />
 
