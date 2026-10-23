@@ -133,6 +133,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
     .filter({ hasText: scheduleTitle });
   await expect(own).toBeVisible();
   await own.getByRole("link", { exact: true, name: "Continue draft" }).click();
+  await page.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   // Wait for the takeaway to load into the editor before replacing it.
   const editor = page.getByLabel("Key points", { exact: true });

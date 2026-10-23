@@ -161,6 +161,9 @@ for (const width of widths) {
         await page
           .getByRole("listitem")
           .filter({ hasText: keypoints })
+          .getByRole("link", { exact: true, name: `Review ${title}` })
+          .click();
+        await page
           .getByRole("link", { exact: true, name: `Edit ${title}` })
           .click();
         const editor = page.getByLabel("Key points", { exact: true });

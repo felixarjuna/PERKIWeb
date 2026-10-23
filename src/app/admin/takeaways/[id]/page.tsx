@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PenLine } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
@@ -11,6 +11,7 @@ import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
 import { statusLabels } from "~/lib/takeaway-status";
+import { canManageTakeaway } from "~/server/api/routers/takeaway";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import { api } from "~/trpc/server";
 
@@ -26,7 +27,10 @@ async function loadReview(id: number) {
   }
 }
 
-/** A workspace reading view for writers who cannot edit this takeaway. */
+/**
+ * The workspace reading view every takeaway opens in: reviewers comment on
+ * and suggest edits to passages here, and its writer and staff edit from it.
+ */
 export default async function ReviewPage({
   params,
   searchParams,
@@ -35,7 +39,7 @@ export default async function ReviewPage({
   searchParams: Promise<PageSearchParams>;
 }) {
   const { id } = await params;
-  const { role } = await requireTakeawayAccess(
+  const { role, session } = await requireTakeawayAccess(
     requestedPath(
       `/admin/takeaways/${encodeURIComponent(id)}`,
       await searchParams
@@ -46,6 +50,7 @@ export default async function ReviewPage({
     notFound();
   }
   const { schedules: schedule, takeaways: note } = await loadReview(takeawayId);
+  const canEdit = await canManageTakeaway(takeawayId, session.user.id);
   return (
     <AdminShell
       {...(await adminShellProps(role))}
@@ -75,6 +80,28 @@ export default async function ReviewPage({
             {statusLabels[note.status]}
           </Badge>
         </div>
+        {/* Next steps sit under the title, above the long thread below. */}
+        <div className="flex flex-wrap items-center gap-2 empty:hidden">
+          {canEdit ? (
+            <Link
+              aria-label={`Edit ${schedule.title}`}
+              className={buttonVariants()}
+              href={`/admin/takeaways/${note.id}/edit`}
+            >
+              <PenLine aria-hidden="true" data-icon="inline-start">
+                <title>Edit</title>
+              </PenLine>
+              Edit
+            </Link>
+          ) : null}
+          <TakeawayActions
+            actions={[]}
+            canManage={false}
+            id={note.id}
+            name={schedule.title}
+            status={note.status}
+          />
+        </div>
         {/* Reviewers check both parts; they share one edge and one label style. */}
         <section aria-labelledby="review-tldr" className="flex flex-col gap-2">
           <p className="type-eyebrow text-muted-foreground" id="review-tldr">
@@ -99,13 +126,6 @@ export default async function ReviewPage({
             <TakeawayMarkdown markdown={note.keypoints} />
           </TakeawayReview>
         </section>
-        <TakeawayActions
-          actions={[]}
-          canManage={false}
-          id={note.id}
-          name={schedule.title}
-          status={note.status}
-        />
       </article>
     </AdminShell>
   );
