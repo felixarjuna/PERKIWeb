@@ -62,6 +62,7 @@ export function TldrField<T extends FieldValues>({
               onBlur={field.onBlur}
               onChange={field.onChange}
               ref={field.ref}
+              toolbarLabel="TL;DR styling"
               value={field.value ?? ""}
             />
           </FormControl>

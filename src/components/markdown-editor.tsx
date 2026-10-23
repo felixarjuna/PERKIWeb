@@ -75,6 +75,8 @@ interface MarkdownEditorProps {
   readonly onBlur?: () => void;
   readonly onChange: (markdown: string) => void;
   readonly ref?: Ref<{ focus: () => void }>;
+  /** Names the toolbar, so two editors on one page stay distinct. */
+  readonly toolbarLabel?: string;
   readonly value: string | undefined;
 }
 
@@ -93,6 +95,7 @@ export function MarkdownEditor({
   onBlur,
   onChange,
   ref,
+  toolbarLabel = "Formatting",
   value = "",
 }: MarkdownEditorProps) {
   // The Markdown this editor last showed or reported, so a new `value` from
@@ -184,13 +187,19 @@ export function MarkdownEditor({
         className
       )}
     >
-      {editor ? <Toolbar editor={editor} /> : null}
+      {editor ? <Toolbar editor={editor} label={toolbarLabel} /> : null}
       <EditorContent editor={editor} />
     </div>
   );
 }
 
-function Toolbar({ editor }: { readonly editor: Editor }) {
+function Toolbar({
+  editor,
+  label,
+}: {
+  readonly editor: Editor;
+  readonly label: string;
+}) {
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
@@ -211,7 +220,7 @@ function Toolbar({ editor }: { readonly editor: Editor }) {
   return (
     <div
       aria-controls={editor.view.dom.id || undefined}
-      aria-label="Formatting"
+      aria-label={label}
       className="flex items-center gap-0.5 overflow-x-auto border-background border-b p-1 sm:gap-1"
       role="toolbar"
     >
