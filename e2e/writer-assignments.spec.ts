@@ -64,7 +64,7 @@ test("an assigned gathering moves into the writer's drafts after saving", async 
   await pending.getByRole("link", { name: "Write takeaway" }).click();
   await selectOption(page, "Schedule", title);
   await page
-    .getByLabel("Key points", { exact: true })
+    .getByLabel("Notes", { exact: true })
     .fill("A reflection on serving our community.");
   await page.getByRole("button", { exact: true, name: "Save draft" }).click();
   await expect(page).toHaveURL("/admin/takeaways");

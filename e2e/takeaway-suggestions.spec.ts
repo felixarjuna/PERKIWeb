@@ -99,7 +99,7 @@ test("a writer accepts another writer's suggestion and applies a stale one by ha
 
   await setTestSession(page, WRITER);
   await page.goto(`/admin/takeaways/${id}/edit`);
-  const notes = page.getByRole("textbox", { name: "Key points" });
+  const notes = page.getByRole("textbox", { exact: true, name: "Notes" });
   await expect(notes).toContainText("Abraham believed God");
   const [fresh, stale] = [
     suggestions.getByRole("listitem").filter({ hasText: "trusted God" }),

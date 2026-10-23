@@ -157,7 +157,7 @@ export function MarkdownEditor({
     editor?.setEditable(!disabled);
   }, [editor, disabled]);
 
-  // A label's `for` only focuses form elements, so clicking "Key points"
+  // A label's `for` only focuses form elements, so clicking "Notes"
   // would do nothing; put the cursor at the end of the note instead.
   useEffect(() => {
     const label = id

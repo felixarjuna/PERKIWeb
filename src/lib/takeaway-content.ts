@@ -24,5 +24,5 @@ export const takeawayKeypointsSchema = z
   .string()
   .refine(
     (value) => hasText(parseMarkdown(value)),
-    "Write some key points before saving or sending to review."
+    "Write the notes before saving or sending to review."
   );

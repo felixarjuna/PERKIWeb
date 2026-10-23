@@ -155,7 +155,7 @@ for (const width of widths) {
         await adminLogin(page);
         await page.goto("/admin/takeaways/new");
         await selectOption(page, "Schedule", title);
-        await page.getByLabel("Key points", { exact: true }).fill(keypoints);
+        await page.getByLabel("Notes", { exact: true }).fill(keypoints);
         await page.getByRole("button", { name: "Save draft" }).click();
         await expect(page).toHaveURL("/admin/takeaways");
         await page
@@ -166,7 +166,7 @@ for (const width of widths) {
         await page
           .getByRole("link", { exact: true, name: `Edit ${title}` })
           .click();
-        const editor = page.getByLabel("Key points", { exact: true });
+        const editor = page.getByLabel("Notes", { exact: true });
         await expect(editor).toHaveText(keypoints);
         const editorWidth = await editor.evaluate(
           (element) => element.getBoundingClientRect().width

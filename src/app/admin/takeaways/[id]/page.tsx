@@ -120,7 +120,7 @@ export default async function ReviewPage({
           className="flex flex-col gap-2 border-t pt-5"
         >
           <p className="type-eyebrow text-muted-foreground" id="review-notes">
-            Key points
+            Notes
           </p>
           <TakeawayReview takeawayId={takeawayId}>
             <TakeawayMarkdown markdown={note.keypoints} />
