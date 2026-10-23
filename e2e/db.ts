@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { desc, lte } from "drizzle-orm";
+import { desc, eq, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -163,6 +163,20 @@ export const insertGroupWith = async (
     await db
       .insert(groupMembers)
       .values({ groupId: group?.id ?? 0, name: user.name, userId: user.id });
+  } finally {
+    await client.end();
+  }
+};
+
+/** Replaces a takeaway's notes, as if its writer had saved new text. */
+export const updateTakeawayNotes = async (id: number, keypoints: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .update(takeaways)
+      .set({ keypoints })
+      .where(eq(takeaways.id, id));
   } finally {
     await client.end();
   }

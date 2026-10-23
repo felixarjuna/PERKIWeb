@@ -146,6 +146,51 @@ export const takeawayComments = pgTable(
   (t) => [index("takeaway_comments_takeaway_idx").on(t.takeawayId)]
 );
 
+export const SUGGESTION_STATUSES = ["open", "accepted", "rejected"] as const;
+export type SuggestionStatus = (typeof SUGGESTION_STATUSES)[number];
+
+/** Replacement text a reviewer proposes for a passage of the notes (#58). */
+export const takeawaySuggestions = pgTable(
+  "takeaway_suggestions",
+  {
+    /** Who suggested the edit; null once their account is deleted. */
+    authorId: text("authorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    /** When it was accepted or rejected; null while it is open. */
+    decidedAt: timestamp("decidedAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    decidedById: text("decidedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    id: serial("id").primaryKey().notNull(),
+    /** The passage as the reviewer selected it, in plain text. */
+    original: text("original").notNull(),
+    replacement: text("replacement").notNull(),
+    status: text("status", { enum: SUGGESTION_STATUSES })
+      .default("open")
+      .notNull(),
+    takeawayId: integer("takeawayId")
+      .notNull()
+      .references(() => takeaways.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("takeaway_suggestions_takeaway_idx").on(t.takeawayId),
+    check(
+      "takeaway_suggestions_status_check",
+      sql`${t.status} in ('open', 'accepted', 'rejected')`
+    ),
+  ]
+);
+
 export const prayers = pgTable("prayers", {
   /** Who submitted the prayer; null for prayers created before authorship. */
   authorId: text("authorId").references(() => users.id, {

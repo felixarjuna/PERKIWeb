@@ -155,6 +155,13 @@
       "when": 1792688994630,
       "tag": "0021_takeaway_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792737036779,
+      "tag": "0022_takeaway_suggestions",
+      "breakpoints": true
     }
   ]
 }

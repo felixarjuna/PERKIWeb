@@ -1,6 +1,7 @@
 "use client";
 
 import type { Control, FieldValues, Path } from "react-hook-form";
+import { EditorWordCount } from "~/components/editor-word-count";
 import { MarkdownEditor } from "~/components/markdown-editor";
 import {
   FormControl,
@@ -10,26 +11,9 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { TLDR_WORD_HINT, tldrWords } from "~/lib/takeaway-tldr";
-import { cn } from "~/lib/utils";
+import { TLDR_WORD_HINT } from "~/lib/takeaway-tldr";
 
 const LABEL_ID = "tldr-label";
-
-/** How long the TL;DR is against the hint; past it, the count stands out. */
-function WordCount({ markdown }: { readonly markdown: string }) {
-  const words = tldrWords(markdown);
-  return (
-    <span
-      className={cn(
-        "tabular-nums",
-        words > TLDR_WORD_HINT ? "text-destructive-text" : undefined
-      )}
-      data-slot="tldr-word-count"
-    >
-      {words} / about {TLDR_WORD_HINT} words
-    </span>
-  );
-}
 
 /**
  * The takeaway's TL;DR, written beside its notes in the same editor; it is
@@ -49,11 +33,8 @@ export function TldrField<T extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel id={LABEL_ID}>TL;DR</FormLabel>
-          <FormDescription className="type-caption flex flex-wrap justify-between gap-x-3">
-            <span>
-              A few sentences for the Monday broadcast and social posts.
-            </span>
-            <WordCount markdown={field.value ?? ""} />
+          <FormDescription className="type-caption">
+            A few sentences for the Monday broadcast and social posts.
           </FormDescription>
           <FormControl>
             <MarkdownEditor
@@ -66,6 +47,7 @@ export function TldrField<T extends FieldValues>({
               value={field.value ?? ""}
             />
           </FormControl>
+          <EditorWordCount hint={TLDR_WORD_HINT} markdown={field.value ?? ""} />
           <FormMessage />
         </FormItem>
       )}

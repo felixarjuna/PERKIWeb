@@ -15,10 +15,10 @@ export function EditorBubbleMenu({
 }: BubbleMenuProps) {
   return (
     <BubbleMenu
+      // Concentric with the buttons inside: their radius plus the padding
+      // and the border, so both curves follow one centre.
       className={cn(
-        "flex rounded-xl border bg-background p-0.5 shadow",
-        "[&>*:first-child]:rounded-l-[9px]",
-        "[&>*:last-child]:rounded-r-[9px]",
+        "flex rounded-[calc(var(--radius-md)+3px)] border bg-background p-0.5 shadow",
         className
       )}
       {...props}

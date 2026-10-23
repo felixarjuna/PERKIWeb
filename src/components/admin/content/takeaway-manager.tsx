@@ -117,13 +117,10 @@ export default function TakeawayManager() {
                         <CardTitle>
                           <h2 className="type-subheading break-words">
                             <Link
-                              aria-label={`${canManage ? "Edit" : "Review"} ${schedule.title}`}
+                              aria-label={`Review ${schedule.title}`}
                               className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
-                              href={
-                                canManage
-                                  ? `/admin/takeaways/${note.id}/edit`
-                                  : `/admin/takeaways/${note.id}`
-                              }
+                              // Everyone reviews first; editors edit from there.
+                              href={`/admin/takeaways/${note.id}`}
                             >
                               {schedule.title}
                             </Link>

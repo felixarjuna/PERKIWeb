@@ -110,9 +110,15 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(article).toContainText("Draft");
   await expect(article).toContainText(ADMIN_USERNAME);
 
-  // The card itself opens the editor.
-  await article.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
+  // The card opens the review page; its writer edits from there.
+  await article.getByRole("link", { name: `Review ${scheduleTitle}` }).click();
+  await expect(page).toHaveURL(REVIEW_TAKEAWAY_URL);
+  await page.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
+  // The editor leads back to the review page and its comments.
+  await expect(
+    page.getByRole("link", { name: "Review and comments" })
+  ).toHaveAttribute("href", REVIEW_TAKEAWAY_URL);
   const keypointsInput = page.getByLabel("Key points", { exact: true });
   await expect(keypointsInput).toHaveText(keypoints);
   // A clear sent while the editor is still settling can be dropped, so
@@ -410,6 +416,9 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     0
   );
   await expect(page.getByRole("link", { name: PUBLIC_PAGE })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: `Edit ${scheduleTitle}` })
+  ).toHaveCount(0);
 
   const peerReviewPath = new URL(page.url()).pathname;
   const forbiddenEdit = await page.goto(`${peerReviewPath}/edit`);
@@ -618,21 +627,23 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
     document.documentElement.style.zoom = "";
   });
   await page.keyboard.press("Tab");
-  const edit = draft.getByRole("link", { name: `Edit Card draft ${suffix}` });
-  await edit.focus();
+  const titleLink = draft.getByRole("link", {
+    name: `Review Card draft ${suffix}`,
+  });
+  await titleLink.focus();
   expect(
-    await edit.evaluate(
+    await titleLink.evaluate(
       (element) => getComputedStyle(element, "::after").boxShadow
     )
   ).not.toBe("none");
   // A click on the card body follows its stretched native title link.
   await draft.click();
-  await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
+  await expect(page).toHaveURL(REVIEW_TAKEAWAY_URL);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Edit takeaway" })
+    page.getByRole("heading", { level: 1, name: "Review takeaway" })
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Save changes" })
+    page.getByRole("link", { name: `Edit Card draft ${suffix}` })
   ).toBeVisible();
   await page.goto("/admin/takeaways");
   await page.getByLabel("Search takeaways").fill(suffix);

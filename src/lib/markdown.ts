@@ -73,3 +73,9 @@ export function markdownToPlainText(markdown: string) {
     .filter(Boolean)
     .join("\n");
 }
+
+const WORD = /\S+/g;
+
+/** Words a reader sees: Markdown marks don't count. */
+export const countWords = (markdown: string) =>
+  markdownToPlainText(markdown).match(WORD)?.length ?? 0;

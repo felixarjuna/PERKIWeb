@@ -74,7 +74,7 @@ function AssignmentCard({ item, staff }: { item: Item; staff: boolean }) {
           href={
             item.takeawayId === null
               ? "/admin/takeaways/new"
-              : `/admin/takeaways/${item.takeawayId}${item.status === "draft" ? "/edit" : ""}`
+              : `/admin/takeaways/${item.takeawayId}`
           }
         >
           {actionLabel}

@@ -71,13 +71,13 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
     window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(range);
   });
-  await page.getByRole("button", { name: "Resume passage comment" }).click();
+  await page.getByRole("button", { name: "Comment (draft saved)" }).click();
   await expect(composer.getByRole("blockquote")).toHaveText(quote);
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Resume comment" }).click();
+  await page.getByRole("button", { name: "Unsent comment" }).click();
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"
   );
@@ -86,7 +86,7 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
     .getByLabel("Comment", { exact: true });
   await generalComment.click();
   await expect(generalComment).toBeFocused();
-  await page.getByRole("button", { name: "Resume comment" }).click();
+  await page.getByRole("button", { name: "Unsent comment" }).click();
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"
   );

@@ -24,7 +24,7 @@ export default function TakeawayViews({ staff }: { staff: boolean }) {
   return (
     <div className="@container space-y-5">
       <AdminSegmented
-        className="h-auto @sm:w-auto w-full [&_button]:h-auto [&_button]:min-h-11 [&_button]:min-w-0 [&_button]:whitespace-nowrap @sm:[&_button]:px-4 [&_button]:px-3 [&_button]:py-2"
+        className="@sm:w-auto w-full [&_button]:min-w-0 [&_button]:whitespace-nowrap @sm:[&_button]:px-4 [&_button]:px-3"
         label="View"
         onChange={setView}
         options={options}
