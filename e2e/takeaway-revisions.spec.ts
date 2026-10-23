@@ -46,7 +46,7 @@ test("a published takeaway stays live while its correction is reviewed", async (
   await page.goto(`/admin/takeaways/${id}`);
   await page.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page.getByText("This takeaway is published.")).toBeVisible();
-  const keypoints = page.getByLabel("Key points", { exact: true });
+  const keypoints = page.getByRole("textbox", { exact: true, name: "Notes" });
   await expect(keypoints).toHaveText(live);
   await keypoints.fill(corrected);
   await page.getByRole("button", { name: "Save changes" }).click();
