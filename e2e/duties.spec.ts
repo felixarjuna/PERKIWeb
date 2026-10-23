@@ -12,7 +12,9 @@ test("a member sees their own serving slots and group days", async ({
 }) => {
   const suffix = uniqueSuffix();
   const user = await createSignedInUser(page, "Duties");
-  const group = `Group ${suffix}`;
+  // As short as a real group name ("Group 3"): /schedule shows it on a
+  // button that doesn't wrap, and interface.spec checks that page at 320px.
+  const group = `G ${suffix.slice(-4)}`;
   const serving = `Serving ${suffix}`;
   const cleaning = `Cleaning ${suffix}`;
   const notMine = `Not mine ${suffix}`;
