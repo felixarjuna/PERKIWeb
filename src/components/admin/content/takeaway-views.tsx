@@ -9,22 +9,22 @@ import { WriterAssignments } from "./writer-assignments";
 export default function TakeawayViews({ staff }: { staff: boolean }) {
   const [view, setView] = useState(staff ? "all" : "mine");
   const options = [
-    { icon: UserPen, label: "My takeaways", value: "mine" },
+    { icon: UserPen, label: "Mine", value: "mine" },
     ...(staff
       ? [
           {
             icon: ClipboardList,
-            label: "All assignments",
+            label: "Assignments",
             value: "assignments",
           },
         ]
       : []),
-    { icon: Files, label: "All takeaways", value: "all" },
+    { icon: Files, label: "All", value: "all" },
   ];
   return (
     <div className="@container space-y-5">
       <AdminSegmented
-        className="h-auto @sm:w-auto w-full [&_button]:h-auto [&_button]:min-h-11 [&_button]:min-w-0 [&_button]:whitespace-normal @sm:[&_button]:whitespace-nowrap @sm:[&_button]:px-4 [&_button]:px-2 [&_button]:py-2"
+        className="h-auto @sm:w-auto w-full [&_button]:h-auto [&_button]:min-h-11 [&_button]:min-w-0 [&_button]:whitespace-nowrap @sm:[&_button]:px-4 [&_button]:px-3 [&_button]:py-2"
         label="View"
         onChange={setView}
         options={options}
