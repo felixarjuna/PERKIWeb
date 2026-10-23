@@ -5,7 +5,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
-import { TakeawayTldr } from "~/components/takeaway-tldr";
 import Template from "~/components/template";
 import { buttonVariants } from "~/components/ui/button";
 import { markdownToPlainText } from "~/lib/markdown";
@@ -47,7 +46,8 @@ export async function generateMetadata({
   const { schedules: schedule, takeaways: takeaway } = await loadTakeaway(
     (await params).id
   );
-  const flat = markdownToPlainText(takeaway.keypoints)
+  // Link previews (WhatsApp, social posts) show the TL;DR when there is one.
+  const flat = markdownToPlainText(takeaway.tldr ?? takeaway.keypoints)
     .replace(WHITESPACE, " ")
     .trim();
   const description =
@@ -117,10 +117,6 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
           </div>
         ))}
       </dl>
-
-      {takeaway.tldr ? (
-        <TakeawayTldr className="mt-8" markdown={takeaway.tldr} />
-      ) : null}
 
       <article className="mt-8">
         <TakeawayMarkdown markdown={takeaway.keypoints} />

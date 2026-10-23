@@ -6,7 +6,6 @@ import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
 import { TakeawayReview } from "~/components/admin/content/takeaway-review";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
-import { TakeawayTldr } from "~/components/takeaway-tldr";
 import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
@@ -76,10 +75,30 @@ export default async function ReviewPage({
             {statusLabels[note.status]}
           </Badge>
         </div>
-        {note.tldr ? <TakeawayTldr markdown={note.tldr} /> : null}
-        <TakeawayReview takeawayId={takeawayId}>
-          <TakeawayMarkdown markdown={note.keypoints} />
-        </TakeawayReview>
+        {/* Reviewers check both parts; they share one edge and one label style. */}
+        <section aria-labelledby="review-tldr" className="flex flex-col gap-2">
+          <p className="type-eyebrow text-muted-foreground" id="review-tldr">
+            TL;DR
+          </p>
+          {note.tldr ? (
+            <TakeawayMarkdown markdown={note.tldr} />
+          ) : (
+            <p className="type-body-sm text-muted-foreground">
+              No TL;DR yet. Ask the writer to add one before it is published.
+            </p>
+          )}
+        </section>
+        <section
+          aria-labelledby="review-notes"
+          className="flex flex-col gap-2 border-t pt-5"
+        >
+          <p className="type-eyebrow text-muted-foreground" id="review-notes">
+            Key points
+          </p>
+          <TakeawayReview takeawayId={takeawayId}>
+            <TakeawayMarkdown markdown={note.keypoints} />
+          </TakeawayReview>
+        </section>
         <TakeawayActions
           actions={[]}
           canManage={false}

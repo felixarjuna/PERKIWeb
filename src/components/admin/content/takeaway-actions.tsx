@@ -2,9 +2,9 @@
 
 import {
   Check,
-  Copy,
   EyeOff,
   Globe,
+  MessageCircle,
   MoreHorizontal,
   Send,
   Trash2,
@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { copyTldr } from "~/components/copy-tldr-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +38,23 @@ import {
 } from "~/components/ui/tooltip";
 import type { TakeawayStatus } from "~/lib/db/schema/schema";
 import type { StatusAction } from "~/lib/takeaway-status";
+import { whatsAppPost } from "~/lib/whatsapp";
 import { api } from "~/trpc/react";
+
+/** The Monday broadcast for WhatsApp: title, TL;DR and the page's link. */
+async function copyForWhatsApp(id: number, title: string, tldr: string) {
+  const url = new URL(`/takeaway/${id}`, window.location.origin).href;
+  try {
+    await navigator.clipboard.writeText(whatsAppPost({ title, tldr, url }));
+    toast.success("Copied for WhatsApp", {
+      description: "Paste it into the group chat.",
+    });
+  } catch {
+    toast.error(
+      "Your browser blocked copying. Allow clipboard access and try again."
+    );
+  }
+}
 
 /** The menu icon for a move: unpublishing hides it, the rest go back. */
 function MoveIcon({ action }: { readonly action: StatusAction }) {
@@ -72,7 +87,7 @@ export function TakeawayActions({
   readonly id: number;
   readonly name: string;
   readonly status: TakeawayStatus;
-  /** Offered for copying once published, for the broadcast and posts. */
+  /** Offered as the WhatsApp broadcast once published. */
   readonly tldr?: string | null;
 }) {
   const utils = api.useUtils();
@@ -178,13 +193,13 @@ export function TakeawayActions({
               )}
               {status === "published" && tldr ? (
                 <DropdownMenuItem
-                  aria-label={`Copy TL;DR: ${name}`}
-                  onSelect={() => copyTldr(tldr)}
+                  aria-label={`Copy for WhatsApp: ${name}`}
+                  onSelect={() => copyForWhatsApp(id, name, tldr)}
                 >
-                  <Copy aria-hidden="true">
-                    <title>Copy TL;DR</title>
-                  </Copy>
-                  Copy TL;DR
+                  <MessageCircle aria-hidden="true">
+                    <title>Copy for WhatsApp</title>
+                  </MessageCircle>
+                  Copy for WhatsApp
                 </DropdownMenuItem>
               ) : null}
               {secondary.map((action) => (
