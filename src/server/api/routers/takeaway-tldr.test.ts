@@ -101,16 +101,18 @@ describe("takeaway TL;DR", () => {
     expect(await storedTldr(id)).toBeNull();
   });
 
-  it("can't change a published TL;DR until it is unpublished", async () => {
+  it("keeps a published TL;DR live while its change waits for review", async () => {
     const { api, id, mita } = await draft();
     await api.takeawayTldr.save({ id, tldr: TLDR });
     await api.takeaways.setStatus({ id, status: "in_review" });
     await mita.takeaways.setStatus({ id, status: "published" });
 
-    await expect(
-      mita.takeawayTldr.save({ id, tldr: "Changed" })
-    ).rejects.toThrow(expect.objectContaining({ code: "FORBIDDEN" }));
+    await mita.takeawayTldr.save({ id, tldr: "Changed" });
+
     expect(await storedTldr(id)).toBe(TLDR);
+    expect(
+      await api.takeawayRevisions.current({ takeawayId: id })
+    ).toMatchObject({ tldr: "Changed" });
   });
 
   it("only lets the author and staff save it", async () => {

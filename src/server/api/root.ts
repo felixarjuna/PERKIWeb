@@ -14,6 +14,7 @@ import { speakerRouter } from "./routers/speakers";
 import { takeawayRouter } from "./routers/takeaway";
 import { takeawayCommentsRouter } from "./routers/takeaway-comments";
 import { takeawayImportRouter } from "./routers/takeaway-import";
+import { takeawayRevisionsRouter } from "./routers/takeaway-revisions";
 import { takeawaySuggestionsRouter } from "./routers/takeaway-suggestions";
 import { takeawayTldrRouter } from "./routers/takeaway-tldr";
 import { userRouter } from "./routers/users";
@@ -39,6 +40,7 @@ export const appRouter = createTRPCRouter({
   speakers: speakerRouter,
   takeawayComments: takeawayCommentsRouter,
   takeawayImport: takeawayImportRouter,
+  takeawayRevisions: takeawayRevisionsRouter,
   takeawaySuggestions: takeawaySuggestionsRouter,
   takeaways: takeawayRouter,
   takeawayTldr: takeawayTldrRouter,

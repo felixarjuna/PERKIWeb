@@ -71,7 +71,10 @@ const UNPUBLISH: StatusAction = {
  * The author owns the text, while they still may write takeaways.
  * Takeaways written before authorship have no author, so staff act for them.
  */
-const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
+export const actsAsAuthor = (
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
+) => {
   if (takeaway.authorId === null) {
     return isStaffRole(viewer.role);
   }
@@ -80,8 +83,9 @@ const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
 
 /**
  * Who may change the text or delete the takeaway: its author and staff,
- * until it is published. A published takeaway changes only after mita or
- * the dev unpublishes it, so they are the one gate to the public site.
+ * until it is published. A published takeaway changes through a correction
+ * (`mayChangeText` in `takeaway-revisions.ts`) that mita or the dev publish,
+ * so they stay the one gate to the public site.
  */
 export const mayEditTakeaway = (
   takeaway: TakeawaySubject,
@@ -119,3 +123,16 @@ export const statusActions = (
   }
   return gate ? [UNPUBLISH] : [];
 };
+
+/**
+ * The read rule from #36: published is public, staff and the author read
+ * every status, other writers read takeaways that are in review.
+ */
+export const mayReadTakeaway = (
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
+) =>
+  takeaway.status === "published" ||
+  isStaffRole(viewer.role) ||
+  (canWriteTakeaways(viewer.role) &&
+    (takeaway.authorId === viewer.id || takeaway.status === "in_review"));
