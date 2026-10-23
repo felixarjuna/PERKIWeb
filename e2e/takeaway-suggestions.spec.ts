@@ -52,8 +52,34 @@ test("a writer accepts another writer's suggestion and applies a stale one by ha
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
   const suggestions = page.getByRole("region", { name: "Suggested edits" });
   await expect(suggestions.getByText("0 open · 0 decided")).toBeVisible();
+  // Both actions stay side by side, and each keeps its own draft.
+  await selectPassage(page, 1, "Faith");
+  await page.getByRole("button", { name: "Comment on selection" }).click();
+  await page
+    .getByRole("dialog", { name: "Comment on passage" })
+    .getByLabel("Comment", { exact: true })
+    .fill("Which verse is this?");
+  await page
+    .getByRole("button", { name: "Suggest edit for selection" })
+    .click();
+  const composer = page.getByRole("dialog", { name: "Suggest an edit" });
+  await expect(composer.getByLabel("Suggested text")).toHaveValue("Faith");
+  await expect(
+    page.getByRole("button", { name: "Comment (draft saved)" })
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Unsent comment" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Unsent suggestion" })
+  ).toHaveCount(0);
+
   await selectPassage(page, 0, "believed God");
   await suggest(page, "trusted God");
+  await expect(
+    page.getByRole("button", { name: "Unsent comment" })
+  ).toBeVisible();
   await selectPassage(page, 1, "Faith comes by hearing.");
   await suggest(page, "Faith comes from hearing.");
   await expect(suggestions.getByText("2 open · 0 decided")).toBeVisible();

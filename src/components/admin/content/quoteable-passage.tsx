@@ -3,7 +3,7 @@
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { MessageSquarePlus, PencilLine } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import { EditorBubbleMenu } from "~/components/kibo-ui/editor-bubble-menu";
 import { Button } from "~/components/ui/button";
 import {
@@ -25,10 +25,43 @@ interface Passage {
 /** What the selection menu opens: a comment, or a suggested edit (#58). */
 type Kind = "comment" | "suggest";
 
-const resumeLabels: Record<Kind, string> = {
-  comment: "Resume comment",
-  suggest: "Resume suggestion",
+/** Unsent text for one kind, with the passage it was started on. */
+interface Draft {
+  passage: Passage;
+  text: string;
+}
+
+const KINDS: Kind[] = ["comment", "suggest"];
+
+const actions: Record<
+  Kind,
+  {
+    draftLabel: string;
+    icon: typeof MessageSquarePlus;
+    label: string;
+    name: string;
+  }
+> = {
+  comment: {
+    draftLabel: "Unsent comment",
+    icon: MessageSquarePlus,
+    label: "Comment",
+    name: "Comment on selection",
+  },
+  suggest: {
+    draftLabel: "Unsent suggestion",
+    icon: PencilLine,
+    label: "Suggest edit",
+    name: "Suggest edit for selection",
+  },
 };
+
+// A suggestion starts as the passage itself; it is a draft once changed.
+const isDraft = (kind: Kind, draft: Draft | null): draft is Draft =>
+  Boolean(
+    draft?.text &&
+      (kind === "comment" || draft.text.trim() !== draft.passage.text)
+  );
 
 /**
  * A read-only Tiptap view of the already sanitized, server-rendered Markdown.
@@ -47,16 +80,19 @@ export function QuoteablePassage({
   }) => Promise<void>;
 }) {
   const fallback = useRef<HTMLDivElement>(null);
-  const resumeButton = useRef<HTMLButtonElement>(null);
+  const draftRow = useRef<HTMLDivElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
   const outsideDismiss = useRef(false);
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState("");
   const [inside, setInside] = useState(false);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>("comment");
-  const [draft, setDraft] = useState("");
+  const [drafts, setDrafts] = useState<Record<Kind, Draft | null>>({
+    comment: null,
+    suggest: null,
+  });
   const [pending, setPending] = useState(false);
-  const [passage, setPassage] = useState<Passage | null>(null);
   const highlight = useRef<Passage | null>(null);
   const editor = useEditor({
     editable: false,
@@ -127,26 +163,32 @@ export function QuoteablePassage({
     }
   }, [editor, inside, open, ready]);
 
-  // A suggestion starts as the passage itself; it is a draft once changed.
-  const hasDraft = Boolean(
-    passage && draft && (kind === "comment" || draft.trim() !== passage.text)
-  );
+  const saved: Record<Kind, boolean> = {
+    comment: isDraft("comment", drafts.comment),
+    suggest: isDraft("suggest", drafts.suggest),
+  };
 
-  // Keeps a draft's passage; without a draft, takes the current selection.
+  // Each kind keeps its draft's passage; without a draft it takes the
+  // current selection, so a new selection never replaces a draft's quote.
   const startPassage = (current: Editor, nextKind: Kind) => {
+    const existing = drafts[nextKind];
     const { from, to } = current.state.selection;
-    const captured =
-      hasDraft && passage
-        ? passage
-        : { from, text: passageText(current.state.doc, from, to), to };
+    const captured = isDraft(nextKind, existing)
+      ? existing.passage
+      : { from, text: passageText(current.state.doc, from, to), to };
     if (!captured.text || captured.text.length > QUOTE_MAX_LENGTH) {
       return false;
     }
-    if (!hasDraft) {
-      setKind(nextKind);
-      setDraft(nextKind === "suggest" ? captured.text : "");
+    if (!isDraft(nextKind, existing)) {
+      setDrafts((all) => ({
+        ...all,
+        [nextKind]: {
+          passage: captured,
+          text: nextKind === "suggest" ? captured.text : "",
+        },
+      }));
     }
-    setPassage(captured);
+    setKind(nextKind);
     highlight.current = captured;
     current.commands.setTextSelection({
       from: captured.from,
@@ -171,33 +213,40 @@ export function QuoteablePassage({
     editor.view.dispatch(editor.state.tr);
   };
 
+  const setText = (text: string) =>
+    setDrafts((all) => {
+      const draft = all[kind];
+      return draft ? { ...all, [kind]: { ...draft, text } } : all;
+    });
+
+  const sent = (passage: Passage) => {
+    setDrafts((all) => ({ ...all, [kind]: null }));
+    setOpen(false);
+    highlight.current = null;
+    editor?.commands.setTextSelection(passage.to);
+  };
+
   const tooLong = selected.length > QUOTE_MAX_LENGTH;
+  const composing = drafts[kind];
+  const kinds = onSuggest ? KINDS : KINDS.slice(0, 1);
   return (
     <div className="min-w-0">
       {ready ? null : <div ref={fallback}>{children}</div>}
       <div hidden={!ready}>
         <EditorContent editor={editor} />
       </div>
-      {hasDraft && passage ? (
-        <Button
-          className="mt-3"
-          hidden={open}
-          onClick={() => {
-            editor?.commands.setTextSelection({
-              from: passage.from,
-              to: passage.to,
-            });
-            changeOpen(true);
-          }}
-          ref={resumeButton}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          <ResumeIcon kind={kind} />
-          {resumeLabels[kind]}
-        </Button>
-      ) : null}
+      <UnsentDrafts
+        composing={open ? kind : null}
+        kinds={kinds.filter((each) => saved[each])}
+        onOpen={(each) => {
+          const passage = drafts[each]?.passage;
+          if (passage) {
+            editor?.commands.setTextSelection(passage);
+          }
+          changeOpen(true, each);
+        }}
+        ref={draftRow}
+      />
       {editor && ready ? (
         <EditorBubbleMenu
           editor={editor}
@@ -216,17 +265,20 @@ export function QuoteablePassage({
           }}
         >
           <Popover onOpenChange={(next) => changeOpen(next)} open={open}>
-            <PopoverAnchor className="flex items-center gap-1">
-              <SelectionActions
-                canSuggest={Boolean(onSuggest)}
-                hasDraft={hasDraft}
-                kind={kind}
-                onOpen={(nextKind) => changeOpen(!open, nextKind)}
-                open={open}
-                tooLong={tooLong}
-              />
+            <PopoverAnchor className="flex items-center gap-1" ref={menu}>
+              {kinds.map((each) => (
+                <SelectionAction
+                  active={open && kind === each}
+                  disabled={tooLong && !saved[each]}
+                  key={each}
+                  kind={each}
+                  // Each action toggles its own composer or switches to it.
+                  onClick={() => changeOpen(!(open && kind === each), each)}
+                  saved={saved[each]}
+                />
+              ))}
             </PopoverAnchor>
-            {tooLong && !hasDraft ? (
+            {tooLong && !kinds.some((each) => saved[each]) ? (
               <p
                 className="max-w-52 px-2 py-1 text-muted-foreground text-xs"
                 role="status"
@@ -242,26 +294,28 @@ export function QuoteablePassage({
               className="w-80 max-w-[calc(100vw-1.5rem)]"
               collisionPadding={12}
               onCloseAutoFocus={(event) => {
-                // The selection trigger can be detached while the closing
+                // The selection menu can be detached while the closing
                 // animation finishes. Never let it steal focus from a newly
-                // reopened composer or an outside input.
+                // reopened composer or an outside input; return focus to the
+                // unsent draft's button when there is one.
                 event.preventDefault();
-                if (
-                  resumeButton.current &&
-                  !resumeButton.current.hidden &&
-                  !outsideDismiss.current
-                ) {
-                  resumeButton.current.focus({ preventScroll: true });
+                const button = draftRow.current?.querySelector<HTMLElement>(
+                  `[data-kind="${kind}"]`
+                );
+                if (button && !button.hidden && !outsideDismiss.current) {
+                  button.focus({ preventScroll: true });
                 }
               }}
               onInteractOutside={(event) => {
-                // Radix defers outside-pointer dismissal until click. During
-                // its exit animation, Resume can reopen this same composer;
-                // that click must not immediately dismiss it a second time.
+                // Radix defers outside-pointer dismissal until click. The
+                // menu's actions and the unsent drafts open, switch and close
+                // the composer themselves; that click must not dismiss it.
+                const { target } = event;
                 if (
                   pending ||
-                  (event.target instanceof Node &&
-                    resumeButton.current?.contains(event.target))
+                  (target instanceof Node &&
+                    (draftRow.current?.contains(target) ||
+                      menu.current?.contains(target)))
                 ) {
                   event.preventDefault();
                 } else {
@@ -270,36 +324,30 @@ export function QuoteablePassage({
               }}
               side="bottom"
             >
-              {passage && kind === "suggest" && onSuggest ? (
+              {composing && kind === "suggest" && onSuggest ? (
                 <PassageSuggestionForm
                   onClose={() => changeOpen(false)}
                   onPendingChange={setPending}
-                  onReplacementChange={setDraft}
+                  onReplacementChange={setText}
                   onSubmit={async (input) => {
                     await onSuggest(input);
-                    setDraft("");
-                    setOpen(false);
-                    highlight.current = null;
-                    editor.commands.setTextSelection(passage.to);
+                    sent(composing.passage);
                   }}
-                  original={passage.text}
-                  replacement={draft}
+                  original={composing.passage.text}
+                  replacement={composing.text}
                 />
               ) : null}
-              {passage && kind === "comment" ? (
+              {composing && kind === "comment" ? (
                 <PassageCommentForm
-                  body={draft}
-                  onBodyChange={setDraft}
+                  body={composing.text}
+                  onBodyChange={setText}
                   onClose={() => changeOpen(false)}
                   onPendingChange={setPending}
                   onSubmit={async (input) => {
                     await onSubmit(input);
-                    setDraft("");
-                    setOpen(false);
-                    highlight.current = null;
-                    editor.commands.setTextSelection(passage.to);
+                    sent(composing.passage);
                   }}
-                  quote={passage.text}
+                  quote={composing.passage.text}
                 />
               ) : null}
             </PopoverContent>
@@ -310,88 +358,86 @@ export function QuoteablePassage({
   );
 }
 
-function ResumeIcon({ kind }: { kind: Kind }) {
-  const Icon = kind === "comment" ? MessageSquarePlus : PencilLine;
+/**
+ * One action in the selection menu. A dot marks an unsent draft while its
+ * composer is closed; the action reopens it with its own passage.
+ */
+function SelectionAction({
+  active,
+  disabled,
+  kind,
+  onClick,
+  saved,
+}: {
+  active: boolean;
+  disabled: boolean;
+  kind: Kind;
+  onClick: () => void;
+  saved: boolean;
+}) {
+  const { icon: Icon, label, name } = actions[kind];
   return (
-    <Icon aria-hidden="true" data-icon="inline-start">
-      <title>{resumeLabels[kind]}</title>
-    </Icon>
+    <Button
+      aria-expanded={active}
+      aria-haspopup="dialog"
+      aria-label={saved ? `${label} (draft saved)` : name}
+      className="aria-expanded:bg-accent"
+      disabled={disabled}
+      onClick={onClick}
+      onPointerDown={(event) => event.preventDefault()}
+      size="sm"
+      type="button"
+      variant="ghost"
+    >
+      <Icon aria-hidden="true" data-icon="inline-start">
+        <title>{label}</title>
+      </Icon>
+      {label}
+      {saved && !active ? (
+        <span aria-hidden="true" className="size-1.5 rounded-full bg-primary" />
+      ) : null}
+    </Button>
   );
 }
 
-/** The selection menu's buttons: resume the draft, or start a comment or edit. */
-function SelectionActions({
-  canSuggest,
-  hasDraft,
-  kind,
+/** Reopens drafts once the selection that showed the menu is gone. */
+function UnsentDrafts({
+  composing,
+  kinds,
   onOpen,
-  open,
-  tooLong,
+  ref,
 }: {
-  canSuggest: boolean;
-  hasDraft: boolean;
-  kind: Kind;
-  onOpen: (kind?: Kind) => void;
-  open: boolean;
-  tooLong: boolean;
+  /** The draft open in the composer, whose button hides but stays mounted. */
+  composing: Kind | null;
+  kinds: Kind[];
+  onOpen: (kind: Kind) => void;
+  ref: Ref<HTMLDivElement>;
 }) {
-  if (hasDraft) {
-    return (
-      <Button
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label={
-          kind === "comment"
-            ? "Resume passage comment"
-            : "Resume passage suggestion"
-        }
-        onClick={() => onOpen()}
-        onPointerDown={(event) => event.preventDefault()}
-        size="sm"
-        type="button"
-        variant="ghost"
-      >
-        <ResumeIcon kind={kind} />
-        {resumeLabels[kind]}
-      </Button>
-    );
-  }
   return (
-    <>
-      <Button
-        aria-expanded={open && kind === "comment"}
-        aria-haspopup="dialog"
-        aria-label="Comment on selection"
-        disabled={tooLong}
-        onClick={() => onOpen("comment")}
-        onPointerDown={(event) => event.preventDefault()}
-        size="sm"
-        type="button"
-        variant="ghost"
-      >
-        <MessageSquarePlus data-icon="inline-start">
-          <title>Comment</title>
-        </MessageSquarePlus>
-        Comment
-      </Button>
-      {canSuggest ? (
-        <Button
-          aria-expanded={open && kind === "suggest"}
-          aria-haspopup="dialog"
-          aria-label="Suggest edit for selection"
-          disabled={tooLong}
-          onClick={() => onOpen("suggest")}
-          onPointerDown={(event) => event.preventDefault()}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          <PencilLine data-icon="inline-start">
-            <title>Suggest edit</title>
-          </PencilLine>
-          Suggest edit
-        </Button>
-      ) : null}
-    </>
+    <div
+      className="mt-3 flex flex-wrap gap-2"
+      hidden={kinds.every((kind) => kind === composing)}
+      ref={ref}
+    >
+      {kinds.map((kind) => {
+        const { draftLabel, icon: Icon } = actions[kind];
+        return (
+          <Button
+            data-kind={kind}
+            hidden={kind === composing}
+            key={kind}
+            onClick={() => onOpen(kind)}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            <Icon aria-hidden="true" data-icon="inline-start">
+              <title>{draftLabel}</title>
+            </Icon>
+            {draftLabel}
+          </Button>
+        );
+      })}
+    </div>
   );
 }
