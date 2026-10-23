@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { accounts, profiles, users } from "~/lib/db/schema/schema";
+import { startDocsServer } from "./docs-server";
 import { assertLocalDatabase, e2eEnv } from "./env";
 import {
   ADMIN,
@@ -13,7 +14,10 @@ import {
   WRITER_2,
 } from "./fixtures";
 
-/** Migrates the throwaway database from scratch and seeds known accounts. */
+/**
+ * Migrates the throwaway database from scratch, seeds known accounts and
+ * starts the Google Docs stand-in; the returned function stops it.
+ */
 export default async function globalSetup() {
   assertLocalDatabase(e2eEnv.DATABASE_URL);
 
@@ -93,4 +97,7 @@ export default async function globalSetup() {
   } finally {
     await client.end();
   }
+  const docsServer = await startDocsServer();
+  return () =>
+    new Promise<void>((resolve) => docsServer.close(() => resolve()));
 }

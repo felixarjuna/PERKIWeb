@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { desc, eq, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lt, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -177,6 +177,22 @@ export const updateTakeawayNotes = async (id: number, keypoints: string) => {
       .update(takeaways)
       .set({ keypoints })
       .where(eq(takeaways.id, id));
+  } finally {
+    await client.end();
+  }
+};
+
+/** Deletes every schedule (and so its takeaways) from `from` until `before`. */
+export const deleteSchedulesBetween = async (from: Date, before: Date) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, {
+    max: 1,
+    onnotice: () => null,
+  });
+  try {
+    await drizzle(client)
+      .delete(schedules)
+      .where(and(gte(schedules.date, from), lt(schedules.date, before)));
   } finally {
     await client.end();
   }
