@@ -1,6 +1,13 @@
 "use client";
 
-import { Calendar, HandHeart, House, NotebookPen, User } from "lucide-react";
+import {
+  Calendar,
+  ClipboardList,
+  HandHeart,
+  House,
+  NotebookPen,
+  User,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,6 +22,11 @@ const navigations = [
   { href: "/schedule", icon: Calendar, name: "Schedule" },
   { href: "/takeaway", icon: NotebookPen, name: "Takeaway" },
   { href: "/prayers", icon: HandHeart, name: "Prayer" },
+] as const;
+
+/** Only signed-in members have duties to look at. */
+const memberNavigations = [
+  { href: "/duties", icon: ClipboardList, name: "Duties" },
 ] as const;
 
 const itemClass =
@@ -81,28 +93,30 @@ export default function Navigation({ revealAfter }: NavigationProps) {
           transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
         >
           <ul className="flex items-center gap-1 rounded-2xl bg-accent/80 px-2 py-1.5 text-foreground shadow-lg backdrop-blur sm:gap-2 sm:px-3 sm:py-2">
-            {navigations.map(({ href, icon: Icon, name }) => {
-              const current = pathname === href;
-              return (
-                <li key={href}>
-                  <Link
-                    aria-current={current ? "page" : undefined}
-                    className={itemClass}
-                    href={href}
-                  >
-                    <span
-                      className={cn(
-                        tileClass,
-                        current && "bg-primary text-primary-foreground"
-                      )}
+            {[...navigations, ...(session ? memberNavigations : [])].map(
+              ({ href, icon: Icon, name }) => {
+                const current = pathname === href;
+                return (
+                  <li key={href}>
+                    <Link
+                      aria-current={current ? "page" : undefined}
+                      className={itemClass}
+                      href={href}
                     >
-                      <Icon aria-hidden="true" className="size-4" />
-                    </span>
-                    <span className="sr-only sm:not-sr-only">{name}</span>
-                  </Link>
-                </li>
-              );
-            })}
+                      <span
+                        className={cn(
+                          tileClass,
+                          current && "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        <Icon aria-hidden="true" className="size-4" />
+                      </span>
+                      <span className="sr-only sm:not-sr-only">{name}</span>
+                    </Link>
+                  </li>
+                );
+              }
+            )}
             <li>
               <button
                 // Label spans are flex items, so a hidden suffix would read

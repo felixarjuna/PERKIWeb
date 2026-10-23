@@ -1,7 +1,18 @@
 import { randomUUID } from "node:crypto";
+import { desc, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { profiles, schedules, takeaways, users } from "~/lib/db/schema/schema";
+import {
+  groupMembers,
+  groups,
+  groupTerms,
+  type NewSchedule,
+  profiles,
+  scheduleAssignments,
+  schedules,
+  takeaways,
+  users,
+} from "~/lib/db/schema/schema";
 import { assertLocalDatabase, e2eEnv } from "./env";
 
 const DAYS_AHEAD = 30;
@@ -13,7 +24,8 @@ const DAY_MS = 86_400_000;
  */
 export const insertSchedule = async (
   title: string,
-  date = new Date(Date.now() + DAYS_AHEAD * DAY_MS)
+  date = new Date(Date.now() + DAYS_AHEAD * DAY_MS),
+  values: Partial<NewSchedule> = {}
 ) => {
   assertLocalDatabase(e2eEnv.DATABASE_URL);
   const client = postgres(e2eEnv.DATABASE_URL, {
@@ -33,6 +45,7 @@ export const insertSchedule = async (
         noteWriter: "Lionel Erico",
         title,
         type: "bible_study",
+        ...values,
       })
       .returning({ id: schedules.id });
     if (!row) {
@@ -89,6 +102,67 @@ export const insertTakeaway = async (
       throw new Error("Failed to insert test takeaway");
     }
     return row.id;
+  } finally {
+    await client.end();
+  }
+};
+
+/** Puts a linked account in a serving slot of a schedule. */
+export const insertAssignment = async (
+  scheduleId: number,
+  role: string,
+  user: { id: string; name: string }
+) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .insert(scheduleAssignments)
+      .values({ name: user.name, role, scheduleId, userId: user.id });
+  } finally {
+    await client.end();
+  }
+};
+
+/**
+ * Adds a group with one linked member to the group term in force on `day`
+ * (`yyyy-MM-dd`), creating an early term when there is none yet, so other
+ * specs' groups stay as they are.
+ */
+export const insertGroupWith = async (
+  groupName: string,
+  user: { id: string; name: string },
+  day: string
+) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    const db = drizzle(client);
+    const [inForce] = await db
+      .select()
+      .from(groupTerms)
+      .where(lte(groupTerms.startsOn, day))
+      .orderBy(desc(groupTerms.startsOn))
+      .limit(1);
+    const term =
+      inForce ??
+      (
+        await db
+          .insert(groupTerms)
+          .values({ startsOn: "2000-01-01" })
+          .onConflictDoUpdate({
+            set: { startsOn: "2000-01-01" },
+            target: groupTerms.startsOn,
+          })
+          .returning()
+      )[0];
+    const [group] = await db
+      .insert(groups)
+      .values({ name: groupName, termId: term?.id ?? 0 })
+      .returning();
+    await db
+      .insert(groupMembers)
+      .values({ groupId: group?.id ?? 0, name: user.name, userId: user.id });
   } finally {
     await client.end();
   }
