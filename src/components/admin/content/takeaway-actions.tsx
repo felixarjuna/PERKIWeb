@@ -4,6 +4,7 @@ import {
   Check,
   EyeOff,
   Globe,
+  MessageCircle,
   MoreHorizontal,
   Send,
   Trash2,
@@ -37,7 +38,23 @@ import {
 } from "~/components/ui/tooltip";
 import type { TakeawayStatus } from "~/lib/db/schema/schema";
 import type { StatusAction } from "~/lib/takeaway-status";
+import { whatsAppPost } from "~/lib/whatsapp";
 import { api } from "~/trpc/react";
+
+/** The Monday broadcast for WhatsApp: title, TL;DR and the page's link. */
+async function copyForWhatsApp(id: number, title: string, tldr: string) {
+  const url = new URL(`/takeaway/${id}`, window.location.origin).href;
+  try {
+    await navigator.clipboard.writeText(whatsAppPost({ title, tldr, url }));
+    toast.success("Copied for WhatsApp", {
+      description: "Paste it into the group chat.",
+    });
+  } catch {
+    toast.error(
+      "Your browser blocked copying. Allow clipboard access and try again."
+    );
+  }
+}
 
 /** The menu icon for a move: unpublishing hides it, the rest go back. */
 function MoveIcon({ action }: { readonly action: StatusAction }) {
@@ -63,12 +80,15 @@ export function TakeawayActions({
   id,
   name,
   status,
+  tldr = null,
 }: {
   readonly actions: readonly StatusAction[];
   readonly canManage: boolean;
   readonly id: number;
   readonly name: string;
   readonly status: TakeawayStatus;
+  /** Offered as the WhatsApp broadcast once published. */
+  readonly tldr?: string | null;
 }) {
   const utils = api.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -171,6 +191,17 @@ export function TakeawayActions({
                   </TooltipContent>
                 </Tooltip>
               )}
+              {status === "published" && tldr ? (
+                <DropdownMenuItem
+                  aria-label={`Copy for WhatsApp: ${name}`}
+                  onSelect={() => copyForWhatsApp(id, name, tldr)}
+                >
+                  <MessageCircle aria-hidden="true">
+                    <title>Copy for WhatsApp</title>
+                  </MessageCircle>
+                  Copy for WhatsApp
+                </DropdownMenuItem>
+              ) : null}
               {secondary.map((action) => (
                 <DropdownMenuItem
                   aria-label={`${action.label}: ${name}`}

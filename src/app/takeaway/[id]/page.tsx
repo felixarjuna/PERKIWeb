@@ -46,7 +46,8 @@ export async function generateMetadata({
   const { schedules: schedule, takeaways: takeaway } = await loadTakeaway(
     (await params).id
   );
-  const flat = markdownToPlainText(takeaway.keypoints)
+  // Link previews (WhatsApp, social posts) show the TL;DR when there is one.
+  const flat = markdownToPlainText(takeaway.tldr ?? takeaway.keypoints)
     .replace(WHITESPACE, " ")
     .trim();
   const description =

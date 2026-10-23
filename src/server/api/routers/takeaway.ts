@@ -55,6 +55,7 @@ const publicTakeawayColumns = {
   publishedAt: takeaways.publishedAt,
   scheduleId: takeaways.scheduleId,
   status: takeaways.status,
+  tldr: takeaways.tldr,
   updatedAt: takeaways.updatedAt,
 };
 
@@ -191,7 +192,7 @@ const notFound = () =>
   new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
 
 /** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not manageable. */
-const assertCanManage = async (takeawayId: number, userId: string) => {
+export const assertCanManage = async (takeawayId: number, userId: string) => {
   const takeaway = await loadOwnership(takeawayId);
   if (!takeaway) {
     throw notFound();

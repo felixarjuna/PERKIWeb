@@ -24,8 +24,10 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
+import { takeawayTldrSchema } from "~/lib/takeaway-tldr";
 import { api } from "~/trpc/react";
 import { KeypointsField } from "../keypoints-field";
+import { TldrField } from "../tldr-field";
 
 type NewStatus = "draft" | "in_review";
 
@@ -33,6 +35,7 @@ const addTakeawayFormSchema = z.object({
   contributors: z.array(z.string()),
   keypoints: takeawayKeypointsSchema,
   scheduleId: z.string().min(1, "Choose a gathering for this takeaway."),
+  tldr: takeawayTldrSchema,
 });
 
 /** `username` comes from the server session, so it is set on first render. */
@@ -49,15 +52,28 @@ export default function AddTakeawayForm({ username }: { username: string }) {
       contributors: [username],
       keypoints: "",
       scheduleId: "",
+      tldr: "",
     },
     resolver: zodResolver(addTakeawayFormSchema),
   });
 
   /** add takeaway action. */
   const utils = api.useUtils();
+  const saveTldr = api.takeawayTldr.save.useMutation();
   const addTakeaway = api.takeaways.addTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async (created) => {
+      const tldr = form.getValues("tldr");
+      if (tldr.trim()) {
+        try {
+          await saveTldr.mutateAsync({ id: created.id, tldr });
+        } catch (error) {
+          // The takeaway exists; its TL;DR can still be added when editing.
+          toast.error(
+            error instanceof Error ? error.message : "Could not save the TL;DR."
+          );
+        }
+      }
       await utils.takeaways.getManageable.cancel();
       await utils.takeaways.invalidate();
       toast.success(
@@ -76,7 +92,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
   });
 
   function onSubmit(
-    values: z.infer<typeof addTakeawayFormSchema>,
+    { tldr: _tldr, ...values }: z.infer<typeof addTakeawayFormSchema>,
     status: NewStatus
   ) {
     addTakeaway.mutate({
@@ -143,6 +159,10 @@ export default function AddTakeawayForm({ username }: { username: string }) {
             </div>
 
             <div className="sm:col-span-2">
+              <TldrField control={form.control} name="tldr" />
+            </div>
+
+            <div className="sm:col-span-2">
               <KeypointsField control={form.control} name="keypoints" />
             </div>
           </section>
@@ -151,7 +171,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             <Button
-              disabled={addTakeaway.isPending}
+              disabled={addTakeaway.isPending || saveTldr.isPending}
               name="intent"
               type="submit"
               value="draft"
@@ -163,7 +183,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
               Save draft
             </Button>
             <Button
-              disabled={addTakeaway.isPending}
+              disabled={addTakeaway.isPending || saveTldr.isPending}
               name="intent"
               type="submit"
               value="in_review"
