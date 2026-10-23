@@ -3,6 +3,7 @@
 import { ClipboardList, Files, UserPen } from "lucide-react";
 import { useState } from "react";
 import { AdminSegmented } from "../admin-controls";
+import { ReviewInbox } from "./review-inbox";
 import TakeawayManager from "./takeaway-manager";
 import { WriterAssignments } from "./writer-assignments";
 
@@ -30,6 +31,7 @@ export default function TakeawayViews({ staff }: { staff: boolean }) {
         options={options}
         value={view}
       />
+      {view === "mine" ? <ReviewInbox /> : null}
       {view === "all" ? (
         <TakeawayManager />
       ) : (
