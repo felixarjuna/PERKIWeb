@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   discordInviteFrom,
+  docIdFrom,
   driveUrlFrom,
   sheetIdFrom,
   whatsappGroupFrom,
@@ -72,5 +73,24 @@ describe("whatsappGroupFrom", () => {
     expect(whatsappGroupFrom("http://chat.whatsapp.com/AbC123")).toBeNull();
     expect(whatsappGroupFrom("https://wa.me/49123")).toBeNull();
     expect(whatsappGroupFrom("https://chat.whatsapp.com/")).toBeNull();
+  });
+});
+
+describe("docIdFrom", () => {
+  const DOC = "1FATkCWWmfpL0sakmRK6Cxa-Nm5rKQXn6EiUAlviTRrc";
+
+  it("reads the id from a pasted Google Docs link or a bare id", () => {
+    expect(
+      docIdFrom(`https://docs.google.com/document/d/${DOC}/edit?tab=t.0`)
+    ).toBe(DOC);
+    expect(docIdFrom(` ${DOC} `)).toBe(DOC);
+  });
+
+  it("rejects sheets and anything else", () => {
+    expect(
+      docIdFrom(`https://docs.google.com/spreadsheets/d/${DOC}/edit`)
+    ).toBeNull();
+    expect(docIdFrom("https://example.com/document/d/abc")).toBeNull();
+    expect(docIdFrom("")).toBeNull();
   });
 });

@@ -5,6 +5,8 @@ import { settings, users } from "~/lib/db/schema/schema";
 import {
   DEFAULT_DISCORD_INVITE_URL,
   discordInviteFrom,
+  docIdFrom,
+  docUrl,
   driveUrlFrom,
   SETTING_KEYS,
   type SettingKey,
@@ -13,6 +15,7 @@ import {
   whatsappGroupFrom,
 } from "~/lib/settings";
 import { db } from "~/server";
+import { docHtml } from "~/server/google-docs";
 import { sheetTitle } from "~/server/google-sheets";
 import { emailSettings } from "~/server/invite-email";
 import { setSetting, takeawayDeadlineWeekday } from "~/server/settings";
@@ -38,6 +41,11 @@ async function loadIntegrationRows() {
     .where(inArray(settings.key, keys));
   return (key: SettingKey) => rows.find((row) => row.key === key) ?? null;
 }
+
+const TAKEAWAY_DOC_KEYS = {
+  notes: SETTING_KEYS.takeawayNotesDocId,
+  tldr: SETTING_KEYS.takeawayTldrDocId,
+} as const;
 
 const changed = (row: { updatedAt: Date; updatedBy: string | null }) => ({
   updatedAt: row.updatedAt,
@@ -71,6 +79,10 @@ export const settingsRouter = createTRPCRouter({
     const drive = row(SETTING_KEYS.driveFolderUrl);
     const discord = row(SETTING_KEYS.discordInviteUrl);
     const whatsapp = row(SETTING_KEYS.whatsappGroupUrl);
+    const takeawayDoc = (key: SettingKey) => {
+      const doc = row(key);
+      return doc && { ...changed(doc), id: doc.value, url: docUrl(doc.value) };
+    };
     return {
       discordInvite: discord
         ? { ...changed(discord), isDefault: false, url: discord.value }
@@ -87,6 +99,8 @@ export const settingsRouter = createTRPCRouter({
         title: await sheetTitle(sheet.value).catch(() => null),
         url: sheetUrl(sheet.value),
       },
+      takeawayNotesDoc: takeawayDoc(TAKEAWAY_DOC_KEYS.notes),
+      takeawayTldrDoc: takeawayDoc(TAKEAWAY_DOC_KEYS.tldr),
       whatsappGroup: whatsapp && { ...changed(whatsapp), url: whatsapp.value },
     };
   }),
@@ -195,6 +209,34 @@ export const settingsRouter = createTRPCRouter({
         String(input.weekday),
         ctx.session.user.id
       );
+    }),
+  /**
+   * Sets the notes or TL;DR document "Import from Docs" reads, from a pasted
+   * link or id. Like the sheet, it's only saved once Google opens it.
+   */
+  setTakeawayDoc: adminProcedure
+    .input(linkInput.extend({ document: z.enum(["notes", "tldr"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const key = TAKEAWAY_DOC_KEYS[input.document];
+      if (input.link === null) {
+        await setSetting(key, null, ctx.session.user.id);
+        return;
+      }
+      const docId = docIdFrom(input.link);
+      if (!docId) {
+        throw invalid(
+          "Paste the link of a Google Doc (docs.google.com/document/…)."
+        );
+      }
+      await docHtml(docId).catch((error: unknown) => {
+        throw new TRPCError({
+          cause: error,
+          code: "BAD_REQUEST",
+          message:
+            "Google couldn't open this document. Check the link, and that the document is shared with “Anyone with the link”.",
+        });
+      });
+      await setSetting(key, docId, ctx.session.user.id);
     }),
   /** Hides the WhatsApp card on /account with `null`. */
   setWhatsappGroup: adminProcedure

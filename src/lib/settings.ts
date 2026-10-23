@@ -6,6 +6,8 @@ export const SETTING_KEYS = {
   emailSender: "email_sender",
   scheduleSheetId: "schedule_sheet_id",
   takeawayDeadlineWeekday: "takeaway_deadline_weekday",
+  takeawayNotesDocId: "takeaway_notes_doc_id",
+  takeawayTldrDocId: "takeaway_tldr_doc_id",
   whatsappGroupUrl: "whatsapp_group_url",
 } as const;
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
@@ -15,6 +17,8 @@ export const DEFAULT_DISCORD_INVITE_URL = "https://discord.gg/4hf5yWFfVP";
 
 const SHEET_URL_ID = /\/spreadsheets\/d\/([\w-]+)/;
 const SHEET_ID = /^[\w-]{20,}$/;
+const DOC_URL_ID =
+  /^https:\/\/docs\.google\.com\/document\/(?:u\/\d+\/)?d\/([\w-]+)/;
 const DISCORD_INVITE_PATH = /^\/(invite\/)?[\w-]+\/?$/;
 const WHATSAPP_GROUP_PATH = /^\/[\w-]+\/?$/;
 
@@ -31,6 +35,22 @@ export function sheetIdFrom(input: string): string | null {
   }
   return SHEET_ID.test(value) ? value : null;
 }
+
+/**
+ * The document id in a pasted Google Docs link
+ * (https://docs.google.com/document/d/<id>/edit) or a bare id; null otherwise.
+ */
+export function docIdFrom(input: string): string | null {
+  const value = input.trim();
+  const fromUrl = DOC_URL_ID.exec(value)?.[1];
+  if (fromUrl) {
+    return fromUrl;
+  }
+  return SHEET_ID.test(value) ? value : null;
+}
+
+export const docUrl = (docId: string) =>
+  `https://docs.google.com/document/d/${docId}/edit`;
 
 export const sheetUrl = (sheetId: string) =>
   `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
