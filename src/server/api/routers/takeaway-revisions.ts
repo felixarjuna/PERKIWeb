@@ -163,8 +163,10 @@ export const saveText = async (
  * Folds an open correction into a takeaway that is being unpublished: the
  * draft continues from the corrected text and goes through review again.
  */
-export const foldOpenRevision = async (tx: Transaction, copy: WorkingCopy) => {
-  const { revision, takeaway } = copy;
+export const foldOpenRevision = async (
+  tx: Transaction,
+  { revision }: WorkingCopy
+) => {
   if (!revision) {
     return {};
   }

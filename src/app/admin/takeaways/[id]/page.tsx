@@ -1,16 +1,14 @@
 import { TRPCError } from "@trpc/server";
-import { ArrowLeft, PenLine } from "lucide-react";
+import { ArrowLeft, Globe, PenLine } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
 import { TakeawayReview } from "~/components/admin/content/takeaway-review";
+import { TakeawayStatusBadges } from "~/components/admin/content/takeaway-status-badges";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
-import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
-import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
-import { statusLabels } from "~/lib/takeaway-status";
 import { canManageTakeaway } from "~/server/api/routers/takeaway";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import { api } from "~/trpc/server";
@@ -50,7 +48,12 @@ export default async function ReviewPage({
     notFound();
   }
   const { schedules: schedule, takeaways: note } = await loadReview(takeawayId);
-  const canEdit = await canManageTakeaway(takeawayId, session.user.id);
+  const [canEdit, revision] = await Promise.all([
+    canManageTakeaway(takeawayId, session.user.id),
+    // A published takeaway's correction (#74) is what reviewers read here.
+    api.takeawayRevisions.current({ takeawayId }),
+  ]);
+  const text = revision ?? note;
   return (
     <AdminShell
       {...(await adminShellProps(role))}
@@ -72,14 +75,35 @@ export default async function ReviewPage({
       <article className="flex min-w-0 flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="type-heading break-words">{schedule.title}</h2>
-          <Badge
-            data-slot="takeaway-status"
-            size="status"
-            {...takeawayBadgeStyles[note.status]}
-          >
-            {statusLabels[note.status]}
-          </Badge>
+          <TakeawayStatusBadges
+            revision={revision?.status}
+            status={note.status}
+          />
         </div>
+        {revision ? (
+          <div
+            className="flex flex-col gap-3 rounded-xl bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+            data-slot="revision-notice"
+          >
+            <p className="type-body-sm text-muted-foreground">
+              You’re reading changes to the published takeaway
+              {revision.author ? ` by ${revision.author.name}` : ""}. The
+              website shows the published text until mita publishes them.
+            </p>
+            <Link
+              className={buttonVariants({
+                className: "shrink-0",
+                variant: "secondary",
+              })}
+              href={`/takeaway/${note.id}`}
+            >
+              <Globe aria-hidden="true" data-icon="inline-start">
+                <title>View published version</title>
+              </Globe>
+              View published version
+            </Link>
+          </div>
+        ) : null}
         {/* Next steps sit under the title, above the long thread below. */}
         <div className="flex flex-wrap items-center gap-2 empty:hidden">
           {canEdit ? (
@@ -107,8 +131,8 @@ export default async function ReviewPage({
           <p className="type-eyebrow text-muted-foreground" id="review-tldr">
             TL;DR
           </p>
-          {note.tldr ? (
-            <TakeawayMarkdown markdown={note.tldr} />
+          {text.tldr ? (
+            <TakeawayMarkdown markdown={text.tldr} />
           ) : (
             <p className="type-body-sm text-muted-foreground">
               No TL;DR yet. Ask the writer to add one before it is published.
@@ -123,7 +147,7 @@ export default async function ReviewPage({
             Notes
           </p>
           <TakeawayReview takeawayId={takeawayId}>
-            <TakeawayMarkdown markdown={note.keypoints} />
+            <TakeawayMarkdown markdown={text.keypoints} />
           </TakeawayReview>
         </section>
       </article>

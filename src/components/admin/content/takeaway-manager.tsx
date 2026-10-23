@@ -5,7 +5,6 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { useState } from "react";
 import LoadMore from "~/components/load-more";
-import { Badge } from "~/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -16,13 +15,13 @@ import {
 } from "~/components/ui/card";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { TAKEAWAY_STATUSES, type TakeawayStatus } from "~/lib/db/schema/schema";
-import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
 import { statusLabels } from "~/lib/takeaway-status";
 import { api } from "~/trpc/react";
 import { AdminSelect, QueryMessage } from "../admin-controls";
 import { type ContentFilters, takeawayQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
 import { TakeawayActions } from "./takeaway-actions";
+import { TakeawayStatusBadges } from "./takeaway-status-badges";
 
 const PAGE_SIZE = 20;
 
@@ -90,6 +89,7 @@ export default function TakeawayManager() {
                 ({
                   actions,
                   canManage,
+                  revision,
                   schedules: schedule,
                   takeaways: note,
                 }) => (
@@ -106,13 +106,10 @@ export default function TakeawayManager() {
                               .setZone("Europe/Berlin")
                               .toFormat("d LLL yyyy")}
                           </p>
-                          <Badge
-                            data-slot="takeaway-status"
-                            size="status"
-                            {...takeawayBadgeStyles[note.status]}
-                          >
-                            {statusLabels[note.status]}
-                          </Badge>
+                          <TakeawayStatusBadges
+                            revision={revision?.status}
+                            status={note.status}
+                          />
                         </div>
                         <CardTitle>
                           <h2 className="type-subheading break-words">
@@ -145,6 +142,7 @@ export default function TakeawayManager() {
                           canManage={canManage}
                           id={note.id}
                           name={schedule.title}
+                          revision={revision}
                           status={note.status}
                           tldr={note.tldr}
                         />

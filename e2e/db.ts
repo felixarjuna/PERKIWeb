@@ -197,3 +197,17 @@ export const deleteSchedulesBetween = async (from: Date, before: Date) => {
     await client.end();
   }
 };
+
+/** Records when a seeded takeaway was published, as publishing would. */
+export const setPublishedAt = async (id: number, publishedAt: Date) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .update(takeaways)
+      .set({ publishedAt })
+      .where(eq(takeaways.id, id));
+  } finally {
+    await client.end();
+  }
+};

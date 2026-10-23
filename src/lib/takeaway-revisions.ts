@@ -53,8 +53,10 @@ const REQUEST_CHANGES: RevisionAction = {
 const DISCARD: RevisionAction = {
   confirm: {
     action: "Discard changes",
+    cancel: "Keep changes",
     description:
       "The website keeps the published text. The changes stay in the takeaway's history but can't be edited again.",
+    pending: "Discarding…",
     title: "Discard these changes?",
   },
   done: "Changes discarded. The published text stays as it is.",

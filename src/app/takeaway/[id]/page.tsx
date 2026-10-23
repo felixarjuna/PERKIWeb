@@ -13,6 +13,7 @@ import { readingMinutes } from "../reading-time";
 import {
   contributorNames,
   fellowshipLabel,
+  publicationDates,
   serviceDate,
 } from "../takeaway-format";
 import ShareButton from "./share-button";
@@ -74,6 +75,16 @@ export default async function TakeawayPage({ params }: TakeawayPageProps) {
   ].filter((detail): detail is { label: string; value: string } =>
     Boolean(detail.value)
   );
+  // When it went public and, after a correction, when it was updated (#74).
+  for (const { date, label, text } of publicationDates(
+    takeaway.publishedAt,
+    takeaway.revisedAt
+  )) {
+    details.push({
+      label,
+      value: <time dateTime={date.toISOString()}>{text}</time>,
+    });
+  }
   // Back to the gathering: its team, duties and any other takeaways.
   details.push({
     label: "Gathering",

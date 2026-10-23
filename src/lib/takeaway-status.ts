@@ -21,7 +21,15 @@ export interface TakeawayViewer {
 
 export interface StatusAction {
   /** Shown before the move runs; for moves that change the public site. */
-  confirm?: { action: string; description: string; title: string };
+  confirm?: {
+    action: string;
+    /** The dialog's cancel button: what keeping things as they are means. */
+    cancel: string;
+    description: string;
+    /** The confirm button while the move runs. */
+    pending: string;
+    title: string;
+  };
   /** What the success toast says. */
   done: string;
   label: string;
@@ -57,8 +65,10 @@ const REQUEST_CHANGES: StatusAction = {
 const UNPUBLISH: StatusAction = {
   confirm: {
     action: "Unpublish",
+    cancel: "Keep it published",
     description:
-      "It disappears from the website and goes back to draft. It has to be reviewed and published again.",
+      "It disappears from the website and goes back to draft, with any changes waiting for review. It has to be reviewed and published again.",
+    pending: "Unpublishing…",
     title: "Unpublish this takeaway?",
   },
   done: "Takeaway unpublished. It is no longer on the website.",
