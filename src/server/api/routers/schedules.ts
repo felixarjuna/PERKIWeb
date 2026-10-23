@@ -18,6 +18,7 @@ import {
 } from "~/lib/schedule-team";
 import type { ServingRole } from "~/lib/serving-roles";
 import { db } from "~/server";
+import { loadDuties } from "~/server/duties";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
 import { affectedRow } from "../errors";
 import {
@@ -38,6 +39,7 @@ import {
 import {
   adminProcedure,
   createTRPCRouter,
+  protectedProcedure,
   publicProcedure,
   takeawayProcedure,
 } from "../trpc";
@@ -239,6 +241,13 @@ export const scheduleRouter = createTRPCRouter({
         (row) => row.date
       )
     )
+  ),
+  /**
+   * The signed-in member's own serving slots and group cooking/cleaning
+   * days; the user id comes from the session only.
+   */
+  myDuties: protectedProcedure.query(({ ctx }) =>
+    loadDuties(ctx.session.user.id)
   ),
   /** Every schedule's id, title, verse and date, newest first, for pickers. */
   options: takeawayProcedure.query(() =>
