@@ -46,7 +46,7 @@ const createTakeaway = async (
   keypoints: string
 ) => {
   await selectOption(page, "Schedule", scheduleTitle);
-  await page.getByLabel("Key points", { exact: true }).fill(keypoints);
+  await page.getByLabel("Notes", { exact: true }).fill(keypoints);
   await page.getByRole("button", { name: "Save draft" }).click();
 
   await expect(toast(page, "Your draft has been saved.")).toBeVisible();
@@ -119,7 +119,7 @@ test("creates, edits and deletes a takeaway for a schedule", async ({
   await expect(
     page.getByRole("link", { name: "Review and comments" })
   ).toHaveAttribute("href", REVIEW_TAKEAWAY_URL);
-  const keypointsInput = page.getByLabel("Key points", { exact: true });
+  const keypointsInput = page.getByLabel("Notes", { exact: true });
   await expect(keypointsInput).toHaveText(keypoints);
   // A clear sent while the editor is still settling can be dropped, so
   // retry until the editor is empty, as a person would.
@@ -219,7 +219,7 @@ test("a writer formats a takeaway in the editor and readers see it formatted", a
 
   await page.goto("/admin/takeaways/new");
   await selectOption(page, "Schedule", scheduleTitle);
-  const editor = page.getByRole("textbox", { name: "Key points" });
+  const editor = page.getByRole("textbox", { exact: true, name: "Notes" });
   // Type only once the editor has focus again, or keys are lost on slow CI.
   const tool = async (name: string) => {
     await page
@@ -499,16 +499,15 @@ for (const action of ["Save draft", "Send to review"] as const) {
     await insertSchedule(scheduleTitle);
     await page.goto("/admin/takeaways/new");
     await selectOption(page, "Schedule", scheduleTitle);
-    const editor = page.getByRole("textbox", { name: "Key points" });
+    const editor = page.getByRole("textbox", { exact: true, name: "Notes" });
     const submit = page.getByRole("button", { exact: true, name: action });
     await expect(submit.locator("svg")).toHaveCount(1);
     await submit.click();
     await expect(page).toHaveURL("/admin/takeaways/new");
     await expect(
-      page.getByText(
-        "Write some key points before saving or sending to review.",
-        { exact: true }
-      )
+      page.getByText("Write the notes before saving or sending to review.", {
+        exact: true,
+      })
     ).toBeVisible();
     await expect(editor).toHaveAttribute("aria-invalid", "true");
     await expect(editor).toBeFocused();

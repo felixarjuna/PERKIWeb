@@ -118,7 +118,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await loginAs(page, WRITER);
   await page.goto("/admin/takeaways/new");
   await selectOption(page, "Schedule", scheduleTitle);
-  await page.getByLabel("Key points", { exact: true }).fill(keypoints);
+  await page.getByLabel("Notes", { exact: true }).fill(keypoints);
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(toast(page, "Your draft has been saved.")).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
@@ -136,7 +136,7 @@ test("a writer edits their own takeaway, has no Edit for another writer's, and g
   await page.getByRole("link", { name: `Edit ${scheduleTitle}` }).click();
   await expect(page).toHaveURL(EDIT_TAKEAWAY_URL);
   // Wait for the takeaway to load into the editor before replacing it.
-  const editor = page.getByLabel("Key points", { exact: true });
+  const editor = page.getByLabel("Notes", { exact: true });
   await expect(editor).toHaveText(keypoints);
   await editor.fill(edited);
   await page.getByRole("button", { name: "Save changes" }).click();

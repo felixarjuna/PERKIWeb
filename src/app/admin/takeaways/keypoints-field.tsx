@@ -28,7 +28,7 @@ export function KeypointsField<T extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel id={LABEL_ID}>Key points</FormLabel>
+          <FormLabel id={LABEL_ID}>Notes</FormLabel>
           <FormDescription className="type-caption">
             Use the toolbar for headings, bold, lists, quotes and links. Readers
             see the note as it looks here.

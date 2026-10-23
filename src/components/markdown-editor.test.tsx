@@ -13,7 +13,7 @@ describe("MarkdownEditor", () => {
     const onChange = vi.fn();
     const view = render(
       <>
-        <span id="label">Key points</span>
+        <span id="label">Notes</span>
         <MarkdownEditor
           aria-labelledby="label"
           onChange={onChange}
@@ -26,7 +26,7 @@ describe("MarkdownEditor", () => {
 
   it("shows the takeaway's Markdown formatted, labelled as a text box", async () => {
     setup("## Integritas Nuh\n\nDi **Kejadian 8:20**.\n\n- Mezbah");
-    const box = await screen.findByRole("textbox", { name: "Key points" });
+    const box = await screen.findByRole("textbox", { name: "Notes" });
     expect(box.querySelector("h2")?.textContent).toBe("Integritas Nuh");
     expect(box.querySelector("strong")?.textContent).toBe("Kejadian 8:20");
     expect(box.querySelector("ul li")?.textContent).toBe("Mezbah");
@@ -38,7 +38,7 @@ describe("MarkdownEditor", () => {
     await screen.findByRole("textbox");
     rerender(
       <>
-        <span id="label">Key points</span>
+        <span id="label">Notes</span>
         <MarkdownEditor
           aria-labelledby="label"
           onChange={onChange}
@@ -58,7 +58,7 @@ describe("MarkdownEditor", () => {
     render(
       <>
         <label htmlFor="notes" id="label">
-          Key points
+          Notes
         </label>
         <MarkdownEditor
           aria-labelledby="label"
@@ -68,8 +68,8 @@ describe("MarkdownEditor", () => {
         />
       </>
     );
-    const box = await screen.findByRole("textbox", { name: "Key points" });
-    await userEvent.click(screen.getByText("Key points"));
+    const box = await screen.findByRole("textbox", { name: "Notes" });
+    await userEvent.click(screen.getByText("Notes"));
     await waitFor(() => expect(document.activeElement).toBe(box));
   });
 

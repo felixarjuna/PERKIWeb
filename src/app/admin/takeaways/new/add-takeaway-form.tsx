@@ -128,7 +128,7 @@ export default function AddTakeawayForm({ username }: { username: string }) {
                   <FormItem>
                     <FormLabel>Schedule</FormLabel>
                     <FormDescription className="type-caption">
-                      The schedule on which the keypoints should be based
+                      The gathering these notes are from
                     </FormDescription>
                     <FormControl>
                       <Select onValueChange={field.onChange}>
