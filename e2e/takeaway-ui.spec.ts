@@ -18,9 +18,7 @@ for (const zoom of [1, 2]) {
     await page.setViewportSize({ height: 900, width: 320 * zoom });
     await setTestSession(page, WRITER);
     await page.goto("/admin/takeaways");
-    await page
-      .getByRole("radio", { exact: true, name: "All takeaways" })
-      .click();
+    await page.getByRole("radio", { exact: true, name: "All" }).click();
     await page.getByRole("searchbox", { name: "Search takeaways" }).fill(title);
     const card = page
       .getByRole("listitem")
@@ -52,8 +50,8 @@ for (const account of [WRITER, ADMIN]) {
     await setTestSession(page, account);
     await page.goto("/admin/takeaways");
     const picker = page.getByRole("radiogroup", { exact: true, name: "View" });
-    const mine = picker.getByRole("radio", { name: "My takeaways" });
-    const all = picker.getByRole("radio", { name: "All takeaways" });
+    const mine = picker.getByRole("radio", { name: "Mine" });
+    const all = picker.getByRole("radio", { name: "All" });
     await expect(picker.getByRole("radio")).toHaveCount(
       account === ADMIN ? 3 : 2
     );
@@ -62,12 +60,12 @@ for (const account of [WRITER, ADMIN]) {
     await page.keyboard.press("ArrowRight");
     const next =
       account === ADMIN
-        ? picker.getByRole("radio", { name: "All assignments" })
+        ? picker.getByRole("radio", { name: "Assignments" })
         : all;
     await expect(next).toBeFocused();
     await page.keyboard.press("Space");
     await expect(next).toBeChecked();
-    await expect(next).toHaveCSS("text-decoration-line", "underline");
+    await expect(next).toHaveCSS("text-decoration-line", "none");
     await expect(mine).not.toBeChecked();
     const boxes = await Promise.all(
       (await picker.getByRole("radio").all()).map((option) =>

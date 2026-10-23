@@ -53,7 +53,7 @@ test("an assigned gathering moves into the writer's drafts after saving", async 
   await setTestSession(page, writer);
   await page.goto("/admin/takeaways");
   await expect(
-    page.getByRole("radio", { exact: true, name: "My takeaways" })
+    page.getByRole("radio", { exact: true, name: "Mine" })
   ).toBeChecked();
   const pending = page
     .getByRole("region", { name: "To write" })
