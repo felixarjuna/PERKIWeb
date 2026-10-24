@@ -3,6 +3,7 @@ import { REQUESTABLE_ROLES } from "~/lib/access";
 import { eventTypeEnum, TAKEAWAY_STATUSES } from "~/lib/db/schema/schema";
 import { BIO_MAX_LENGTH } from "~/lib/profile-completion";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
+import { COMMENT_MAX_LENGTH } from "~/lib/takeaway-comments";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 
 const takeawayFieldsSchema = z.object({
@@ -11,7 +12,7 @@ const takeawayFieldsSchema = z.object({
   scheduleId: z.number(),
 });
 
-/** New takeaways start as a draft or go straight to review; staff publish later. */
+/** New takeaways start as a draft or go straight to mita; staff publish later. */
 export const addTakeawaySchema = takeawayFieldsSchema.extend({
   status: z.enum(["draft", "in_review"]).default("draft"),
 });
@@ -23,6 +24,8 @@ export const updateTakeawaySchema = takeawayFieldsSchema.extend({
 
 export const takeawayStatusSchema = z.object({
   id: z.number(),
+  /** Mita's note when requesting changes (#75); required for that move. */
+  note: z.string().trim().max(COMMENT_MAX_LENGTH).optional(),
   status: z.enum(TAKEAWAY_STATUSES),
 });
 

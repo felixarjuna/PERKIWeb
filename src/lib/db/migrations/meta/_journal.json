@@ -169,6 +169,13 @@
       "when": 1792759844480,
       "tag": "0023_takeaway_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792860014816,
+      "tag": "0024_takeaway_change_requests",
+      "breakpoints": true
     }
   ]
 }

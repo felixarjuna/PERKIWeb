@@ -201,6 +201,11 @@ export const takeawayComments = pgTable(
     id: serial("id").primaryKey().notNull(),
     /** The passage of the notes the comment is about, if any. */
     quote: text("quote"),
+    /**
+     * Mita's note when sending a submitted takeaway back to draft (#75): shown
+     * to the writer above the text until they resolve it.
+     */
+    requestsChanges: boolean("requestsChanges").default(false).notNull(),
     /** When the comment was resolved; null while it is open. */
     resolvedAt: timestamp("resolvedAt", {
       mode: "date",

@@ -80,15 +80,19 @@ describe("takeaway TL;DR", () => {
     expect(JSON.stringify(list)).not.toContain("Secret draft summary");
   });
 
-  it("lets staff read it in review and edit it before publishing", async () => {
+  it("lets staff edit it in draft, and locks it once submitted", async () => {
     const { api, id, mita } = await draft();
     await api.takeawayTldr.save({ id, tldr: TLDR });
+    await mita.takeawayTldr.save({ id, tldr: "Shorter." });
+    expect(await storedTldr(id)).toBe("Shorter.");
     await api.takeaways.setStatus({ id, status: "in_review" });
 
     expect((await mita.takeaways.getTakeawayById({ id })).takeaways.tldr).toBe(
-      TLDR
+      "Shorter."
     );
-    await mita.takeawayTldr.save({ id, tldr: "Shorter." });
+    await expect(
+      mita.takeawayTldr.save({ id, tldr: "Changed" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(await storedTldr(id)).toBe("Shorter.");
   });
 

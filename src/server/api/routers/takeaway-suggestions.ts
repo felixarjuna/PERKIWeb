@@ -102,9 +102,12 @@ const assertMayDecide = (
 ) => {
   if (!mayDecideSuggestions(takeaway, viewer)) {
     throw forbidden(
-      takeaway.status === "published"
-        ? "Published takeaways can't be changed. Unpublish it first."
-        : "Only the takeaway's writer or staff can decide on suggestions."
+      {
+        draft: "Only the takeaway's writer or staff can decide on suggestions.",
+        in_review:
+          "The text is locked while mita checks it. Suggestions are decided while it is a draft.",
+        published: "Published takeaways can't be changed. Unpublish it first.",
+      }[takeaway.status]
     );
   }
 };

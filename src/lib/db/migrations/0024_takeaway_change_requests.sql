@@ -1,0 +1,1 @@
+ALTER TABLE "takeaway_comments" ADD COLUMN "requestsChanges" boolean DEFAULT false NOT NULL;

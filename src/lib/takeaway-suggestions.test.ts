@@ -16,10 +16,10 @@ const takeaway = (
 ) => ({ authorId, status });
 
 describe("maySuggestOn", () => {
-  it("lets other writers suggest only while it is in review", () => {
+  it("lets other writers suggest only while it is a draft", () => {
     const other = viewer("writer");
-    expect(maySuggestOn(takeaway("draft"), other)).toBe(false);
-    expect(maySuggestOn(takeaway("in_review"), other)).toBe(true);
+    expect(maySuggestOn(takeaway("draft"), other)).toBe(true);
+    expect(maySuggestOn(takeaway("in_review"), other)).toBe(false);
     expect(maySuggestOn(takeaway("published"), other)).toBe(false);
   });
 
@@ -34,11 +34,11 @@ describe("maySuggestOn", () => {
     }
   });
 
-  it("lets mita and the dev suggest until it is published", () => {
+  it("lets mita and the dev suggest while it is a draft", () => {
     for (const role of ["mita", "owner"] as const) {
       expect(maySuggestOn(takeaway("draft"), viewer(role))).toBe(true);
       expect(maySuggestOn(takeaway("in_review", null), viewer(role))).toBe(
-        true
+        false
       );
       expect(maySuggestOn(takeaway("published"), viewer(role))).toBe(false);
     }
@@ -50,16 +50,14 @@ describe("maySuggestOn", () => {
 });
 
 describe("mayDecideSuggestions", () => {
-  it("lets the writer and staff decide until it is published", () => {
+  it("lets the writer and staff decide while it is a draft", () => {
     const author = viewer("writer", AUTHOR);
     expect(mayDecideSuggestions(takeaway("draft"), author)).toBe(true);
-    expect(mayDecideSuggestions(takeaway("in_review"), author)).toBe(true);
+    expect(mayDecideSuggestions(takeaway("in_review"), author)).toBe(false);
     expect(mayDecideSuggestions(takeaway("published"), author)).toBe(false);
-    expect(mayDecideSuggestions(takeaway("in_review"), viewer("mita"))).toBe(
-      true
-    );
+    expect(mayDecideSuggestions(takeaway("draft"), viewer("mita"))).toBe(true);
     expect(mayDecideSuggestions(takeaway("in_review"), viewer("owner"))).toBe(
-      true
+      false
     );
     expect(mayDecideSuggestions(takeaway("published"), viewer("owner"))).toBe(
       false
@@ -67,7 +65,7 @@ describe("mayDecideSuggestions", () => {
   });
 
   it("never lets other writers decide", () => {
-    expect(mayDecideSuggestions(takeaway("in_review"), viewer("writer"))).toBe(
+    expect(mayDecideSuggestions(takeaway("draft"), viewer("writer"))).toBe(
       false
     );
   });

@@ -255,10 +255,10 @@ describe("takeaway revisions", () => {
     await subject.mita.takeawayTldr.save({ id, tldr: PENDING_TLDR });
     expect(await revisionRows(id)).toHaveLength(1);
 
-    // Other writers don't see a correction in draft, but review one in review.
+    // Other writers read a correction in draft too: it is the shared draft.
     expect(
       await otherWriter.takeawayRevisions.current({ takeawayId: id })
-    ).toBeNull();
+    ).toMatchObject({ status: "draft", tldr: PENDING_TLDR });
     await expect(
       member.takeawayRevisions.current({ takeawayId: id })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -281,6 +281,12 @@ describe("takeaway revisions", () => {
         takeawayId: id,
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    // A submitted correction is locked until it is withdrawn.
+    await expect(
+      api.takeawayTldr.save({ id, tldr: "Locked" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await api.takeawayRevisions.setStatus({ status: "draft", takeawayId: id });
 
     // A published takeaway itself still can't be deleted or moved elsewhere.
     await expect(api.takeaways.deleteTakeaway({ id })).rejects.toMatchObject({
@@ -315,10 +321,6 @@ describe("takeaway revisions", () => {
     const subject = await published();
     const { api, author, id } = subject;
     await correct(subject);
-    await api.takeawayRevisions.setStatus({
-      status: "in_review",
-      takeawayId: id,
-    });
     const reviewerId = (await writer("Reviewer")).id;
     const reviewer = callerFor(reviewerId);
 
@@ -355,7 +357,7 @@ describe("takeaway revisions", () => {
     expect(await liveRow(id)).toMatchObject({ keypoints: LIVE });
   });
 
-  it("lists the correction with its moves and finds corrections in review", async () => {
+  it("lists the correction with its moves and finds submitted corrections", async () => {
     const subject = await published();
     const { api, id, mita } = subject;
     const [before] = (await mita.takeaways.getManageable({})).items;
@@ -369,7 +371,7 @@ describe("takeaway revisions", () => {
       takeaways: { preview: LIVE, status: "published" },
     });
     expect(draft?.revision?.actions.map((action) => action.label)).toEqual([
-      "Send changes to review",
+      "Submit changes to mita",
       "Discard changes",
     ]);
 

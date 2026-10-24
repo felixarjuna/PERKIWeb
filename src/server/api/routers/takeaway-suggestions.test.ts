@@ -62,11 +62,18 @@ const notesOf = async (id: number) => {
 
 const writer = (name = "Writer") => insertUser({ name, role: "writer" });
 
-/** A takeaway in review by one writer, with a suggestion from another. */
+/** Submits the takeaway to mita as is. */
+const markSubmitted = (id: number) =>
+  testDb
+    .update(takeaways)
+    .set({ status: "in_review" })
+    .where(eq(takeaways.id, id));
+
+/** A draft by one writer, with a suggestion from another. */
 const reviewed = async () => {
   const author = await writer("Author");
   const reviewer = await writer("Reviewer");
-  const { id } = await insertTakeaway("in_review", author.id);
+  const { id } = await insertTakeaway("draft", author.id);
   const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add({
     original: ORIGINAL,
     replacement: "Abraham trusted God",
@@ -196,13 +203,14 @@ describe("takeaway suggestions", () => {
         takeawayId: draft.id,
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const submitted = await insertTakeaway("in_review", author.id);
     await expect(
       callerFor(other.id).takeawaySuggestions.add({
         original: ORIGINAL,
         replacement: "x",
-        takeawayId: draft.id,
+        takeawayId: submitted.id,
       })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     const mita = await insertUser({ role: "mita" });
     await callerFor(mita.id).takeawaySuggestions.add({
       original: ORIGINAL,
@@ -225,6 +233,7 @@ describe("takeaway suggestions", () => {
   it("freezes suggestions once the takeaway is published", async () => {
     const { author, id, reviewer, suggestion } = await reviewed();
     const staff = await insertUser({ role: "mita" });
+    await markSubmitted(id);
     await callerFor(staff.id).takeaways.setStatus({ id, status: "published" });
     await expect(
       callerFor(author.id).takeawaySuggestions.accept({ id: suggestion.id })
@@ -298,6 +307,7 @@ describe("takeaway suggestions", () => {
   it("never sends suggestions through the public takeaway queries", async () => {
     const { author, id, reviewer } = await reviewed();
     const staff = await insertUser({ role: "mita" });
+    await markSubmitted(id);
     await callerFor(staff.id).takeaways.setStatus({ id, status: "published" });
     const visitor = anonymousCaller();
     const responses = JSON.stringify([

@@ -13,7 +13,7 @@ export type OpenRevisionStatus = Extract<RevisionStatus, "draft" | "in_review">;
 
 export const revisionLabels: Record<OpenRevisionStatus, string> = {
   draft: "Changes in draft",
-  in_review: "Changes in review",
+  in_review: "Changes submitted",
 };
 
 /** A move of a takeaway's open correction (`takeawayRevisions.setStatus`). */
@@ -23,15 +23,15 @@ export interface RevisionAction extends Omit<StatusAction, "to"> {
 }
 
 const SEND_TO_REVIEW: RevisionAction = {
-  done: "Changes sent to review. The website keeps the published text until they are published.",
-  label: "Send changes to review",
+  done: "Changes submitted to mita. The website keeps the published text until they are published.",
+  label: "Submit changes to mita",
   primary: true,
   revision: true,
   to: "in_review",
 };
 const WITHDRAW: RevisionAction = {
-  done: "Changes withdrawn from review.",
-  label: "Withdraw changes from review",
+  done: "Changes withdrawn. They are a draft again.",
+  label: "Withdraw changes",
   primary: false,
   revision: true,
   to: "draft",

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { TakeawayStatus } from "./db/schema/schema";
 import type { Role } from "./roles";
 import {
+  mayDeleteTakeaway,
   mayEditTakeaway,
+  mayReadTakeaway,
   statusActions,
   statusLabels,
+  submitBlockers,
 } from "./takeaway-status";
 
 const AUTHOR = "author";
@@ -24,7 +27,7 @@ describe("statusLabels", () => {
   it("names every status for readers", () => {
     expect(statusLabels).toEqual({
       draft: "Draft",
-      in_review: "In review",
+      in_review: "Submitted",
       published: "Published",
     });
   });
@@ -33,18 +36,18 @@ describe("statusLabels", () => {
 describe("statusActions", () => {
   const author = viewer("writer", AUTHOR);
 
-  it("lets only the author send a draft to review", () => {
+  it("lets only the author submit a draft to mita", () => {
     expect(moves(takeaway("draft"), author)).toEqual([
-      "Send to review > in_review",
+      "Submit to mita > in_review",
     ]);
     for (const role of ["owner", "mita", "writer"] as const) {
       expect(moves(takeaway("draft"), viewer(role))).toEqual([]);
     }
   });
 
-  it("lets the author withdraw from review and mita publish or request changes", () => {
+  it("lets the author withdraw a submitted takeaway and mita publish or request changes", () => {
     expect(moves(takeaway("in_review"), author)).toEqual([
-      "Withdraw from review > draft",
+      "Withdraw > draft",
     ]);
     for (const role of ["mita", "owner"] as const) {
       expect(moves(takeaway("in_review"), viewer(role))).toEqual([
@@ -58,7 +61,7 @@ describe("statusActions", () => {
   it("lets a mita author publish their own takeaway or withdraw it", () => {
     expect(moves(takeaway("in_review"), viewer("mita", AUTHOR))).toEqual([
       "Publish > published",
-      "Withdraw from review > draft",
+      "Withdraw > draft",
     ]);
   });
 
@@ -75,9 +78,9 @@ describe("statusActions", () => {
     }
   });
 
-  it("lets staff send an authorless draft to review", () => {
+  it("lets staff submit an authorless draft", () => {
     expect(moves(takeaway("draft", null), viewer("owner"))).toEqual([
-      "Send to review > in_review",
+      "Submit to mita > in_review",
     ]);
     expect(moves(takeaway("draft", null), viewer("writer"))).toEqual([]);
   });
@@ -90,28 +93,117 @@ describe("statusActions", () => {
     }
   });
 
-  it("marks sending to review and publishing as the primary action", () => {
+  it("marks submitting and publishing as the primary action", () => {
     expect(
       statusActions(takeaway("in_review"), viewer("mita")).map((a) => a.primary)
     ).toEqual([true, false]);
     expect(statusActions(takeaway("draft"), author)[0]?.primary).toBe(true);
   });
+
+  it("asks for a note when mita requests changes, and for resolved comments on submit", () => {
+    const [publish, requestChanges] = statusActions(
+      takeaway("in_review"),
+      viewer("mita")
+    );
+    expect(publish?.requiresNote).toBeFalsy();
+    expect(requestChanges?.requiresNote).toBe(true);
+    const [withdraw] = statusActions(takeaway("in_review"), author);
+    expect(withdraw?.requiresNote).toBeFalsy();
+    const [submit] = statusActions(takeaway("draft"), author);
+    expect(submit?.requiresResolvedComments).toBe(true);
+  });
 });
 
 describe("mayEditTakeaway", () => {
-  it("lets the author and staff edit until it is published, then nobody", () => {
-    for (const status of ["draft", "in_review"] as const) {
-      expect(mayEditTakeaway(takeaway(status), viewer("writer", AUTHOR))).toBe(
-        true
-      );
-      expect(mayEditTakeaway(takeaway(status), viewer("owner"))).toBe(true);
-      expect(mayEditTakeaway(takeaway(status), viewer("mita"))).toBe(true);
-      expect(mayEditTakeaway(takeaway(status), viewer("writer"))).toBe(false);
+  it("lets the author and staff change the text of a draft only", () => {
+    expect(mayEditTakeaway(takeaway("draft"), viewer("writer", AUTHOR))).toBe(
+      true
+    );
+    expect(mayEditTakeaway(takeaway("draft"), viewer("owner"))).toBe(true);
+    expect(mayEditTakeaway(takeaway("draft"), viewer("mita"))).toBe(true);
+    expect(mayEditTakeaway(takeaway("draft"), viewer("writer"))).toBe(false);
+  });
+
+  it("locks the text for everyone once submitted or published", () => {
+    for (const status of ["in_review", "published"] as const) {
+      for (const role of ["owner", "mita", "writer"] as const) {
+        expect(mayEditTakeaway(takeaway(status), viewer(role, AUTHOR))).toBe(
+          false
+        );
+        expect(mayEditTakeaway(takeaway(status), viewer(role))).toBe(false);
+      }
     }
-    for (const role of ["owner", "mita", "writer"] as const) {
-      expect(mayEditTakeaway(takeaway("published"), viewer(role, AUTHOR))).toBe(
+  });
+});
+
+describe("mayDeleteTakeaway", () => {
+  it("lets the author and staff delete until it is published", () => {
+    for (const status of ["draft", "in_review"] as const) {
+      expect(
+        mayDeleteTakeaway(takeaway(status), viewer("writer", AUTHOR))
+      ).toBe(true);
+      expect(mayDeleteTakeaway(takeaway(status), viewer("mita"))).toBe(true);
+      expect(mayDeleteTakeaway(takeaway(status), viewer("writer"))).toBe(
         false
       );
     }
+    expect(mayDeleteTakeaway(takeaway("published"), viewer("owner"))).toBe(
+      false
+    );
+  });
+});
+
+describe("mayReadTakeaway", () => {
+  it("lets every writer read every draft and submitted takeaway", () => {
+    for (const status of ["draft", "in_review", "published"] as const) {
+      expect(mayReadTakeaway(takeaway(status), viewer("writer"))).toBe(true);
+    }
+  });
+
+  it("shows members only published takeaways", () => {
+    expect(mayReadTakeaway(takeaway("draft"), viewer("member"))).toBe(false);
+    expect(mayReadTakeaway(takeaway("in_review"), viewer("member"))).toBe(
+      false
+    );
+    expect(mayReadTakeaway(takeaway("published"), viewer("member"))).toBe(
+      true
+    );
+  });
+});
+
+describe("submitBlockers", () => {
+  const comment = (authorId: string | null, resolved = false) => ({
+    authorId,
+    resolvedAt: resolved ? new Date() : null,
+  });
+
+  it("is every open comment from someone other than the writer", () => {
+    const open = comment("reviewer");
+    expect(
+      submitBlockers(
+        [open, comment("reviewer", true), comment(AUTHOR)],
+        takeaway("draft"),
+        viewer("writer", AUTHOR)
+      )
+    ).toEqual([open]);
+  });
+
+  it("counts comments from deleted accounts", () => {
+    const orphan = comment(null);
+    expect(
+      submitBlockers([orphan], takeaway("draft"), viewer("writer", AUTHOR))
+    ).toEqual([orphan]);
+  });
+
+  it("leaves out the submitter's own notes on an authorless takeaway", () => {
+    const own = comment("staff");
+    const other = comment("reviewer");
+    expect(
+      submitBlockers(
+        [own, other],
+        takeaway("draft", null),
+        viewer("mita", "staff")
+      )
+    ).toEqual([other]);
   });
 });
