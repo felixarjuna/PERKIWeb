@@ -78,6 +78,16 @@ export function CommentItem({
             </StatusIcon>
             <span>{resolved ? "Resolved" : "Open"}</span>
           </Badge>
+          {comment.requestsChanges ? (
+            <Badge size="status" variant="review">
+              <span>Changes requested</span>
+            </Badge>
+          ) : null}
+          {comment.blocksSubmit ? (
+            <span className="text-muted-foreground text-xs">
+              Resolve before submitting
+            </span>
+          ) : null}
           {resolved ? (
             <span className="text-muted-foreground text-xs">
               by {comment.resolvedBy?.name ?? "Deleted account"}

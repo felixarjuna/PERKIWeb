@@ -242,8 +242,8 @@ describe("takeaway comments", () => {
     const [comment] = thread.comments;
     expect(comment).toMatchObject({
       author: { name: "Reviewer" },
-      body: "Could you add the verse reference here?",
       blocksSubmit: true,
+      body: "Could you add the verse reference here?",
       mine: false,
       quote: QUOTE,
       requestsChanges: false,
@@ -317,9 +317,7 @@ describe("takeaway comments", () => {
       takeawayId: id,
     });
     expect(thread.canComment).toBe(false);
-    expect(thread.comments.map((comment) => comment.body)).toEqual([
-      "Note to self",
-    ]);
+    expect(thread.comments.map((row) => row.body)).toEqual(["Note to self"]);
     await expect(
       callerFor(other.id).takeawayComments.add({ body: "Hi", takeawayId: id })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayActions } from "~/components/admin/content/takeaway-actions";
+import { ChangesRequested } from "~/components/admin/content/takeaway-move-dialogs";
 import { TakeawayReview } from "~/components/admin/content/takeaway-review";
 import { TakeawayStatusBadges } from "~/components/admin/content/takeaway-status-badges";
 import { TakeawayMarkdown } from "~/components/takeaway-markdown";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
-import { canManageTakeaway } from "~/server/api/routers/takeaway";
+import { canManageTakeaway, reviewMoves } from "~/server/api/routers/takeaway";
 import { adminShellProps, requireTakeawayAccess } from "~/server/authz";
 import { api } from "~/trpc/server";
 
@@ -48,11 +49,13 @@ export default async function ReviewPage({
     notFound();
   }
   const { schedules: schedule, takeaways: note } = await loadReview(takeawayId);
-  const [canEdit, revision] = await Promise.all([
+  const [canEdit, revision, moves] = await Promise.all([
     canManageTakeaway(takeawayId, session.user.id),
     // A published takeaway's correction (#74) is what reviewers read here.
     api.takeawayRevisions.current({ takeawayId }),
+    reviewMoves(takeawayId, session.user.id),
   ]);
+  const status = revision?.status ?? note.status;
   const text = revision ?? note;
   return (
     <AdminShell
@@ -69,7 +72,11 @@ export default async function ReviewPage({
         </Link>
       }
       section="Takeaways"
-      subtitle="Read the takeaway and review its feedback below."
+      subtitle={
+        status === "draft"
+          ? "A shared draft: read it, comment and suggest edits. Only its writer changes the text."
+          : "Read the takeaway and review its feedback below."
+      }
       title="Review takeaway"
     >
       <article className="flex min-w-0 flex-col gap-5">
@@ -119,13 +126,25 @@ export default async function ReviewPage({
             </Link>
           ) : null}
           <TakeawayActions
-            actions={[]}
+            actions={moves.actions}
             canManage={false}
             id={note.id}
             name={schedule.title}
+            revision={moves.revision}
             status={note.status}
+            tldr={note.tldr}
           />
         </div>
+        {status === "in_review" ? (
+          <p
+            className="type-body-sm text-muted-foreground"
+            data-slot="submitted-notice"
+          >
+            Submitted to mita. The text is locked until mita publishes it or
+            requests changes.
+          </p>
+        ) : null}
+        <ChangesRequested takeawayId={takeawayId} />
         {/* Reviewers check both parts; they share one edge and one label style. */}
         <section aria-labelledby="review-tldr" className="flex flex-col gap-2">
           <p className="type-eyebrow text-muted-foreground" id="review-tldr">

@@ -46,9 +46,7 @@ describe("statusActions", () => {
   });
 
   it("lets the author withdraw a submitted takeaway and mita publish or request changes", () => {
-    expect(moves(takeaway("in_review"), author)).toEqual([
-      "Withdraw > draft",
-    ]);
+    expect(moves(takeaway("in_review"), author)).toEqual(["Withdraw > draft"]);
     for (const role of ["mita", "owner"] as const) {
       expect(moves(takeaway("in_review"), viewer(role))).toEqual([
         "Publish > published",
@@ -143,9 +141,7 @@ describe("mayDeleteTakeaway", () => {
         mayDeleteTakeaway(takeaway(status), viewer("writer", AUTHOR))
       ).toBe(true);
       expect(mayDeleteTakeaway(takeaway(status), viewer("mita"))).toBe(true);
-      expect(mayDeleteTakeaway(takeaway(status), viewer("writer"))).toBe(
-        false
-      );
+      expect(mayDeleteTakeaway(takeaway(status), viewer("writer"))).toBe(false);
     }
     expect(mayDeleteTakeaway(takeaway("published"), viewer("owner"))).toBe(
       false
@@ -165,9 +161,7 @@ describe("mayReadTakeaway", () => {
     expect(mayReadTakeaway(takeaway("in_review"), viewer("member"))).toBe(
       false
     );
-    expect(mayReadTakeaway(takeaway("published"), viewer("member"))).toBe(
-      true
-    );
+    expect(mayReadTakeaway(takeaway("published"), viewer("member"))).toBe(true);
   });
 });
 

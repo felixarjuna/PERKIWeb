@@ -88,8 +88,7 @@ describe("shared draft flow (#75)", () => {
       author.takeaways.setStatus({ id, status: "in_review" })
     ).rejects.toMatchObject({
       code: "PRECONDITION_FAILED",
-      message:
-        "Resolve the open comment from Peer before submitting to mita.",
+      message: "Resolve the open comment from Peer before submitting to mita.",
     });
     const thread = await author.takeawayComments.list({ takeawayId: id });
     expect(thread.comments.map((row) => row.blocksSubmit)).toEqual([true]);
@@ -209,9 +208,9 @@ describe("shared draft flow (#75)", () => {
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     // Other writers still read it; its writer and mita still talk in the thread.
-    expect((await peer.takeaways.getTakeawayById({ id })).takeaways.status).toBe(
-      "in_review"
-    );
+    expect(
+      (await peer.takeaways.getTakeawayById({ id })).takeaways.status
+    ).toBe("in_review");
     await author.takeawayComments.add({ body: "Ready?", takeawayId: id });
     await mita.takeawayComments.add({ body: "Looking now.", takeawayId: id });
     expect(

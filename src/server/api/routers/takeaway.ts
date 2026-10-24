@@ -277,6 +277,39 @@ export const canManageTakeaway = async (
   });
 };
 
+/**
+ * The status moves the review page offers the viewer, the same ones the
+ * admin list shows (`getManageable`): the takeaway's own, or its open
+ * correction's while there is one.
+ */
+export const reviewMoves = async (takeawayId: number, userId: string) => {
+  const viewer = await viewerFor(userId);
+  const [row] = await db
+    .select({
+      authorId: takeaways.authorId,
+      revision: takeawayRevisions.status,
+      status: takeaways.status,
+    })
+    .from(takeaways)
+    .leftJoin(takeawayRevisions, openRevisionOf)
+    .where(eq(takeaways.id, takeawayId))
+    .limit(1);
+  if (!row) {
+    return { actions: [], revision: null };
+  }
+  const takeaway = { authorId: row.authorId, status: row.status };
+  const revision = openStatus(row.revision);
+  return {
+    actions: statusActions(takeaway, viewer),
+    revision: revision
+      ? {
+          actions: revisionActions(takeaway, revision, viewer),
+          status: revision,
+        }
+      : null,
+  };
+};
+
 const notFound = () =>
   new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
 

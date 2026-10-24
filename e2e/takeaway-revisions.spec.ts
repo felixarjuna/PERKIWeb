@@ -65,7 +65,7 @@ test("a published takeaway stays live while its correction is reviewed", async (
     .click();
   await expect(toast(page, "Changes sent to review.")).toBeVisible();
   await expect(
-    card.getByText("Changes in review", { exact: true })
+    card.getByText("Changes submitted", { exact: true })
   ).toBeVisible();
 
   // Readers still get the published text.
@@ -92,7 +92,7 @@ test("a published takeaway stays live while its correction is reviewed", async (
     .click();
   await expect(toast(page, "Changes published.")).toBeVisible();
   await expect(
-    reviewed.getByText("Changes in review", { exact: true })
+    reviewed.getByText("Changes submitted", { exact: true })
   ).toHaveCount(0);
 
   // The website shows the new text and when it was updated.

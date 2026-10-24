@@ -79,13 +79,13 @@ export default function AddTakeawayForm({ username }: { username: string }) {
       await utils.takeaways.invalidate();
       toast.success(
         created.status === "in_review"
-          ? "Your takeaway is in review."
+          ? "Your takeaway is submitted to mita."
           : "Your draft has been saved.",
         {
           description:
             created.status === "in_review"
-              ? "Mita or the owner will publish it."
-              : "Send it to review when it is ready.",
+              ? "Mita publishes it, or sends it back with a note."
+              : "Other writers can read it and comment. Submit it to mita when it is ready.",
         }
       );
       router.push("/admin/takeaways");
@@ -190,9 +190,9 @@ export default function AddTakeawayForm({ username }: { username: string }) {
             variant="default"
           >
             <Send aria-hidden="true" data-icon="inline-start">
-              <title>Send to review</title>
+              <title>Submit to mita</title>
             </Send>
-            Send to review
+            Submit to mita
           </Button>
           <Link
             className={buttonVariants({ variant: "ghost" })}

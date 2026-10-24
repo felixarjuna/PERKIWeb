@@ -45,6 +45,7 @@ import type {
 import type { StatusAction } from "~/lib/takeaway-status";
 import { whatsAppPost } from "~/lib/whatsapp";
 import { api } from "~/trpc/react";
+import { RequestChangesDialog, SubmitDialog } from "./takeaway-move-dialogs";
 
 /** The Monday broadcast for WhatsApp: title, TL;DR and the page's link. */
 async function copyForWhatsApp(id: number, title: string, tldr: string) {
@@ -119,6 +120,8 @@ export function TakeawayActions({
   const utils = api.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMove, setConfirmMove] = useState<Move | null>(null);
+  // Submitting checks open comments; requesting changes asks for a note.
+  const [dialog, setDialog] = useState<"note" | "submit" | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const onError = (error: { message: string }) => toast.error(error.message);
   const change = api.takeaways.setStatus.useMutation({ onError });
@@ -127,6 +130,7 @@ export function TakeawayActions({
   });
   const moved = (action: Move) => async () => {
     setConfirmMove(null);
+    setDialog(null);
     await utils.takeaways.getManageable.cancel();
     await Promise.all([
       utils.takeaways.invalidate(),
@@ -134,14 +138,39 @@ export function TakeawayActions({
     ]);
     toast.success(action.done);
   };
-  const move = (action: Move) => {
+  const move = (action: Move, note?: string) => {
     if ("revision" in action) {
       changeRevision.mutate(
         { status: action.to, takeawayId: id },
         { onSuccess: moved(action) }
       );
     } else {
-      change.mutate({ id, status: action.to }, { onSuccess: moved(action) });
+      change.mutate(
+        { id, note, status: action.to },
+        { onSuccess: moved(action) }
+      );
+    }
+  };
+  /** Starts a move, through its dialog when it has one. */
+  const start = (action: Move) => {
+    if (action.confirm) {
+      setConfirmMove(action);
+    } else if ("requiresNote" in action && action.requiresNote) {
+      setDialog("note");
+    } else if (
+      "requiresResolvedComments" in action &&
+      action.requiresResolvedComments
+    ) {
+      setDialog("submit");
+    } else {
+      move(action);
+    }
+  };
+  // Back to the menu when it opened the dialog; otherwise Radix's default.
+  const restoreFocus = (event: Event) => {
+    if (trigger.current) {
+      event.preventDefault();
+      trigger.current.focus();
     }
   };
   const remove = api.takeaways.deleteTakeaway.useMutation({
@@ -169,7 +198,7 @@ export function TakeawayActions({
         <Button
           aria-label={`${primary.label}: ${name}`}
           disabled={pending}
-          onClick={() => move(primary)}
+          onClick={() => start(primary)}
           type="button"
         >
           <PrimaryIcon aria-hidden="true" data-icon="inline-start">
@@ -243,9 +272,7 @@ export function TakeawayActions({
                 <DropdownMenuItem
                   aria-label={`${action.label}: ${name}`}
                   key={action.label}
-                  onSelect={() =>
-                    action.confirm ? setConfirmMove(action) : move(action)
-                  }
+                  onSelect={() => start(action)}
                 >
                   <MoveIcon action={action} />
                   {action.label}
@@ -302,6 +329,33 @@ export function TakeawayActions({
           </AlertDialogContent>
         </AlertDialog>
       ) : null}
+      <SubmitDialog
+        name={name}
+        onCancel={() => setDialog(null)}
+        onCloseAutoFocus={restoreFocus}
+        onSubmit={() => {
+          const submit = actions.find((a) => a.requiresResolvedComments);
+          if (submit) {
+            move(submit);
+          }
+        }}
+        open={dialog === "submit"}
+        pending={moving}
+        takeawayId={id}
+      />
+      <RequestChangesDialog
+        name={name}
+        onCancel={() => setDialog(null)}
+        onCloseAutoFocus={restoreFocus}
+        onRequest={(note) => {
+          const request = actions.find((a) => a.requiresNote);
+          if (request) {
+            move(request, note);
+          }
+        }}
+        open={dialog === "note"}
+        pending={moving}
+      />
       <AlertDialog
         onOpenChange={(open) => {
           if (!open) {

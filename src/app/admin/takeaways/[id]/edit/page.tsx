@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminShell from "~/components/admin/admin-shell";
 import { TakeawayComments } from "~/components/admin/content/takeaway-comments";
+import { ChangesRequested } from "~/components/admin/content/takeaway-move-dialogs";
 import { buttonVariants } from "~/components/ui/button";
 import { type PageSearchParams, requestedPath } from "~/lib/auth-redirect";
 import { canManageTakeaway } from "~/server/api/routers/takeaway";
@@ -49,6 +50,9 @@ export default async function EditorPage({
       section="Takeaways"
       title="Edit takeaway"
     >
+      <div className="mb-6 empty:hidden">
+        <ChangesRequested takeawayId={takeawayId} />
+      </div>
       <EditTakeawayForm />
       <TakeawayComments takeawayId={takeawayId} />
     </AdminShell>

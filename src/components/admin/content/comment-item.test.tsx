@@ -10,11 +10,13 @@ import { CommentItem } from "./comment-item";
 
 const comment = {
   author: { image: null, name: "Felix Arjuna" },
+  blocksSubmit: false,
   body: "Please add a reference.",
   createdAt: new Date("2026-10-22T12:00:00Z"),
   id: 1,
   mine: true,
   quote: "Abraham believed God",
+  requestsChanges: false,
   resolvedAt: null,
   resolvedBy: null,
 };
@@ -84,5 +86,26 @@ describe("comment actions", () => {
       </ol>
     );
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("marks mita's request for changes and the comments that block submitting", () => {
+    render(
+      <ol>
+        <CommentItem
+          canComment
+          comment={{
+            ...comment,
+            blocksSubmit: true,
+            mine: false,
+            requestsChanges: true,
+          }}
+          onDelete={async () => Promise.resolve()}
+          onResolve={() => null}
+          pending={false}
+        />
+      </ol>
+    );
+    expect(screen.getByText("Changes requested")).toBeTruthy();
+    expect(screen.getByText("Resolve before submitting")).toBeTruthy();
   });
 });

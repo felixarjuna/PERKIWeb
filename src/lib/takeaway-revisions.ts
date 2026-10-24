@@ -105,7 +105,7 @@ export const mayChangeText = (
 /**
  * The moves of an open correction a viewer may make, in button order; the
  * server allows exactly these. They mirror a takeaway's own review: the
- * writer sends it to review or withdraws it, staff publish it or request
+ * writer submits it to mita or withdraws it, staff publish it or request
  * changes. The writer and staff may also discard it.
  */
 export const revisionActions = (
