@@ -70,11 +70,11 @@ Every row has five fields:
 | --- | --- | --- | --- | --- |
 | Writers | Takeaway editor | I write the notes and TL;DR in an editor that shows what readers will see. | Live | No open issue. |
 | Writers | My takeaways and due dates | I can see which takeaways I am assigned to and when they are due. | Live | No open issue. |
-| Writers | Draft, review and publish | My takeaway stays a draft until it is checked, and only mita put it online. | Live | One shared draft that writers check together ([#75](https://github.com/felixarjuna/PERKIWeb/issues/75)). |
+| Writers | Draft, review and publish | My takeaway stays a draft until it is checked, and only mita put it online. | Live | Say whether feedback is about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
 | Writers | Review comments and suggested edits | Other writers can comment on a passage or suggest new text, and I decide what to accept. | Live | Say whether feedback is about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
-| Writers | Review inbox | I can see what needs my review and which feedback I still have to handle. | Live | Show corrections to published takeaways there too (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)). |
+| Writers | Review inbox | I can see what needs my review and which feedback I still have to handle. | Live | List other writers' drafts to review and everything submitted to mita (PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101)). |
 | Writers | Corrections to published takeaways | I can fix a published takeaway while readers still see the published version. | In review (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)) | Owner review and merge of PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97). |
-| Writers | Shared draft (CaKar) | All writers work on one draft together, then the author sends it to mita. | Needs answers ([#75](https://github.com/felixarjuna/PERKIWeb/issues/75)) | Decide whether "In review" becomes "Submitted" or a new step is added. |
+| Writers | Shared draft (CaKar) | All writers work on one draft together, then the author sends it to mita. | In review (PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101)) | Owner review and merge of PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101). |
 | Writers | Feedback on notes or TL;DR | Each comment and suggestion sits next to the text it is about. | Planned ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)) | Build it once the corrections work (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)) is merged, since both change review feedback. |
 
 ### Mita & owner (staff)

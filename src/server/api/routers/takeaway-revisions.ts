@@ -125,7 +125,10 @@ export const saveText = async (
     if (!mayChangeText(takeaway, revision?.status ?? null, viewer)) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "You can only change your own takeaways.",
+        message:
+          (revision?.status ?? takeaway.status) === "in_review"
+            ? "The text is locked while mita checks it. Withdraw it, or ask mita to request changes, to edit it."
+            : "You can only change your own takeaways.",
       });
     }
     if (takeaway.status !== "published") {
@@ -182,10 +185,10 @@ export const foldOpenRevision = async (
 
 const refusal = (next: RevisionStatus) => {
   if (next === "published") {
-    return "Only mita or the dev can publish changes, once they are in review.";
+    return "Only mita or the dev can publish changes, once they are submitted.";
   }
   if (next === "in_review") {
-    return "Only the writer of this takeaway can send its changes to review.";
+    return "Only the writer of this takeaway can submit its changes to mita.";
   }
   return "Only its writer, mita or the dev can change these changes' status.";
 };

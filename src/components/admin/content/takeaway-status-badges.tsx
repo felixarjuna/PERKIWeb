@@ -9,7 +9,7 @@ import { statusLabels } from "~/lib/takeaway-status";
 
 /**
  * A takeaway's status, and beside it the status of its open correction
- * (#74): "Published" stays true for the website while "Changes in review"
+ * (#74): "Published" stays true for the website while "Changes submitted"
  * says what reviewers are working on.
  */
 export function TakeawayStatusBadges({

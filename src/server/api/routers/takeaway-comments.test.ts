@@ -53,6 +53,13 @@ const insertTakeaway = async (status: TakeawayStatus, authorId: string) => {
 
 const writer = (name = "Writer") => insertUser({ name, role: "writer" });
 
+/** Submits the takeaway to mita as is, open comments and all. */
+const markSubmitted = (id: number) =>
+  testDb
+    .update(takeaways)
+    .set({ status: "in_review" })
+    .where(eq(takeaways.id, id));
+
 describe("takeaway comments", () => {
   it("includes the author's profile image without exposing their email", async () => {
     const image = "https://example.com/reviewer.png";
@@ -73,7 +80,7 @@ describe("takeaway comments", () => {
     const author = await writer();
     const reviewer = await writer("Reviewer");
     const staff = await insertUser({ role: "mita" });
-    const { id } = await insertTakeaway("in_review", author.id);
+    const { id } = await insertTakeaway("draft", author.id);
     const api = callerFor(reviewer.id).takeawayComments;
     const comment = await api.add({ body: "Feedback", takeawayId: id });
     await Promise.all(
@@ -95,13 +102,14 @@ describe("takeaway comments", () => {
     const author = await writer();
     const reviewer = await writer("Reviewer");
     const staff = await insertUser({ role: "mita" });
-    const { id } = await insertTakeaway("in_review", author.id);
+    const { id } = await insertTakeaway("draft", author.id);
     const api = callerFor(author.id).takeawayComments;
     const own = await api.add({ body: "My note", takeawayId: id });
     const other = await callerFor(reviewer.id).takeawayComments.add({
       body: "Review",
       takeawayId: id,
     });
+    await markSubmitted(id);
     await callerFor(staff.id).takeaways.setStatus({ id, status: "published" });
     await expect(api.remove({ id: own.id })).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -128,9 +136,10 @@ describe("takeaway comments", () => {
     const author = await writer();
     const reviewer = await writer("Reviewer");
     const staff = await insertUser({ role: "mita" });
-    const { id } = await insertTakeaway("in_review", author.id);
+    const { id } = await insertTakeaway("draft", author.id);
     const api = callerFor(reviewer.id).takeawayComments;
     const comment = await api.add({ body: "Feedback", takeawayId: id });
+    await markSubmitted(id);
     await callerFor(staff.id).takeaways.setStatus({ id, status: "published" });
     await expect(
       api.setResolved({ id: comment.id, resolved: true })
@@ -217,7 +226,7 @@ describe("takeaway comments", () => {
   it("lets another writer quote a passage and the writer resolve it", async () => {
     const author = await writer("Author");
     const reviewer = await writer("Reviewer");
-    const { id } = await insertTakeaway("in_review", author.id);
+    const { id } = await insertTakeaway("draft", author.id);
 
     await callerFor(reviewer.id).takeawayComments.add({
       body: "Could you add the verse reference here?",
@@ -233,9 +242,11 @@ describe("takeaway comments", () => {
     const [comment] = thread.comments;
     expect(comment).toMatchObject({
       author: { name: "Reviewer" },
+      blocksSubmit: true,
       body: "Could you add the verse reference here?",
       mine: false,
       quote: QUOTE,
+      requestsChanges: false,
       resolvedAt: null,
       resolvedBy: null,
     });
@@ -293,28 +304,53 @@ describe("takeaway comments", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("keeps other writers out of a draft's thread", async () => {
+  it("shows other writers a submitted takeaway's thread, read-only", async () => {
     const author = await writer();
     const other = await writer("Other");
-    const { id } = await insertTakeaway("draft", author.id);
+    const { id } = await insertTakeaway("in_review", author.id);
     await callerFor(author.id).takeawayComments.add({
       body: "Note to self",
       takeawayId: id,
     });
 
-    await expect(
-      callerFor(other.id).takeawayComments.list({ takeawayId: id })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const thread = await callerFor(other.id).takeawayComments.list({
+      takeawayId: id,
+    });
+    expect(thread.canComment).toBe(false);
+    expect(thread.comments.map((row) => row.body)).toEqual(["Note to self"]);
     await expect(
       callerFor(other.id).takeawayComments.add({ body: "Hi", takeawayId: id })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     const [comment] = await testDb.select().from(takeawayComments);
     await expect(
       callerFor(other.id).takeawayComments.setResolved({
         id: comment?.id ?? MISSING_ID,
         resolved: true,
       })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("marks only reviewers' open comments as blocking, and only for the writer", async () => {
+    const author = await writer("Author");
+    const reviewer = await writer("Reviewer");
+    const { id } = await insertTakeaway("draft", author.id);
+    await callerFor(author.id).takeawayComments.add({
+      body: "Note to self",
+      takeawayId: id,
+    });
+    await callerFor(reviewer.id).takeawayComments.add({
+      body: "Fix this",
+      takeawayId: id,
+    });
+
+    const blocks = async (userId: string) =>
+      (
+        await callerFor(userId).takeawayComments.list({ takeawayId: id })
+      ).comments.map((comment) => comment.blocksSubmit);
+    expect(await blocks(author.id)).toEqual([false, true]);
+    expect(await blocks(reviewer.id)).toEqual([false, false]);
+    await markSubmitted(id);
+    expect(await blocks(author.id)).toEqual([false, false]);
   });
 
   it("lets the writer read but not add to the thread once published", async () => {

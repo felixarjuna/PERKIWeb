@@ -74,7 +74,7 @@ describe("InboxSections", () => {
     );
     const ready = screen.getByRole("region", { name: "Ready to publish" });
     expect(within(ready).getByText("Published")).toBeTruthy();
-    expect(within(ready).getByText("Changes in review")).toBeTruthy();
+    expect(within(ready).getByText("Changes submitted")).toBeTruthy();
     expect(
       within(ready)
         .getByRole("link", { name: "Review changes to Faith" })

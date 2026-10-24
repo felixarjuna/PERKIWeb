@@ -12,17 +12,17 @@ const takeaway = (
 ) => ({ authorId, status });
 
 describe("mayCommentOn", () => {
-  it("lets the writer comment on their own draft and in-review takeaway", () => {
+  it("lets the writer comment on their own draft and submitted takeaway", () => {
     const author = viewer("writer", AUTHOR);
     expect(mayCommentOn(takeaway("draft"), author)).toBe(true);
     expect(mayCommentOn(takeaway("in_review"), author)).toBe(true);
     expect(mayCommentOn(takeaway("published"), author)).toBe(false);
   });
 
-  it("lets other writers comment only while it is in review", () => {
+  it("lets other writers comment only while it is a draft", () => {
     const other = viewer("writer");
-    expect(mayCommentOn(takeaway("draft"), other)).toBe(false);
-    expect(mayCommentOn(takeaway("in_review"), other)).toBe(true);
+    expect(mayCommentOn(takeaway("draft"), other)).toBe(true);
+    expect(mayCommentOn(takeaway("in_review"), other)).toBe(false);
     expect(mayCommentOn(takeaway("published"), other)).toBe(false);
   });
 
@@ -51,12 +51,12 @@ describe("mayReadComments", () => {
     ).toBe(true);
   });
 
-  it("hides another writer's draft and published threads from writers", () => {
-    expect(mayReadComments(takeaway("draft"), viewer("writer"))).toBe(false);
+  it("shows writers the threads of unpublished takeaways only", () => {
+    expect(mayReadComments(takeaway("draft"), viewer("writer"))).toBe(true);
+    expect(mayReadComments(takeaway("in_review"), viewer("writer"))).toBe(true);
     expect(mayReadComments(takeaway("published"), viewer("writer"))).toBe(
       false
     );
-    expect(mayReadComments(takeaway("in_review"), viewer("writer"))).toBe(true);
   });
 
   it("hides every thread from members", () => {

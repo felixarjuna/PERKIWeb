@@ -556,7 +556,7 @@ describe("takeaways router", () => {
       }
     );
 
-    it("lets only the writer send a draft to review, not mita or the owner", async () => {
+    it("lets only the writer submit a draft to mita, not mita or the owner", async () => {
       const { author, id } = await draftBy();
       for (const role of ["mita", "owner"] as const) {
         // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
@@ -565,7 +565,7 @@ describe("takeaways router", () => {
           api.setStatus({ id, status: "in_review" })
         ).rejects.toMatchObject({
           code: "FORBIDDEN",
-          message: "Only the writer of this takeaway can send it to review.",
+          message: "Only the writer of this takeaway can submit it to mita.",
         });
       }
       await callerFor(author.id).takeaways.setStatus({
@@ -581,14 +581,19 @@ describe("takeaways router", () => {
         const { author, id } = await draftBy("writer", "in_review");
         const gate = callerFor((await insertUser({ role })).id).takeaways;
 
-        // Request changes: back to the writer as a draft.
-        await gate.setStatus({ id, status: "draft" });
+        // Request changes: back to the writer as a draft, with a note they
+        // resolve before submitting again.
+        await gate.setStatus({ id, note: "Shorter, please.", status: "draft" });
         expect(await statusOf(id)).toBe("draft");
 
-        await callerFor(author.id).takeaways.setStatus({
-          id,
-          status: "in_review",
+        const writer = callerFor(author.id);
+        const [note] = (await writer.takeawayComments.list({ takeawayId: id }))
+          .comments;
+        await writer.takeawayComments.setResolved({
+          id: note?.id ?? 0,
+          resolved: true,
         });
+        await writer.takeaways.setStatus({ id, status: "in_review" });
         await gate.setStatus({ id, status: "published" });
         expect(await statusOf(id)).toBe("published");
         await gate.setStatus({ id, status: "draft" });
@@ -705,7 +710,7 @@ describe("takeaways router", () => {
       }
     );
 
-    it("starts a new takeaway as a draft that only its author and staff can read", async () => {
+    it("starts a new takeaway as a draft that only writers and staff can read", async () => {
       const { author, id, schedule } = await draftBy();
       const visitor = anonymousCaller();
       const member = await signedInMember();
@@ -714,7 +719,7 @@ describe("takeaways router", () => {
       expect(await statusOf(id)).toBe("draft");
       expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
       expect(await visitor.takeaways.months()).toEqual([]);
-      for (const api of [visitor, member, otherWriter]) {
+      for (const api of [visitor, member]) {
         // biome-ignore lint/performance/noAwaitInLoops: assertions in order.
         await expect(
           api.takeaways.getTakeawayById({ id })
@@ -724,7 +729,14 @@ describe("takeaways router", () => {
         id: schedule.id,
       });
       expect(gathering.takeawayIds).toEqual([]);
-      expect((await otherWriter.takeaways.getManageable({})).items).toEqual([]);
+      // The draft is the team's shared working copy (#75).
+      const shared = await otherWriter.takeaways.getTakeawayById({ id });
+      expect(shared.takeaways.status).toBe("draft");
+      expect(
+        (await otherWriter.takeaways.getManageable({})).items.map(
+          (row) => row.takeaways.id
+        )
+      ).toEqual([id]);
 
       const mine = await callerFor(author.id).takeaways.getTakeawayById({ id });
       expect(mine.takeaways).toMatchObject({ id, status: "draft" });
@@ -736,7 +748,7 @@ describe("takeaways router", () => {
       expect(manageable.map((row) => row.takeaways.status)).toEqual(["draft"]);
     });
 
-    it("lets a writer send their own draft to review and withdraw it, not publish it", async () => {
+    it("lets a writer submit their own draft and withdraw it, not publish it", async () => {
       const { author, id } = await draftBy();
       const api = callerFor(author.id);
 
@@ -750,7 +762,7 @@ describe("takeaways router", () => {
       expect(await statusOf(id)).toBe("draft");
     });
 
-    it("can be created straight into review, never straight to published", async () => {
+    it("can be created straight into submitted, never straight to published", async () => {
       const { id } = await draftBy("writer", "in_review");
       expect(await statusOf(id)).toBe("in_review");
 
@@ -764,7 +776,7 @@ describe("takeaways router", () => {
       ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     });
 
-    it("shows a takeaway in review to other writers, read-only", async () => {
+    it("shows a submitted takeaway to other writers, read-only", async () => {
       const { id } = await draftBy("writer", "in_review");
       const other = callerFor((await insertUser({ role: "writer" })).id);
 

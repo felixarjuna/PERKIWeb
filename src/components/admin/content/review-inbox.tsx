@@ -92,7 +92,7 @@ export function InboxSections({ data }: { data: InboxData }) {
   );
 }
 
-/** What waits for the viewer in review (#59), above their assignments. */
+/** What waits for the viewer in the review flow (#59), above their assignments. */
 export function ReviewInbox() {
   const { data } = api.reviewInbox.mine.useQuery(
     undefined,

@@ -23,7 +23,7 @@ const EDIT_TAKEAWAY_URL = /\/admin\/takeaways\/\d+\/edit$/;
 /** "Share" with a native share sheet, "Copy link" without one. */
 const SHARE_BUTTON = /Share|Copy link/;
 const SEARCH_URL = /[?&]q=PELAYANAN/;
-const SEND_REVIEW = /^Send to review:/;
+const SEND_REVIEW = /^Submit to mita:/;
 const PUBLISH_ACTION = /^Publish:/;
 const MORE_ACTIONS = /^More actions/;
 const REVIEW_TAKEAWAY_URL = /\/admin\/takeaways\/\d+$/;
@@ -74,9 +74,18 @@ const changeStatus = async (
   await article
     .getByRole("button", { exact: true, name: `${action}: ${scheduleTitle}` })
     .click();
+  if (action === "Submit to mita") {
+    await submitDialog(page, scheduleTitle)
+      .getByRole("button", { exact: true, name: "Submit to mita" })
+      .click();
+  }
   await expect(toast(page, confirmation)).toBeVisible();
   return article;
 };
+
+/** The dialog that checks open comments before a draft goes to mita. */
+const submitDialog = (page: Page, scheduleTitle: string) =>
+  page.getByRole("alertdialog", { name: `Submit “${scheduleTitle}” to mita?` });
 
 /** Opens /admin/takeaways/new through the list page's "Add takeaway" link. */
 const openCreateFromList = async (page: Page) => {
@@ -248,12 +257,12 @@ test("a writer formats a takeaway in the editor and readers see it formatted", a
   );
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(toast(page, "Your draft has been saved.")).toBeVisible();
-  // Even staff must send a draft to review before publishing.
+  // Even staff must submit a draft before publishing.
   await changeStatus(
     page,
     scheduleTitle,
-    "Send to review",
-    "Takeaway sent to review."
+    "Submit to mita",
+    "Takeaway submitted to mita."
   );
   await changeStatus(page, scheduleTitle, "Publish", "Takeaway published.");
 
@@ -338,7 +347,7 @@ test("a takeaway created from a direct link credits its author", async ({
   await expect(article).toContainText(ADMIN_USERNAME);
 });
 
-test("a writer drafts a takeaway, sends it to review and mita publishes it", async ({
+test("a writer drafts a takeaway, submits it to mita and mita publishes it", async ({
   page,
 }) => {
   const suffix = uniqueSuffix();
@@ -353,26 +362,26 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
     await expect(publicCard()).toHaveCount(0);
   };
 
-  // The writer saves a draft: only they see it, and it is not public.
+  // The writer saves a draft: the shared working copy other writers read,
+  // never public.
   await loginAs(page, WRITER);
   await page.goto("/admin/takeaways/new");
   await createTakeaway(page, scheduleTitle, keypoints);
   await expectHiddenFromPublic();
   await loginAs(page, WRITER_2);
-  await page.goto("/admin/takeaways");
-  await page.getByRole("radio", { exact: true, name: "All" }).click();
-  await page.getByLabel("Search takeaways").fill(scheduleTitle);
-  await expect(page.getByRole("status")).toContainText("No takeaways match");
+  const sharedDraft = await findInList(page, scheduleTitle);
+  await expect(sharedDraft).toContainText("Draft");
+  await expect(sharedDraft.getByRole("button")).toHaveCount(0);
 
-  // The writer sends it to review: other writers can read it, not edit it.
+  // The writer submits it to mita: the text is locked, others still read it.
   await loginAs(page, WRITER);
   const inReview = await changeStatus(
     page,
     scheduleTitle,
-    "Send to review",
-    "Takeaway sent to review."
+    "Submit to mita",
+    "Takeaway submitted to mita."
   );
-  await expect(inReview).toContainText("In review");
+  await expect(inReview).toContainText("Submitted");
   await expect(
     inReview.getByRole("button", { name: `Publish: ${scheduleTitle}` })
   ).toHaveCount(0);
@@ -385,20 +394,20 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await page
     .getByRole("menuitem", {
       exact: true,
-      name: `Withdraw from review: ${scheduleTitle}`,
+      name: `Withdraw: ${scheduleTitle}`,
     })
     .click();
-  await expect(toast(page, "Takeaway withdrawn from review.")).toBeVisible();
+  await expect(toast(page, "Takeaway withdrawn.")).toBeVisible();
   await expect(ownReview.getByText("Draft", { exact: true })).toBeVisible();
   await changeStatus(
     page,
     scheduleTitle,
-    "Send to review",
-    "Takeaway sent to review."
+    "Submit to mita",
+    "Takeaway submitted to mita."
   );
   await loginAs(page, WRITER_2);
   const peerView = await findInList(page, scheduleTitle);
-  await expect(peerView).toContainText("In review");
+  await expect(peerView).toContainText("Submitted");
   await expect(
     peerView.getByRole("link", { name: `Edit ${scheduleTitle}` })
   ).toHaveCount(0);
@@ -474,7 +483,9 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await expectHiddenFromPublic();
 });
 
-test("a draft takeaway is a 404 for members", async ({ page }) => {
+test("a draft takeaway is a 404 for members, and open to other writers", async ({
+  page,
+}) => {
   await loginAs(page, MEMBER);
   const suffix = uniqueSuffix();
   const scheduleId = await insertSchedule(`Hidden draft ${suffix}`);
@@ -489,10 +500,11 @@ test("a draft takeaway is a 404 for members", async ({ page }) => {
   expect(response?.status()).toBe(404);
   await loginAs(page, WRITER_2);
   const peerResponse = await page.goto(`/admin/takeaways/${id}`);
-  expect(peerResponse?.status()).toBe(404);
+  expect(peerResponse?.status()).toBe(200);
+  await expect(page.getByText(`Hidden notes ${suffix}`)).toBeVisible();
 });
 
-for (const action of ["Save draft", "Send to review"] as const) {
+for (const action of ["Save draft", "Submit to mita"] as const) {
   test(`${action} blocks an empty note and focuses its inline error`, async ({
     page,
   }) => {
@@ -506,7 +518,7 @@ for (const action of ["Save draft", "Send to review"] as const) {
     await submit.click();
     await expect(page).toHaveURL("/admin/takeaways/new");
     await expect(
-      page.getByText("Write the notes before saving or sending to review.", {
+      page.getByText("Write the notes before saving or submitting to mita.", {
         exact: true,
       })
     ).toBeVisible();
@@ -520,7 +532,7 @@ for (const action of ["Save draft", "Send to review"] as const) {
     await expect(page).toHaveURL("/admin/takeaways");
     const card = await findInList(page, scheduleTitle);
     await expect(
-      card.getByText(action === "Save draft" ? "Draft" : "In review", {
+      card.getByText(action === "Save draft" ? "Draft" : "Submitted", {
         exact: true,
       })
     ).toBeVisible();
@@ -659,7 +671,7 @@ test("cards keep one next step, compact badges and keyboard-accessible menus at 
   ).toBeVisible();
 });
 
-test("sending to review replaces a stale search response already in flight", async ({
+test("submitting replaces a stale search response already in flight", async ({
   page,
 }) => {
   const suffix = uniqueSuffix();
@@ -698,11 +710,14 @@ test("sending to review replaces a stale search response already in flight", asy
         request.url().includes(suffix)
     );
     await card
-      .getByRole("button", { name: `Send to review: ${title}` })
+      .getByRole("button", { name: `Submit to mita: ${title}` })
+      .click();
+    await submitDialog(page, title)
+      .getByRole("button", { exact: true, name: "Submit to mita" })
       .click();
     await refetch;
     release.resolve();
-    await expect(card.getByText("In review", { exact: true })).toBeVisible();
+    await expect(card.getByText("Submitted", { exact: true })).toBeVisible();
   } finally {
     release.resolve();
     await page.unroute(pattern);

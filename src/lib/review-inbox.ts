@@ -26,10 +26,9 @@ export const hasOpenFeedback = (takeaway: InboxTakeaway) =>
  * What waits for the viewer, read from statuses, comments and suggestions:
  * - Open feedback: their own unpublished takeaways with unresolved comments or
  *   open suggestions.
- * - Ready to publish (mita and the dev): takeaways in review with no open
- *   feedback left.
- * - Needs review: other writers' takeaways in review; for staff, only those
- *   that still have open feedback.
+ * - Ready to publish (mita and the dev): every submitted takeaway.
+ * - Needs review: other writers' drafts, the shared working copy (#75); for
+ *   staff, only those that still have open feedback.
  * A published takeaway's correction counts as the takeaway at the
  * correction's status, with the feedback on that correction.
  */
@@ -41,11 +40,10 @@ export const reviewInbox = <T extends InboxTakeaway>(
     return { needsReview: [], openFeedback: [], readyToPublish: [] };
   }
   const staff = isStaffRole(viewer.role);
-  const inReview = takeaways.filter(
-    (takeaway) => reviewStatus(takeaway) === "in_review"
-  );
+  const inStatus = (status: OpenRevisionStatus) =>
+    takeaways.filter((takeaway) => reviewStatus(takeaway) === status);
   return {
-    needsReview: inReview.filter(
+    needsReview: inStatus("draft").filter(
       (takeaway) =>
         takeaway.authorId !== viewer.id && (!staff || hasOpenFeedback(takeaway))
     ),
@@ -55,8 +53,6 @@ export const reviewInbox = <T extends InboxTakeaway>(
         reviewStatus(takeaway) !== "published" &&
         hasOpenFeedback(takeaway)
     ),
-    readyToPublish: staff
-      ? inReview.filter((takeaway) => !hasOpenFeedback(takeaway))
-      : [],
+    readyToPublish: staff ? inStatus("in_review") : [],
   };
 };

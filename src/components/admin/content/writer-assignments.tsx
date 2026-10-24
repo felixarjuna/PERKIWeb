@@ -14,7 +14,7 @@ type Item = RouterOutputs["writerAssignments"]["mine"]["items"][number];
 const GROUPS = [
   { label: "To write", status: "not_started" },
   { label: "Drafts", status: "draft" },
-  { label: "In review", status: "in_review" },
+  { label: "Submitted", status: "in_review" },
   { label: "Published", status: "published" },
 ] as const;
 const REFRESH_INTERVAL = 60_000;

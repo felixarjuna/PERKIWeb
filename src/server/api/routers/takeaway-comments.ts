@@ -9,7 +9,11 @@ import {
   mayReadComments,
   QUOTE_MAX_LENGTH,
 } from "~/lib/takeaway-comments";
-import type { TakeawayViewer } from "~/lib/takeaway-status";
+import {
+  actsAsAuthor,
+  submitBlockers,
+  type TakeawayViewer,
+} from "~/lib/takeaway-status";
 import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow } from "../errors";
@@ -38,6 +42,7 @@ const authorizeThread = async (
   return {
     canComment: mayCommentOn(copy.subject, viewer),
     revisionId: copy.revision?.id ?? null,
+    subject: copy.subject,
   };
 };
 
@@ -90,7 +95,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
       role: await getRole(ctx.session.user.id),
     };
     return await db.transaction(async (tx) => {
-      const { canComment } = await authorizeThread(
+      const { canComment, subject } = await authorizeThread(
         tx,
         input.takeawayId,
         viewer
@@ -103,6 +108,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
           createdAt: takeawayComments.createdAt,
           id: takeawayComments.id,
           quote: takeawayComments.quote,
+          requestsChanges: takeawayComments.requestsChanges,
           resolvedAt: takeawayComments.resolvedAt,
           resolvedBy: { name: resolver.name },
         })
@@ -111,15 +117,25 @@ export const takeawayCommentsRouter = createTRPCRouter({
         .leftJoin(resolver, eq(resolver.id, takeawayComments.resolvedById))
         .where(eq(takeawayComments.takeawayId, input.takeawayId))
         .orderBy(asc(takeawayComments.createdAt), asc(takeawayComments.id));
+      // What keeps the viewer from submitting it, if they are its writer.
+      const blocking = new Set(
+        subject.status === "draft" && actsAsAuthor(subject, viewer)
+          ? submitBlockers(rows, subject, viewer)
+          : []
+      );
       return {
         canComment,
-        comments: rows.map(({ authorId, ...comment }) => ({
-          ...comment,
-          author: comment.author
-            ? { image: comment.author.image, name: comment.author.name }
-            : null,
-          mine: authorId === viewer.id,
-        })),
+        comments: rows.map((row) => {
+          const { authorId, ...comment } = row;
+          return {
+            ...comment,
+            author: comment.author
+              ? { image: comment.author.image, name: comment.author.name }
+              : null,
+            blocksSubmit: blocking.has(row),
+            mine: authorId === viewer.id,
+          };
+        }),
       };
     });
   }),

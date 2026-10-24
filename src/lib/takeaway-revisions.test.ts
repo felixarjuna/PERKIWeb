@@ -54,15 +54,20 @@ describe("mayChangeText", () => {
   it("lets the writer and staff change a published takeaway through a correction", () => {
     expect(mayChangeText(takeaway("published"), null, author)).toBe(true);
     expect(mayChangeText(takeaway("published"), "draft", author)).toBe(true);
-    expect(mayChangeText(takeaway("published"), "in_review", author)).toBe(
-      true
-    );
     expect(mayChangeText(takeaway("published"), "draft", viewer("mita"))).toBe(
       true
     );
     expect(
       mayChangeText(takeaway("published"), "in_review", viewer("writer"))
     ).toBe(false);
+  });
+
+  it("locks a submitted correction for everyone, like a submitted takeaway", () => {
+    for (const who of [author, viewer("mita"), viewer("owner")]) {
+      expect(mayChangeText(takeaway("published"), "in_review", who)).toBe(
+        false
+      );
+    }
   });
 
   it("keeps the edit rule for unpublished takeaways", () => {
@@ -77,9 +82,9 @@ describe("revisionActions", () => {
   const author = viewer("writer", AUTHOR);
   const mita = viewer("mita");
 
-  it("lets the writer send a correction to review or discard it", () => {
+  it("lets the writer submit a correction or discard it", () => {
     expect(moves(takeaway("published"), "draft", author)).toEqual([
-      "Send changes to review > in_review",
+      "Submit changes to mita > in_review",
       "Discard changes > discarded",
     ]);
     expect(moves(takeaway("published"), "draft", mita)).toEqual([
@@ -88,14 +93,14 @@ describe("revisionActions", () => {
     expect(moves(takeaway("published"), "draft", viewer("writer"))).toEqual([]);
   });
 
-  it("lets only staff publish a correction in review or send it back", () => {
+  it("lets only staff publish a submitted correction or send it back", () => {
     expect(moves(takeaway("published"), "in_review", mita)).toEqual([
       "Publish changes > published",
       "Request changes > draft",
       "Discard changes > discarded",
     ]);
     expect(moves(takeaway("published"), "in_review", author)).toEqual([
-      "Withdraw changes from review > draft",
+      "Withdraw changes > draft",
       "Discard changes > discarded",
     ]);
     expect(moves(takeaway("published"), "in_review", viewer("writer"))).toEqual(
@@ -105,12 +110,12 @@ describe("revisionActions", () => {
 
   it("lets staff act as the writer of an authorless takeaway", () => {
     expect(moves(takeaway("published", null), "draft", mita)).toEqual([
-      "Send changes to review > in_review",
+      "Submit changes to mita > in_review",
       "Discard changes > discarded",
     ]);
   });
 
-  it("makes sending and publishing the main step and confirms discarding", () => {
+  it("makes submitting and publishing the main step and confirms discarding", () => {
     const [publish, , discard] = revisionActions(
       takeaway("published"),
       "in_review",

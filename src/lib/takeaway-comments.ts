@@ -9,9 +9,9 @@ const ownsTakeaway = (takeaway: TakeawaySubject, viewer: TakeawayViewer) =>
   takeaway.authorId === viewer.id && canWriteTakeaways(viewer.role);
 
 /**
- * Who may comment on a takeaway (#36): its writer while it is a draft or in
- * review, other writers while it is in review, mita and the dev always.
- * Resolving and reopening comments follows the same rule.
+ * Who may comment on a takeaway (#36, #75): every writer while it is a draft
+ * (the shared working copy), its writer also while it is submitted, mita and
+ * the dev always. Resolving and reopening comments follows the same rule.
  */
 export const mayCommentOn = (
   takeaway: TakeawaySubject,
@@ -20,18 +20,21 @@ export const mayCommentOn = (
   if (isStaffRole(viewer.role)) {
     return true;
   }
-  if (takeaway.status === "in_review") {
+  if (takeaway.status === "draft") {
     return canWriteTakeaways(viewer.role);
   }
-  return takeaway.status === "draft" && ownsTakeaway(takeaway, viewer);
+  return takeaway.status === "in_review" && ownsTakeaway(takeaway, viewer);
 };
 
 /**
- * Who may read a takeaway's review thread: everyone who may comment, and its
- * writer at any status, so they keep the feedback after it is published.
- * Readers of the public site never see comments.
+ * Who may read a takeaway's review thread: every writer until it is
+ * published, and its writer at any status, so they keep the feedback after it
+ * is published. Readers of the public site never see comments.
  */
 export const mayReadComments = (
   takeaway: TakeawaySubject,
   viewer: TakeawayViewer
-) => mayCommentOn(takeaway, viewer) || ownsTakeaway(takeaway, viewer);
+) =>
+  mayCommentOn(takeaway, viewer) ||
+  ownsTakeaway(takeaway, viewer) ||
+  (takeaway.status !== "published" && canWriteTakeaways(viewer.role));

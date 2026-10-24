@@ -98,38 +98,39 @@ describe("review inbox", () => {
     expect(inbox.needsReview).toEqual([]);
   });
 
-  it("shows another writer what needs review, never someone's draft", async () => {
+  it("shows another writer the drafts to review, never submitted or published ones", async () => {
     const writer = await insertUser({ name: "Writer", role: "writer" });
     const reviewer = await insertUser({ name: "Reviewer", role: "writer" });
-    const inReview = await insertTakeaway("Grace", "in_review", writer.id);
-    await insertTakeaway("Draft", "draft", writer.id);
+    await insertTakeaway("Grace", "in_review", writer.id);
+    const draft = await insertTakeaway("Draft", "draft", writer.id);
     await insertTakeaway("Live", "published", writer.id);
 
     const inbox = await callerFor(reviewer.id).reviewInbox.mine();
 
-    expect(inbox.needsReview.map((row) => row.id)).toEqual([inReview.id]);
+    expect(inbox.needsReview.map((row) => row.id)).toEqual([draft.id]);
     expect(inbox.openFeedback).toEqual([]);
     expect(inbox.readyToPublish).toEqual([]);
   });
 
-  it("shows mita what is ready to publish once the feedback is handled", async () => {
+  it("shows mita every submitted takeaway as ready, and drafts with open feedback to review", async () => {
     const writer = await insertUser({ name: "Writer", role: "writer" });
     const mita = await insertUser({ role: "mita" });
-    const note = await insertTakeaway("Hope", "in_review", writer.id);
-    await comment(note.id, mita.id);
+    const submitted = await insertTakeaway("Hope", "in_review", writer.id);
+    const draft = await insertTakeaway("Love", "draft", writer.id);
+    await insertTakeaway("Quiet", "draft", writer.id);
+    await comment(draft.id, mita.id);
     const api = callerFor(mita.id);
 
-    expect((await api.reviewInbox.mine()).needsReview).toHaveLength(1);
-    expect((await api.reviewInbox.mine()).readyToPublish).toEqual([]);
+    const inbox = await api.reviewInbox.mine();
+    expect(inbox.readyToPublish.map((row) => row.id)).toEqual([submitted.id]);
+    expect(inbox.needsReview.map((row) => row.id)).toEqual([draft.id]);
 
     await testDb.update(takeawayComments).set({ resolvedAt: new Date() });
 
-    const ready = await api.reviewInbox.mine();
-    expect(ready.readyToPublish.map((row) => row.id)).toEqual([note.id]);
-    expect(ready.needsReview).toEqual([]);
+    expect((await api.reviewInbox.mine()).needsReview).toEqual([]);
   });
 
-  it("lists a correction in review with the feedback on that correction only", async () => {
+  it("lists a correction at its status with the feedback on that correction only", async () => {
     const writer = await insertUser({ name: "Writer", role: "writer" });
     const reviewer = await insertUser({ name: "Reviewer", role: "writer" });
     const mita = await insertUser({ role: "mita" });
@@ -139,32 +140,19 @@ describe("review inbox", () => {
     const author = callerFor(writer.id);
     await author.takeawayTldr.save({ id: note.id, tldr: "Waiting is faith." });
 
-    // A correction in draft waits for nobody.
-    expect(
-      (await callerFor(reviewer.id).reviewInbox.mine()).needsReview
-    ).toEqual([]);
-    expect(
-      (await callerFor(mita.id).reviewInbox.mine()).readyToPublish
-    ).toEqual([]);
-
-    await author.takeawayRevisions.setStatus({
-      status: "in_review",
-      takeawayId: note.id,
-    });
+    // A correction in draft is the shared draft: other writers review it.
     const reviewing = await callerFor(reviewer.id).reviewInbox.mine();
     expect(reviewing.needsReview).toEqual([
       expect.objectContaining({
         id: note.id,
         openComments: 0,
-        revision: "in_review",
+        revision: "draft",
         status: "published",
       }),
     ]);
     expect(
-      (await callerFor(mita.id).reviewInbox.mine()).readyToPublish.map(
-        (row) => row.id
-      )
-    ).toEqual([note.id]);
+      (await callerFor(mita.id).reviewInbox.mine()).readyToPublish
+    ).toEqual([]);
 
     await callerFor(reviewer.id).takeawayComments.add({
       body: "Which son?",
@@ -173,12 +161,25 @@ describe("review inbox", () => {
     expect((await author.reviewInbox.mine()).openFeedback).toEqual([
       expect.objectContaining({ id: note.id, openComments: 1 }),
     ]);
+    expect(
+      (await callerFor(mita.id).reviewInbox.mine()).needsReview.map(
+        (row) => row.id
+      )
+    ).toEqual([note.id]);
+
+    await testDb.update(takeawayComments).set({ resolvedAt: new Date() });
+    await author.takeawayRevisions.setStatus({
+      status: "in_review",
+      takeawayId: note.id,
+    });
     const staff = await callerFor(mita.id).reviewInbox.mine();
-    expect(staff.readyToPublish).toEqual([]);
-    expect(staff.needsReview.map((row) => row.id)).toEqual([note.id]);
+    expect(staff.readyToPublish.map((row) => row.id)).toEqual([note.id]);
+    expect(staff.needsReview).toEqual([]);
+    expect(
+      (await callerFor(reviewer.id).reviewInbox.mine()).needsReview
+    ).toEqual([]);
 
     // Once published, the correction leaves every list.
-    await testDb.update(takeawayComments).set({ resolvedAt: new Date() });
     await callerFor(mita.id).takeawayRevisions.setStatus({
       status: "published",
       takeawayId: note.id,

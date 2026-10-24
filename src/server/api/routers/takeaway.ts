@@ -1,10 +1,20 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  getTableColumns,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import {
   schedules,
   type TakeawayStatus,
+  takeawayComments,
   takeawayRevisions,
   takeaways,
+  users,
 } from "~/lib/db/schema/schema";
 import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
@@ -16,9 +26,10 @@ import {
   workingSubject,
 } from "~/lib/takeaway-revisions";
 import {
-  mayEditTakeaway,
+  mayDeleteTakeaway,
   mayReadTakeaway,
   statusActions,
+  submitBlockers,
 } from "~/lib/takeaway-status";
 import { db } from "~/server";
 import { getRole } from "~/server/authz";
@@ -46,6 +57,7 @@ import {
   openRevisionOf,
   openStatus,
   saveText,
+  type Transaction,
 } from "./takeaway-revisions";
 
 /** Maps a write that references a missing schedule to NOT_FOUND. */
@@ -158,19 +170,65 @@ interface Ownership {
   status: TakeawayStatus;
 }
 
-/** The edit rule (`mayEditTakeaway`): author and staff, until published. */
+/** The delete rule (`mayDeleteTakeaway`): author and staff, until published. */
 const mayManage = (takeaway: Ownership, viewer: Viewer) =>
-  mayEditTakeaway(takeaway, viewer);
+  mayDeleteTakeaway(takeaway, viewer);
 
 /** The read rule (`mayReadTakeaway`). */
 const mayRead = mayReadTakeaway;
 
 /** The status rule (`statusActions`): exactly the moves the list offers. */
-const maySetStatus = (
+const statusMove = (
   takeaway: Ownership,
   viewer: Viewer,
   next: TakeawayStatus
-) => statusActions(takeaway, viewer).some((action) => action.to === next);
+) => statusActions(takeaway, viewer).find((action) => action.to === next);
+
+/** "Ana", "Ana and Budi", "Ana, Budi and Cici". */
+const listNames = (names: string[]) =>
+  names.length > 1
+    ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`
+    : (names[0] ?? "");
+
+/**
+ * Refuses to submit while reviewers' comments are open (`submitBlockers`),
+ * naming whose, so the writer knows which thread to finish first.
+ */
+const assertNoOpenComments = async (
+  tx: Transaction,
+  takeaway: Ownership & { id: number },
+  viewer: Viewer
+) => {
+  const comments = await tx
+    .select({
+      authorId: takeawayComments.authorId,
+      name: users.name,
+      resolvedAt: takeawayComments.resolvedAt,
+    })
+    .from(takeawayComments)
+    .leftJoin(users, eq(users.id, takeawayComments.authorId))
+    .where(
+      and(
+        eq(takeawayComments.takeawayId, takeaway.id),
+        isNull(takeawayComments.resolvedAt)
+      )
+    )
+    .orderBy(takeawayComments.createdAt, takeawayComments.id);
+  const blockers = submitBlockers(comments, takeaway, viewer);
+  if (!blockers.length) {
+    return;
+  }
+  const names = listNames([
+    ...new Set(blockers.map((comment) => comment.name ?? "a former writer")),
+  ]);
+  throw new TRPCError({
+    code: "PRECONDITION_FAILED",
+    message:
+      blockers.length === 1
+        ? `Resolve the open comment from ${names} before submitting to mita.`
+        : `Resolve the ${blockers.length} open comments from ${names} before submitting to mita.`,
+  });
+};
 
 /** Why `viewer` may not make this move, for the FORBIDDEN message. */
 const statusRefusal = (current: TakeawayStatus, next: TakeawayStatus) => {
@@ -181,9 +239,9 @@ const statusRefusal = (current: TakeawayStatus, next: TakeawayStatus) => {
     return "Only mita or the dev can unpublish a takeaway.";
   }
   if (next === "in_review") {
-    return "Only the writer of this takeaway can send it to review.";
+    return "Only the writer of this takeaway can submit it to mita.";
   }
-  return "Only its writer, mita or the dev can take this takeaway out of review.";
+  return "Only its writer, mita or the dev can send this takeaway back to draft.";
 };
 
 const loadOwnership = async (
@@ -219,10 +277,43 @@ export const canManageTakeaway = async (
   });
 };
 
+/**
+ * The status moves the review page offers the viewer, the same ones the
+ * admin list shows (`getManageable`): the takeaway's own, or its open
+ * correction's while there is one.
+ */
+export const reviewMoves = async (takeawayId: number, userId: string) => {
+  const viewer = await viewerFor(userId);
+  const [row] = await db
+    .select({
+      authorId: takeaways.authorId,
+      revision: takeawayRevisions.status,
+      status: takeaways.status,
+    })
+    .from(takeaways)
+    .leftJoin(takeawayRevisions, openRevisionOf)
+    .where(eq(takeaways.id, takeawayId))
+    .limit(1);
+  if (!row) {
+    return { actions: [], revision: null };
+  }
+  const takeaway = { authorId: row.authorId, status: row.status };
+  const revision = openStatus(row.revision);
+  return {
+    actions: statusActions(takeaway, viewer),
+    revision: revision
+      ? {
+          actions: revisionActions(takeaway, revision, viewer),
+          status: revision,
+        }
+      : null,
+  };
+};
+
 const notFound = () =>
   new TRPCError({ code: "NOT_FOUND", message: "Takeaway not found." });
 
-/** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not manageable. */
+/** Throws NOT_FOUND if the takeaway is missing, FORBIDDEN if not deletable. */
 export const assertCanManage = async (takeawayId: number, userId: string) => {
   const takeaway = await loadOwnership(takeawayId);
   if (!takeaway) {
@@ -234,8 +325,8 @@ export const assertCanManage = async (takeawayId: number, userId: string) => {
       code: "FORBIDDEN",
       message:
         takeaway.status === "published"
-          ? "Published takeaways can't be changed. Unpublish it first."
-          : "You can only change your own takeaways.",
+          ? "Published takeaways can't be deleted. Unpublish it first."
+          : "You can only delete your own takeaways.",
     });
   }
   // Recheck ownership and status in the write itself, so a takeaway
@@ -266,8 +357,8 @@ const publicationFor = (
 };
 
 /**
- * The admin list's status filter. "In review" also finds published
- * takeaways whose correction is in review: that is what reviewers act on.
+ * The admin list's status filter. "Submitted" also finds published
+ * takeaways whose correction is submitted: that is what mita acts on.
  */
 const statusFilter = (status: TakeawayStatus | "all") => {
   if (status === "all") {
@@ -282,14 +373,12 @@ const statusFilter = (status: TakeawayStatus | "all") => {
   return eq(takeaways.status, status);
 };
 
-/** The rows `viewer` may see in the admin list (see `mayRead`). */
+/**
+ * The rows `viewer` may see in the admin list (see `mayRead`): every writer
+ * reads every takeaway, drafts included (#75).
+ */
 const readableBy = (viewer: Viewer) =>
-  viewer.staff
-    ? undefined
-    : or(
-        eq(takeaways.authorId, viewer.id),
-        inArray(takeaways.status, ["in_review", "published"])
-      );
+  viewer.writer ? undefined : eq(takeaways.status, "published");
 
 export const takeawayRouter = createTRPCRouter({
   addTakeaway: takeawayProcedure
@@ -438,8 +527,10 @@ export const takeawayRouter = createTRPCRouter({
     )
   ),
   /**
-   * Moves a takeaway between draft, in review and published. Publishing
-   * records who did it and when; leaving published clears that again.
+   * Moves a takeaway between draft, submitted (`in_review`) and published.
+   * Submitting waits for reviewers' comments to be resolved; requesting
+   * changes needs a note, kept in the review thread for the writer.
+   * Publishing records who did it and when; leaving published clears that.
    */
   setStatus: takeawayProcedure
     .input(takeawayStatusSchema)
@@ -454,13 +545,21 @@ export const takeawayRouter = createTRPCRouter({
       if (input.status === "published" && takeaway.status === "draft") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Send this draft to review before publishing it.",
+          message: "Submit this draft to mita before publishing it.",
         });
       }
-      if (!maySetStatus(takeaway, viewer, input.status)) {
+      const move = statusMove(takeaway, viewer, input.status);
+      if (!move) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: statusRefusal(takeaway.status, input.status),
+        });
+      }
+      const note = input.note ?? "";
+      if (move.requiresNote && !note) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Add a note telling the writer what to change.",
         });
       }
       if (input.status !== "draft") {
@@ -474,12 +573,15 @@ export const takeawayRouter = createTRPCRouter({
       }
       return await db.transaction(async (tx) => {
         const copy = await lockWorkingCopy(tx, input.id);
+        if (copy && move.requiresResolvedComments) {
+          await assertNoOpenComments(tx, { ...takeaway, id: input.id }, viewer);
+        }
         // Unpublishing keeps an open correction: the draft continues from it.
         const folded =
           copy && copy.takeaway.status === "published"
             ? await foldOpenRevision(tx, copy)
             : {};
-        return affectedRow(
+        const moved = affectedRow(
           await tx
             .update(takeaways)
             .set({
@@ -496,6 +598,15 @@ export const takeawayRouter = createTRPCRouter({
             .returning({ id: takeaways.id, status: takeaways.status }),
           "Takeaway"
         );
+        if (move.requiresNote) {
+          await tx.insert(takeawayComments).values({
+            authorId: viewer.id,
+            body: note,
+            requestsChanges: true,
+            takeawayId: input.id,
+          });
+        }
+        return moved;
       });
     }),
   updateTakeaway: takeawayProcedure

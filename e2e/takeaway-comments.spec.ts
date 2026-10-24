@@ -12,7 +12,7 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
     await insertSchedule(title),
     `${quote}, and it was counted to him as righteousness.`,
     WRITER.id,
-    "in_review"
+    "draft"
   );
   await setTestSession(page, WRITER_2);
   await page.goto(`/admin/takeaways/${id}`);
@@ -138,7 +138,7 @@ test("selection menu rejects long passages and closes outside the takeaway", asy
     await insertSchedule(title),
     "x".repeat(1001),
     WRITER.id,
-    "in_review"
+    "draft"
   );
   await setTestSession(page, WRITER_2);
   await page.goto(`/admin/takeaways/${id}`);

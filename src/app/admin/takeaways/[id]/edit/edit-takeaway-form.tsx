@@ -183,8 +183,8 @@ export default function EditTakeawayForm() {
           </div>
           <p className="type-caption text-muted-foreground">
             {published
-              ? "Send your changes to review from the takeaways list."
-              : "Saving keeps the status. Change it from the takeaways list."}
+              ? "Submit your changes to mita from the review page or the takeaways list."
+              : "Saving keeps it a draft. Submit it to mita from the review page or the takeaways list."}
           </p>
         </div>
       </form>

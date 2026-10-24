@@ -22,13 +22,13 @@ const takeaway = (
 const ids = (rows: InboxTakeaway[]) => rows.map((row) => row.id);
 
 describe("reviewInbox", () => {
-  it("shows a writer other writers' takeaways in review, never drafts or their own", () => {
+  it("shows a writer other writers' drafts, never submitted ones or their own", () => {
     const inbox = reviewInbox(
       [
-        takeaway(1, "in_review", OTHER),
-        takeaway(2, "in_review", OTHER, { comments: 1 }),
-        takeaway(3, "draft", OTHER),
-        takeaway(4, "in_review", ME),
+        takeaway(1, "draft", OTHER),
+        takeaway(2, "draft", OTHER, { comments: 1 }),
+        takeaway(3, "in_review", OTHER),
+        takeaway(4, "draft", ME),
         takeaway(5, "published", OTHER),
       ],
       viewer("writer")
@@ -51,16 +51,17 @@ describe("reviewInbox", () => {
     expect(ids(inbox.openFeedback)).toEqual([1, 2]);
   });
 
-  it("gives staff in-review takeaways without open feedback as ready to publish", () => {
+  it("gives staff every submitted takeaway as ready to publish, and drafts with open feedback to review", () => {
     for (const role of ["mita", "owner"] as const) {
       const inbox = reviewInbox(
         [
           takeaway(1, "in_review", OTHER),
-          takeaway(2, "in_review", OTHER, { comments: 1 }),
-          takeaway(3, "in_review", OTHER, { suggestions: 1 }),
+          takeaway(2, "draft", OTHER, { comments: 1 }),
+          takeaway(3, "draft", OTHER, { suggestions: 1 }),
           takeaway(4, "in_review", ME),
-          takeaway(5, "in_review", null),
+          takeaway(5, "in_review", null, { comments: 1 }),
           takeaway(6, "draft", OTHER),
+          takeaway(7, "draft", ME, { comments: 1 }),
         ],
         viewer(role)
       );
@@ -88,13 +89,13 @@ describe("reviewInbox", () => {
       ],
       viewer("writer")
     );
-    expect(ids(writer.needsReview)).toEqual([1]);
+    expect(ids(writer.needsReview)).toEqual([2]);
     expect(ids(writer.openFeedback)).toEqual([3, 4]);
 
     const mita = reviewInbox(
       [
         correction(1, "in_review", OTHER),
-        correction(2, "in_review", OTHER, { comments: 1 }),
+        correction(2, "draft", OTHER, { comments: 1 }),
         correction(3, "draft", OTHER),
       ],
       { id: ME, role: "mita" }

@@ -9,20 +9,21 @@ import {
 export const REPLACEMENT_MAX_LENGTH = 2000;
 
 /**
- * Who may suggest an edit (#58): every reviewer who may comment, while the
- * text can still change. The writer edits their own text directly instead.
+ * Who may suggest an edit (#58): every reviewer who may comment, while it is
+ * a draft (#75); once submitted the text is locked. The writer edits their
+ * own text directly instead.
  */
 export const maySuggestOn = (
   takeaway: TakeawaySubject,
   viewer: TakeawayViewer
 ) =>
-  takeaway.status !== "published" &&
+  takeaway.status === "draft" &&
   takeaway.authorId !== viewer.id &&
   mayCommentOn(takeaway, viewer);
 
 /**
  * Who may accept or reject suggestions: whoever may change the text, i.e. its
- * writer, mita and the dev, until it is published.
+ * writer, mita and the dev, while it is a draft.
  */
 export const mayDecideSuggestions = mayEditTakeaway;
 
