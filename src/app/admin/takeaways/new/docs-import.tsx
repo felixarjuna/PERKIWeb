@@ -1,25 +1,35 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { ArrowRight, CalendarDays, List, RefreshCw } from "lucide-react";
 import { DateTime } from "luxon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type React from "react";
+import React from "react";
 import { toast } from "sonner";
-import { QueryMessage } from "~/components/admin/admin-controls";
+import {
+  AdminSegmented,
+  QueryMessage,
+} from "~/components/admin/admin-controls";
 import { Button } from "~/components/ui/button";
 import { markdownToPlainText } from "~/lib/markdown";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
+import DocsImportCalendar from "./docs-import-calendar";
+
+const VIEWS = [
+  { icon: List, label: "List", value: "list" },
+  { icon: CalendarDays, label: "Calendar", value: "calendar" },
+] as const;
 
 type Entry = RouterOutputs["takeawayImport"]["preview"]["entries"][number];
 
-const CHANGE_LABELS: Record<Entry["changes"][number], string> = {
-  notes: "notes",
+const FIELD_LABELS: Record<Entry["changes"][number]["field"], string> = {
+  notes: "Notes",
   tldr: "TL;DR",
 };
 
 const BLOCK_BREAK = "\n\n";
+const LINE_BREAK = "\n";
 
 /** The TL;DR as text, without the dated heading it starts with. */
 const summaryText = (tldr: string) =>
@@ -52,6 +62,38 @@ function Detail({ children }: { children: React.ReactNode }) {
     <p className="type-body-sm mt-1.5 line-clamp-3 break-words text-muted-foreground">
       {children}
     </p>
+  );
+}
+
+/** A passage as plain text, one line per paragraph. */
+const passageText = (markdown: string) =>
+  markdown
+    .split(BLOCK_BREAK)
+    .map(markdownToPlainText)
+    .filter(Boolean)
+    .join(LINE_BREAK);
+
+/** Each replaced field as the passage that differs, before and after. */
+function Changes({ entry }: { entry: Entry }) {
+  return (
+    <dl className="type-body-sm mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
+      {entry.changes.map((change) => (
+        <div className="contents" key={change.field}>
+          <dt className="text-muted-foreground">
+            {FIELD_LABELS[change.field]}
+          </dt>
+          <dd className="flex min-w-0 flex-col gap-1 break-words">
+            <span className="line-clamp-3 whitespace-pre-line text-muted-foreground line-through">
+              {passageText(change.from) || "empty"}
+            </span>
+            <ArrowRight aria-label="becomes" className="size-3.5 shrink-0" />
+            <span className="line-clamp-3 whitespace-pre-line">
+              {passageText(change.to) || "empty"}
+            </span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -103,6 +145,56 @@ const importLabel = (count: number) => {
 const byStatus = (entries: Entry[], status: Entry["status"]) =>
   entries.filter((entry) => entry.status === status);
 
+/** The preview as lists: new takeaways with their TL;DR, changes passage by passage, the rest with why. */
+function ImportList({
+  added,
+  changed,
+  published,
+  skipped,
+}: Record<"added" | "changed" | "published" | "skipped", Entry[]>) {
+  return (
+    <>
+      <Group
+        description="Added as drafts without an author, ready for review."
+        entries={added}
+        title="New"
+      >
+        {(entry) => (
+          <Detail>
+            {entry.tldr
+              ? summaryText(entry.tldr)
+              : "No TL;DR in the document yet."}
+          </Detail>
+        )}
+      </Group>
+
+      <Group
+        description="Not published yet, so the documents' text replaces it."
+        entries={changed}
+        title="Changed"
+      >
+        {(entry) => <Changes entry={entry} />}
+      </Group>
+
+      <Group
+        description="The documents differ, but published takeaways are never overwritten. Unpublish one to update it."
+        entries={published}
+        title="Published, left alone"
+      >
+        {() => null}
+      </Group>
+
+      <Group
+        description="Dates are never guessed: fix the date in the document heading, or add the gathering first."
+        entries={skipped}
+        title="Skipped"
+      >
+        {(entry) => <Detail>{entry.reason}</Detail>}
+      </Group>
+    </>
+  );
+}
+
 /**
  * Imports the notes and TL;DR documents. The preview shows what would be
  * added and changed; nothing is written until the import is confirmed, and
@@ -112,6 +204,7 @@ export default function DocsImport() {
   const router = useRouter();
   const utils = api.useUtils();
   const status = api.takeawayImport.status.useQuery();
+  const [view, setView] = React.useState("list");
   const preview = api.takeawayImport.preview.useQuery(undefined, {
     enabled: status.data?.configured === true,
     retry: false,
@@ -159,11 +252,11 @@ export default function DocsImport() {
 
   return (
     <div className="@container space-y-6">
+      <p className="type-body-sm text-muted-foreground">
+        Reads both documents and matches each dated entry to the gathering held
+        that day.
+      </p>
       <div className="flex flex-wrap items-center gap-3">
-        <p className="type-body-sm min-w-0 flex-1 text-muted-foreground">
-          Reads both documents and matches each dated entry to the gathering
-          held that day.
-        </p>
         <Button
           disabled={preview.isFetching}
           onClick={() => preview.refetch()}
@@ -179,6 +272,13 @@ export default function DocsImport() {
           />
           Read again
         </Button>
+        <AdminSegmented
+          className="ml-auto"
+          label="Preview as"
+          onChange={setView}
+          options={VIEWS}
+          value={view}
+        />
       </div>
 
       {preview.isError ? (
@@ -208,50 +308,21 @@ export default function DocsImport() {
             {skipped.length} skipped
           </p>
 
-          <Group
-            description="Added as drafts without an author, ready for review."
-            entries={added}
-            title="New"
-          >
-            {(entry) => (
-              <Detail>
-                {entry.tldr
-                  ? summaryText(entry.tldr)
-                  : "No TL;DR in the document yet."}
-              </Detail>
-            )}
-          </Group>
-
-          <Group
-            description="Not published yet, so the documents' text replaces it."
-            entries={changed}
-            title="Changed"
-          >
-            {(entry) => (
-              <Detail>
-                Updates{" "}
-                {entry.changes
-                  .map((change) => CHANGE_LABELS[change])
-                  .join(" and ")}
-              </Detail>
-            )}
-          </Group>
-
-          <Group
-            description="The documents differ, but published takeaways are never overwritten. Unpublish one to update it."
-            entries={published}
-            title="Published, left alone"
-          >
-            {() => null}
-          </Group>
-
-          <Group
-            description="Dates are never guessed: fix the date in the document heading, or add the gathering first."
-            entries={skipped}
-            title="Skipped"
-          >
-            {(entry) => <Detail>{entry.reason}</Detail>}
-          </Group>
+          {view === "calendar" ? (
+            <DocsImportCalendar
+              entries={entries}
+              label={(field) =>
+                field === "tldr" ? FIELD_LABELS[field] : field
+              }
+            />
+          ) : (
+            <ImportList
+              added={added}
+              changed={changed}
+              published={published}
+              skipped={skipped}
+            />
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <Button

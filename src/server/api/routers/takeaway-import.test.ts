@@ -142,7 +142,11 @@ describe("takeaway import router", () => {
     expect(
       preview.entries.map((entry) => [entry.day, entry.status, entry.changes])
     ).toEqual([
-      ["2026-01-03", "changed", ["notes"]],
+      [
+        "2026-01-03",
+        "changed",
+        [{ field: "notes", from: "", to: "A paragraph added later." }],
+      ],
       ["2026-01-10", "published", []],
       ["2026-06-07", "skipped", []],
     ]);

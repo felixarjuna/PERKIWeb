@@ -327,9 +327,46 @@ export type DocsImportStatus =
   | "published"
   | "skipped";
 
+/** A field the import would replace: the passage that differs, before and after. */
+export interface TextChange {
+  field: "notes" | "tldr";
+  from: string;
+  to: string;
+}
+
+const PARAGRAPH_BREAK = /\n{2,}/;
+const PARAGRAPH_JOIN = "\n\n";
+
+/**
+ * The passage that differs between two Markdown texts: their paragraphs once
+ * the ones both start and end with are set aside.
+ */
+export function changedPassage(from: string, to: string) {
+  const before = from.split(PARAGRAPH_BREAK);
+  const after = to.split(PARAGRAPH_BREAK);
+  let start = 0;
+  while (
+    start < Math.min(before.length, after.length) &&
+    before[start] === after[start]
+  ) {
+    start += 1;
+  }
+  let end = 0;
+  while (
+    end < Math.min(before.length, after.length) - start &&
+    before.at(-1 - end) === after.at(-1 - end)
+  ) {
+    end += 1;
+  }
+  return {
+    from: before.slice(start, before.length - end).join(PARAGRAPH_JOIN),
+    to: after.slice(start, after.length - end).join(PARAGRAPH_JOIN),
+  };
+}
+
 export interface DocsImportEntry {
-  /** Which fields the import would replace; only for `changed`. */
-  changes: ("notes" | "tldr")[];
+  /** What the import would replace; only for `changed`. */
+  changes: TextChange[];
   day: string;
   heading: string;
   notes: string | null;
@@ -360,6 +397,28 @@ function skipReason(
     return `The gathering has ${takeaways.length} takeaways`;
   }
   return null;
+}
+
+/** What the documents would replace in a stored takeaway; a missing TL;DR keeps the stored one. */
+function textChanges(
+  takeaway: StoredTakeaway,
+  notes: string,
+  tldr: string | null
+): TextChange[] {
+  const changes: TextChange[] = [];
+  if (takeaway.keypoints !== notes) {
+    changes.push({
+      field: "notes",
+      ...changedPassage(takeaway.keypoints, notes),
+    });
+  }
+  if (tldr !== null && takeaway.tldr !== tldr) {
+    changes.push({
+      field: "tldr",
+      ...changedPassage(takeaway.tldr ?? "", tldr),
+    });
+  }
+  return changes;
 }
 
 /**
@@ -404,13 +463,7 @@ export function planDocsImport(
     if (!takeaway) {
       return { ...base, status: "new" };
     }
-    const changes: DocsImportEntry["changes"] = [];
-    if (takeaway.keypoints !== base.notes) {
-      changes.push("notes");
-    }
-    if (base.tldr !== null && takeaway.tldr !== base.tldr) {
-      changes.push("tldr");
-    }
+    const changes = textChanges(takeaway, base.notes ?? "", base.tldr);
     let status: DocsImportStatus = "changed";
     if (changes.length === 0) {
       status = "unchanged";

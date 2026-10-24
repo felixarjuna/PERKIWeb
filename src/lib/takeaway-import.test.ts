@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assertLocalImportDatabase,
+  changedPassage,
   pairTakeawaySources,
   parseTakeawaySource,
   planDocsImport,
@@ -171,7 +172,12 @@ describe("planDocsImport", () => {
       ])
     ).toEqual([
       ["2026-01-03", "new", [], null],
-      ["2026-01-10", "changed", ["tldr"], null],
+      [
+        "2026-01-10",
+        "changed",
+        [{ field: "tldr", from: "", to: tldr.entries[1]?.content }],
+        null,
+      ],
       ["2026-01-17", "unchanged", [], null],
       ["2026-01-24", "published", [], null],
       ["2026-01-31", "skipped", [], "No gathering on this date"],
@@ -204,6 +210,23 @@ describe("planDocsImport", () => {
       ]
     );
     expect(plan?.status).toBe("unchanged");
+  });
+
+  it("shows only the passage that changed", () => {
+    const text = (...paragraphs: string[]) => paragraphs.join("\n\n");
+    expect(
+      changedPassage(
+        text("### Day", "One.", "Two.", "Three."),
+        text("### Day", "One.", "Two, edited.", "Three.")
+      )
+    ).toEqual({ from: "Two.", to: "Two, edited." });
+    expect(
+      changedPassage(text("### Day", "One."), text("### Day", "One.", "Added."))
+    ).toEqual({ from: "", to: "Added." });
+    expect(changedPassage("", text("### Day", "New."))).toEqual({
+      from: "",
+      to: text("### Day", "New."),
+    });
   });
 
   it("leaves a gathering with several takeaways alone", () => {

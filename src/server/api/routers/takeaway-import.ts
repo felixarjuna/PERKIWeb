@@ -7,6 +7,7 @@ import {
   parseTakeawaySource,
   planDocsImport,
   type TakeawaySource,
+  type TextChange,
 } from "~/lib/takeaway-import";
 import { db } from "~/server";
 import { docHtml } from "~/server/google-docs";
@@ -123,6 +124,8 @@ export const takeawayImportRouter = createTRPCRouter({
       let added = 0;
       let updated = 0;
       for (const entry of await planDocs(tx, docs)) {
+        const replaces = (field: TextChange["field"]) =>
+          entry.changes.some((change) => change.field === field);
         if (entry.status === "new" && entry.scheduleId && entry.notes) {
           // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
           await tx.insert(takeaways).values({
@@ -137,10 +140,10 @@ export const takeawayImportRouter = createTRPCRouter({
           await tx
             .update(takeaways)
             .set({
-              ...(entry.changes.includes("notes") && entry.notes
+              ...(replaces("notes") && entry.notes
                 ? { keypoints: entry.notes }
                 : {}),
-              ...(entry.changes.includes("tldr") ? { tldr: entry.tldr } : {}),
+              ...(replaces("tldr") ? { tldr: entry.tldr } : {}),
             })
             .where(
               and(
