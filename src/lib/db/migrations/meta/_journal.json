@@ -162,6 +162,13 @@
       "when": 1792737036779,
       "tag": "0022_takeaway_suggestions",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792759844480,
+      "tag": "0023_takeaway_revisions",
+      "breakpoints": true
     }
   ]
 }

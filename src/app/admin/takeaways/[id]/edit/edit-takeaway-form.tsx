@@ -9,14 +9,12 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import { TakeawayStatusBadges } from "~/components/admin/content/takeaway-status-badges";
 import { TakeawaySuggestions } from "~/components/admin/content/takeaway-suggestions";
-import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
-import { statusLabels } from "~/lib/takeaway-status";
 import { takeawayTldrSchema } from "~/lib/takeaway-tldr";
 import { getUsernameFromName } from "~/lib/utils";
 import { updateTakeawaySchema } from "~/server/api/schema/schema";
@@ -39,9 +37,14 @@ export default function EditTakeawayForm() {
   const router = useRouter();
 
   const { id } = useParams<{ id: string }>();
+  const takeawayId = Number.parseInt(id, 10);
   const { data: takeaway } = api.takeaways.getTakeawayById.useQuery({
-    id: Number.parseInt(id, 10),
+    id: takeawayId,
   });
+  // A published takeaway is edited through its correction (#74).
+  const { data: revision, isSuccess: revisionLoaded } =
+    api.takeawayRevisions.current.useQuery({ takeawayId });
+  const published = takeaway?.takeaways.status === "published";
 
   /** form definition. */
   const form = useForm<EditTakeawayValues>({
@@ -54,16 +57,22 @@ export default function EditTakeawayForm() {
    */
   const loadedId = React.useRef<number | null>(null);
   React.useEffect(() => {
-    if (!takeaway || loadedId.current === takeaway.takeaways.id) {
+    if (
+      !(takeaway && revisionLoaded) ||
+      loadedId.current === takeaway.takeaways.id
+    ) {
       return;
     }
     loadedId.current = takeaway.takeaways.id;
+    const text = revision ?? takeaway.takeaways;
     form.reset({
       ...takeaway.takeaways,
-      contributors: takeaway.takeaways.contributors as string[],
-      tldr: takeaway.takeaways.tldr ?? "",
+      contributors: text.contributors as string[],
+      keypoints: text.keypoints,
+      tldr: text.tldr ?? "",
     });
-  }, [form, takeaway]);
+  }, [form, revision, revisionLoaded, takeaway]);
+  const savedTldr = (revision ?? takeaway?.takeaways)?.tldr ?? "";
 
   /** edit takeaway action. */
   const utils = api.useUtils();
@@ -74,10 +83,20 @@ export default function EditTakeawayForm() {
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       await utils.takeaways.getManageable.cancel();
-      await utils.takeaways.invalidate();
-      toast.success("Your changes has been saved successfully!", {
-        description: "Thanks for your contribution!",
-      });
+      await Promise.all([
+        utils.takeaways.invalidate(),
+        utils.takeawayRevisions.invalidate(),
+      ]);
+      toast.success(
+        published
+          ? "Changes saved."
+          : "Your changes has been saved successfully!",
+        {
+          description: published
+            ? "The website keeps the published text until mita publishes your changes."
+            : "Thanks for your contribution!",
+        }
+      );
       router.push("/admin/takeaways");
     },
   });
@@ -88,7 +107,7 @@ export default function EditTakeawayForm() {
       username && !values.contributors.includes(username)
         ? [...values.contributors, username]
         : values.contributors;
-    if (tldr !== (takeaway?.takeaways.tldr ?? "")) {
+    if (tldr !== savedTldr) {
       try {
         await saveTldr.mutateAsync({ id: values.id, tldr });
       } catch {
@@ -108,15 +127,22 @@ export default function EditTakeawayForm() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="type-heading">Fellowship Information</h2>
             {takeaway ? (
-              <Badge
-                data-slot="takeaway-status"
-                size="status"
-                {...takeawayBadgeStyles[takeaway.takeaways.status]}
-              >
-                {statusLabels[takeaway.takeaways.status]}
-              </Badge>
+              <TakeawayStatusBadges
+                revision={revision?.status}
+                status={takeaway.takeaways.status}
+              />
             ) : null}
           </div>
+          {published ? (
+            <p
+              className="type-body-sm rounded-xl bg-card p-4 text-muted-foreground sm:p-6"
+              data-slot="revision-notice"
+            >
+              This takeaway is published. Your changes are saved separately and
+              go through review; the website keeps the published text until mita
+              publishes them.
+            </p>
+          ) : null}
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="takeaway-schedule">Schedule</Label>
@@ -156,7 +182,9 @@ export default function EditTakeawayForm() {
             </Link>
           </div>
           <p className="type-caption text-muted-foreground">
-            Saving keeps the status. Change it from the takeaways list.
+            {published
+              ? "Send your changes to review from the takeaways list."
+              : "Saving keeps the status. Change it from the takeaways list."}
           </p>
         </div>
       </form>
@@ -170,7 +198,7 @@ export default function EditTakeawayForm() {
         onAccepted={(keypoints) =>
           form.reset({ ...form.getValues(), keypoints })
         }
-        takeawayId={Number.parseInt(id, 10)}
+        takeawayId={takeawayId}
       />
     </Form>
   );

@@ -438,7 +438,8 @@ test("a writer drafts a takeaway, sends it to review and mita publishes it", asy
   await publicCard().click();
   await expect(page.getByText(keypoints, { exact: true })).toBeVisible();
 
-  // Once published, the writer can no longer edit it.
+  // Once published, the writer has no status moves left; corrections go
+  // through review while it stays live (takeaway-revisions.spec.ts).
   await loginAs(page, WRITER);
   const locked = await findInList(page, scheduleTitle);
   await expect(locked).toContainText("Published");

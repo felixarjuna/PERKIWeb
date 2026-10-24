@@ -2,7 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
-import { takeawaySuggestions, takeaways, users } from "~/lib/db/schema/schema";
+import {
+  takeawayRevisions,
+  takeawaySuggestions,
+  takeaways,
+  users,
+} from "~/lib/db/schema/schema";
 import { mayReadComments, QUOTE_MAX_LENGTH } from "~/lib/takeaway-comments";
 import type { TakeawayViewer } from "~/lib/takeaway-status";
 import {
@@ -15,8 +20,11 @@ import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow } from "../errors";
 import { createTRPCRouter, takeawayProcedure } from "../trpc";
-
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+import {
+  lockWorkingCopy,
+  type Transaction,
+  workingText,
+} from "./takeaway-revisions";
 
 const viewerOf = async (userId: string): Promise<TakeawayViewer> => ({
   id: userId,
@@ -25,28 +33,26 @@ const viewerOf = async (userId: string): Promise<TakeawayViewer> => ({
 
 // Lock the takeaway until the operation finishes: its text, status and
 // author cannot change between checking a permission and acting on it.
+// While a published takeaway has a correction, suggestions are about the
+// correction's text (#74) and accepting one changes it, never the live text.
 const lockTakeaway = async (
   tx: Transaction,
   takeawayId: number,
   viewer: TakeawayViewer
 ) => {
-  const [takeaway] = await tx
-    .select({
-      authorId: takeaways.authorId,
-      keypoints: takeaways.keypoints,
-      status: takeaways.status,
-    })
-    .from(takeaways)
-    .where(eq(takeaways.id, takeawayId))
-    .for("update");
+  const copy = await lockWorkingCopy(tx, takeawayId);
   // Suggestions are part of the review thread and share its visibility.
-  if (!(takeaway && mayReadComments(takeaway, viewer))) {
+  if (!(copy && mayReadComments(copy.subject, viewer))) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Review thread not found.",
     });
   }
-  return takeaway;
+  return {
+    ...copy.subject,
+    keypoints: workingText(copy).keypoints,
+    revisionId: copy.revision?.id ?? null,
+  };
 };
 
 const forbidden = (message: string) =>
@@ -140,10 +146,15 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
             });
           }
           keypoints = applied;
-          await tx
-            .update(takeaways)
-            .set({ keypoints })
-            .where(eq(takeaways.id, suggestion.takeawayId));
+          await (takeaway.revisionId === null
+            ? tx
+                .update(takeaways)
+                .set({ keypoints })
+                .where(eq(takeaways.id, suggestion.takeawayId))
+            : tx
+                .update(takeawayRevisions)
+                .set({ keypoints })
+                .where(eq(takeawayRevisions.id, takeaway.revisionId)));
         }
         await tx
           .update(takeawaySuggestions)
@@ -183,6 +194,7 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
               authorId: viewer.id,
               original: input.original,
               replacement: input.replacement,
+              revisionId: takeaway.revisionId,
               takeawayId: input.takeawayId,
             })
             .returning({ id: takeawaySuggestions.id }),

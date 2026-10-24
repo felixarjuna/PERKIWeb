@@ -18,6 +18,25 @@ export function serviceDate(date: Date, style: "short" | "long" = "short") {
 }
 
 /**
+ * "Published 2 Mar 2026" and, after a correction on a later day (#74),
+ * "Updated 9 Mar 2026". Takeaways published before the date was kept show
+ * only when they were updated, if they were.
+ */
+export function publicationDates(
+  publishedAt: Date | null,
+  revisedAt: Date | null
+) {
+  const dates = [
+    { date: publishedAt, label: "Published" },
+    { date: revisedAt, label: "Updated" },
+  ].flatMap(({ date, label }) =>
+    date ? [{ date, label, text: serviceDate(date) }] : []
+  );
+  const [first, second] = dates;
+  return first && second?.text === first.text ? [first] : dates;
+}
+
+/**
  * `contributors` is an untyped JSON column; keep only non-empty names.
  * Returns "Gaby, Erico and Tius", or null when nobody is credited.
  */

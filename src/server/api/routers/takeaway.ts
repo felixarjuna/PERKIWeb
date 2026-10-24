@@ -3,13 +3,23 @@ import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 import {
   schedules,
   type TakeawayStatus,
+  takeawayRevisions,
   takeaways,
 } from "~/lib/db/schema/schema";
 import { markdownToPlainText } from "~/lib/markdown";
 import { monthsOf } from "~/lib/months";
 import { canWriteTakeaways, isStaffRole, type Role } from "~/lib/roles";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
-import { mayEditTakeaway, statusActions } from "~/lib/takeaway-status";
+import {
+  mayChangeText,
+  revisionActions,
+  workingSubject,
+} from "~/lib/takeaway-revisions";
+import {
+  mayEditTakeaway,
+  mayReadTakeaway,
+  statusActions,
+} from "~/lib/takeaway-status";
 import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow, isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
@@ -30,6 +40,13 @@ import {
   updateTakeawaySchema,
 } from "../schema/schema";
 import { createTRPCRouter, publicProcedure, takeawayProcedure } from "../trpc";
+import {
+  foldOpenRevision,
+  lockWorkingCopy,
+  openRevisionOf,
+  openStatus,
+  saveText,
+} from "./takeaway-revisions";
 
 /** Maps a write that references a missing schedule to NOT_FOUND. */
 const rethrowMissingSchedule = (error: unknown): never => {
@@ -53,6 +70,17 @@ const publicTakeawayColumns = {
   id: takeaways.id,
   keypoints: takeaways.keypoints,
   publishedAt: takeaways.publishedAt,
+  /**
+   * When a correction was last published since the takeaway itself was
+   * (#74); null when none was. Only published corrections count, so a
+   * pending one never shows here.
+   */
+  revisedAt: sql<Date | null>`(
+    select max(${takeawayRevisions.decidedAt}) from ${takeawayRevisions}
+    where ${takeawayRevisions.takeawayId} = ${takeaways.id}
+      and ${takeawayRevisions.status} = 'published'
+      and ${takeawayRevisions.decidedAt} > coalesce(${takeaways.publishedAt}, '-infinity'::timestamptz)
+  )`.mapWith(takeaways.publishedAt),
   scheduleId: takeaways.scheduleId,
   status: takeaways.status,
   tldr: takeaways.tldr,
@@ -134,15 +162,8 @@ interface Ownership {
 const mayManage = (takeaway: Ownership, viewer: Viewer) =>
   mayEditTakeaway(takeaway, viewer);
 
-/**
- * The read rule from #36: published is public, staff and the author read
- * every status, other writers read takeaways that are in review.
- */
-const mayRead = (takeaway: Ownership, viewer: Viewer) =>
-  takeaway.status === "published" ||
-  viewer.staff ||
-  (viewer.writer &&
-    (takeaway.authorId === viewer.id || takeaway.status === "in_review"));
+/** The read rule (`mayReadTakeaway`). */
+const mayRead = mayReadTakeaway;
 
 /** The status rule (`statusActions`): exactly the moves the list offers. */
 const maySetStatus = (
@@ -180,12 +201,22 @@ const loadOwnership = async (
   return takeaway;
 };
 
+/**
+ * Whether the viewer may open the editor: to change the text directly, or,
+ * once it is published, through its correction (`mayChangeText`).
+ */
 export const canManageTakeaway = async (
   takeawayId: number,
   userId: string
 ): Promise<boolean> => {
-  const takeaway = await loadOwnership(takeawayId);
-  return takeaway !== undefined && mayManage(takeaway, await viewerFor(userId));
+  const viewer = await viewerFor(userId);
+  return await db.transaction(async (tx) => {
+    const copy = await lockWorkingCopy(tx, takeawayId);
+    return (
+      copy !== undefined &&
+      mayChangeText(copy.takeaway, copy.revision?.status ?? null, viewer)
+    );
+  });
 };
 
 const notFound = () =>
@@ -232,6 +263,23 @@ const publicationFor = (
     return {};
   }
   return { publishedAt: new Date(), publishedById: viewerId };
+};
+
+/**
+ * The admin list's status filter. "In review" also finds published
+ * takeaways whose correction is in review: that is what reviewers act on.
+ */
+const statusFilter = (status: TakeawayStatus | "all") => {
+  if (status === "all") {
+    return;
+  }
+  if (status === "in_review") {
+    return or(
+      eq(takeaways.status, status),
+      eq(takeawayRevisions.status, status)
+    );
+  }
+  return eq(takeaways.status, status);
 };
 
 /** The rows `viewer` may see in the admin list (see `mayRead`). */
@@ -288,15 +336,8 @@ export const takeawayRouter = createTRPCRouter({
         .select()
         .from(takeaways)
         .innerJoin(schedules, eq(schedules.id, takeaways.scheduleId))
-        .where(
-          and(
-            where,
-            readableBy(viewer),
-            input.status === "all"
-              ? undefined
-              : eq(takeaways.status, input.status)
-          )
-        )
+        .leftJoin(takeawayRevisions, openRevisionOf)
+        .where(and(where, readableBy(viewer), statusFilter(input.status)))
         .orderBy(...orderBy)
         .limit(input.limit + 1);
       const page = toPage(rows, input.limit, cursorOf);
@@ -305,12 +346,25 @@ export const takeawayRouter = createTRPCRouter({
           ({
             takeaways: { authorId, publishedById: _publisher, ...note },
             schedules: schedule,
-          }) => ({
-            actions: statusActions({ authorId, status: note.status }, viewer),
-            canManage: mayManage({ authorId, status: note.status }, viewer),
-            schedules: schedule,
-            takeaways: withPreview(note),
-          })
+            takeaway_revisions: correction,
+          }) => {
+            const takeaway = { authorId, status: note.status };
+            const revision = openStatus(correction?.status);
+            return {
+              actions: statusActions(takeaway, viewer),
+              canManage: mayManage(takeaway, viewer),
+              // The open correction, for those who may read it.
+              revision:
+                revision && mayRead(workingSubject(takeaway, revision), viewer)
+                  ? {
+                      actions: revisionActions(takeaway, revision, viewer),
+                      status: revision,
+                    }
+                  : null,
+              schedules: schedule,
+              takeaways: withPreview(note),
+            };
+          }
         ),
         nextCursor: page.nextCursor,
       };
@@ -418,35 +472,35 @@ export const takeawayRouter = createTRPCRouter({
           });
         }
       }
-      return affectedRow(
-        await db
-          .update(takeaways)
-          .set({
-            status: input.status,
-            ...publicationFor(takeaway.status, input.status, viewer.id),
-          })
-          .where(
-            and(
-              eq(takeaways.id, input.id),
-              eq(takeaways.status, takeaway.status)
+      return await db.transaction(async (tx) => {
+        const copy = await lockWorkingCopy(tx, input.id);
+        // Unpublishing keeps an open correction: the draft continues from it.
+        const folded =
+          copy && copy.takeaway.status === "published"
+            ? await foldOpenRevision(tx, copy)
+            : {};
+        return affectedRow(
+          await tx
+            .update(takeaways)
+            .set({
+              status: input.status,
+              ...folded,
+              ...publicationFor(takeaway.status, input.status, viewer.id),
+            })
+            .where(
+              and(
+                eq(takeaways.id, input.id),
+                eq(takeaways.status, takeaway.status)
+              )
             )
-          )
-          .returning({ id: takeaways.id, status: takeaways.status }),
-        "Takeaway"
-      );
+            .returning({ id: takeaways.id, status: takeaways.status }),
+          "Takeaway"
+        );
+      });
     }),
   updateTakeaway: takeawayProcedure
     .input(updateTakeawaySchema)
-    .mutation(async ({ ctx, input }) => {
-      const where = await assertCanManage(input.id, ctx.session.user.id);
-      return affectedRow(
-        await db
-          .update(takeaways)
-          .set({ ...input })
-          .where(where)
-          .returning({ id: takeaways.id })
-          .catch(rethrowMissingSchedule),
-        "Takeaway"
-      );
-    }),
+    .mutation(({ ctx, input: { id, ...text } }) =>
+      saveText(ctx.session.user.id, id, text).catch(rethrowMissingSchedule)
+    ),
 });

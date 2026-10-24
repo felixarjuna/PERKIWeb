@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
-import { takeawayComments, takeaways, users } from "~/lib/db/schema/schema";
+import { takeawayComments, users } from "~/lib/db/schema/schema";
 import {
   COMMENT_MAX_LENGTH,
   mayCommentOn,
@@ -14,29 +14,31 @@ import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow } from "../errors";
 import { createTRPCRouter, takeawayProcedure } from "../trpc";
+import { lockWorkingCopy, type Transaction } from "./takeaway-revisions";
 
 const threadInput = z.object({ takeawayId: z.number().int().positive() });
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // Lock the takeaway until the operation finishes: publication or withdrawal
 // cannot change the permission between checking it and writing a comment.
+// While a published takeaway has a correction, the thread is about the
+// correction (#74): its status decides who may comment, and new comments
+// are attached to it.
 const authorizeThread = async (
   tx: Transaction,
   takeawayId: number,
   viewer: TakeawayViewer
 ) => {
-  const [takeaway] = await tx
-    .select({ authorId: takeaways.authorId, status: takeaways.status })
-    .from(takeaways)
-    .where(eq(takeaways.id, takeawayId))
-    .for("update");
-  if (!(takeaway && mayReadComments(takeaway, viewer))) {
+  const copy = await lockWorkingCopy(tx, takeawayId);
+  if (!(copy && mayReadComments(copy.subject, viewer))) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Review thread not found.",
     });
   }
-  return mayCommentOn(takeaway, viewer);
+  return {
+    canComment: mayCommentOn(copy.subject, viewer),
+    revisionId: copy.revision?.id ?? null,
+  };
 };
 
 const assertWritable = (canComment: boolean) => {
@@ -65,7 +67,8 @@ export const takeawayCommentsRouter = createTRPCRouter({
         role: await getRole(ctx.session.user.id),
       };
       return await db.transaction(async (tx) => {
-        assertWritable(await authorizeThread(tx, input.takeawayId, viewer));
+        const thread = await authorizeThread(tx, input.takeawayId, viewer);
+        assertWritable(thread.canComment);
         return affectedRow(
           await tx
             .insert(takeawayComments)
@@ -73,6 +76,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
               authorId: viewer.id,
               body: input.body,
               quote: input.quote || null,
+              revisionId: thread.revisionId,
               takeawayId: input.takeawayId,
             })
             .returning({ id: takeawayComments.id }),
@@ -86,7 +90,11 @@ export const takeawayCommentsRouter = createTRPCRouter({
       role: await getRole(ctx.session.user.id),
     };
     return await db.transaction(async (tx) => {
-      const canComment = await authorizeThread(tx, input.takeawayId, viewer);
+      const { canComment } = await authorizeThread(
+        tx,
+        input.takeawayId,
+        viewer
+      );
       const rows = await tx
         .select({
           author: { id: author.id, image: author.image, name: author.name },
@@ -136,7 +144,9 @@ export const takeawayCommentsRouter = createTRPCRouter({
             message: "Comment not found.",
           });
         }
-        assertWritable(await authorizeThread(tx, comment.takeawayId, viewer));
+        assertWritable(
+          (await authorizeThread(tx, comment.takeawayId, viewer)).canComment
+        );
         if (comment.authorId !== viewer.id) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -170,7 +180,9 @@ export const takeawayCommentsRouter = createTRPCRouter({
             message: "Comment not found.",
           });
         }
-        assertWritable(await authorizeThread(tx, comment.takeawayId, viewer));
+        assertWritable(
+          (await authorizeThread(tx, comment.takeawayId, viewer)).canComment
+        );
         return affectedRow(
           await tx
             .update(takeawayComments)

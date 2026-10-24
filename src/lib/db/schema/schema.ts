@@ -110,6 +110,76 @@ export const takeaways = pgTable(
   ]
 );
 
+export const REVISION_STATUSES = [
+  "draft",
+  "in_review",
+  "published",
+  "discarded",
+] as const;
+export type RevisionStatus = (typeof REVISION_STATUSES)[number];
+
+/**
+ * A correction to a published takeaway (#74). The website keeps showing the
+ * takeaway's own text while its open revision (draft or in review) is worked
+ * on; publishing copies the revision onto the takeaway. Published and
+ * discarded revisions stay as the takeaway's version history. Never returned
+ * by the public takeaway queries.
+ */
+export const takeawayRevisions = pgTable(
+  "takeaway_revisions",
+  {
+    /** Who started the correction; null once their account is deleted. */
+    authorId: text("authorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    contributors: json("contributors").notNull(),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    /** When it was published or discarded; null while it is open. */
+    decidedAt: timestamp("decidedAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    decidedById: text("decidedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    id: serial("id").primaryKey().notNull(),
+    keypoints: text("keypoints").notNull(),
+    /** The live notes this revision replaced, set when it is published. */
+    previousKeypoints: text("previousKeypoints"),
+    previousTldr: text("previousTldr"),
+    status: text("status", { enum: REVISION_STATUSES })
+      .default("draft")
+      .notNull(),
+    takeawayId: integer("takeawayId")
+      .notNull()
+      .references(() => takeaways.id, { onDelete: "cascade" }),
+    tldr: text("tldr"),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("takeaway_revisions_takeaway_idx").on(t.takeawayId),
+    // One correction at a time per takeaway.
+    uniqueIndex("takeaway_revisions_open")
+      .on(t.takeawayId)
+      .where(sql`${t.status} in ('draft', 'in_review')`),
+    check(
+      "takeaway_revisions_status_check",
+      sql`${t.status} in ('draft', 'in_review', 'published', 'discarded')`
+    ),
+  ]
+);
+
 /**
  * The review thread on a takeaway (#57): internal to writers and staff, never
  * returned by the public takeaway queries.
@@ -137,6 +207,10 @@ export const takeawayComments = pgTable(
       withTimezone: true,
     }),
     resolvedById: text("resolvedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    /** The correction the comment was made on (#74); null for the takeaway's own review. */
+    revisionId: integer("revisionId").references(() => takeawayRevisions.id, {
       onDelete: "set null",
     }),
     takeawayId: integer("takeawayId")
@@ -175,6 +249,10 @@ export const takeawaySuggestions = pgTable(
     /** The passage as the reviewer selected it, in plain text. */
     original: text("original").notNull(),
     replacement: text("replacement").notNull(),
+    /** The correction it was suggested on (#74); its text is what it replaces. */
+    revisionId: integer("revisionId").references(() => takeawayRevisions.id, {
+      onDelete: "set null",
+    }),
     status: text("status", { enum: SUGGESTION_STATUSES })
       .default("open")
       .notNull(),

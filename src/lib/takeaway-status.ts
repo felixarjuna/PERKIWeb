@@ -21,7 +21,15 @@ export interface TakeawayViewer {
 
 export interface StatusAction {
   /** Shown before the move runs; for moves that change the public site. */
-  confirm?: { action: string; description: string; title: string };
+  confirm?: {
+    action: string;
+    /** The dialog's cancel button: what keeping things as they are means. */
+    cancel: string;
+    description: string;
+    /** The confirm button while the move runs. */
+    pending: string;
+    title: string;
+  };
   /** What the success toast says. */
   done: string;
   label: string;
@@ -57,8 +65,10 @@ const REQUEST_CHANGES: StatusAction = {
 const UNPUBLISH: StatusAction = {
   confirm: {
     action: "Unpublish",
+    cancel: "Keep it published",
     description:
-      "It disappears from the website and goes back to draft. It has to be reviewed and published again.",
+      "It disappears from the website and goes back to draft, with any changes waiting for review. It has to be reviewed and published again.",
+    pending: "Unpublishing…",
     title: "Unpublish this takeaway?",
   },
   done: "Takeaway unpublished. It is no longer on the website.",
@@ -71,7 +81,10 @@ const UNPUBLISH: StatusAction = {
  * The author owns the text, while they still may write takeaways.
  * Takeaways written before authorship have no author, so staff act for them.
  */
-const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
+export const actsAsAuthor = (
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
+) => {
   if (takeaway.authorId === null) {
     return isStaffRole(viewer.role);
   }
@@ -80,8 +93,9 @@ const actsAsAuthor = (takeaway: TakeawaySubject, viewer: TakeawayViewer) => {
 
 /**
  * Who may change the text or delete the takeaway: its author and staff,
- * until it is published. A published takeaway changes only after mita or
- * the dev unpublishes it, so they are the one gate to the public site.
+ * until it is published. A published takeaway changes through a correction
+ * (`mayChangeText` in `takeaway-revisions.ts`) that mita or the dev publish,
+ * so they stay the one gate to the public site.
  */
 export const mayEditTakeaway = (
   takeaway: TakeawaySubject,
@@ -119,3 +133,16 @@ export const statusActions = (
   }
   return gate ? [UNPUBLISH] : [];
 };
+
+/**
+ * The read rule from #36: published is public, staff and the author read
+ * every status, other writers read takeaways that are in review.
+ */
+export const mayReadTakeaway = (
+  takeaway: TakeawaySubject,
+  viewer: TakeawayViewer
+) =>
+  takeaway.status === "published" ||
+  isStaffRole(viewer.role) ||
+  (canWriteTakeaways(viewer.role) &&
+    (takeaway.authorId === viewer.id || takeaway.status === "in_review"));

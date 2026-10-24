@@ -9,6 +9,7 @@ import {
   Send,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -37,6 +38,10 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import type { TakeawayStatus } from "~/lib/db/schema/schema";
+import type {
+  OpenRevisionStatus,
+  RevisionAction,
+} from "~/lib/takeaway-revisions";
 import type { StatusAction } from "~/lib/takeaway-status";
 import { whatsAppPost } from "~/lib/whatsapp";
 import { api } from "~/trpc/react";
@@ -56,29 +61,45 @@ async function copyForWhatsApp(id: number, title: string, tldr: string) {
   }
 }
 
-/** The menu icon for a move: unpublishing hides it, the rest go back. */
-function MoveIcon({ action }: { readonly action: StatusAction }) {
-  return action.confirm ? (
-    <EyeOff aria-hidden="true">
+/** A move of the takeaway itself or of its open correction (#74). */
+type Move = StatusAction | RevisionAction;
+
+/**
+ * The icon for a move: unpublishing hides the takeaway, discarding drops its
+ * changes, the rest go back a step.
+ */
+function MoveIcon({
+  action,
+  inline = false,
+}: {
+  readonly action: Move;
+  readonly inline?: boolean;
+}) {
+  let Icon = Undo2;
+  if (action.to === "discarded") {
+    Icon = X;
+  } else if (action.confirm) {
+    Icon = EyeOff;
+  }
+  return (
+    <Icon aria-hidden="true" data-icon={inline ? "inline-start" : undefined}>
       <title>{action.label}</title>
-    </EyeOff>
-  ) : (
-    <Undo2 aria-hidden="true">
-      <title>{action.label}</title>
-    </Undo2>
+    </Icon>
   );
 }
 
 /**
- * One next step, with less frequent actions in a named menu. `actions` and
- * `canManage` come from the server (`takeaways.getManageable`), which allows
- * exactly these moves.
+ * One next step, with less frequent actions in a named menu. `actions`,
+ * `revision` and `canManage` come from the server
+ * (`takeaways.getManageable`), which allows exactly these moves. While a
+ * published takeaway has a correction, its next step comes first.
  */
 export function TakeawayActions({
   actions,
   canManage,
   id,
   name,
+  revision = null,
   status,
   tldr = null,
 }: {
@@ -86,29 +107,43 @@ export function TakeawayActions({
   readonly canManage: boolean;
   readonly id: number;
   readonly name: string;
+  /** The open correction of a published takeaway, and its moves. */
+  readonly revision?: {
+    readonly actions: readonly RevisionAction[];
+    readonly status: OpenRevisionStatus;
+  } | null;
   readonly status: TakeawayStatus;
   /** Offered as the WhatsApp broadcast once published. */
   readonly tldr?: string | null;
 }) {
   const utils = api.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmMove, setConfirmMove] = useState<StatusAction | null>(null);
+  const [confirmMove, setConfirmMove] = useState<Move | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const change = api.takeaways.setStatus.useMutation({
-    onError: (error) => toast.error(error.message),
+  const onError = (error: { message: string }) => toast.error(error.message);
+  const change = api.takeaways.setStatus.useMutation({ onError });
+  const changeRevision = api.takeawayRevisions.setStatus.useMutation({
+    onError,
   });
-  const move = (action: StatusAction) =>
-    change.mutate(
-      { id, status: action.to },
-      {
-        onSuccess: async () => {
-          setConfirmMove(null);
-          await utils.takeaways.getManageable.cancel();
-          await utils.takeaways.invalidate();
-          toast.success(action.done);
-        },
-      }
-    );
+  const moved = (action: Move) => async () => {
+    setConfirmMove(null);
+    await utils.takeaways.getManageable.cancel();
+    await Promise.all([
+      utils.takeaways.invalidate(),
+      utils.takeawayRevisions.invalidate(),
+    ]);
+    toast.success(action.done);
+  };
+  const move = (action: Move) => {
+    if ("revision" in action) {
+      changeRevision.mutate(
+        { status: action.to, takeawayId: id },
+        { onSuccess: moved(action) }
+      );
+    } else {
+      change.mutate({ id, status: action.to }, { onSuccess: moved(action) });
+    }
+  };
   const remove = api.takeaways.deleteTakeaway.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -118,9 +153,11 @@ export function TakeawayActions({
       toast.success("Takeaway deleted.");
     },
   });
-  const primary = actions.find((action) => action.primary);
-  const secondary = actions.filter((action) => !action.primary);
-  const pending = change.isPending || remove.isPending;
+  const moves: Move[] = [...(revision?.actions ?? []), ...actions];
+  const primary = moves.find((action) => action.primary);
+  const secondary = moves.filter((action) => action !== primary);
+  const moving = change.isPending || changeRevision.isPending;
+  const pending = moving || remove.isPending;
   const PrimaryIcon = primary?.to === "published" ? Check : Send;
   const showMenu = canManage || secondary.length > 0 || status === "published";
   if (!(primary || showMenu)) {
@@ -286,11 +323,11 @@ export function TakeawayActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={change.isPending}>
-              Keep it published
+            <AlertDialogCancel disabled={moving}>
+              {confirmMove?.confirm?.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
-              disabled={change.isPending}
+              disabled={moving}
               onClick={(event) => {
                 event.preventDefault();
                 if (confirmMove) {
@@ -298,11 +335,9 @@ export function TakeawayActions({
                 }
               }}
             >
-              <EyeOff aria-hidden="true" data-icon="inline-start">
-                <title>{confirmMove?.confirm?.action}</title>
-              </EyeOff>
-              {change.isPending
-                ? "Unpublishing…"
+              {confirmMove ? <MoveIcon action={confirmMove} inline /> : null}
+              {moving
+                ? confirmMove?.confirm?.pending
                 : confirmMove?.confirm?.action}
             </AlertDialogAction>
           </AlertDialogFooter>

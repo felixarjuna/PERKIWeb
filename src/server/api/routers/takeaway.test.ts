@@ -645,10 +645,35 @@ describe("takeaways router", () => {
       }
     );
 
-    it.each(["edit", "delete", "status"] as const)(
+    it("turns a writer's edit into a correction when staff publish during authorization", async () => {
+      const { author, id, schedule } = await draftBy();
+      const publisher = await insertUser({ role: "mita" });
+      vi.mocked(getRole).mockImplementationOnce(async () => {
+        await testDb
+          .update(takeaways)
+          .set({ publishedById: publisher.id, status: "published" })
+          .where(eq(takeaways.id, id));
+        return "writer";
+      });
+
+      await callerFor(author.id).takeaways.updateTakeaway({
+        ...sample(schedule.id, "Changed"),
+        id,
+      });
+
+      expect(await onlyTakeaway()).toMatchObject({
+        keypoints: "Notes",
+        status: "published",
+      });
+      expect(
+        await callerFor(author.id).takeawayRevisions.current({ takeawayId: id })
+      ).toMatchObject({ keypoints: "Changed", status: "draft" });
+    });
+
+    it.each(["delete", "status"] as const)(
       "rejects a writer's stale %s when staff publishes during authorization",
       async (action) => {
-        const { author, id, schedule } = await draftBy();
+        const { author, id } = await draftBy();
         const publisher = await insertUser({ role: "mita" });
         const publishedAt = new Date("2026-10-22T12:00:00Z");
         // Pause at the role lookup, after ownership was read, to publish first.
@@ -666,8 +691,6 @@ describe("takeaways router", () => {
         const api = callerFor(author.id).takeaways;
         const changes = {
           delete: () => api.deleteTakeaway({ id }),
-          edit: () =>
-            api.updateTakeaway({ ...sample(schedule.id, "Changed"), id }),
           status: () => api.setStatus({ id, status: "in_review" }),
         };
         const change = changes[action]();
@@ -798,14 +821,11 @@ describe("takeaways router", () => {
       expect((await visitor.takeaways.getTakeaways({})).items).toEqual([]);
     });
 
-    it("keeps everyone from editing or deleting a published takeaway", async () => {
+    it("keeps a published takeaway's text and keeps everyone from deleting it", async () => {
       const { author, id, schedule } = await draftBy();
       await publish(id);
       const api = callerFor(author.id);
 
-      await expect(
-        api.takeaways.updateTakeaway({ ...sample(schedule.id, "Later"), id })
-      ).rejects.toMatchObject({ code: "FORBIDDEN" });
       await expect(api.takeaways.deleteTakeaway({ id })).rejects.toMatchObject({
         code: "FORBIDDEN",
       });
@@ -815,16 +835,16 @@ describe("takeaways router", () => {
       const [row] = (await api.takeaways.getManageable({})).items;
       expect(row).toMatchObject({ actions: [], canManage: false });
 
-      // Staff can't either: they unpublish first, so changes go through review.
+      // Staff can't delete it either; edits become a correction (#74) that
+      // waits for review while the published text stays.
+      await api.takeaways.updateTakeaway({
+        ...sample(schedule.id, "Later"),
+        id,
+      });
       for (const role of ["mita", "owner"] as const) {
         // biome-ignore lint/performance/noAwaitInLoops: one role at a time.
         const staffApi = callerFor((await insertUser({ role })).id).takeaways;
-        await expect(
-          staffApi.updateTakeaway({ ...sample(schedule.id, "Later"), id })
-        ).rejects.toMatchObject({
-          code: "FORBIDDEN",
-          message: "Published takeaways can't be changed. Unpublish it first.",
-        });
+        await staffApi.updateTakeaway({ ...sample(schedule.id, "Later"), id });
         await expect(staffApi.deleteTakeaway({ id })).rejects.toMatchObject({
           code: "FORBIDDEN",
         });
