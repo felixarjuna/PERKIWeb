@@ -17,6 +17,7 @@ import {
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
+import { REVIEW_TARGETS } from "../../review-target";
 import { SERVING_ROLES } from "../../serving-roles";
 
 export const eventTypeEnum = pgEnum("event_type", [
@@ -221,8 +222,15 @@ export const takeawayComments = pgTable(
     takeawayId: integer("takeawayId")
       .notNull()
       .references(() => takeaways.id, { onDelete: "cascade" }),
+    target: text("target", { enum: REVIEW_TARGETS }).default("notes").notNull(),
   },
-  (t) => [index("takeaway_comments_takeaway_idx").on(t.takeawayId)]
+  (t) => [
+    index("takeaway_comments_takeaway_idx").on(t.takeawayId),
+    check(
+      "takeaway_comments_target_check",
+      sql`${t.target} in ('notes', 'tldr')`
+    ),
+  ]
 );
 
 export const SUGGESTION_STATUSES = ["open", "accepted", "rejected"] as const;
@@ -264,9 +272,14 @@ export const takeawaySuggestions = pgTable(
     takeawayId: integer("takeawayId")
       .notNull()
       .references(() => takeaways.id, { onDelete: "cascade" }),
+    target: text("target", { enum: REVIEW_TARGETS }).default("notes").notNull(),
   },
   (t) => [
     index("takeaway_suggestions_takeaway_idx").on(t.takeawayId),
+    check(
+      "takeaway_suggestions_target_check",
+      sql`${t.target} in ('notes', 'tldr')`
+    ),
     check(
       "takeaway_suggestions_status_check",
       sql`${t.status} in ('open', 'accepted', 'rejected')`

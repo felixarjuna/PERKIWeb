@@ -83,6 +83,101 @@ const reviewed = async () => {
 };
 
 describe("takeaway suggestions", () => {
+  it("explains when accepting would exceed the TL;DR limit without changing either text", async () => {
+    const { author, reviewer, id } = await reviewed();
+    await testDb
+      .update(takeaways)
+      .set({ tldr: `Context. ${ORIGINAL}` })
+      .where(eq(takeaways.id, id));
+    const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add({
+      original: ORIGINAL,
+      replacement: "x".repeat(2000),
+      takeawayId: id,
+      target: "tldr",
+    });
+    const api = callerFor(author.id).takeawaySuggestions;
+    expect(
+      (await api.list({ takeawayId: id })).suggestions.find(
+        (item) => item.id === suggestion.id
+      )?.applies
+    ).toBe(false);
+    await expect(api.accept({ id: suggestion.id })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: expect.stringContaining("2000"),
+    });
+    expect(await notesOf(id)).toBe(NOTES);
+  });
+
+  it("does not match a TL;DR suggestion against notes when the summary is absent", async () => {
+    const { author, reviewer, id } = await reviewed();
+    const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add({
+      original: ORIGINAL,
+      replacement: "New summary",
+      takeawayId: id,
+      target: "tldr",
+    });
+    const api = callerFor(author.id).takeawaySuggestions;
+    expect(
+      (await api.list({ takeawayId: id })).suggestions.find(
+        (item) => item.id === suggestion.id
+      )?.applies
+    ).toBe(false);
+    await expect(api.accept({ id: suggestion.id })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(await notesOf(id)).toBe(NOTES);
+  });
+
+  it("rejects invalid targets before writing feedback", async () => {
+    const { reviewer, id } = await reviewed();
+    const api = callerFor(reviewer.id);
+    const invalid = { takeawayId: id, target: "other" };
+    await expect(
+      api.takeawayComments.add({ ...invalid, body: "Feedback" } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      api.takeawaySuggestions.add({
+        ...invalid,
+        original: ORIGINAL,
+        replacement: "New text",
+      } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("applies TL;DR feedback only to the TL;DR when both texts have the same passage", async () => {
+    const { author, id, reviewer } = await reviewed();
+    await testDb
+      .update(takeaways)
+      .set({ tldr: NOTES })
+      .where(eq(takeaways.id, id));
+    const input = {
+      original: ORIGINAL,
+      replacement: "Abraham relied on God",
+      takeawayId: id,
+      target: "tldr" as const,
+    };
+    const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add(
+      input
+    );
+    await callerFor(author.id).takeawaySuggestions.accept({
+      id: suggestion.id,
+    });
+    const [row] = await testDb
+      .select()
+      .from(takeaways)
+      .where(eq(takeaways.id, id));
+    expect(row).toMatchObject({
+      keypoints: NOTES,
+      tldr: NOTES.replace(ORIGINAL, input.replacement),
+    });
+    const list = await callerFor(author.id).takeawaySuggestions.list({
+      takeawayId: id,
+    });
+    expect(
+      list.suggestions.find((item) => item.id === suggestion.id)
+    ).toMatchObject({ status: "accepted", target: "tldr" });
+  });
+
   it("lets the writer accept another writer's suggestion, replacing the passage", async () => {
     const { author, id, reviewer, suggestion } = await reviewed();
     const list = await callerFor(author.id).takeawaySuggestions.list({
@@ -107,7 +202,7 @@ describe("takeaway suggestions", () => {
     });
     const expected =
       "Abraham trusted God, and it was counted to him as righteousness.";
-    expect(result).toEqual({ keypoints: expected });
+    expect(result).toMatchObject({ keypoints: expected, target: "notes" });
     expect(await notesOf(id)).toBe(expected);
     const [accepted] = (
       await callerFor(reviewer.id).takeawaySuggestions.list({ takeawayId: id })

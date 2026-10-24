@@ -19,6 +19,7 @@ const comment = {
   requestsChanges: false,
   resolvedAt: null,
   resolvedBy: null,
+  target: "notes" as const,
 };
 
 describe("comment actions", () => {

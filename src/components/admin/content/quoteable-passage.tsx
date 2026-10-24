@@ -71,6 +71,8 @@ export function QuoteablePassage({
   children,
   onSubmit,
   onSuggest,
+  onCompose,
+  label = "Takeaway text",
 }: {
   children: ReactNode;
   onSubmit: (input: { body: string; quote: string }) => Promise<void>;
@@ -78,6 +80,8 @@ export function QuoteablePassage({
     original: string;
     replacement: string;
   }) => Promise<void>;
+  onCompose?: (kind: Kind, quote: string) => void;
+  label?: string;
 }) {
   const fallback = useRef<HTMLDivElement>(null);
   const draftRow = useRef<HTMLDivElement>(null);
@@ -98,7 +102,7 @@ export function QuoteablePassage({
     editable: false,
     editorProps: {
       attributes: {
-        "aria-label": "Takeaway text",
+        "aria-label": label,
         class: "takeaway-prose",
         role: "document",
       },
@@ -121,14 +125,17 @@ export function QuoteablePassage({
     },
   });
 
+  // The sanitized server-rendered children are the source of the reader HTML.
+  // Rebuild it when a server refresh brings back an accepted suggestion.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: children updates the fallback DOM read by this effect.
   useEffect(() => {
-    if (editor && fallback.current && !ready) {
+    if (editor && fallback.current) {
       editor.commands.setContent(fallback.current.innerHTML, {
         emitUpdate: false,
       });
       setReady(true);
     }
-  }, [editor, ready]);
+  }, [editor, children]);
 
   useEffect(() => {
     if (!editor) {
@@ -157,11 +164,11 @@ export function QuoteablePassage({
     if (editor && ready && !inside && !open) {
       editor.commands.setMeta("review-comment-menu", "hide");
     }
-    if (editor && ready && open) {
+    if (editor && ready && (open || (inside && selected))) {
       editor.commands.setMeta("review-comment-menu", "show");
       editor.commands.setMeta("review-comment-menu", "updatePosition");
     }
-  }, [editor, inside, open, ready]);
+  }, [editor, inside, open, ready, selected]);
 
   const saved: Record<Kind, boolean> = {
     comment: isDraft("comment", drafts.comment),
@@ -202,6 +209,16 @@ export function QuoteablePassage({
       return;
     }
     if (next) {
+      if (onCompose) {
+        const { from, to } = editor.state.selection;
+        const quote = passageText(editor.state.doc, from, to);
+        if (quote && quote.length <= QUOTE_MAX_LENGTH) {
+          onCompose(nextKind, quote);
+          editor.commands.setTextSelection(to);
+          window.getSelection()?.removeAllRanges();
+        }
+        return;
+      }
       outsideDismiss.current = false;
       if (!startPassage(editor, nextKind)) {
         return;
@@ -231,7 +248,9 @@ export function QuoteablePassage({
   const kinds = onSuggest ? KINDS : KINDS.slice(0, 1);
   return (
     <div className="min-w-0">
-      {ready ? null : <div ref={fallback}>{children}</div>}
+      <div hidden={ready} ref={fallback}>
+        {children}
+      </div>
       <div hidden={!ready}>
         <EditorContent editor={editor} />
       </div>

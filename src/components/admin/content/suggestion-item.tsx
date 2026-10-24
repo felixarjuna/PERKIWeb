@@ -6,6 +6,7 @@ import { PersonAvatar } from "~/components/person-avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import type { SuggestionStatus } from "~/lib/db/schema/schema";
+import { reviewTargetLabel } from "~/lib/review-target";
 import type { RouterOutputs } from "~/trpc/react";
 
 type Suggestion =
@@ -67,6 +68,9 @@ export function SuggestionItem({
           </time>
         </div>
         <div className="flex flex-col gap-3 rounded-2xl rounded-tl-sm bg-secondary p-4 text-secondary-foreground">
+          <Badge variant="secondary">
+            {reviewTargetLabel(suggestion.target)}
+          </Badge>
           <div className="flex flex-col gap-1">
             <p className="type-caption text-muted-foreground">Replace</p>
             <del className="whitespace-pre-wrap break-words text-muted-foreground text-sm">
@@ -122,7 +126,7 @@ function SuggestionActions({
 }) {
   const note = suggestion.applies
     ? acceptBlocked
-    : "This passage changed since it was suggested. Apply it by hand in the editor, then mark it as applied.";
+    : suggestion.applicationReason;
   return (
     <>
       <div className="ml-auto flex flex-wrap items-center gap-2">

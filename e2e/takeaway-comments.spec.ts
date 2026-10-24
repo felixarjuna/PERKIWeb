@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { setTestSession } from "./auth-fixtures";
 import { insertSchedule, insertTakeaway } from "./db";
 import { uniqueSuffix, WRITER, WRITER_2 } from "./fixtures";
+import { openReviewFeedback, reviewFeedback } from "./review-feedback";
 
 test("reviewer quotes a passage and the writer resolves and reopens feedback", async ({
   page,
@@ -47,13 +48,13 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
     .poll(() => page.evaluate(() => window.getSelection()?.toString()))
     .toBe(quote);
   await page.getByRole("button", { name: "Comment on selection" }).click();
-  const composer = page.getByRole("dialog", { name: "Comment on passage" });
+  const composer = reviewFeedback(page);
   await expect(composer.getByRole("blockquote")).toHaveText(quote);
   await expect(composer.getByLabel("Comment", { exact: true })).toBeFocused();
   await composer
     .getByLabel("Comment", { exact: true })
     .fill("Could you add the verse reference?");
-  await expect(page.locator(".tiptap .bg-accent")).toHaveText(quote);
+
   await page.keyboard.press("Escape");
   await expect(composer).not.toBeVisible();
   // A different selection must not silently replace the saved draft's quote.
@@ -71,31 +72,24 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
     window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(range);
   });
-  await page.getByRole("button", { name: "Comment (draft saved)" }).click();
+  await page.getByRole("button", { name: "Comment on selection" }).click();
   await expect(composer.getByRole("blockquote")).toHaveText(quote);
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Unsent comment" }).click();
-  await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
-    "Could you add the verse reference?"
-  );
-  const generalComment = page
-    .getByRole("region", { name: "Review comments" })
-    .getByLabel("Comment", { exact: true });
-  await generalComment.click();
-  await expect(generalComment).toBeFocused();
-  await page.getByRole("button", { name: "Unsent comment" }).click();
+  await openReviewFeedback(page);
+  await composer.getByRole("button", { name: "Unsent comment" }).click();
   await expect(composer.getByLabel("Comment", { exact: true })).toHaveValue(
     "Could you add the verse reference?"
   );
   await composer.getByRole("button", { name: "Add comment" }).click();
-  await expect(composer).not.toBeVisible();
+  await expect(composer.getByLabel("Comment", { exact: true })).toHaveCount(0);
   const thread = page.getByRole("region", { name: "Review comments" });
   await expect(thread.getByText("1 open · 0 resolved")).toBeVisible();
   await expect(thread.getByRole("blockquote")).toHaveText(quote);
   await page.reload();
+  await openReviewFeedback(page);
   await expect(
     thread.getByText("Could you add the verse reference?")
   ).toBeVisible();
@@ -113,6 +107,7 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
   await expect(thread.getByText("1 open · 0 resolved")).toBeVisible();
   await setTestSession(page, WRITER_2);
   await page.goto(`/admin/takeaways/${id}`);
+  await openReviewFeedback(page);
   await thread.getByRole("button", { exact: true, name: "Delete" }).click();
   const confirmation = page.getByRole("alertdialog", {
     name: "Delete your comment?",
@@ -125,6 +120,7 @@ test("reviewer quotes a passage and the writer resolves and reopens feedback", a
   await confirmation.getByRole("button", { name: "Delete comment" }).click();
   await expect(thread.getByText("0 open · 0 resolved")).toBeVisible();
   await page.reload();
+  await openReviewFeedback(page);
   await expect(
     thread.getByText("Could you add the verse reference?")
   ).toHaveCount(0);

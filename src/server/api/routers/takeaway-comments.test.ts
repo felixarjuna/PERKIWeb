@@ -61,6 +61,27 @@ const markSubmitted = (id: number) =>
     .where(eq(takeaways.id, id));
 
 describe("takeaway comments", () => {
+  it("keeps TL;DR comments distinct and defaults existing callers to notes", async () => {
+    const author = await writer();
+    const { id } = await insertTakeaway("draft", author.id);
+    const api = callerFor(author.id).takeawayComments;
+    const input = {
+      body: "Clarify this summary",
+      quote: QUOTE,
+      takeawayId: id,
+      target: "tldr" as const,
+    };
+    const summary = await api.add(input);
+    const notes = await api.add({ body: "General feedback", takeawayId: id });
+    const thread = await api.list({ takeawayId: id });
+    expect(
+      thread.comments.find((comment) => comment.id === summary.id)
+    ).toMatchObject({ quote: QUOTE, target: "tldr" });
+    expect(
+      thread.comments.find((comment) => comment.id === notes.id)
+    ).toMatchObject({ target: "notes" });
+  });
+
   it("includes the author's profile image without exposing their email", async () => {
     const image = "https://example.com/reviewer.png";
     const author = await insertUser({

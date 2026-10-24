@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
+import type { ReviewTarget } from "~/lib/review-target";
 import { api } from "~/trpc/react";
 import { SuggestionItem } from "./suggestion-item";
 
@@ -14,11 +15,17 @@ export function TakeawaySuggestions({
   takeawayId,
   acceptBlocked,
   onAccepted,
+  target,
 }: {
   takeawayId: number;
   acceptBlocked?: string;
+  target?: ReviewTarget;
   /** Receives the notes after a suggestion replaced a passage. */
-  onAccepted?: (keypoints: string) => void;
+  onAccepted?: (text: {
+    keypoints: string;
+    tldr: string | null;
+    target: ReviewTarget;
+  }) => void;
 }) {
   const headingId = useId();
   const utils = api.useUtils();
@@ -35,13 +42,14 @@ export function TakeawaySuggestions({
   };
   const accept = api.takeawaySuggestions.accept.useMutation({
     onError,
-    onSuccess: async ({ keypoints }, { byHand }) => {
+    onSuccess: async (text, { byHand }) => {
       if (!byHand) {
-        onAccepted?.(keypoints);
+        onAccepted?.(text);
       }
       await Promise.all([
         refresh(),
         utils.takeaways.getTakeawayById.invalidate({ id: takeawayId }),
+        utils.takeawayRevisions.current.invalidate({ takeawayId }),
       ]);
       toast.success(
         byHand ? "Suggestion marked as applied." : "Suggestion accepted."
@@ -68,12 +76,16 @@ export function TakeawaySuggestions({
     return null;
   }
   const { data } = list;
+  const suggestions =
+    data?.suggestions.filter(
+      (suggestion) => !target || suggestion.target === target
+    ) ?? [];
   if (data && !data.suggestions.length && !data.canSuggest) {
     return null;
   }
-  const openCount =
-    data?.suggestions.filter((suggestion) => suggestion.status === "open")
-      .length ?? 0;
+  const openCount = suggestions.filter(
+    (suggestion) => suggestion.status === "open"
+  ).length;
   const pending = accept.isPending || reject.isPending || withdraw.isPending;
   return (
     <section
@@ -104,11 +116,11 @@ export function TakeawaySuggestions({
       {data ? (
         <>
           <p className="font-medium text-sm" role="status">
-            {openCount} open · {data.suggestions.length - openCount} decided
+            {openCount} open · {suggestions.length - openCount} decided
           </p>
-          {data.suggestions.length ? (
+          {suggestions.length ? (
             <ol className="space-y-3">
-              {data.suggestions.map((suggestion) => (
+              {suggestions.map((suggestion) => (
                 <SuggestionItem
                   acceptBlocked={acceptBlocked}
                   canDecide={data.canDecide}
