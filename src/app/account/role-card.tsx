@@ -1,11 +1,20 @@
 "use client";
 
+import { LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { Button } from "~/components/ui/button";
+import { navigationFor } from "~/components/admin/admin-navigation";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { roleBadgeStyles } from "~/lib/role-badge-styles";
 import { historyDate, joinedLine, roleChangeLine } from "~/lib/role-history";
-import { normalizeRole, type Role, roleLabels } from "~/lib/roles";
+import {
+  canWriteTakeaways,
+  normalizeRole,
+  type Role,
+  roleLabels,
+} from "~/lib/roles";
+import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 /** Anchor the takeaway page's "Ask to become a writer" hint links to. */
@@ -83,6 +92,7 @@ function HistoryList({ history }: { history: History }) {
  * The signed-in person's role and what it allows, and their history: when
  * they joined and every change of their role. Members can ask to become
  * a writer here; the card then shows the request until a mita answers it.
+ * Everyone with admin access gets a link into the workspace.
  */
 export default function RoleCard() {
   const utils = api.useUtils();
@@ -111,11 +121,12 @@ export default function RoleCard() {
       className="flex scroll-mt-28 flex-col gap-5 rounded-xl bg-card p-4 sm:p-6"
       id={ROLE_CARD_ID}
     >
-      <div className="flex items-center gap-3">
+      {/* Wraps on phones, so the workspace link sits under the text. */}
+      <div className="flex flex-wrap items-center gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary">
           <Icon aria-hidden="true" className="size-4" />
         </span>
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 basis-48 flex-col">
           <h2 className="type-body">Your role: {roleLabels[role]}</h2>
           <p
             className="type-body-sm text-muted-foreground outline-none"
@@ -141,6 +152,18 @@ export default function RoleCard() {
           >
             {status === "declined" ? "Ask again" : "Ask"}
           </Button>
+        ) : null}
+        {canWriteTakeaways(role) ? (
+          <Link
+            className={cn(
+              buttonVariants({ size: "sm", variant: "secondary" }),
+              "shrink-0 max-sm:ml-13"
+            )}
+            href={navigationFor(role)[0].url}
+          >
+            <LayoutDashboard aria-hidden="true" className="size-4" />
+            Open workspace
+          </Link>
         ) : null}
       </div>
       {history ? <HistoryList history={history} /> : null}

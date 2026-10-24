@@ -51,6 +51,24 @@ describe("Your role card", () => {
     }
   );
 
+  it.each([
+    ["writer", "/admin/takeaways"],
+    ["mita", "/admin/dashboard"],
+    ["owner", "/admin/dashboard"],
+    ["admin", "/admin/dashboard"],
+  ])("opens the workspace for a %s at %s", (role, href) => {
+    state.role = role;
+    render(<RoleCard />);
+    expect(
+      screen.getByRole("link", { name: "Open workspace" }).getAttribute("href")
+    ).toBe(href);
+  });
+
+  it("shows a member no way into the workspace", () => {
+    render(<RoleCard />);
+    expect(screen.queryByRole("link", { name: "Open workspace" })).toBeNull();
+  });
+
   it("lets a member ask to become a writer", () => {
     render(<RoleCard />);
     expect(
