@@ -348,6 +348,7 @@ describe("takeaway comments", () => {
         await callerFor(userId).takeawayComments.list({ takeawayId: id })
       ).comments.map((comment) => comment.blocksSubmit);
     expect(await blocks(author.id)).toEqual([false, true]);
+    expect(await blocks(reviewer.id)).toEqual([false, false]);
     await markSubmitted(id);
     expect(await blocks(author.id)).toEqual([false, false]);
   });

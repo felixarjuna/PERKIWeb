@@ -9,7 +9,11 @@ import {
   mayReadComments,
   QUOTE_MAX_LENGTH,
 } from "~/lib/takeaway-comments";
-import { submitBlockers, type TakeawayViewer } from "~/lib/takeaway-status";
+import {
+  actsAsAuthor,
+  submitBlockers,
+  type TakeawayViewer,
+} from "~/lib/takeaway-status";
 import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow } from "../errors";
@@ -115,7 +119,9 @@ export const takeawayCommentsRouter = createTRPCRouter({
         .orderBy(asc(takeawayComments.createdAt), asc(takeawayComments.id));
       // What keeps the viewer from submitting it, if they are its writer.
       const blocking = new Set(
-        subject.status === "draft" ? submitBlockers(rows, subject, viewer) : []
+        subject.status === "draft" && actsAsAuthor(subject, viewer)
+          ? submitBlockers(rows, subject, viewer)
+          : []
       );
       return {
         canComment,
