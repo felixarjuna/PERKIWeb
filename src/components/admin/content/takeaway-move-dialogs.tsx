@@ -192,12 +192,12 @@ export function RequestChangesDialog({
             <Textarea
               aria-describedby={hintId}
               aria-invalid={tried && empty}
+              aria-required="true"
               autoFocus
               id={noteId}
               maxLength={COMMENT_MAX_LENGTH}
               onChange={(event) => setNote(event.target.value)}
               placeholder="For example: shorten the second point and add the verse reference."
-              required
               rows={4}
               value={note}
             />

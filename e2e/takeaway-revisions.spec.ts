@@ -60,10 +60,10 @@ test("a published takeaway stays live while its correction is reviewed", async (
   await card
     .getByRole("button", {
       exact: true,
-      name: `Send changes to review: ${scheduleTitle}`,
+      name: `Submit changes to mita: ${scheduleTitle}`,
     })
     .click();
-  await expect(toast(page, "Changes sent to review.")).toBeVisible();
+  await expect(toast(page, "Changes submitted to mita.")).toBeVisible();
   await expect(
     card.getByText("Changes submitted", { exact: true })
   ).toBeVisible();

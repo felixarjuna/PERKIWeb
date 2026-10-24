@@ -44,7 +44,7 @@ test("a writer accepts another writer's suggestion and applies a stale one by ha
     await insertSchedule(title),
     "Abraham believed God, and it was counted to him as righteousness.\n\nFaith comes by hearing.",
     WRITER.id,
-    "in_review"
+    "draft"
   );
 
   await setTestSession(page, WRITER_2);
