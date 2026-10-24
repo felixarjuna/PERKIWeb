@@ -69,6 +69,40 @@ describe("reviewInbox", () => {
     }
   });
 
+  it("treats a published takeaway's correction like a takeaway in its status", () => {
+    const correction = (
+      id: number,
+      status: "draft" | "in_review",
+      authorId: string,
+      open: { comments?: number } = {}
+    ): InboxTakeaway => ({
+      ...takeaway(id, "published", authorId, open),
+      revision: status,
+    });
+    const writer = reviewInbox(
+      [
+        correction(1, "in_review", OTHER),
+        correction(2, "draft", OTHER),
+        correction(3, "in_review", ME, { comments: 1 }),
+        correction(4, "draft", ME, { comments: 1 }),
+      ],
+      viewer("writer")
+    );
+    expect(ids(writer.needsReview)).toEqual([1]);
+    expect(ids(writer.openFeedback)).toEqual([3, 4]);
+
+    const mita = reviewInbox(
+      [
+        correction(1, "in_review", OTHER),
+        correction(2, "in_review", OTHER, { comments: 1 }),
+        correction(3, "draft", OTHER),
+      ],
+      { id: ME, role: "mita" }
+    );
+    expect(ids(mita.readyToPublish)).toEqual([1]);
+    expect(ids(mita.needsReview)).toEqual([2]);
+  });
+
   it("shows members nothing", () => {
     const inbox = reviewInbox(
       [takeaway(1, "in_review", OTHER), takeaway(2, "draft", ME)],

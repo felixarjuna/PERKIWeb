@@ -10,6 +10,7 @@ const item = (overrides: Partial<Item> = {}): Item => ({
   id: 7,
   openComments: 0,
   openSuggestions: 0,
+  revision: null,
   status: "in_review",
   title: "Faith",
   type: "bible_study",
@@ -58,6 +59,27 @@ describe("InboxSections", () => {
     expect(within(ready).getByText("By Budi · No open feedback")).toBeTruthy();
     const review = screen.getByRole("region", { name: "Needs review" });
     expect(within(review).getByText("By Ana · 1 open comment")).toBeTruthy();
+  });
+
+  it("marks a correction of a published takeaway and opens its review page", () => {
+    render(
+      <InboxSections
+        data={{
+          ...empty,
+          readyToPublish: [
+            item({ revision: "in_review", status: "published" }),
+          ],
+        }}
+      />
+    );
+    const ready = screen.getByRole("region", { name: "Ready to publish" });
+    expect(within(ready).getByText("Published")).toBeTruthy();
+    expect(within(ready).getByText("Changes in review")).toBeTruthy();
+    expect(
+      within(ready)
+        .getByRole("link", { name: "Review changes to Faith" })
+        .getAttribute("href")
+    ).toBe("/admin/takeaways/7");
   });
 
   it("renders nothing when nothing waits", () => {

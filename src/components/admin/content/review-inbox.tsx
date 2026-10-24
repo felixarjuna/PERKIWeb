@@ -2,10 +2,8 @@
 
 import { DateTime } from "luxon";
 import Link from "next/link";
-import { Badge } from "~/components/ui/badge";
-import { takeawayBadgeStyles } from "~/lib/takeaway-badge-styles";
-import { statusLabels } from "~/lib/takeaway-status";
 import { api, type RouterOutputs } from "~/trpc/react";
+import { TakeawayStatusBadges } from "./takeaway-status-badges";
 import { assignmentQueryOptions } from "./writer-assignments";
 
 export type InboxData = RouterOutputs["reviewInbox"]["mine"];
@@ -39,17 +37,16 @@ function InboxCard({ item, showWriter }: { item: Item; showWriter: boolean }) {
             "d LLL yyyy"
           )}
         </p>
-        <Badge
-          data-slot="takeaway-status"
-          size="status"
-          {...takeawayBadgeStyles[item.status]}
-        >
-          {statusLabels[item.status]}
-        </Badge>
+        <TakeawayStatusBadges revision={item.revision} status={item.status} />
       </div>
       <h3 className="type-subheading mt-2 break-words">
         <Link
-          aria-label={`Review ${item.title}`}
+          aria-label={
+            // A correction (#74) is read and reviewed on the same page.
+            item.revision
+              ? `Review changes to ${item.title}`
+              : `Review ${item.title}`
+          }
           className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
           href={`/admin/takeaways/${item.id}`}
         >
