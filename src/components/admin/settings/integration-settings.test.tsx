@@ -3,10 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import IntegrationSettings from "./integration-settings";
 
-const { mutation, setWhatsappGroup } = vi.hoisted(() => ({
+const { mutation, setTakeawayDoc, setWhatsappGroup } = vi.hoisted(() => ({
   mutation: (mutate: () => void = () => undefined) => ({
     useMutation: () => ({ isPending: false, mutate }),
   }),
+  setTakeawayDoc: vi.fn(),
   setWhatsappGroup: vi.fn(),
 }));
 vi.mock("~/trpc/react", () => ({
@@ -30,6 +31,8 @@ vi.mock("~/trpc/react", () => ({
             },
             driveFolder: null,
             scheduleSheet: null,
+            takeawayNotesDoc: null,
+            takeawayTldrDoc: null,
             whatsappGroup: null,
           },
           isError: false,
@@ -40,11 +43,13 @@ vi.mock("~/trpc/react", () => ({
       setDriveFolder: mutation(),
       setEmail: mutation(),
       setScheduleSheet: mutation(),
+      setTakeawayDoc: mutation(setTakeawayDoc),
       setWhatsappGroup: mutation(setWhatsappGroup),
     },
     useUtils: () => ({
       scheduleImport: { invalidate: () => Promise.resolve() },
       settings: { invalidate: () => Promise.resolve() },
+      takeawayImport: { invalidate: () => Promise.resolve() },
     }),
   },
 }));
@@ -65,6 +70,23 @@ describe("integration settings", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(setWhatsappGroup).toHaveBeenCalledWith({
       link: "https://chat.whatsapp.com/AbC123",
+    });
+  });
+
+  it("adds the takeaway notes document", async () => {
+    render(<IntegrationSettings />);
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Change the Takeaway notes document",
+      })
+    );
+    const dialog = screen.getByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("textbox"));
+    await userEvent.paste("https://docs.google.com/document/d/abc/edit");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(setTakeawayDoc).toHaveBeenCalledWith({
+      document: "notes",
+      link: "https://docs.google.com/document/d/abc/edit",
     });
   });
 });

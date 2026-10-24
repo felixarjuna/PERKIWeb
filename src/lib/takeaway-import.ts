@@ -309,3 +309,172 @@ export function planTakeawayImport(
     };
   });
 }
+
+interface DocsSchedule {
+  /** The gathering's day in Aachen, `yyyy-MM-dd`. */
+  day: string;
+  id: number;
+}
+
+interface StoredTakeaway extends ExistingTakeaway {
+  status: "draft" | "in_review" | "published";
+}
+
+export type DocsImportStatus =
+  | "new"
+  | "changed"
+  | "unchanged"
+  | "published"
+  | "skipped";
+
+/** A field the import would replace: the passage that differs, before and after. */
+export interface TextChange {
+  field: "notes" | "tldr";
+  from: string;
+  to: string;
+}
+
+const PARAGRAPH_BREAK = /\n{2,}/;
+const PARAGRAPH_JOIN = "\n\n";
+
+/**
+ * The passage that differs between two Markdown texts: their paragraphs once
+ * the ones both start and end with are set aside.
+ */
+export function changedPassage(from: string, to: string) {
+  const before = from.split(PARAGRAPH_BREAK);
+  const after = to.split(PARAGRAPH_BREAK);
+  let start = 0;
+  while (
+    start < Math.min(before.length, after.length) &&
+    before[start] === after[start]
+  ) {
+    start += 1;
+  }
+  let end = 0;
+  while (
+    end < Math.min(before.length, after.length) - start &&
+    before.at(-1 - end) === after.at(-1 - end)
+  ) {
+    end += 1;
+  }
+  return {
+    from: before.slice(start, before.length - end).join(PARAGRAPH_JOIN),
+    to: after.slice(start, after.length - end).join(PARAGRAPH_JOIN),
+  };
+}
+
+export interface DocsImportEntry {
+  /** What the import would replace; only for `changed`. */
+  changes: TextChange[];
+  day: string;
+  heading: string;
+  notes: string | null;
+  /** Why the entry is left out; only for `skipped`. */
+  reason: string | null;
+  scheduleId: number | null;
+  status: DocsImportStatus;
+  takeawayId: number | null;
+  tldr: string | null;
+}
+
+/** Why a dated entry can't be matched to exactly one takeaway slot, or null. */
+function skipReason(
+  notes: SourceEntry | undefined,
+  gatherings: DocsSchedule[],
+  takeaways: StoredTakeaway[]
+) {
+  if (!notes) {
+    return "A TL;DR without notes";
+  }
+  if (gatherings.length === 0) {
+    return "No gathering on this date";
+  }
+  if (gatherings.length > 1) {
+    return `${gatherings.length} gatherings on this date`;
+  }
+  if (takeaways.length > 1) {
+    return `The gathering has ${takeaways.length} takeaways`;
+  }
+  return null;
+}
+
+/** What the documents would replace in a stored takeaway; a missing TL;DR keeps the stored one. */
+function textChanges(
+  takeaway: StoredTakeaway,
+  notes: string,
+  tldr: string | null
+): TextChange[] {
+  const changes: TextChange[] = [];
+  if (takeaway.keypoints !== notes) {
+    changes.push({
+      field: "notes",
+      ...changedPassage(takeaway.keypoints, notes),
+    });
+  }
+  if (tldr !== null && takeaway.tldr !== tldr) {
+    changes.push({
+      field: "tldr",
+      ...changedPassage(takeaway.tldr ?? "", tldr),
+    });
+  }
+  return changes;
+}
+
+/**
+ * Pairs the notes and TL;DR documents by date and compares each date with the
+ * gathering held that day in Aachen and its takeaway. Dates are never guessed:
+ * one without exactly one gathering is skipped. A TL;DR missing from its
+ * document keeps the stored one. Published takeaways are never changed; they
+ * count as unchanged when they still read like the documents.
+ */
+export function planDocsImport(
+  notes: TakeawaySource,
+  tldr: TakeawaySource,
+  schedules: DocsSchedule[],
+  existing: StoredTakeaway[]
+): DocsImportEntry[] {
+  const notesOn = new Map(notes.entries.map((entry) => [entry.date, entry]));
+  const tldrOn = new Map(tldr.entries.map((entry) => [entry.date, entry]));
+  const days = [...new Set([...notesOn.keys(), ...tldrOn.keys()])].sort();
+  return days.map((day): DocsImportEntry => {
+    const note = notesOn.get(day);
+    const summary = tldrOn.get(day);
+    const gatherings = schedules.filter((schedule) => schedule.day === day);
+    const [gathering] = gatherings;
+    const takeaways = existing.filter(
+      (row) => row.scheduleId === gathering?.id
+    );
+    const base = {
+      changes: [],
+      day,
+      heading: note?.heading ?? summary?.heading ?? day,
+      notes: note?.content ?? null,
+      reason: null,
+      scheduleId: gathering?.id ?? null,
+      takeawayId: null,
+      tldr: summary?.content ?? null,
+    };
+    const reason = skipReason(note, gatherings, takeaways);
+    if (reason) {
+      return { ...base, reason, status: "skipped" };
+    }
+    const [takeaway] = takeaways;
+    if (!takeaway) {
+      return { ...base, status: "new" };
+    }
+    const changes = textChanges(takeaway, base.notes ?? "", base.tldr);
+    let status: DocsImportStatus = "changed";
+    if (changes.length === 0) {
+      status = "unchanged";
+    } else if (takeaway.status === "published") {
+      status = "published";
+    }
+    return {
+      ...base,
+      changes: status === "changed" ? changes : [],
+      status,
+      takeawayId: takeaway.id,
+    };
+  });
+}

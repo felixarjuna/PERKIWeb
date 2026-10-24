@@ -1,4 +1,13 @@
-# Local takeaway and TL;DR import
+# Takeaway and TL;DR import
+
+Staff now import from the documents in the app: set both links on
+Settings → Integrations, then use "Import from Docs" on Add takeaway. It shows
+a preview, adds drafts and updates unpublished takeaways, skips dates without
+exactly one gathering, and never touches published takeaways. Running it again
+with the same documents changes nothing. Fix a mistyped date in the document
+heading rather than mapping it.
+
+The local script below is the earlier one-off and is kept for reference.
 
 Each takeaway stores its full notes in `keypoints` and its optional summary in
 `tldr`. Migration 0020 adds the nullable text column; older rows remain valid.

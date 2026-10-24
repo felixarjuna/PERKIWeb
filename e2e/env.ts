@@ -1,6 +1,10 @@
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 /** Host port of the throwaway database; `compose.test.yml` reads the same variable. */
 const E2E_DB_PORT = Number(process.env.E2E_DB_PORT ?? 54_329);
+/** Port of the local stand-in for Google Docs (`e2e/docs-server.ts`). */
+export const E2E_DOCS_PORT = Number(
+  process.env.E2E_DOCS_PORT ?? E2E_PORT + 1000
+);
 
 /** Base URL of the production build that Playwright drives. */
 export const BASE_URL = `http://localhost:${E2E_PORT}`;
@@ -18,6 +22,8 @@ export const e2eEnv = {
   DRIVE_FOLDER_URL: "https://drive.example.test/e2e-folder",
   GOOGLE_CLIENT_ID: "e2e-google-client-id",
   GOOGLE_CLIENT_SECRET: "e2e-google-client-secret",
+  // Document imports read fixture documents, never the real Google Docs.
+  GOOGLE_DOCS_URL: `http://127.0.0.1:${E2E_DOCS_PORT}`,
   NEXT_PUBLIC_GOOGLE_API_KEY: "e2e-google-api-key",
   NEXTAUTH_SECRET: "e2e-secret-not-for-production",
   NEXTAUTH_URL: BASE_URL,

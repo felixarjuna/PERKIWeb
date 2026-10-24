@@ -133,7 +133,27 @@ function LinkDialog({
   );
 }
 
-type Editing = "discord" | "drive" | "sheet" | "whatsapp" | null;
+type Editing =
+  | "discord"
+  | "drive"
+  | "notes"
+  | "sheet"
+  | "tldr"
+  | "whatsapp"
+  | null;
+
+const TAKEAWAY_DOCS = {
+  notes: {
+    description:
+      "The document writers keep the full notes in. “Import from Docs” on Add takeaway reads it.",
+    title: "Takeaway notes document",
+  },
+  tldr: {
+    description:
+      "The document with the TL;DR of each gathering, read together with the notes.",
+    title: "TL;DR document",
+  },
+} as const;
 
 /** Settings → Integrations: the outside services the workspace links to. */
 export default function IntegrationSettings() {
@@ -145,6 +165,7 @@ export default function IntegrationSettings() {
     await Promise.all([
       utils.settings.invalidate(),
       utils.scheduleImport.invalidate(),
+      utils.takeawayImport.invalidate(),
     ]);
     toast.success(message);
   };
@@ -154,6 +175,13 @@ export default function IntegrationSettings() {
     onSuccess: (result) =>
       done(
         result.title ? `Connected “${result.title}”` : "Schedule sheet removed"
+      )(),
+  });
+  const takeawayDoc = api.settings.setTakeawayDoc.useMutation({
+    onError,
+    onSuccess: (_result, input) =>
+      done(
+        `${TAKEAWAY_DOCS[input.document].title} ${input.link === null ? "removed" : "saved"}`
       )(),
   });
   const drive = api.settings.setDriveFolder.useMutation({
@@ -175,8 +203,18 @@ export default function IntegrationSettings() {
   if (query.isPending) {
     return <QueryMessage>Loading settings…</QueryMessage>;
   }
-  const { discordInvite, driveFolder, scheduleSheet, whatsappGroup } =
-    query.data;
+  const {
+    discordInvite,
+    driveFolder,
+    scheduleSheet,
+    takeawayNotesDoc,
+    takeawayTldrDoc,
+    whatsappGroup,
+  } = query.data;
+  const takeawayDocs = [
+    ["notes", takeawayNotesDoc],
+    ["tldr", takeawayTldrDoc],
+  ] as const;
   const close = (open: boolean) => {
     if (!open) {
       setEditing(null);
@@ -216,6 +254,35 @@ export default function IntegrationSettings() {
             {scheduleSheet ? "Change" : "Add"}
           </Button>
         </SettingRow>
+        {takeawayDocs.map(([document, doc]) => (
+          <SettingRow
+            description={
+              <>
+                {TAKEAWAY_DOCS[document].description}
+                {doc ? changedBy(doc) : ""}
+              </>
+            }
+            key={document}
+            title={TAKEAWAY_DOCS[document].title}
+          >
+            {doc ? (
+              <OpenLink href={doc.url} label="Open document" />
+            ) : (
+              <span className="type-body-sm text-muted-foreground">
+                Not set, so the import is off
+              </span>
+            )}
+            <Button
+              aria-label={`Change the ${TAKEAWAY_DOCS[document].title}`}
+              onClick={() => setEditing(document)}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              {doc ? "Change" : "Add"}
+            </Button>
+          </SettingRow>
+        ))}
         <SettingRow
           description={
             <>
@@ -327,6 +394,26 @@ export default function IntegrationSettings() {
         }
         title="Schedule sheet"
       />
+      {takeawayDocs.map(([document, doc]) => (
+        <LinkDialog
+          description="Paste the link from the browser. It's saved only if Google can open it, so the document must be shared with “Anyone with the link”."
+          key={document}
+          onOpenChange={close}
+          onSave={(link) => takeawayDoc.mutate({ document, link })}
+          open={editing === document}
+          pending={takeawayDoc.isPending}
+          placeholder="https://docs.google.com/document/d/…"
+          remove={
+            doc
+              ? {
+                  label: "Remove document",
+                  onRemove: () => takeawayDoc.mutate({ document, link: null }),
+                }
+              : undefined
+          }
+          title={TAKEAWAY_DOCS[document].title}
+        />
+      ))}
       <LinkDialog
         description="The shared folder mita open from the sidebar."
         onOpenChange={close}

@@ -5,7 +5,15 @@ import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
 const ID = "1McH8SoN1ut6CfERNi6BSh45O8vhshfZElDA42FbTZMs";
-const google = vi.hoisted(() => ({ opens: true }));
+const DOC = "1FATkCWWmfpL0sakmRK6Cxa-Nm5rKQXn6EiUAlviTRrc";
+const google = vi.hoisted(() => ({ docOpens: true, opens: true }));
+vi.mock("~/server/google-docs", () => ({
+  docHtml: vi.fn(() =>
+    google.docOpens
+      ? Promise.resolve("<html><body></body></html>")
+      : Promise.reject(new Error("Google Docs answered 401."))
+  ),
+}));
 vi.mock("~/server/google-sheets", () => ({
   sheetTitle: vi.fn(() =>
     google.opens
@@ -19,6 +27,7 @@ const admin = async () =>
 
 describe("settings router", () => {
   beforeEach(() => {
+    google.docOpens = true;
     google.opens = true;
   });
   afterEach(() => {
@@ -36,8 +45,39 @@ describe("settings router", () => {
       },
       driveFolder: null,
       scheduleSheet: null,
+      takeawayNotesDoc: null,
+      takeawayTldrDoc: null,
       whatsappGroup: null,
     });
+  });
+
+  it("saves the notes and TL;DR documents from pasted links, once Google opens them", async () => {
+    const api = await admin();
+    await api.settings.setTakeawayDoc({
+      document: "notes",
+      link: `https://docs.google.com/document/d/${DOC}/edit?tab=t.0`,
+    });
+    await expect(
+      api.settings.setTakeawayDoc({
+        document: "tldr",
+        link: `https://docs.google.com/spreadsheets/d/${ID}/edit`,
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    google.docOpens = false;
+    await expect(
+      api.settings.setTakeawayDoc({ document: "tldr", link: ID })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    const saved = await api.settings.integrations();
+    expect(saved.takeawayNotesDoc).toMatchObject({
+      id: DOC,
+      updatedBy: "Mita",
+      url: `https://docs.google.com/document/d/${DOC}/edit`,
+    });
+    expect(saved.takeawayTldrDoc).toBeNull();
+
+    await api.settings.setTakeawayDoc({ document: "notes", link: null });
+    expect((await api.settings.integrations()).takeawayNotesDoc).toBeNull();
   });
 
   it("saves the sheet id from a pasted link and shows the file name", async () => {
