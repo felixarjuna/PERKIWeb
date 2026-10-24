@@ -254,7 +254,7 @@ export function ChangesRequested({ takeawayId }: { takeawayId: number }) {
   return (
     <section
       aria-label="Changes requested"
-      className="flex flex-col gap-3 rounded-xl bg-secondary p-4 sm:p-6"
+      className="flex flex-col gap-3 rounded-xl bg-card p-4 sm:p-6"
       data-slot="changes-requested"
     >
       <div className="flex items-center gap-2">
