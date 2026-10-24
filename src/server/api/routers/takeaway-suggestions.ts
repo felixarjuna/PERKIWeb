@@ -8,6 +8,11 @@ import {
   takeaways,
   users,
 } from "~/lib/db/schema/schema";
+import {
+  REVIEW_TARGETS,
+  type ReviewTarget,
+  reviewTargetText,
+} from "~/lib/review-target";
 import { mayReadComments, QUOTE_MAX_LENGTH } from "~/lib/takeaway-comments";
 import type { TakeawayViewer } from "~/lib/takeaway-status";
 import {
@@ -16,6 +21,7 @@ import {
   maySuggestOn,
   REPLACEMENT_MAX_LENGTH,
 } from "~/lib/takeaway-suggestions";
+import { TLDR_MAX_LENGTH, takeawayTldrSchema } from "~/lib/takeaway-tldr";
 import { db } from "~/server";
 import { getRole } from "~/server/authz";
 import { affectedRow } from "../errors";
@@ -52,6 +58,7 @@ const lockTakeaway = async (
     ...copy.subject,
     keypoints: workingText(copy).keypoints,
     revisionId: copy.revision?.id ?? null,
+    tldr: workingText(copy).tldr,
   };
 };
 
@@ -116,6 +123,49 @@ const author = alias(users, "suggestion_author");
 const decider = alias(users, "suggestion_decider");
 const idInput = z.object({ id: z.number().int().positive() });
 
+const application = (
+  takeaway: Awaited<ReturnType<typeof lockTakeaway>>,
+  suggestion: {
+    target: ReviewTarget;
+    revisionId: number | null;
+    original: string;
+    replacement: string;
+  }
+) => {
+  if (suggestion.revisionId !== takeaway.revisionId) {
+    return {
+      code: "CONFLICT" as const,
+      reason:
+        "This suggestion belongs to an earlier version. Apply it by hand in the editor, then mark it as applied.",
+      text: null,
+    };
+  }
+  const text = applySuggestion(
+    reviewTargetText(takeaway, suggestion.target),
+    suggestion.original,
+    suggestion.replacement
+  );
+  if (text === null) {
+    return {
+      code: "CONFLICT" as const,
+      reason:
+        "This passage changed since it was suggested. Apply it by hand in the editor, then mark it as applied.",
+      text: null,
+    };
+  }
+  if (
+    suggestion.target === "tldr" &&
+    !takeawayTldrSchema.safeParse(text).success
+  ) {
+    return {
+      code: "BAD_REQUEST" as const,
+      reason: `This edit would exceed ${TLDR_MAX_LENGTH} characters. Shorten the TL;DR in the editor, then mark it as applied.`,
+      text: null,
+    };
+  }
+  return { code: "CONFLICT" as const, reason: null, text };
+};
+
 export const takeawaySuggestionsRouter = createTRPCRouter({
   /**
    * Accepts a suggestion: the passage is replaced in the notes. A passage
@@ -134,29 +184,29 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
         );
         assertMayDecide(takeaway, viewer);
         assertOpen(status);
-        let { keypoints } = takeaway;
+        let { keypoints, tldr } = takeaway;
         if (!input.byHand) {
-          const applied = applySuggestion(
-            keypoints,
-            suggestion.original,
-            suggestion.replacement
-          );
-          if (applied === null) {
+          const result = application(takeaway, suggestion);
+          if (result.text === null) {
             throw new TRPCError({
-              code: "CONFLICT",
-              message:
-                "This passage changed since it was suggested. Apply the suggestion by hand, then mark it as applied.",
+              code: result.code,
+              message: result.reason,
             });
           }
-          keypoints = applied;
+          const changes =
+            suggestion.target === "tldr"
+              ? { tldr: result.text }
+              : { keypoints: result.text };
+          keypoints = changes.keypoints ?? keypoints;
+          tldr = changes.tldr ?? tldr;
           await (takeaway.revisionId === null
             ? tx
                 .update(takeaways)
-                .set({ keypoints })
+                .set(changes)
                 .where(eq(takeaways.id, suggestion.takeawayId))
             : tx
                 .update(takeawayRevisions)
-                .set({ keypoints })
+                .set(changes)
                 .where(eq(takeawayRevisions.id, takeaway.revisionId)));
         }
         await tx
@@ -167,7 +217,7 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
             status: "accepted",
           })
           .where(eq(takeawaySuggestions.id, input.id));
-        return { keypoints };
+        return { keypoints, target: suggestion.target, tldr };
       });
     }),
   add: takeawayProcedure
@@ -177,6 +227,7 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
           original: z.string().trim().min(1).max(QUOTE_MAX_LENGTH),
           replacement: z.string().trim().min(1).max(REPLACEMENT_MAX_LENGTH),
           takeawayId: z.number().int().positive(),
+          target: z.enum(REVIEW_TARGETS).default("notes"),
         })
         .refine((value) => value.original !== value.replacement, {
           message: "Change the passage before suggesting it.",
@@ -199,6 +250,7 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
               replacement: input.replacement,
               revisionId: takeaway.revisionId,
               takeawayId: input.takeawayId,
+              target: input.target,
             })
             .returning({ id: takeawaySuggestions.id }),
           "Suggestion"
@@ -221,7 +273,9 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
             id: takeawaySuggestions.id,
             original: takeawaySuggestions.original,
             replacement: takeawaySuggestions.replacement,
+            revisionId: takeawaySuggestions.revisionId,
             status: takeawaySuggestions.status,
+            target: takeawaySuggestions.target,
           })
           .from(takeawaySuggestions)
           .leftJoin(author, eq(author.id, takeawaySuggestions.authorId))
@@ -236,13 +290,9 @@ export const takeawaySuggestionsRouter = createTRPCRouter({
           canSuggest: maySuggestOn(takeaway, viewer),
           suggestions: rows.map(({ authorId, ...suggestion }) => ({
             ...suggestion,
+            applicationReason: application(takeaway, suggestion).reason,
             /** Whether accepting can replace the passage in the current text. */
-            applies:
-              applySuggestion(
-                takeaway.keypoints,
-                suggestion.original,
-                suggestion.replacement
-              ) !== null,
+            applies: application(takeaway, suggestion).text !== null,
             author: suggestion.author
               ? { image: suggestion.author.image, name: suggestion.author.name }
               : null,

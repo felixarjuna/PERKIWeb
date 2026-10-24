@@ -10,6 +10,7 @@ type Suggestion =
   RouterOutputs["takeawaySuggestions"]["list"]["suggestions"][number];
 
 const suggestion: Suggestion = {
+  applicationReason: null,
   applies: true,
   author: { image: null, name: "Reviewer" },
   createdAt: new Date("2026-10-22T12:00:00Z"),
@@ -19,7 +20,9 @@ const suggestion: Suggestion = {
   mine: false,
   original: "Abraham believed God",
   replacement: "Abraham trusted God",
+  revisionId: null,
   status: "open",
+  target: "notes",
 };
 
 const renderItem = (
@@ -54,7 +57,11 @@ describe("suggestion item", () => {
 
   it("asks the writer to apply a stale suggestion by hand", () => {
     const accepted = renderItem(
-      { applies: false },
+      {
+        applicationReason:
+          "This passage changed. Apply it by hand in the editor, then mark it as applied.",
+        applies: false,
+      },
       "Save your changes before accepting a suggestion."
     );
     expect(screen.getByText(STALE)).toBeTruthy();

@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
+import { reviewTargetLabel } from "~/lib/review-target";
 import type { RouterOutputs } from "~/trpc/react";
 
 type Comment = RouterOutputs["takeawayComments"]["list"]["comments"][number];
@@ -62,6 +63,7 @@ export function CommentItem({
           </time>
         </div>
         <div className="flex flex-col gap-3 rounded-2xl rounded-tl-sm bg-secondary p-4 text-secondary-foreground">
+          <Badge variant="secondary">{reviewTargetLabel(comment.target)}</Badge>
           {comment.quote ? (
             <blockquote className="whitespace-pre-wrap break-words border-primary/40 border-l-2 pl-3 text-muted-foreground text-sm">
               {comment.quote}

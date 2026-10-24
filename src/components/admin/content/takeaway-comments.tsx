@@ -3,11 +3,20 @@
 import { useId } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
+import type { ReviewTarget } from "~/lib/review-target";
 import { api } from "~/trpc/react";
 import { CommentForm } from "./comment-form";
 import { CommentItem } from "./comment-item";
 
-export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
+export function TakeawayComments({
+  takeawayId,
+  target,
+  hideComposer = false,
+}: {
+  takeawayId: number;
+  target?: ReviewTarget;
+  hideComposer?: boolean;
+}) {
   const headingId = useId();
   const utils = api.useUtils();
   const thread = api.takeawayComments.list.useQuery(
@@ -29,8 +38,10 @@ export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
     return null;
   }
   const { data } = thread;
-  const openCount =
-    data?.comments.filter((comment) => !comment.resolvedAt).length ?? 0;
+  const comments =
+    data?.comments.filter((comment) => !target || comment.target === target) ??
+    [];
+  const openCount = comments.filter((comment) => !comment.resolvedAt).length;
   return (
     <section
       aria-labelledby={headingId}
@@ -60,11 +71,11 @@ export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
       {data ? (
         <>
           <p className="font-medium text-sm" role="status">
-            {openCount} open · {data.comments.length - openCount} resolved
+            {openCount} open · {comments.length - openCount} resolved
           </p>
-          {data.comments.length ? (
+          {comments.length ? (
             <ol className="space-y-3">
-              {data.comments.map((comment) => (
+              {comments.map((comment) => (
                 <CommentItem
                   canComment={data.canComment}
                   comment={comment}
@@ -81,18 +92,19 @@ export function TakeawayComments({ takeawayId }: { takeawayId: number }) {
             </ol>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No comments yet. Add the first review note below.
+              No comments yet. Add feedback about this text.
             </p>
           )}
-          {data.canComment ? (
+          {data.canComment && !hideComposer ? (
             <CommentForm
               onSubmit={async (input) => {
-                await add.mutateAsync({ ...input, takeawayId });
+                await add.mutateAsync({ ...input, takeawayId, target });
                 await refresh();
                 toast.success("Comment added.");
               }}
             />
-          ) : (
+          ) : null}
+          {data.canComment ? null : (
             <p className="text-muted-foreground text-sm">
               This thread is read-only after publication.
             </p>

@@ -15,9 +15,9 @@ The owner's priorities, in order.
 
 1. **Writers' workflow.** Make writing, checking and correcting a takeaway easy.
    - Import takeaways and TL;DRs from the Google Docs ([#86](https://github.com/felixarjuna/PERKIWeb/issues/86)). Done.
-   - Correct a published takeaway while it stays online ([#74](https://github.com/felixarjuna/PERKIWeb/issues/74)). In review in PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97).
-   - One shared draft that writers check together, then send to mita ([#75](https://github.com/felixarjuna/PERKIWeb/issues/75)).
-   - Comments and suggested edits say whether they are about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)).
+   - Correct a published takeaway while it stays online ([#74](https://github.com/felixarjuna/PERKIWeb/issues/74)). Done.
+   - One shared draft that writers check together, then send to mita ([#75](https://github.com/felixarjuna/PERKIWeb/issues/75)). Done.
+   - Comments and suggested edits say whether they are about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). In review.
 2. **My duties for members** ([#84](https://github.com/felixarjuna/PERKIWeb/issues/84)). Done.
 
 **Next**
@@ -70,12 +70,12 @@ Every row has five fields:
 | --- | --- | --- | --- | --- |
 | Writers | Takeaway editor | I write the notes and TL;DR in an editor that shows what readers will see. | Live | No open issue. |
 | Writers | My takeaways and due dates | I can see which takeaways I am assigned to and when they are due. | Live | No open issue. |
-| Writers | Draft, review and publish | My takeaway stays a draft until it is checked, and only mita put it online. | Live | Say whether feedback is about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
-| Writers | Review comments and suggested edits | Other writers can comment on a passage or suggest new text, and I decide what to accept. | Live | Say whether feedback is about the notes or the TL;DR ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
-| Writers | Review inbox | I can see what needs my review and which feedback I still have to handle. | Live | List other writers' drafts to review and everything submitted to mita (PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101)). |
-| Writers | Corrections to published takeaways | I can fix a published takeaway while readers still see the published version. | In review (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)) | Owner review and merge of PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97). |
-| Writers | Shared draft (CaKar) | All writers work on one draft together, then the author sends it to mita. | In review (PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101)) | Owner review and merge of PR [#101](https://github.com/felixarjuna/PERKIWeb/pull/101). |
-| Writers | Feedback on notes or TL;DR | Each comment and suggestion sits next to the text it is about. | Planned ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)) | Build it once the corrections work (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)) is merged, since both change review feedback. |
+| Writers | Draft, review and publish | My takeaway stays a draft until it is checked, and only mita put it online. | Live | Targeted feedback is in review ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
+| Writers | Review comments and suggested edits | Other writers can comment on a passage or suggest new text, and I decide what to accept. | Live | Targeted feedback is in review ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)). |
+| Writers | Review inbox | I can see what needs my review and which feedback I still have to handle. | Live | No open issue. |
+| Writers | Corrections to published takeaways | I can fix a published takeaway while readers still see the published version. | Live | No open issue. |
+| Writers | Shared draft (CaKar) | All writers work on one draft together, then the author sends it to mita. | Live | No open issue. |
+| Writers | Feedback on notes or TL;DR | Each comment and suggestion sits next to the text it is about. | In review ([#89](https://github.com/felixarjuna/PERKIWeb/issues/89)) | Owner review of the reading workspace, feedback panel and mobile sheet. |
 
 ### Mita & owner (staff)
 

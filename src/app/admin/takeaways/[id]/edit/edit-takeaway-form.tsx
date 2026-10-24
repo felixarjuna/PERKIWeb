@@ -195,9 +195,20 @@ export default function EditTakeawayForm() {
             ? "Save your changes before accepting a suggestion."
             : undefined
         }
-        onAccepted={(keypoints) =>
-          form.reset({ ...form.getValues(), keypoints })
-        }
+        onAccepted={({ keypoints, tldr, target }) => {
+          const field = target === "tldr" ? "tldr" : "keypoints";
+          // The writer may have typed while the acceptance request was in flight.
+          // Never overwrite those edits or mark another field's edits as saved.
+          if (form.getFieldState(field).isDirty) {
+            toast.info(
+              "Suggestion saved. Your unsaved text is still in the editor."
+            );
+            return;
+          }
+          form.resetField(field, {
+            defaultValue: target === "tldr" ? (tldr ?? "") : keypoints,
+          });
+        }}
         takeawayId={takeawayId}
       />
     </Form>

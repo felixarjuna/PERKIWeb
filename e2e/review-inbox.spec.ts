@@ -3,6 +3,11 @@ import { setTestSession } from "./auth-fixtures";
 import { insertSchedule, insertTakeaway } from "./db";
 import { ADMIN, uniqueSuffix, WRITER, WRITER_2 } from "./fixtures";
 import { loadUntilVisible, toast } from "./helpers";
+import {
+  closeReviewFeedback,
+  openReviewFeedback,
+  reviewFeedback,
+} from "./review-feedback";
 
 const PASSAGE = "believed God";
 
@@ -84,10 +89,19 @@ test("a shared draft goes through review, submission, a change request and publi
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 
   // Another writer comments and suggests an edit.
+  await openReviewFeedback(page);
+  await reviewFeedback(page)
+    .getByRole("button", { exact: true, name: "Add comment" })
+    .click();
   const thread = page.getByRole("region", { name: "Review comments" });
-  await thread.getByLabel("Comment", { exact: true }).fill("Which verse?");
-  await thread.getByRole("button", { name: "Add comment" }).click();
+  await reviewFeedback(page)
+    .getByLabel("Comment", { exact: true })
+    .fill("Which verse?");
+  await reviewFeedback(page)
+    .getByRole("button", { name: "Add comment" })
+    .click();
   await expect(thread.getByText("Which verse?")).toBeVisible();
+  await closeReviewFeedback(page);
   await page
     .locator(".tiptap p")
     .first()
@@ -106,10 +120,10 @@ test("a shared draft goes through review, submission, a change request and publi
   await page
     .getByRole("button", { name: "Suggest edit for selection" })
     .click();
-  const composer = page.getByRole("dialog", { name: "Suggest an edit" });
+  const composer = reviewFeedback(page);
   await composer.getByLabel("Suggested text").fill("trusted God");
   await composer.getByRole("button", { name: "Suggest edit" }).click();
-  await expect(composer).not.toBeVisible();
+  await expect(composer.getByLabel("Suggested text")).toHaveCount(0);
 
   // Mita sees the draft still has open feedback; nothing is submitted yet.
   await openInbox(page, ADMIN);
@@ -140,6 +154,7 @@ test("a shared draft goes through review, submission, a change request and publi
   const feedback = inboxCard(page, "Open feedback", title);
   await expect(feedback).toContainText("1 open comment · 1 open suggestion");
   await feedback.getByRole("link", { name: `Review ${title}` }).click();
+  await openReviewFeedback(page);
   const suggestions = page.getByRole("region", { name: "Suggested edits" });
   await suggestions.getByRole("button", { name: "Accept" }).click();
   await expect(suggestions.getByText("0 open · 1 decided")).toBeVisible();
@@ -192,7 +207,15 @@ test("a shared draft goes through review, submission, a change request and publi
   await openInbox(page, ADMIN);
   const ready = inboxCard(page, "Ready to publish", title);
   await ready.getByRole("link", { name: `Review ${title}` }).click();
-  await expect(page.getByText("Abraham trusted God")).toBeVisible();
+  const notes = page.getByRole("document", { exact: true, name: "Notes text" });
+  await expect(notes).toBeVisible();
+  await expect(notes).toHaveText(
+    "Abraham trusted God, and it was counted to him as righteousness."
+  );
+  // The hidden server-rendered source also contains this text after hydration.
+  await expect(
+    page.getByText("Abraham trusted God").filter({ visible: true })
+  ).toHaveCount(1);
   await changeStatus(
     page,
     title,

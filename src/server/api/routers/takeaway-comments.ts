@@ -3,6 +3,7 @@ import { asc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { takeawayComments, users } from "~/lib/db/schema/schema";
+import { REVIEW_TARGETS } from "~/lib/review-target";
 import {
   COMMENT_MAX_LENGTH,
   mayCommentOn,
@@ -64,6 +65,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
       threadInput.extend({
         body: z.string().trim().min(1).max(COMMENT_MAX_LENGTH),
         quote: z.string().trim().max(QUOTE_MAX_LENGTH).optional(),
+        target: z.enum(REVIEW_TARGETS).default("notes"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -83,6 +85,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
               quote: input.quote || null,
               revisionId: thread.revisionId,
               takeawayId: input.takeawayId,
+              target: input.target,
             })
             .returning({ id: takeawayComments.id }),
           "Comment"
@@ -111,6 +114,7 @@ export const takeawayCommentsRouter = createTRPCRouter({
           requestsChanges: takeawayComments.requestsChanges,
           resolvedAt: takeawayComments.resolvedAt,
           resolvedBy: { name: resolver.name },
+          target: takeawayComments.target,
         })
         .from(takeawayComments)
         .leftJoin(author, eq(author.id, takeawayComments.authorId))

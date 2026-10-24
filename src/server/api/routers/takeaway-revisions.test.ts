@@ -103,6 +103,61 @@ const publicView = async (id: number) => {
 };
 
 describe("takeaway revisions", () => {
+  it("does not apply an earlier correction's suggestion to an identical passage in a later correction", async () => {
+    const subject = await published();
+    await correct(subject);
+    const reviewer = await writer("Reviewer");
+    const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add({
+      original: "Waiting",
+      replacement: "Patience",
+      takeawayId: subject.id,
+      target: "tldr",
+    });
+    await subject.api.takeawayRevisions.setStatus({
+      status: "discarded",
+      takeawayId: subject.id,
+    });
+    await correct(subject);
+    const list = await subject.api.takeawaySuggestions.list({
+      takeawayId: subject.id,
+    });
+    expect(
+      list.suggestions.find((item) => item.id === suggestion.id)?.applies
+    ).toBe(false);
+    await expect(
+      subject.api.takeawaySuggestions.accept({ id: suggestion.id })
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(
+      (await subject.api.takeawayRevisions.current({ takeawayId: subject.id }))
+        ?.tldr
+    ).toBe(PENDING_TLDR);
+  });
+
+  it("accepts a TL;DR edit in the correction without changing identical notes or published text", async () => {
+    const subject = await published();
+    await correct(subject, PENDING_TLDR);
+    const reviewer = await writer("Reviewer");
+    const input = {
+      original: "Waiting",
+      replacement: "Patience",
+      takeawayId: subject.id,
+      target: "tldr" as const,
+    };
+    const suggestion = await callerFor(reviewer.id).takeawaySuggestions.add(
+      input
+    );
+    await subject.api.takeawaySuggestions.accept({ id: suggestion.id });
+    expect((await revisionRows(subject.id)).at(0)).toMatchObject({
+      keypoints: PENDING_TLDR,
+      tldr: "Patience is part of faith.",
+    });
+    expect(await liveRow(subject.id)).toMatchObject({
+      keypoints: LIVE,
+      tldr: LIVE_TLDR,
+    });
+    expect(await publicView(subject.id)).not.toContain("Patience");
+  });
+
   it("keeps the published text live while a correction is reviewed, then publishes it", async () => {
     const subject = await published();
     const { id, mitaId } = subject;

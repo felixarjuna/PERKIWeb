@@ -75,7 +75,7 @@ export default async function ReviewPage({
       subtitle={
         status === "draft"
           ? "A shared draft: read it, comment and suggest edits. Only its writer changes the text."
-          : "Read the takeaway and review its feedback below."
+          : "Read the takeaway. Open feedback when you need it."
       }
       title="Review takeaway"
     >
@@ -145,30 +145,21 @@ export default async function ReviewPage({
           </p>
         ) : null}
         <ChangesRequested takeawayId={takeawayId} />
-        {/* Reviewers check both parts; they share one edge and one label style. */}
-        <section aria-labelledby="review-tldr" className="flex flex-col gap-2">
-          <p className="type-eyebrow text-muted-foreground" id="review-tldr">
-            TL;DR
-          </p>
-          {text.tldr ? (
-            <TakeawayMarkdown markdown={text.tldr} />
-          ) : (
-            <p className="type-body-sm text-muted-foreground">
-              No TL;DR yet. Ask the writer to add one before it is published.
-            </p>
-          )}
-        </section>
-        <section
-          aria-labelledby="review-notes"
-          className="flex flex-col gap-2 border-t pt-5"
-        >
-          <p className="type-eyebrow text-muted-foreground" id="review-notes">
-            Notes
-          </p>
-          <TakeawayReview takeawayId={takeawayId}>
-            <TakeawayMarkdown markdown={text.keypoints} />
-          </TakeawayReview>
-        </section>
+        <TakeawayReview
+          hasTldr={Boolean(text.tldr)}
+          key={takeawayId}
+          notes={<TakeawayMarkdown markdown={text.keypoints} />}
+          takeawayId={takeawayId}
+          tldr={
+            text.tldr ? (
+              <TakeawayMarkdown markdown={text.tldr} />
+            ) : (
+              <p className="type-body-sm text-muted-foreground">
+                No TL;DR yet. Ask the writer to add one before it is published.
+              </p>
+            )
+          }
+        />
       </article>
     </AdminShell>
   );
