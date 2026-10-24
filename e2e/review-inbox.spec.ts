@@ -207,7 +207,15 @@ test("a shared draft goes through review, submission, a change request and publi
   await openInbox(page, ADMIN);
   const ready = inboxCard(page, "Ready to publish", title);
   await ready.getByRole("link", { name: `Review ${title}` }).click();
-  await expect(page.getByText("Abraham trusted God")).toBeVisible();
+  const notes = page.getByRole("document", { exact: true, name: "Notes text" });
+  await expect(notes).toBeVisible();
+  await expect(notes).toHaveText(
+    "Abraham trusted God, and it was counted to him as righteousness."
+  );
+  // The hidden server-rendered source also contains this text after hydration.
+  await expect(
+    page.getByText("Abraham trusted God").filter({ visible: true })
+  ).toHaveCount(1);
   await changeStatus(
     page,
     title,
