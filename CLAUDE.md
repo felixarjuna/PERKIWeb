@@ -70,6 +70,7 @@ General app pages, including the admin login, render inside `src/components/temp
 
 - Branch from `main` and open a PR into `main`. Merged branches are deleted automatically.
 - Work that resolves an issue must put `Closes #<n>` in the **PR description** (one line per issue; `.github/pull_request_template.md` has the slot). GitHub then closes the issue when the PR merges into `main`. A closing keyword in a commit message works too, but the PR description is where it's checked.
+- `docs/roadmap.md` is the feature overview; update its row when a PR changes a feature's status.
 - The repo is public. Security problems are tracked in private draft security advisories, never in public issues, PRs or commit messages, until they're fixed.
 
 ## it-stack
