@@ -165,6 +165,66 @@ describe("schedules.myDuties", () => {
     ]);
   });
 
+  it("follows a member moved to another group in a new term", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-21T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const ana = await insertUser({ name: "Ana Putri" });
+    const admin = callerFor((await insertUser({ role: "mita" })).id);
+    await insertGroup("2026-04-01", "Group 1", [
+      { name: "Ana Putri", userId: ana.id },
+    ]);
+    const [april] = await testDb.select().from(groupTerms);
+    await testDb
+      .insert(groups)
+      .values({ name: "Group 2", termId: april?.id ?? 0 });
+    await admin.groups.startTerm({ startsOn: "2026-11-01" });
+    const next = (await admin.groups.terms()).terms.find(
+      (term) => term.startsOn === "2026-11-01"
+    );
+    const [group1, group2] = next?.groups ?? [];
+    await admin.groups.moveMember({
+      groupId: group2?.id ?? 0,
+      memberId: group1?.members[0]?.id ?? 0,
+    });
+    await admin.schedules.addScheduleBatch([
+      {
+        ...gathering,
+        cleaningGroup: "Group 1",
+        date: new Date("2026-10-24T13:30:00Z"),
+        title: "Group 1, old term",
+      },
+      {
+        ...gathering,
+        cleaningGroup: "Group 1",
+        date: new Date("2026-11-07T14:30:00Z"),
+        title: "Group 1, new term",
+      },
+      {
+        ...gathering,
+        cleaningGroup: "Group 2",
+        date: new Date("2026-11-14T14:30:00Z"),
+        title: "Group 2, new term",
+      },
+    ]);
+
+    const duties = await callerFor(ana.id).schedules.myDuties();
+
+    expect(
+      duties.upcoming.map(({ title, duties: own }) => ({ own, title }))
+    ).toEqual([
+      {
+        own: [{ group: "Group 1", role: "cleaning" }],
+        title: "Group 1, old term",
+      },
+      {
+        own: [{ group: "Group 2", role: "cleaning" }],
+        title: "Group 2, new term",
+      },
+    ]);
+  });
+
   it("is empty for a member with no linked slots or group", async () => {
     const ana = await insertUser({ name: "Ana Putri" });
     expect(await callerFor(ana.id).schedules.myDuties()).toEqual({
