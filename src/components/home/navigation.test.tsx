@@ -4,11 +4,12 @@ import { profileCompletion } from "~/lib/profile-completion";
 import Navigation from "./navigation";
 
 const state = vi.hoisted(() => ({
+  pathname: "/schedule",
   profile: null as Record<string, unknown> | null,
   session: { user: { id: "u1" } } as object | null,
 }));
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/schedule",
+  usePathname: () => state.pathname,
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock("next-auth/react", () => ({
@@ -38,7 +39,22 @@ const complete = {
 
 describe("navigation account item", () => {
   beforeEach(() => {
+    state.pathname = "/schedule";
     state.session = { user: { id: "u1" } };
+  });
+
+  it("is highlighted on the account page like the other items", () => {
+    state.profile = complete;
+    state.pathname = "/account";
+    render(<Navigation />);
+    const account = screen.getByRole("button", { name: "Account" });
+    expect(account.getAttribute("aria-current")).toBe("page");
+    expect(account.querySelector("span")?.className).toContain("bg-primary");
+    expect(
+      screen
+        .getByRole("link", { name: "Schedule" })
+        .getAttribute("aria-current")
+    ).toBeNull();
   });
 
   it("marks an unfinished profile", () => {

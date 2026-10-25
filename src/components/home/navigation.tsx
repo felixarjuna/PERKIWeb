@@ -43,6 +43,58 @@ interface NavigationProps {
   readonly revealAfter?: string;
 }
 
+interface AccountItemProps {
+  readonly current: boolean;
+  readonly signedIn: boolean;
+  readonly unfinished: boolean;
+}
+
+/**
+ * The last item: a button, not a Link, because visitors go to sign-in with
+ * the current page as the destination. It marks itself current on /account.
+ */
+function AccountItem({ current, signedIn, unfinished }: AccountItemProps) {
+  const router = useRouter();
+  const open = signedIn
+    ? () => router.push("/account")
+    : () =>
+        router.push(
+          authPageUrl(
+            "signin",
+            `${window.location.pathname}${window.location.search}${window.location.hash}`
+          )
+        );
+  return (
+    <li>
+      <button
+        aria-current={current ? "page" : undefined}
+        // Label spans are flex items, so a hidden suffix would read
+        // as "Account , profile …"; name the state outright instead.
+        aria-label={unfinished ? "Account, profile incomplete" : undefined}
+        className={itemClass}
+        onClick={open}
+        type="button"
+      >
+        <span
+          className={cn(
+            tileClass,
+            "relative",
+            current && "bg-primary text-primary-foreground"
+          )}
+        >
+          <User aria-hidden="true" className="size-4" />
+          {unfinished ? (
+            <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary" />
+          ) : null}
+        </span>
+        <span className="sr-only sm:not-sr-only">
+          {signedIn ? "Account" : "Sign in"}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 /**
  * Floating pill navigation. On the landing page it slides in after the
  * hero; on app pages it is always there. Labels are visually hidden on
@@ -50,8 +102,8 @@ interface NavigationProps {
  */
 export default function Navigation({ revealAfter }: NavigationProps) {
   const { data: session } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
+  const onAccount = Boolean(session) && pathname === "/account";
   const reduceMotion = useReducedMotion();
   const [visible, setVisible] = useState(!revealAfter);
   const { data: own } = api.profiles.mine.useQuery(undefined, {
@@ -117,38 +169,11 @@ export default function Navigation({ revealAfter }: NavigationProps) {
                 );
               }
             )}
-            <li>
-              <button
-                // Label spans are flex items, so a hidden suffix would read
-                // as "Account , profile …"; name the state outright instead.
-                aria-label={
-                  unfinished ? "Account, profile incomplete" : undefined
-                }
-                className={itemClass}
-                onClick={
-                  session
-                    ? () => router.push("/account")
-                    : () =>
-                        router.push(
-                          authPageUrl(
-                            "signin",
-                            `${window.location.pathname}${window.location.search}${window.location.hash}`
-                          )
-                        )
-                }
-                type="button"
-              >
-                <span className={cn(tileClass, "relative")}>
-                  <User aria-hidden="true" className="size-4" />
-                  {unfinished ? (
-                    <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary" />
-                  ) : null}
-                </span>
-                <span className="sr-only sm:not-sr-only">
-                  {session ? "Account" : "Sign in"}
-                </span>
-              </button>
-            </li>
+            <AccountItem
+              current={onAccount}
+              signedIn={Boolean(session)}
+              unfinished={unfinished}
+            />
           </ul>
         </motion.nav>
       ) : null}
