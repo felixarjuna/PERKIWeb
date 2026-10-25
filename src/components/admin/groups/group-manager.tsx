@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import React from "react";
 import { toast } from "sonner";
 import { AdminSelect, QueryMessage } from "~/components/admin/admin-controls";
-import { PersonAvatar } from "~/components/person-avatar";
+import { AvatarStack, PersonAvatar } from "~/components/person-avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -212,15 +212,18 @@ function GroupCard({
       aria-labelledby={`group-${group.id}`}
       className="rounded-xl bg-card p-4"
     >
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h3 className="type-body" id={`group-${group.id}`}>
           {group.name}
         </h3>
-        <p className="type-caption text-muted-foreground">
-          {group.members.length === 1
-            ? "1 person"
-            : `${group.members.length} people`}
-        </p>
+        <div className="flex items-center gap-2">
+          <AvatarStack people={group.members} />
+          <p className="type-caption text-muted-foreground">
+            {group.members.length === 1
+              ? "1 person"
+              : `${group.members.length} people`}
+          </p>
+        </div>
       </div>
       {group.members.length > 0 ? (
         <ul className="mt-2">
