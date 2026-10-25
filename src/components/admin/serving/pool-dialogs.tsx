@@ -27,30 +27,30 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import {
+  LEADER_PARTS,
   POOL_GROUPS,
   POOL_STATUSES,
   type PoolScope,
   type PoolStatus,
   poolEntriesFor,
+  poolRoleLabels,
   scopeLabels,
   scopesFor,
   statusLabels,
-  WORSHIP_LEADER_PARTS,
 } from "~/lib/serving-pool";
-import { servingRoleLabels } from "~/lib/serving-roles";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { AdminSegmented, AdminSelect } from "../admin-controls";
 import { entryName, type PoolEntry } from "./pool-columns";
 
 const MAX_NOTE = 500;
-/** Icons for what a worship leader leads. */
+/** Icons for what a leader leads. */
 const LEADS_ICONS = {
+  lead: Layers,
   leader: BookOpen,
   liturgist: Church,
-  worship_leader: Layers,
 };
-const leadsOptions = WORSHIP_LEADER_PARTS.map((part) => ({
+const leadsOptions = LEADER_PARTS.map((part) => ({
   ...part,
   icon: LEADS_ICONS[part.value],
 }));
@@ -93,7 +93,7 @@ const useRefresh = () => {
   return () => utils.servingPool.list.invalidate();
 };
 
-/** Adds a member from the directory to a role, or as a worship leader. */
+/** Adds a member from the directory to a role, or as a leader. */
 export function AddDialog({
   open,
   onOpenChange,
@@ -104,19 +104,19 @@ export function AddDialog({
   const accounts = api.people.accounts.useQuery(undefined, { enabled: open });
   const refresh = useRefresh();
   const [userId, setUserId] = useState("");
-  const [group, setGroup] = useState("worship_leader");
-  /** What a worship leader leads: both, or just one of them. */
-  const [part, setPart] = useState<string>("worship_leader");
+  const [group, setGroup] = useState("lead");
+  /** What a leader leads: both, or just one of them. */
+  const [part, setPart] = useState<string>("lead");
   const [scope, setScope] = useState<PoolScope>("both");
   useEffect(() => {
     if (open) {
       setUserId("");
-      setGroup("worship_leader");
-      setPart("worship_leader");
+      setGroup("lead");
+      setPart("lead");
       setScope("both");
     }
   }, [open]);
-  const target = group === "worship_leader" ? part : group;
+  const target = group === "lead" ? part : group;
   const entries = poolEntriesFor(target);
   const single = entries?.length === 1 ? entries[0] : undefined;
   const scopes = single ? scopesFor(single.role) : [];
@@ -195,7 +195,7 @@ export function AddDialog({
             options={groupOptions}
             value={group}
           />
-          {group === "worship_leader" ? (
+          {group === "lead" ? (
             <Field label="Leads">
               <AdminSegmented
                 className="w-full"
@@ -267,7 +267,7 @@ export function EditDialog({
         <DialogHeader>
           <DialogTitle>
             {entry
-              ? `${entryName(entry)}, ${servingRoleLabels[entry.role]}`
+              ? `${entryName(entry)}, ${poolRoleLabels[entry.role]}`
               : "Edit"}
           </DialogTitle>
           <DialogDescription>
@@ -362,7 +362,7 @@ export function PauseDialog({
         <DialogHeader>
           <DialogTitle>Pause {name}</DialogTitle>
           <DialogDescription>
-            {entry ? servingRoleLabels[entry.role] : ""}. They show as available
+            {entry ? poolRoleLabels[entry.role] : ""}. They show as available
             again the day after the pause ends.
           </DialogDescription>
         </DialogHeader>
@@ -419,9 +419,7 @@ export function PauseDialog({
                 htmlFor="pause-every-role"
               >
                 Also pause{" "}
-                {others
-                  .map((other) => servingRoleLabels[other.role])
-                  .join(", ")}
+                {others.map((other) => poolRoleLabels[other.role]).join(", ")}
               </Label>
             </div>
           ) : null}

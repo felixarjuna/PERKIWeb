@@ -40,14 +40,14 @@ describe("servingPool", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("adds a worship leader as both leader and liturgist", async () => {
+  it("adds a leader as both leader and liturgist", async () => {
     const api = await admin();
     const ana = await insertUser({ name: "Ana Putri" });
 
-    await api.servingPool.add({ group: "worship_leader", userId: ana.id });
+    await api.servingPool.add({ group: "lead", userId: ana.id });
     // Adding again keeps the existing entries.
     await expect(
-      api.servingPool.add({ group: "worship_leader", userId: ana.id })
+      api.servingPool.add({ group: "lead", userId: ana.id })
     ).rejects.toMatchObject({ code: "CONFLICT" });
 
     const { entries } = await api.servingPool.list();
@@ -74,7 +74,7 @@ describe("servingPool", () => {
     ]);
   });
 
-  it("adds a worship leader for the service only or PA Besar only", async () => {
+  it("adds a leader for the service only or PA Besar only", async () => {
     const api = await admin();
     const ana = await insertUser({ name: "Ana Putri" });
     const budi = await insertUser({ name: "Budi Santoso" });
@@ -130,7 +130,7 @@ describe("servingPool", () => {
     await testDb
       .insert(groupTerms)
       .values([{ startsOn: "2026-04-01" }, { startsOn: "2026-10-01" }]);
-    await api.servingPool.add({ group: "worship_leader", userId: ana.id });
+    await api.servingPool.add({ group: "lead", userId: ana.id });
     await api.servingPool.add({ group: "musician", userId: ana.id });
     await api.servingPool.add({ group: "musician", userId: budi.id });
     await api.schedules.addScheduleBatch([
@@ -187,7 +187,7 @@ describe("servingPool", () => {
     });
     const api = await admin();
     const ana = await insertUser({ name: "Ana Putri" });
-    await api.servingPool.add({ group: "worship_leader", userId: ana.id });
+    await api.servingPool.add({ group: "lead", userId: ana.id });
     const ids = (await api.servingPool.list()).entries.map((entry) => entry.id);
 
     await expect(
@@ -232,7 +232,7 @@ describe("servingPool", () => {
     });
     const api = await admin();
     const ana = await insertUser({ name: "Ana Putri" });
-    await api.servingPool.add({ group: "worship_leader", userId: ana.id });
+    await api.servingPool.add({ group: "lead", userId: ana.id });
     const ids = (await api.servingPool.list()).entries.map((entry) => entry.id);
     await api.servingPool.pause({
       ids,

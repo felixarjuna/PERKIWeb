@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   addTargets,
+  LEADER_PARTS,
   POOL_GROUPS,
   POOL_ROLES,
   poolEntriesFor,
+  poolRoleLabels,
   poolStatus,
   scopesFor,
   termWindow,
-  WORSHIP_LEADER_PARTS,
 } from "./serving-pool";
 
 describe("serving pool rules", () => {
@@ -18,33 +19,29 @@ describe("serving pool rules", () => {
     );
   });
 
-  it("adds a worship leader as both Bible-study leader and service liturgist", () => {
-    expect(
-      POOL_GROUPS.find((group) => group.value === "worship_leader")
-    ).toEqual({
+  it("adds a leader as both Bible-study leader and service liturgist", () => {
+    expect(POOL_GROUPS.find((group) => group.value === "lead")).toEqual({
       entries: [
         { role: "leader", scope: "bible_study" },
         { role: "liturgist", scope: "church_service" },
       ],
-      label: "Worship leader",
-      value: "worship_leader",
+      label: "Leader",
+      value: "lead",
     });
   });
 
-  it("lets a worship leader lead both (the default) or just one", () => {
-    expect(
-      WORSHIP_LEADER_PARTS.map(({ label, value }) => [label, value])
-    ).toEqual([
-      ["Both", "worship_leader"],
+  it("lets a leader lead both (the default) or just one", () => {
+    expect(LEADER_PARTS.map(({ label, value }) => [label, value])).toEqual([
+      ["Both", "lead"],
       ["Service", "liturgist"],
       ["PA Besar", "leader"],
     ]);
-    expect(WORSHIP_LEADER_PARTS.map((part) => part.value)).toEqual([
-      "worship_leader",
+    expect(LEADER_PARTS.map((part) => part.value)).toEqual([
+      "lead",
       "liturgist",
       "leader",
     ]);
-    expect(poolEntriesFor("worship_leader")).toHaveLength(2);
+    expect(poolEntriesFor("lead")).toHaveLength(2);
     expect(poolEntriesFor("liturgist")).toEqual([
       { role: "liturgist", scope: "church_service" },
     ]);
@@ -54,6 +51,12 @@ describe("serving pool rules", () => {
     expect(poolEntriesFor("musician")).toEqual([{ role: "musician" }]);
     expect(poolEntriesFor("preacher")).toBeUndefined();
     expect(addTargets).toContain("leader");
+  });
+
+  it("labels a leader by what they lead, so Leader alone is never ambiguous", () => {
+    expect(poolRoleLabels.liturgist).toBe("Leader · Service");
+    expect(poolRoleLabels.leader).toBe("Leader · PA Besar");
+    expect(poolRoleLabels.musician).toBe("Musician");
   });
 
   it("offers only the scopes a role is scheduled for", () => {

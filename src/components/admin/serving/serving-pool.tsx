@@ -23,8 +23,7 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { Button, buttonVariants } from "~/components/ui/button";
-import { POOL_ROLES, statusLabels } from "~/lib/serving-pool";
-import { servingRoleLabels } from "~/lib/serving-roles";
+import { POOL_ROLES, poolRoleLabels, statusLabels } from "~/lib/serving-pool";
 import { api } from "~/trpc/react";
 import {
   AdminSearch,
@@ -46,7 +45,7 @@ const PINNING: ColumnPinningState = { end: ["actions"], start: ["name"] };
 const roleOptions = [
   { label: "All roles", value: "" },
   ...POOL_ROLES.map((role) => ({
-    label: servingRoleLabels[role],
+    label: poolRoleLabels[role],
     value: role,
   })),
 ];
@@ -260,7 +259,7 @@ export default function ServingPool() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               Remove {removing ? entryName(removing) : ""} as{" "}
-              {removing ? servingRoleLabels[removing.role] : ""}?
+              {removing ? poolRoleLabels[removing.role] : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               They stay on past schedules; only their place in the pool goes.

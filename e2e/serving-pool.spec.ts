@@ -18,9 +18,7 @@ test("members who are not staff get a 404 at the serving pool", async ({
   expect(response?.status()).toBe(NOT_FOUND);
 });
 
-test("mita add a worship leader, filter by role and pause them", async ({
-  page,
-}) => {
+test("mita add a leader, filter by role and pause them", async ({ page }) => {
   const name = `Pool Person ${uniqueSuffix()}`;
   const person = await insertProfiledUser(name, "member");
   const served = await insertSchedule(
@@ -43,23 +41,23 @@ test("mita add a worship leader, filter by role and pause them", async ({
   const table = page.getByRole("table", { name: "Serving pool" });
   await expect(table.getByRole("row")).toHaveCount(3);
 
-  await selectOption(page, "Role", "Liturgist");
+  await selectOption(page, "Role", "Leader · Service");
   await expect(page).toHaveURL(ROLE_PARAM);
   const row = table.getByRole("row").filter({ hasText: name });
   await expect(row).toHaveCount(1);
-  await expect(row).toContainText("Liturgist");
+  await expect(row).toContainText("Leader · Service");
   await expect(row).toContainText("Service");
   await expect(row.getByRole("cell").nth(2)).toHaveText("1");
 
   await row
-    .getByRole("button", { name: `Actions for ${name}, Liturgist` })
+    .getByRole("button", { name: `Actions for ${name}, Leader · Service` })
     .click();
   await page.getByRole("menuitem", { name: "Pause" }).click();
   const pause = page.getByRole("dialog");
   await pause.getByRole("button", { name: "Go to the Next Month" }).click();
   await pause.getByRole("button", { name: FIFTEENTH }).click();
   await pause.getByLabel("Reason").fill("Exams until the end of term");
-  await expect(pause.getByLabel("Also pause Leader")).toBeChecked();
+  await expect(pause.getByLabel("Also pause Leader · PA Besar")).toBeChecked();
   await pause.getByRole("button", { exact: true, name: "Pause" }).click();
   await expect(toast(page, "Paused.")).toBeVisible();
   await expect(row).toContainText("Paused");
@@ -71,7 +69,7 @@ test("mita add a worship leader, filter by role and pause them", async ({
   await expect(table.getByRole("row").filter({ hasText: name })).toHaveCount(2);
 });
 
-test("mita add a worship leader for the service only", async ({ page }) => {
+test("mita add a leader for the service only", async ({ page }) => {
   const name = `Pool Liturgist ${uniqueSuffix()}`;
   await insertProfiledUser(name, "member");
 
@@ -91,5 +89,5 @@ test("mita add a worship leader for the service only", async ({ page }) => {
     .getByRole("row")
     .filter({ hasText: name });
   await expect(rows).toHaveCount(1);
-  await expect(rows).toContainText("Liturgist");
+  await expect(rows).toContainText("Leader · Service");
 });

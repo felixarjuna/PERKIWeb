@@ -31,6 +31,16 @@ export const statusLabels: Record<ShownStatus, string> = {
 };
 
 /**
+ * Role names on the pool page. Schedules call the service's leader the
+ * liturgist; here both are leaders, named by what they lead.
+ */
+export const poolRoleLabels: Record<PoolRole, string> = {
+  ...servingRoleLabels,
+  leader: "Leader · PA Besar",
+  liturgist: "Leader · Service",
+};
+
+/**
  * The scopes a role is scheduled for: a Bible study has a leader, a service a
  * liturgist, and multimedia and accommodation only serve at services.
  */
@@ -57,15 +67,15 @@ const LITURGIST = { role: "liturgist", scope: "church_service" } as const;
 const PA_LEADER = { role: "leader", scope: "bible_study" } as const;
 
 /**
- * What the role picker offers. A worship leader (the sheet's "Litur/PA
- * Besar") leads the service as liturgist, PA Besar (the Bible study) as
- * leader, or both; adding one creates both entries unless one is chosen.
+ * What the role picker offers. A leader (the sheet's "Litur/PA Besar")
+ * leads the service as liturgist, PA Besar (the Bible study) as leader, or
+ * both; adding one creates both entries unless one is chosen.
  */
 export const POOL_GROUPS: readonly PoolGroup[] = [
   {
     entries: [PA_LEADER, LITURGIST],
-    label: "Worship leader",
-    value: "worship_leader",
+    label: "Leader",
+    value: "lead",
   },
   ...POOL_ROLES.filter((role) => role !== "leader" && role !== "liturgist").map(
     (role) => ({
@@ -76,14 +86,14 @@ export const POOL_GROUPS: readonly PoolGroup[] = [
   ),
 ];
 
-/** What a worship leader leads; both by default. */
-export const WORSHIP_LEADER_PARTS = [
-  { label: "Both", value: "worship_leader" },
+/** What a leader leads; both by default. */
+export const LEADER_PARTS = [
+  { label: "Both", value: "lead" },
   { label: "Service", value: "liturgist" },
   { label: "PA Besar", value: "leader" },
 ] as const;
 
-/** Everything `servingPool.add` accepts: a picker entry or one worship leader part. */
+/** Everything `servingPool.add` accepts: a picker entry or one leader part. */
 export const addTargets = [
   ...POOL_GROUPS.map((group) => group.value),
   LITURGIST.role,

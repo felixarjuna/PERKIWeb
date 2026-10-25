@@ -16,8 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { scopeLabels, statusLabels } from "~/lib/serving-pool";
-import { servingRoleLabels } from "~/lib/serving-roles";
+import { poolRoleLabels, scopeLabels, statusLabels } from "~/lib/serving-pool";
 import type { RouterOutputs } from "~/trpc/react";
 
 export type PoolEntry = RouterOutputs["servingPool"]["list"]["entries"][number];
@@ -44,7 +43,7 @@ function Actions({
   entry: PoolEntry;
   onAction: (action: PoolAction, entry: PoolEntry, origin: HTMLElement) => void;
 }) {
-  const name = `${entryName(entry)}, ${servingRoleLabels[entry.role]}`;
+  const name = `${entryName(entry)}, ${poolRoleLabels[entry.role]}`;
   const trigger = useRef<HTMLButtonElement>(null);
   const act = (action: PoolAction) => () => {
     if (trigger.current) {
@@ -115,7 +114,7 @@ export function createPoolColumns(
               {entryName(row.original)}
             </span>
             <span className="type-caption truncate text-muted-foreground">
-              {servingRoleLabels[row.original.role]}
+              {poolRoleLabels[row.original.role]}
             </span>
           </div>
         </div>
