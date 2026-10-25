@@ -1,13 +1,14 @@
 /** Turns a Google Doc's HTML export into dated Markdown entries.
  *
- * Needs jsdom, which can't load on Vercel's Node runtime, so nothing in the
- * server's module graph imports this file statically: the import router loads
- * it with a dynamic import() only when an import actually runs.
+ * Uses happy-dom, not jsdom: jsdom's dependencies `require()` ES modules,
+ * which Vercel's Node runtime refuses, so jsdom can't load in production.
  */
-import { JSDOM } from "jsdom";
+import { type Element, type Node, Window } from "happy-dom";
 import type { SourceEntry, TakeawaySource } from "./takeaway-import";
 
 const HEADING_TAG = /^H[1-6]$/;
+/** Head-only tags a fragment can leave in the body; they hold no text. */
+const NON_CONTENT_TAGS = new Set(["LINK", "META", "STYLE", "TITLE"]);
 const SOURCE_DATE = /\b(\d{1,2})[./-](\d{1,2})[./-](20\d{2})\b/;
 const MARKDOWN_SPECIAL = /[\\`*_[\]<>~]/g;
 const NON_BREAKING_SPACE = /\u00a0/g;
@@ -15,7 +16,7 @@ const WHITESPACE = /\s+/g;
 const BOLD_WEIGHT = 600;
 const OUTER_WHITESPACE = /^(\s*)([\s\S]*?)(\s*)$/;
 
-function inlineMarkdown(node: Node, window: JSDOM["window"]): string {
+function inlineMarkdown(node: Node, window: Window): string {
   if (node.nodeType === 3) {
     return (node.textContent ?? "")
       .replace(NON_BREAKING_SPACE, " ")
@@ -65,7 +66,7 @@ function inlineMarkdown(node: Node, window: JSDOM["window"]): string {
   return `${whitespace?.[1] ?? ""}${formatted}${whitespace?.[3] ?? ""}`;
 }
 
-function blockMarkdown(element: Element, window: JSDOM["window"]): string {
+function blockMarkdown(element: Element, window: Window): string {
   if (!element.textContent?.trim() && element.tagName !== "HR") {
     return "";
   }
@@ -115,7 +116,7 @@ function requireEntryBody(entry: SourceEntry | undefined, bodyBlocks: number) {
   }
 }
 
-function mergeSourceSpans(window: JSDOM["window"]) {
+function mergeSourceSpans(window: Window) {
   for (const span of window.document.querySelectorAll("span")) {
     let next = span.nextSibling;
     while (
@@ -131,11 +132,27 @@ function mergeSourceSpans(window: JSDOM["window"]) {
   }
 }
 
+/** Parse only: never run scripts or fetch stylesheets, scripts, images or frames. */
+const OFFLINE_SETTINGS = {
+  disableCSSFileLoading: true,
+  disableIframePageLoading: true,
+  disableJavaScriptFileLoading: true,
+  enableImageFileLoading: false,
+  enableJavaScriptEvaluation: false,
+  handleDisabledFileLoadingAsSuccess: true,
+  navigation: {
+    disableChildFrameNavigation: true,
+    disableChildPageNavigation: true,
+    disableMainFrameNavigation: true,
+  },
+};
+
 export function parseTakeawaySource(html: string): TakeawaySource {
-  const dom = new JSDOM(html);
+  const window = new Window({ settings: OFFLINE_SETTINGS });
+  window.document.write(html);
   try {
     if (
-      dom.window.document.body.querySelector(
+      window.document.body.querySelector(
         "img, table, iframe, svg, script, object"
       )
     ) {
@@ -143,19 +160,22 @@ export function parseTakeawaySource(html: string): TakeawaySource {
         "Unsupported embedded source content; review the HTML export."
       );
     }
-    mergeSourceSpans(dom.window);
+    mergeSourceSpans(window);
     const instructions: string[] = [];
     const entries: SourceEntry[] = [];
     let current: SourceEntry | undefined;
     let bodyBlocks = 0;
-    for (const element of dom.window.document.body.children) {
+    for (const element of window.document.body.children) {
+      if (NON_CONTENT_TAGS.has(element.tagName)) {
+        continue;
+      }
       const heading = (element.textContent ?? "")
         .replace(WHITESPACE, " ")
         .trim();
       const date = HEADING_TAG.test(element.tagName)
         ? headingDate(heading)
         : undefined;
-      const block = blockMarkdown(element, dom.window);
+      const block = blockMarkdown(element, window);
       if (!block) {
         continue;
       }
@@ -185,6 +205,7 @@ export function parseTakeawaySource(html: string): TakeawaySource {
     }
     return { entries, instructions: instructions.join("\n\n") };
   } finally {
-    dom.window.close();
+    window.happyDOM.abort();
+    window.close();
   }
 }
