@@ -156,6 +156,8 @@ export async function loadOpenSlots(
     .from(schedules)
     .where(
       and(
+        // Nobody serves at a cancelled gathering, so none of its slots are open.
+        eq(schedules.cancelled, false),
         gte(schedules.date, today.toJSDate()),
         lt(schedules.date, today.plus({ weeks: OPEN_SLOT_WEEKS }).toJSDate())
       )

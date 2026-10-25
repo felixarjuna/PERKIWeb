@@ -3,6 +3,7 @@ import { REQUESTABLE_ROLES } from "~/lib/access";
 import { eventTypeEnum, TAKEAWAY_STATUSES } from "~/lib/db/schema/schema";
 import { BIO_MAX_LENGTH } from "~/lib/profile-completion";
 import { ASSIGNABLE_ROLES } from "~/lib/roles";
+import { orderedFlags, SCHEDULE_FLAGS } from "~/lib/schedule-flags";
 import { COMMENT_MAX_LENGTH } from "~/lib/takeaway-comments";
 import { takeawayKeypointsSchema } from "~/lib/takeaway-content";
 
@@ -32,6 +33,8 @@ export const takeawayStatusSchema = z.object({
 export const addScheduleSchema = z.object({
   accommodation: z.string().optional(),
   bibleVerse: z.string().min(2).max(50),
+  /** Called off: kept with its takeaways, but out of duties and open slots. */
+  cancelled: z.boolean().optional(),
   cleaningGroup: z.string().min(2).max(50),
   cookingGroup: z.string().optional(),
   date: z.date({
@@ -40,6 +43,7 @@ export const addScheduleSchema = z.object({
   description: z.string().min(2, {
     message: "An event must have a description with at least 2 characters.",
   }),
+  flags: z.array(z.enum(SCHEDULE_FLAGS)).transform(orderedFlags).optional(),
   leader: z.string().min(2).max(50),
   multimedia: z.string().optional(),
   musician: z.string().min(2).max(50),

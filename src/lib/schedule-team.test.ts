@@ -94,6 +94,19 @@ describe("openSlots", () => {
     ).toEqual(["Multimedia", "Accommodation", "Cooking group"]);
   });
 
+  it("asks nothing of a cancelled gathering", () => {
+    expect(
+      openSlots({
+        cancelled: true,
+        cleaningGroup: "",
+        leader: "",
+        musician: "",
+        noteWriter: "",
+        type: "bible_study",
+      })
+    ).toEqual([]);
+  });
+
   it("asks a Bible study only for its own slots", () => {
     expect(
       openSlots({
@@ -261,7 +274,7 @@ describe("sameDayWarning", () => {
 });
 
 describe("isCancelled", () => {
-  it("reads a cancelled flag once schedules have one", () => {
+  it("reads the schedule's cancelled flag", () => {
     expect(isCancelled({})).toBe(false);
     expect(isCancelled({ cancelled: false })).toBe(false);
     expect(isCancelled({ cancelled: true })).toBe(true);

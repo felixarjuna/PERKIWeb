@@ -117,6 +117,51 @@ describe("schedules.myDuties", () => {
     expect(JSON.stringify(duties)).not.toContain(ana.id);
   });
 
+  it("leaves out cancelled gatherings", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-10-21T12:00:00Z"),
+      toFake: ["Date"],
+    });
+    const ana = await insertUser({ name: "Ana Putri" });
+    const admin = callerFor((await insertUser({ role: "mita" })).id);
+    await insertGroup("2026-04-01", "Group 3", [
+      { name: "Ana", userId: ana.id },
+    ]);
+    await admin.schedules.addScheduleBatch([
+      {
+        ...gathering,
+        cancelled: true,
+        date: new Date("2026-10-24T13:30:00Z"),
+        leader: "Ana Putri",
+        title: "Cancelled",
+      },
+      {
+        ...gathering,
+        cancelled: true,
+        cleaningGroup: "Group 3",
+        date: new Date("2026-10-31T14:30:00Z"),
+        title: "Cancelled cleaning",
+      },
+      {
+        ...gathering,
+        cancelled: true,
+        date: new Date("2026-10-03T13:30:00Z"),
+        musician: "Ana Putri",
+        title: "Cancelled earlier",
+      },
+      {
+        ...gathering,
+        date: new Date("2026-11-07T14:30:00Z"),
+        musician: "Ana Putri",
+        title: "Planned",
+      },
+    ]);
+
+    const duties = await callerFor(ana.id).schedules.myDuties();
+    expect(duties.upcoming.map((duty) => duty.title)).toEqual(["Planned"]);
+    expect(duties.past).toEqual([]);
+  });
+
   it("uses the group term in force on each gathering's day", async () => {
     vi.useFakeTimers({
       now: new Date("2026-03-01T12:00:00Z"),

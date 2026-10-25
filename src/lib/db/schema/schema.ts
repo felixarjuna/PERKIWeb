@@ -18,6 +18,7 @@ import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
 import { REVIEW_TARGETS } from "../../review-target";
+import { SCHEDULE_FLAGS, type ScheduleFlag } from "../../schedule-flags";
 import { POOL_ROLES, POOL_SCOPES, POOL_STATUSES } from "../../serving-pool";
 import { SERVING_ROLES } from "../../serving-roles";
 
@@ -31,32 +32,49 @@ export type EventTypeEnum = z.infer<typeof eventEnum>;
 
 export type NewSchedule = typeof schedules.$inferInsert;
 export type Schedule = typeof schedules.$inferSelect;
-export const schedules = pgTable("schedules", {
-  accommodation: text("accommodation"),
-  bibleVerse: text("bibleVerse").notNull(),
-  cleaningGroup: text("cleaningGroup").notNull(),
-  cookingGroup: text("cookingGroup"),
-  createdAt: timestamp("createdAt", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  date: timestamp("date", { mode: "date", withTimezone: true }).notNull(),
-  description: text("description").notNull(),
-  id: serial("id").primaryKey().notNull(),
-  leader: text("leader").notNull(),
-  multimedia: text("multimedia"),
-  musician: text("musician").notNull(),
-  noteWriter: text("noteWriter").notNull(),
-  preacher: text("preacher"),
-  title: text("title").notNull(),
-  type: eventTypeEnum("type").notNull(),
-  updatedAt: timestamp("updatedAt", {
-    mode: "date",
-    withTimezone: true,
-  })
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const schedules = pgTable(
+  "schedules",
+  {
+    accommodation: text("accommodation"),
+    bibleVerse: text("bibleVerse").notNull(),
+    /** Called off: kept with its takeaways, but nobody serves and it's shown crossed out. */
+    cancelled: boolean("cancelled").notNull().default(false),
+    cleaningGroup: text("cleaningGroup").notNull(),
+    cookingGroup: text("cookingGroup"),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    date: timestamp("date", { mode: "date", withTimezone: true }).notNull(),
+    description: text("description").notNull(),
+    /** Event flags from `SCHEDULE_FLAGS` (Holy Communion, online, Putzdienst). */
+    flags: text("flags")
+      .array()
+      .$type<ScheduleFlag[]>()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    id: serial("id").primaryKey().notNull(),
+    leader: text("leader").notNull(),
+    multimedia: text("multimedia"),
+    musician: text("musician").notNull(),
+    noteWriter: text("noteWriter").notNull(),
+    preacher: text("preacher"),
+    title: text("title").notNull(),
+    type: eventTypeEnum("type").notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    check(
+      "schedules_flags_check",
+      sql`${table.flags} <@ ${sql.raw(`array[${SCHEDULE_FLAGS.map((flag) => `'${flag}'`).join(", ")}]::text[]`)}`
+    ),
+  ]
+);
 
 export const TAKEAWAY_STATUSES = ["draft", "in_review", "published"] as const;
 export type TakeawayStatus = (typeof TAKEAWAY_STATUSES)[number];

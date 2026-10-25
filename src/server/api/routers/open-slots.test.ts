@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   groupMembers,
   groups,
   groupTerms,
+  schedules,
   servingPool,
 } from "~/lib/db/schema/schema";
 import { db } from "~/server";
@@ -164,6 +166,24 @@ describe("open slots", () => {
       code: "BAD_REQUEST",
       message: "Your group cooks that day, so you can't serve as musician too.",
     });
+  });
+
+  it("leaves out cancelled gatherings and refuses their slots", async () => {
+    const { ana, scheduleId } = await setup();
+    await joinPool(ana.id, "musician");
+    await testDb
+      .update(schedules)
+      .set({ cancelled: true })
+      .where(eq(schedules.id, scheduleId));
+    const api = callerFor(ana.id);
+
+    expect(await api.schedules.openSlots()).toEqual({
+      active: true,
+      slots: [],
+    });
+    await expect(
+      api.schedules.takeSlot({ role: "musician", scheduleId })
+    ).rejects.toMatchObject({ message: "This gathering is cancelled." });
   });
 
   it("refuses a slot someone else has taken", async () => {
