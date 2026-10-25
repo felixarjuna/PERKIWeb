@@ -57,15 +57,15 @@ const LITURGIST = { role: "liturgist", scope: "church_service" } as const;
 const PA_LEADER = { role: "leader", scope: "bible_study" } as const;
 
 /**
- * What the role picker offers. The sheet's "Litur/PA Besar" is one list:
- * liturgists lead the service, leaders lead PA Besar (the Bible study), and
- * many people do both, so it adds both entries unless one is chosen.
+ * What the role picker offers. A worship leader (the sheet's "Litur/PA
+ * Besar") leads the service as liturgist, PA Besar (the Bible study) as
+ * leader, or both; adding one creates both entries unless one is chosen.
  */
 export const POOL_GROUPS: readonly PoolGroup[] = [
   {
     entries: [PA_LEADER, LITURGIST],
-    label: "Litur/PA Besar",
-    value: "litur_pa",
+    label: "Worship leader",
+    value: "worship_leader",
   },
   ...POOL_ROLES.filter((role) => role !== "leader" && role !== "liturgist").map(
     (role) => ({
@@ -76,14 +76,14 @@ export const POOL_GROUPS: readonly PoolGroup[] = [
   ),
 ];
 
-/** The switch shown for Litur/PA Besar; both roles by default. */
-export const LITUR_PA_PARTS = [
-  { label: "Both", value: "litur_pa" },
-  { label: "Liturgist", value: "liturgist" },
-  { label: "PA Besar leader", value: "leader" },
+/** What a worship leader leads; both by default. */
+export const WORSHIP_LEADER_PARTS = [
+  { label: "Both", value: "worship_leader" },
+  { label: "Service", value: "liturgist" },
+  { label: "PA Besar", value: "leader" },
 ] as const;
 
-/** Everything `servingPool.add` accepts: a picker entry or one Litur/PA part. */
+/** Everything `servingPool.add` accepts: a picker entry or one worship leader part. */
 export const addTargets = [
   ...POOL_GROUPS.map((group) => group.value),
   LITURGIST.role,

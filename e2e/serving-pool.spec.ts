@@ -18,7 +18,7 @@ test("members who are not staff get a 404 at the serving pool", async ({
   expect(response?.status()).toBe(NOT_FOUND);
 });
 
-test("mita add someone to Litur/PA Besar, filter by role and pause them", async ({
+test("mita add a worship leader, filter by role and pause them", async ({
   page,
 }) => {
   const name = `Pool Person ${uniqueSuffix()}`;
@@ -71,9 +71,7 @@ test("mita add someone to Litur/PA Besar, filter by role and pause them", async 
   await expect(table.getByRole("row").filter({ hasText: name })).toHaveCount(2);
 });
 
-test("mita add someone to Litur/PA Besar as liturgist only", async ({
-  page,
-}) => {
+test("mita add a worship leader for the service only", async ({ page }) => {
   const name = `Pool Liturgist ${uniqueSuffix()}`;
   await insertProfiledUser(name, "member");
 
@@ -83,7 +81,7 @@ test("mita add someone to Litur/PA Besar as liturgist only", async ({
   const add = page.getByRole("dialog");
   await add.getByPlaceholder("Search members…").fill(name);
   await add.getByRole("option", { name }).click();
-  await add.getByRole("radio", { name: "Liturgist" }).click();
+  await add.getByRole("radio", { name: "Service" }).click();
   await add.getByRole("button", { name: "Add to pool" }).click();
   await expect(toast(page, "Added to the serving pool.")).toBeVisible();
 

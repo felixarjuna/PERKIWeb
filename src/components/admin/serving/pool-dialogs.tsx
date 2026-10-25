@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Check } from "lucide-react";
+import { BookOpen, Check, Church, Layers } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PersonAvatar } from "~/components/person-avatar";
@@ -27,7 +27,6 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import {
-  LITUR_PA_PARTS,
   POOL_GROUPS,
   POOL_STATUSES,
   type PoolScope,
@@ -36,6 +35,7 @@ import {
   scopeLabels,
   scopesFor,
   statusLabels,
+  WORSHIP_LEADER_PARTS,
 } from "~/lib/serving-pool";
 import { servingRoleLabels } from "~/lib/serving-roles";
 import { cn } from "~/lib/utils";
@@ -44,6 +44,16 @@ import { AdminSegmented, AdminSelect } from "../admin-controls";
 import { entryName, type PoolEntry } from "./pool-columns";
 
 const MAX_NOTE = 500;
+/** Icons for what a worship leader leads. */
+const LEADS_ICONS = {
+  leader: BookOpen,
+  liturgist: Church,
+  worship_leader: Layers,
+};
+const leadsOptions = WORSHIP_LEADER_PARTS.map((part) => ({
+  ...part,
+  icon: LEADS_ICONS[part.value],
+}));
 const groupOptions = POOL_GROUPS.map(({ label, value }) => ({ label, value }));
 const scopeOptions = (scopes: readonly PoolScope[]) =>
   scopes.map((scope) => ({ label: scopeLabels[scope], value: scope }));
@@ -83,7 +93,7 @@ const useRefresh = () => {
   return () => utils.servingPool.list.invalidate();
 };
 
-/** Adds a member from the directory to a role, or to Litur/PA Besar. */
+/** Adds a member from the directory to a role, or as a worship leader. */
 export function AddDialog({
   open,
   onOpenChange,
@@ -94,19 +104,19 @@ export function AddDialog({
   const accounts = api.people.accounts.useQuery(undefined, { enabled: open });
   const refresh = useRefresh();
   const [userId, setUserId] = useState("");
-  const [group, setGroup] = useState("litur_pa");
-  /** Which Litur/PA Besar roles: both, or just one of them. */
-  const [part, setPart] = useState<string>("litur_pa");
+  const [group, setGroup] = useState("worship_leader");
+  /** What a worship leader leads: both, or just one of them. */
+  const [part, setPart] = useState<string>("worship_leader");
   const [scope, setScope] = useState<PoolScope>("both");
   useEffect(() => {
     if (open) {
       setUserId("");
-      setGroup("litur_pa");
-      setPart("litur_pa");
+      setGroup("worship_leader");
+      setPart("worship_leader");
       setScope("both");
     }
   }, [open]);
-  const target = group === "litur_pa" ? part : group;
+  const target = group === "worship_leader" ? part : group;
   const entries = poolEntriesFor(target);
   const single = entries?.length === 1 ? entries[0] : undefined;
   const scopes = single ? scopesFor(single.role) : [];
@@ -185,15 +195,13 @@ export function AddDialog({
             options={groupOptions}
             value={group}
           />
-          {group === "litur_pa" ? (
-            <Field
-              hint="Liturgists lead the service; leaders lead PA Besar."
-              label="Serves as"
-            >
+          {group === "worship_leader" ? (
+            <Field label="Leads">
               <AdminSegmented
-                label="Serves as"
+                className="w-full"
+                label="Leads"
                 onChange={setPart}
-                options={LITUR_PA_PARTS}
+                options={leadsOptions}
                 value={part}
               />
             </Field>

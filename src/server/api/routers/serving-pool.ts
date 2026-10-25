@@ -75,7 +75,7 @@ function servedCounts(from: Date | null, before: Date) {
 }
 
 export const servingPoolRouter = createTRPCRouter({
-  /** Adds a member to a role, or to both Litur/PA Besar roles. */
+  /** Adds a member to a role; a worship leader can lead the service, PA Besar or both. */
   add: adminProcedure
     .input(
       z.object({

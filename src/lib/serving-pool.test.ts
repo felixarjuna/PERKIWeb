@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   addTargets,
-  LITUR_PA_PARTS,
   POOL_GROUPS,
   POOL_ROLES,
   poolEntriesFor,
   poolStatus,
   scopesFor,
   termWindow,
+  WORSHIP_LEADER_PARTS,
 } from "./serving-pool";
 
 describe("serving pool rules", () => {
@@ -18,24 +18,33 @@ describe("serving pool rules", () => {
     );
   });
 
-  it("enters Litur/PA Besar as both Bible-study leader and service liturgist", () => {
-    expect(POOL_GROUPS.find((group) => group.value === "litur_pa")).toEqual({
+  it("adds a worship leader as both Bible-study leader and service liturgist", () => {
+    expect(
+      POOL_GROUPS.find((group) => group.value === "worship_leader")
+    ).toEqual({
       entries: [
         { role: "leader", scope: "bible_study" },
         { role: "liturgist", scope: "church_service" },
       ],
-      label: "Litur/PA Besar",
-      value: "litur_pa",
+      label: "Worship leader",
+      value: "worship_leader",
     });
   });
 
-  it("lets Litur/PA Besar be both roles (the default) or just one", () => {
-    expect(LITUR_PA_PARTS.map((part) => part.value)).toEqual([
-      "litur_pa",
+  it("lets a worship leader lead both (the default) or just one", () => {
+    expect(
+      WORSHIP_LEADER_PARTS.map(({ label, value }) => [label, value])
+    ).toEqual([
+      ["Both", "worship_leader"],
+      ["Service", "liturgist"],
+      ["PA Besar", "leader"],
+    ]);
+    expect(WORSHIP_LEADER_PARTS.map((part) => part.value)).toEqual([
+      "worship_leader",
       "liturgist",
       "leader",
     ]);
-    expect(poolEntriesFor("litur_pa")).toHaveLength(2);
+    expect(poolEntriesFor("worship_leader")).toHaveLength(2);
     expect(poolEntriesFor("liturgist")).toEqual([
       { role: "liturgist", scope: "church_service" },
     ]);
