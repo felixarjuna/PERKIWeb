@@ -10,7 +10,7 @@ const TRIGGER = /Ann/;
 const user = { avatar: "", email: "ann@example.com", name: "Ann" };
 
 describe("NavUser", () => {
-  it("offers the member site next to the account", async () => {
+  it("offers only the account and logging out", async () => {
     render(
       <SidebarProvider>
         <NavUser user={user} />
@@ -18,9 +18,9 @@ describe("NavUser", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: TRIGGER }));
     const account = await screen.findByRole("menuitem", { name: "Account" });
-    const site = screen.getByRole("menuitem", { name: "Open the site" });
     expect(account.getAttribute("href")).toBe("/account");
-    expect(site.getAttribute("href")).toBe("/schedule");
-    expect(site.parentElement).toBe(account.parentElement);
+    expect(
+      screen.getAllByRole("menuitem").map((item) => item.textContent)
+    ).toEqual(["Account", "Log out"]);
   });
 });
