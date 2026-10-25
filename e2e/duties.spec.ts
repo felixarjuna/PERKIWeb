@@ -12,6 +12,7 @@ const DAY_MS = 86_400_000;
 const SIGN_IN = /\/auth\/signin/;
 const NEXT_MONTH = /next month/i;
 const REMOVE = /^Remove /;
+const FEED_LINK = /\/api\/calendar\/[\w-]{43}\.ics$/;
 const inDays = (days: number) => new Date(Date.now() + days * DAY_MS);
 
 test("a member sees their own serving slots and group days", async ({
@@ -167,4 +168,34 @@ test("a member marks a day they can't serve, and its open slot is no longer offe
 
   await marked.getByRole("button", { name: REMOVE }).click();
   await expect(slots.getByRole("listitem", { name: away })).toBeVisible();
+});
+
+test("a member's calendar link lists their duties, and a new link ends the old one", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const user = await createSignedInUser(page, "Calendar");
+  const serving = `Feed ${suffix}`;
+  const servingId = await insertSchedule(serving, inDays(9));
+  await insertAssignment(servingId, "musician", user);
+  await insertSchedule(`Not in feed ${suffix}`, inDays(10));
+
+  await page.goto("/duties");
+  await page.getByRole("button", { name: "Get calendar link" }).click();
+  const link = page.getByRole("textbox", { name: "Your calendar link" });
+  await expect(link).toHaveValue(FEED_LINK);
+  const first = await link.inputValue();
+
+  const feed = await page.request.get(first);
+  expect(feed.status()).toBe(200);
+  const ics = await feed.text();
+  expect(ics).toContain(`DESCRIPTION:${serving}`);
+  expect(ics).toContain("SUMMARY:Musician · Bible study");
+  expect(ics).not.toContain(`Not in feed ${suffix}`);
+
+  await page.getByRole("button", { name: "New link" }).click();
+  await page.getByRole("button", { name: "Make a new link" }).click();
+  await expect(link).not.toHaveValue(first);
+  expect((await page.request.get(first)).status()).toBe(404);
+  expect((await page.request.get(await link.inputValue())).status()).toBe(200);
 });

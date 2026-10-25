@@ -2,6 +2,7 @@ import { prayerRouter } from "~/server/api/routers/prayers";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { accessRouter } from "./routers/access";
 import { botRouter } from "./routers/bot";
+import { calendarFeedRouter } from "./routers/calendar-feed";
 import { groupRouter } from "./routers/groups";
 import { peopleRouter } from "./routers/people";
 import { profileRouter } from "./routers/profile";
@@ -31,6 +32,7 @@ import { writerAssignmentsRouter } from "./routers/writer-assignments";
 export const appRouter = createTRPCRouter({
   access: accessRouter,
   bot: botRouter,
+  calendarFeed: calendarFeedRouter,
   groups: groupRouter,
   people: peopleRouter,
   prayers: prayerRouter,
