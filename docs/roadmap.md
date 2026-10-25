@@ -5,7 +5,7 @@ What the PERKI Aachen website offers today, and where it is going next.
 This page is kept up to date: when a pull request changes what a feature can do,
 it updates that feature's row here.
 
-Last checked: 2026-10-24.
+Last checked: 2026-10-25.
 
 ## Now, Next, Later
 
@@ -23,7 +23,7 @@ The owner's priorities, in order.
 **Next**
 
 3. **Testimonies** ([#71](https://github.com/felixarjuna/PERKIWeb/issues/71)) and **small-group history on the profile** ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)).
-4. **Mita planning and handovers.** Schedule planning ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37), to be split into smaller issues), managing the cooking and cleaning groups, Google Drive access ([#30](https://github.com/felixarjuna/PERKIWeb/issues/30)) and onboarding for new mita ([#72](https://github.com/felixarjuna/PERKIWeb/issues/72)).
+4. **Mita planning and handovers.** Schedule planning ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37), to be split into smaller issues), managing the cooking and cleaning groups (done, [#104](https://github.com/felixarjuna/PERKIWeb/issues/104)), Google Drive access ([#30](https://github.com/felixarjuna/PERKIWeb/issues/30)) and onboarding for new mita ([#72](https://github.com/felixarjuna/PERKIWeb/issues/72)).
 
 **Later**
 
@@ -56,7 +56,7 @@ Every row has five fields:
 | Members | Welcome and profile | I fill in my details once, so the fellowship knows how to reach and care for me. | Live | Show my small group on my profile ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | Account history | I can see when I joined and how my role changed. | Live | Add small-group entries to the history ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | My duties | I can see when I serve and when my group cooks or cleans. | Live | Reminders before a duty, part of the later WhatsApp work ([#93](https://github.com/felixarjuna/PERKIWeb/issues/93)). |
-| Members | Groups | I can see which cooking and cleaning group I am in. | Live | Let mita manage the groups on the site ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)). |
+| Members | Groups | I can see which cooking and cleaning group I am in. | Live | Show my group on my profile ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | Schedule details | When signed in, I can see who serves at each gathering, with their photos. | Live | No open issue. |
 | Members | My prayer requests | I can share a request, keep it private or have it published, and tell others I am praying for theirs. | Live | No open issue. |
 | Members | WhatsApp group link | Once my profile is complete, I can join the fellowship's WhatsApp group. | Live | No open issue. |
@@ -86,7 +86,7 @@ Every row has five fields:
 | Mita & owner (staff) | Invites and access requests | We can invite people before they have an account and answer access requests. | Live | No open issue. |
 | Mita & owner (staff) | Schedules | We add gatherings by hand or import them from the schedule sheet, and see open slots in a calendar. | Live | Plan the schedule in the app instead of the sheet ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)). |
 | Mita & owner (staff) | Schedule planning | We pick people from a serving pool, generate a schedule and handle swaps, without the sheet. | Planned ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)) | Split #37 into small issues. |
-| Mita & owner (staff) | Group management | We can change the cooking and cleaning groups when they are reshuffled. | Planned ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)) | Make it one of the issues split from #37. |
+| Mita & owner (staff) | Group management | We can change the cooking and cleaning groups when they are reshuffled. | Live ([#104](https://github.com/felixarjuna/PERKIWeb/issues/104)) | Pick which group cooks and cleans at each gathering while planning the schedule ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)). |
 | Mita & owner (staff) | Names and guest speakers | Schedule names link to the right member, and guest preachers have their own profiles. | Live | No open issue. |
 | Mita & owner (staff) | Publish takeaways | We are the one check before a takeaway goes online. | Live | Publish corrections without taking the takeaway offline (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)). |
 | Mita & owner (staff) | Import takeaways from Docs | We bring the notes and TL;DR from the Google Docs into the site with one preview. | Live | No open issue. |
