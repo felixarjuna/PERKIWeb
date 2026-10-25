@@ -97,7 +97,7 @@ function LinkDialog({
             value={link}
           />
         </form>
-        <DialogFooter className="gap-2 sm:justify-between">
+        <DialogFooter className="sm:justify-between">
           {remove ? (
             <Button
               className="text-muted-foreground"

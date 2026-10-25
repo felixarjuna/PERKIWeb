@@ -204,7 +204,7 @@ function FieldEditor({
           value={draft}
         />
       </div>
-      <DialogFooter className="gap-2">
+      <DialogFooter>
         <Button onClick={onClose} type="button" variant="ghost">
           Cancel
         </Button>
