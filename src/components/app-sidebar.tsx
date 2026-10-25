@@ -131,6 +131,7 @@ function NavSection({
                       href={item.url}
                       onClick={onNavigate}
                     >
+                      <item.icon aria-hidden="true" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuSubButton>

@@ -9,7 +9,7 @@ import {
   Mic,
   NotebookPen,
   Settings,
-  Users,
+  UserRoundCheck,
   UsersRound,
   Utensils,
 } from "lucide-react";
@@ -37,7 +37,7 @@ export const adminNavigation = [
   },
   {
     group: "Community",
-    icon: Users,
+    icon: UserRoundCheck,
     parent: "Serving",
     title: "Serving teams",
     url: "/admin/serving",
