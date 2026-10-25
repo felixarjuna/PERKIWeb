@@ -13,6 +13,7 @@ import {
   servingPool,
   settings,
   takeaways,
+  unavailability,
   users,
 } from "~/lib/db/schema/schema";
 import { assertLocalDatabase, e2eEnv } from "./env";
@@ -253,6 +254,24 @@ export const deleteUsersNamed = async (prefix: string) => {
     await drizzle(client)
       .delete(users)
       .where(like(users.name, `${prefix}%`));
+  } finally {
+    await client.end();
+  }
+};
+
+/** Marks days (`yyyy-MM-dd`, both included) a member can't serve. */
+export const insertUnavailability = async (
+  userId: string,
+  startsOn: string,
+  endsOn: string,
+  note: string | null = null
+) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .insert(unavailability)
+      .values({ endsOn, note, startsOn, userId });
   } finally {
     await client.end();
   }
