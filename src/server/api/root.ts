@@ -9,6 +9,7 @@ import { reviewInboxRouter } from "./routers/review-inbox";
 import { rolesRouter } from "./routers/roles";
 import { scheduleImportRouter } from "./routers/schedule-import";
 import { scheduleRouter } from "./routers/schedules";
+import { servingPoolRouter } from "./routers/serving-pool";
 import { settingsRouter } from "./routers/settings";
 import { speakerRouter } from "./routers/speakers";
 import { takeawayRouter } from "./routers/takeaway";
@@ -36,6 +37,7 @@ export const appRouter = createTRPCRouter({
   roles: rolesRouter,
   scheduleImport: scheduleImportRouter,
   schedules: scheduleRouter,
+  servingPool: servingPoolRouter,
   settings: settingsRouter,
   speakers: speakerRouter,
   takeawayComments: takeawayCommentsRouter,

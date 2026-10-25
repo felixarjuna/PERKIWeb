@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   HandHeart,
+  HandHelping,
   KeyRound,
   LayoutDashboard,
   Link2,
@@ -48,6 +49,12 @@ export const adminNavigation = [
     icon: CalendarDays,
     title: "Schedules",
     url: "/admin/schedules",
+  },
+  {
+    group: "Content",
+    icon: HandHelping,
+    title: "Serving pool",
+    url: "/admin/serving",
   },
   {
     group: "Content",

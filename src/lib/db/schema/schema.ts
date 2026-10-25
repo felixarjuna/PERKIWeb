@@ -18,6 +18,7 @@ import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
 import { REVIEW_TARGETS } from "../../review-target";
+import { POOL_ROLES, POOL_SCOPES, POOL_STATUSES } from "../../serving-pool";
 import { SERVING_ROLES } from "../../serving-roles";
 
 export const eventTypeEnum = pgEnum("event_type", [
@@ -516,6 +517,58 @@ export const scheduleAssignments = pgTable(
     check(
       "schedule_assignments_role_check",
       sql`${t.role} in (${sql.raw(SERVING_ROLES.map((role) => `'${role}'`).join(", "))})`
+    ),
+  ]
+);
+
+const sqlList = (values: readonly string[]) =>
+  sql.raw(values.map((value) => `'${value}'`).join(", "));
+
+/**
+ * The serving pool: one person in one role, with where they serve and
+ * whether they're available. Pause notes are for staff only.
+ */
+export const servingPool = pgTable(
+  "serving_pool",
+  {
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    id: serial("id").primaryKey().notNull(),
+    /** Last Aachen day of a pause; the entry is available again after it. */
+    pausedUntil: date("pausedUntil", { mode: "string" }),
+    pauseNote: text("pauseNote"),
+    role: text("role").notNull(),
+    /** church_service | bible_study | both */
+    scope: text("scope").notNull(),
+    /** active | backup */
+    status: text("status").default("active").notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    uniqueIndex("serving_pool_user_role").on(t.userId, t.role),
+    check(
+      "serving_pool_role_check",
+      sql`${t.role} in (${sqlList(POOL_ROLES)})`
+    ),
+    check(
+      "serving_pool_scope_check",
+      sql`${t.scope} in (${sqlList(POOL_SCOPES)})`
+    ),
+    check(
+      "serving_pool_status_check",
+      sql`${t.status} in (${sqlList(POOL_STATUSES)})`
     ),
   ]
 );
