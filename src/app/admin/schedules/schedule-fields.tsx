@@ -102,7 +102,14 @@ function SelectField({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <Select
-            onValueChange={field.onChange}
+            // No option is empty, so "" only comes from Radix's hidden native
+            // select, which can't hold a stored name whose option isn't
+            // registered yet (#126). Ignore it so the stored name stays.
+            onValueChange={(value) => {
+              if (value !== "") {
+                field.onChange(value);
+              }
+            }}
             value={typeof field.value === "string" ? field.value : ""}
           >
             <FormControl>

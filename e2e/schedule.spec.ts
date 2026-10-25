@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { format } from "date-fns";
 
+import { insertSchedule } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, loadUntilVisible, selectOption, toast } from "./helpers";
 
@@ -187,4 +188,24 @@ test("calendar shows a month's gatherings and their open slots", async ({
   await event.click();
   await expect(page).toHaveURL(EDIT_SCHEDULE_URL);
   await expect(page.getByLabel("Title", { exact: true })).toHaveValue(title);
+});
+
+test("edit form keeps a stored name that isn't in the picker list", async ({
+  page,
+}) => {
+  const title = `Unlisted ${uniqueSuffix()}`;
+  const leader = `Guest Leader ${uniqueSuffix()}`;
+  const id = await insertSchedule(title, scheduleDate(), { leader });
+  const leaderField = page.getByRole("combobox", { name: "Leader" });
+
+  await page.goto(`/admin/schedules/${id}/edit`);
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(title);
+  await expect(leaderField).toHaveText(leader);
+
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(toast(page, "Schedule updated successfully!")).toBeVisible();
+
+  await page.goto(`/admin/schedules/${id}/edit`);
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(title);
+  await expect(leaderField).toHaveText(leader);
 });
