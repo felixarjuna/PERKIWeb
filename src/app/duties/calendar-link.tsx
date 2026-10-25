@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus, Copy, RefreshCw } from "lucide-react";
+import { CalendarPlus, Copy, RefreshCw, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useSyncExternalStore } from "react";
 import { toast } from "sonner";
@@ -82,8 +82,8 @@ export default function CalendarLink({ feed }: { feed: Feed | null }) {
           Add to your calendar
         </h2>
         <p className="type-body-sm text-pretty text-muted-foreground">
-          Your duties appear in Google Calendar or on your phone, and update
-          when the schedule changes.
+          Your duties appear in your iPhone or Google calendar, and update when
+          the schedule changes.
         </p>
       </div>
       {feed ? (
@@ -115,20 +115,22 @@ export default function CalendarLink({ feed }: { feed: Feed | null }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {/* Most members use iPhones: a webcal link opens Calendar's subscribe sheet. */}
             <a
               className={buttonVariants({ variant: "default" })}
+              href={url ? webcal(url) : undefined}
+            >
+              <Smartphone aria-hidden="true" className="size-4" />
+              Add to iPhone Calendar
+            </a>
+            <a
+              className={buttonVariants({ variant: "secondary" })}
               href={url ? googleCalendarUrl(url) : undefined}
               rel="noopener noreferrer"
               target="_blank"
             >
               <CalendarPlus aria-hidden="true" className="size-4" />
               Add to Google Calendar
-            </a>
-            <a
-              className={buttonVariants({ variant: "secondary" })}
-              href={url ? webcal(url) : undefined}
-            >
-              Open in calendar app
             </a>
             <AlertDialog>
               <AlertDialogTrigger asChild>

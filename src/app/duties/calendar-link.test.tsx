@@ -37,6 +37,11 @@ describe("CalendarLink", () => {
       `${window.location.origin}${path}`
     );
     expect(
+      screen
+        .getByRole("link", { name: "Add to iPhone Calendar" })
+        .getAttribute("href")
+    ).toBe(`webcal://${window.location.host}${path}`);
+    expect(
       screen.getByRole("link", { name: "Add to Google Calendar" })
     ).toBeTruthy();
 
