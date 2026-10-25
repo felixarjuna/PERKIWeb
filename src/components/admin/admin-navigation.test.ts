@@ -1,4 +1,4 @@
-import { HandHelping, UserRoundCheck, Utensils } from "lucide-react";
+import { HeartHandshake, UserRoundCheck, Utensils } from "lucide-react";
 import { expect, it } from "vitest";
 import {
   adminNavigation,
@@ -40,7 +40,9 @@ it("nests cooking and cleaning and the serving teams under Serving", () => {
     "Name links",
   ]);
   const [, , serving] = sidebarEntries(community);
-  expect(serving && "items" in serving ? serving.icon : null).toBe(HandHelping);
+  expect(serving && "items" in serving ? serving.icon : null).toBe(
+    HeartHandshake
+  );
   // Each page in the section keeps its own icon, distinct from Members'.
   expect(
     serving && "items" in serving ? serving.items.map((item) => item.icon) : []

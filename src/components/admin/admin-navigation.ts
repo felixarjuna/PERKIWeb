@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   HandHeart,
-  HandHelping,
+  HeartHandshake,
   KeyRound,
   LayoutDashboard,
   Link2,
@@ -96,7 +96,7 @@ export const navigationFor = (role: Role) =>
 type NavigationItem = (typeof adminNavigation)[number];
 
 /** Icons of the collapsible entries that hold several pages. */
-const PARENT_ICONS: Record<string, LucideIcon> = { Serving: HandHelping };
+const PARENT_ICONS: Record<string, LucideIcon> = { Serving: HeartHandshake };
 
 export type SidebarEntry =
   | NavigationItem
