@@ -27,10 +27,12 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import {
+  LITUR_PA_PARTS,
   POOL_GROUPS,
   POOL_STATUSES,
   type PoolScope,
   type PoolStatus,
+  poolEntriesFor,
   scopeLabels,
   scopesFor,
   statusLabels,
@@ -93,15 +95,19 @@ export function AddDialog({
   const refresh = useRefresh();
   const [userId, setUserId] = useState("");
   const [group, setGroup] = useState("litur_pa");
+  /** Which Litur/PA Besar roles: both, or just one of them. */
+  const [part, setPart] = useState<string>("litur_pa");
   const [scope, setScope] = useState<PoolScope>("both");
   useEffect(() => {
     if (open) {
       setUserId("");
       setGroup("litur_pa");
+      setPart("litur_pa");
       setScope("both");
     }
   }, [open]);
-  const entries = POOL_GROUPS.find((item) => item.value === group)?.entries;
+  const target = group === "litur_pa" ? part : group;
+  const entries = poolEntriesFor(target);
   const single = entries?.length === 1 ? entries[0] : undefined;
   const scopes = single ? scopesFor(single.role) : [];
   const add = api.servingPool.add.useMutation({
@@ -128,7 +134,7 @@ export function AddDialog({
           onSubmit={(event) => {
             event.preventDefault();
             add.mutate({
-              group,
+              group: target,
               scope: scopes.length > 1 ? scope : undefined,
               userId,
             });
@@ -179,14 +185,18 @@ export function AddDialog({
             options={groupOptions}
             value={group}
           />
-          {entries && entries.length > 1 ? (
-            <p className="type-caption -mt-3 text-muted-foreground">
-              Adds them as{" "}
-              {entries
-                .map((entry) => servingRoleLabels[entry.role])
-                .join(" and ")}
-              .
-            </p>
+          {group === "litur_pa" ? (
+            <Field
+              hint="Liturgists lead the service; leaders lead PA Besar."
+              label="Serves as"
+            >
+              <AdminSegmented
+                label="Serves as"
+                onChange={setPart}
+                options={LITUR_PA_PARTS}
+                value={part}
+              />
+            </Field>
           ) : null}
           {scopes.length > 1 ? (
             <Field label="Serves at">

@@ -53,17 +53,17 @@ interface PoolGroup {
   value: string;
 }
 
+const LITURGIST = { role: "liturgist", scope: "church_service" } as const;
+const PA_LEADER = { role: "leader", scope: "bible_study" } as const;
+
 /**
- * What a person is added to. The sheet's "Litur/PA Besar" is one group of
- * people who lead Bible studies and are liturgists at services, so adding
- * someone there creates both entries.
+ * What the role picker offers. The sheet's "Litur/PA Besar" is one list:
+ * liturgists lead the service, leaders lead PA Besar (the Bible study), and
+ * many people do both, so it adds both entries unless one is chosen.
  */
 export const POOL_GROUPS: readonly PoolGroup[] = [
   {
-    entries: [
-      { role: "leader", scope: "bible_study" },
-      { role: "liturgist", scope: "church_service" },
-    ],
+    entries: [PA_LEADER, LITURGIST],
     label: "Litur/PA Besar",
     value: "litur_pa",
   },
@@ -75,6 +75,33 @@ export const POOL_GROUPS: readonly PoolGroup[] = [
     })
   ),
 ];
+
+/** The switch shown for Litur/PA Besar; both roles by default. */
+export const LITUR_PA_PARTS = [
+  { label: "Both", value: "litur_pa" },
+  { label: "Liturgist", value: "liturgist" },
+  { label: "PA Besar leader", value: "leader" },
+] as const;
+
+/** Everything `servingPool.add` accepts: a picker entry or one Litur/PA part. */
+export const addTargets = [
+  ...POOL_GROUPS.map((group) => group.value),
+  LITURGIST.role,
+  PA_LEADER.role,
+];
+
+/** The pool entries an add target creates; undefined for anything else. */
+export function poolEntriesFor(
+  target: string
+): PoolGroup["entries"] | undefined {
+  if (target === LITURGIST.role) {
+    return [LITURGIST];
+  }
+  if (target === PA_LEADER.role) {
+    return [PA_LEADER];
+  }
+  return POOL_GROUPS.find((group) => group.value === target)?.entries;
+}
 
 /** Paused through `pausedUntil` (an Aachen day), otherwise the stored status. */
 export const poolStatus = (

@@ -21,10 +21,11 @@ import {
 } from "~/lib/db/schema/schema";
 import { localDay } from "~/lib/schedule-team";
 import {
-  POOL_GROUPS,
+  addTargets,
   POOL_SCOPES,
   POOL_STATUSES,
   type PoolRole,
+  poolEntriesFor,
   poolStatus,
   scopesFor,
   termWindow,
@@ -78,24 +79,24 @@ export const servingPoolRouter = createTRPCRouter({
   add: adminProcedure
     .input(
       z.object({
-        group: z.enum(POOL_GROUPS.map((group) => group.value) as [string]),
+        group: z.string().refine((value) => addTargets.includes(value)),
         scope: z.enum(POOL_SCOPES).optional(),
         userId: z.string().min(1),
       })
     )
     .mutation(async ({ input }) => {
-      const group = POOL_GROUPS.find((entry) => entry.value === input.group);
+      const entries = poolEntriesFor(input.group);
       const [user] = await db
         .select({ id: users.id })
         .from(users)
         .where(eq(users.id, input.userId));
-      if (!(group && user)) {
+      if (!(entries && user)) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Member not found.",
         });
       }
-      const rows = group.entries.map(({ role, scope }) => {
+      const rows = entries.map(({ role, scope }) => {
         const chosen = scope ?? input.scope ?? scopesFor(role)[0] ?? "both";
         checkScope(role, chosen);
         return { role, scope: chosen, userId: user.id };

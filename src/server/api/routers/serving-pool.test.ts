@@ -74,6 +74,23 @@ describe("servingPool", () => {
     ]);
   });
 
+  it("adds only the liturgist or only the PA Besar leader when asked", async () => {
+    const api = await admin();
+    const ana = await insertUser({ name: "Ana Putri" });
+    const budi = await insertUser({ name: "Budi Santoso" });
+
+    await api.servingPool.add({ group: "liturgist", userId: ana.id });
+    await api.servingPool.add({ group: "leader", userId: budi.id });
+
+    const { entries } = await api.servingPool.list();
+    expect(
+      entries.map(({ role, scope, user }) => [user.name, role, scope])
+    ).toEqual([
+      ["Ana Putri", "liturgist", "church_service"],
+      ["Budi Santoso", "leader", "bible_study"],
+    ]);
+  });
+
   it("refuses a scope the role isn't scheduled for", async () => {
     const api = await admin();
     const ana = await insertUser({ name: "Ana Putri" });

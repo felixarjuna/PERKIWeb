@@ -70,3 +70,28 @@ test("mita add someone to Litur/PA Besar, filter by role and pause them", async 
   await expect(page).toHaveURL(PAUSED_PARAM);
   await expect(table.getByRole("row").filter({ hasText: name })).toHaveCount(2);
 });
+
+test("mita add someone to Litur/PA Besar as liturgist only", async ({
+  page,
+}) => {
+  const name = `Pool Liturgist ${uniqueSuffix()}`;
+  await insertProfiledUser(name, "member");
+
+  await adminLogin(page);
+  await page.goto("/admin/serving");
+  await page.getByRole("button", { name: "Add member" }).click();
+  const add = page.getByRole("dialog");
+  await add.getByPlaceholder("Search members…").fill(name);
+  await add.getByRole("option", { name }).click();
+  await add.getByRole("radio", { name: "Liturgist" }).click();
+  await add.getByRole("button", { name: "Add to pool" }).click();
+  await expect(toast(page, "Added to the serving pool.")).toBeVisible();
+
+  await page.getByLabel("Search the serving pool").fill(name);
+  const rows = page
+    .getByRole("table", { name: "Serving pool" })
+    .getByRole("row")
+    .filter({ hasText: name });
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText("Liturgist");
+});

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  addTargets,
+  LITUR_PA_PARTS,
   POOL_GROUPS,
   POOL_ROLES,
+  poolEntriesFor,
   poolStatus,
   scopesFor,
   termWindow,
@@ -24,6 +27,24 @@ describe("serving pool rules", () => {
       label: "Litur/PA Besar",
       value: "litur_pa",
     });
+  });
+
+  it("lets Litur/PA Besar be both roles (the default) or just one", () => {
+    expect(LITUR_PA_PARTS.map((part) => part.value)).toEqual([
+      "litur_pa",
+      "liturgist",
+      "leader",
+    ]);
+    expect(poolEntriesFor("litur_pa")).toHaveLength(2);
+    expect(poolEntriesFor("liturgist")).toEqual([
+      { role: "liturgist", scope: "church_service" },
+    ]);
+    expect(poolEntriesFor("leader")).toEqual([
+      { role: "leader", scope: "bible_study" },
+    ]);
+    expect(poolEntriesFor("musician")).toEqual([{ role: "musician" }]);
+    expect(poolEntriesFor("preacher")).toBeUndefined();
+    expect(addTargets).toContain("leader");
   });
 
   it("offers only the scopes a role is scheduled for", () => {
