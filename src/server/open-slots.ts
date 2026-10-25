@@ -9,6 +9,7 @@ import {
   scheduleAssignments,
   schedules,
   servingPool,
+  unavailability,
   users,
 } from "~/lib/db/schema/schema";
 import {
@@ -23,6 +24,7 @@ import {
 } from "~/lib/schedule-team";
 import type { PoolRole, PoolScope, PoolStatus } from "~/lib/serving-pool";
 import { SERVING_ROLES, type ServingRole } from "~/lib/serving-roles";
+import { unavailableOn } from "~/lib/unavailability";
 import { db } from "~/server";
 import { groupKey } from "~/server/duties";
 import {
@@ -39,7 +41,7 @@ type Reader = Pick<Transaction, "select">;
 
 /** What the hard rules need to know about the member, read once. */
 async function memberFacts(tx: Reader, userId: string) {
-  const [entries, own, terms, serving] = await Promise.all([
+  const [entries, own, terms, serving, away] = await Promise.all([
     tx
       .select({
         pausedUntil: servingPool.pausedUntil,
@@ -64,6 +66,13 @@ async function memberFacts(tx: Reader, userId: string) {
       .from(scheduleAssignments)
       .innerJoin(schedules, eq(schedules.id, scheduleAssignments.scheduleId))
       .where(eq(scheduleAssignments.userId, userId)),
+    tx
+      .select({
+        endsOn: unavailability.endsOn,
+        startsOn: unavailability.startsOn,
+      })
+      .from(unavailability)
+      .where(eq(unavailability.userId, userId)),
   ]);
   const entryFor = (role: PoolRole) => {
     const entry = entries.find((row) => row.role === role);
@@ -96,7 +105,10 @@ async function memberFacts(tx: Reader, userId: string) {
       )
       .map((slot) => slot.role as ServingRole)
       .sort((a, b) => SERVING_ROLES.indexOf(a) - SERVING_ROLES.indexOf(b));
-  return { cooks, entries, entryFor, servingOn };
+  /** The member marked the gathering's day as one they can't serve. */
+  const unavailable = (schedule: Schedule) =>
+    unavailableOn(away, localDay(schedule.date));
+  return { cooks, entries, entryFor, servingOn, unavailable };
 }
 
 type Facts = Awaited<ReturnType<typeof memberFacts>>;
@@ -121,6 +133,7 @@ function checkFor(
     role,
     today: localDay(now),
     type: schedule.type,
+    unavailable: facts.unavailable(schedule),
   };
 }
 
@@ -168,7 +181,12 @@ export async function loadOpenSlots(
       const role = entry.role as PoolRole;
       const column = slotColumn(role, schedule.type);
       const inScope = entry.scope === "both" || entry.scope === schedule.type;
-      if (!(column && inScope) || slotHolder(schedule[column])) {
+      // Days the member can't serve aren't offered at all (#110).
+      if (
+        !(column && inScope) ||
+        slotHolder(schedule[column]) ||
+        facts.unavailable(schedule)
+      ) {
         return [];
       }
       return [

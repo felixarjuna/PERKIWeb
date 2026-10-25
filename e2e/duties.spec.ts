@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import {
   insertAssignment,
   insertGroupWith,
@@ -10,6 +10,8 @@ import { createSignedInUser } from "./helpers";
 
 const DAY_MS = 86_400_000;
 const SIGN_IN = /\/auth\/signin/;
+const NEXT_MONTH = /next month/i;
+const REMOVE = /^Remove /;
 const inDays = (days: number) => new Date(Date.now() + days * DAY_MS);
 
 test("a member sees their own serving slots and group days", async ({
@@ -122,4 +124,47 @@ test("an active musician takes an open slot, and is told why another is refused"
 test("visitors are sent to sign in", async ({ page }) => {
   await page.goto("/duties");
   await expect(page).toHaveURL(SIGN_IN);
+});
+
+/** Picks one day in the open calendar, moving to its month first. */
+const pickDay = async (page: Page, date: Date) => {
+  const day = date.toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+  const cell = page.locator(`td[data-day="${day}"]:not([data-outside]) button`);
+  if ((await cell.count()) === 0) {
+    await page.getByRole("button", { name: NEXT_MONTH }).click();
+  }
+  await cell.click();
+};
+
+test("a member marks a day they can't serve, and its open slot is no longer offered", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const user = await createSignedInUser(page, "Away");
+  const away = `Away ${suffix}`;
+  const free = `Free ${suffix}`;
+  await insertSchedule(away, inDays(5), { musician: "-" });
+  await insertSchedule(free, inDays(12), { musician: "-" });
+  await insertPoolEntry(user.id, "musician");
+
+  await page.goto("/duties");
+  const slots = page.getByRole("region", { name: "Open slots" });
+  await expect(slots.getByRole("listitem", { name: away })).toBeVisible();
+
+  await page.getByRole("button", { name: "Mark days" }).click();
+  const dialog = page.getByRole("dialog", { name: "Days you can't serve" });
+  await pickDay(page, inDays(5));
+  await dialog.getByLabel("Note for mita (optional)").fill("Visiting family");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(
+    page.getByText("Marked. Mita won't plan you on those days.")
+  ).toBeVisible();
+
+  const marked = page.getByRole("list", { name: "Days you can't serve" });
+  await expect(marked).toContainText("Visiting family");
+  await expect(slots.getByRole("listitem", { name: away })).toHaveCount(0);
+  await expect(slots.getByRole("listitem", { name: free })).toBeVisible();
+
+  await marked.getByRole("button", { name: REMOVE }).click();
+  await expect(slots.getByRole("listitem", { name: away })).toBeVisible();
 });

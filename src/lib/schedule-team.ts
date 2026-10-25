@@ -207,6 +207,8 @@ export interface TakeCheck {
   /** Today in Aachen, `yyyy-MM-dd`. */
   today: string;
   type: ScheduleSlots["type"];
+  /** The member marked this day as one they can't serve (#110). */
+  unavailable?: boolean;
 }
 
 const SCOPE_ONLY: Record<ScheduleSlots["type"], string> = {
@@ -231,7 +233,8 @@ const shortDay = (day: string) =>
  * Why a member may not take a slot, as a message for them, or null when they
  * may. A member takes an open slot only in a role they're active in, with the
  * gathering in their scope, not paused that day, and (for liturgist and
- * musician) not while their group cooks.
+ * musician) not while their group cooks, on a day they haven't marked as
+ * unavailable.
  */
 export function takeRefusal(check: TakeCheck): string | null {
   const role = roleName(check.role);
@@ -262,6 +265,9 @@ export function takeRefusal(check: TakeCheck): string | null {
   }
   if (entry.pausedUntil && entry.pausedUntil >= check.day) {
     return `You're paused until ${shortDay(entry.pausedUntil)}, so you can't take this slot.`;
+  }
+  if (check.unavailable) {
+    return "You marked this day as one you can't serve.";
   }
   if (check.cooksThatDay && NOT_WHILE_COOKING.includes(check.role)) {
     return `Your group cooks that day, so you can't serve as ${role} too.`;
