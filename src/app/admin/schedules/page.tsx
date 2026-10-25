@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import AdminShell from "~/components/admin/admin-shell";
+import AddScheduleMenu from "~/components/admin/content/add-schedule-menu";
 import ScheduleManager from "~/components/admin/content/schedule-manager";
-import { buttonVariants } from "~/components/ui/button";
 import { adminShellProps, requireAdmin } from "~/server/authz";
 
 export default async function ManagementPage() {
@@ -10,11 +9,7 @@ export default async function ManagementPage() {
   return (
     <AdminShell
       {...(await adminShellProps(role))}
-      actions={
-        <Link className={buttonVariants()} href="/admin/schedules/new">
-          Add schedule
-        </Link>
-      }
+      actions={<AddScheduleMenu />}
       section="Schedules"
       subtitle="Plan gatherings and keep the fellowship informed."
     >

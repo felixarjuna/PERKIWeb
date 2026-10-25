@@ -1,24 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import {
-  and,
-  asc,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lt,
-  lte,
-  sql,
-} from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import {
-  groupTerms,
-  scheduleAssignments,
-  schedules,
-  servingPool,
-  users,
-} from "~/lib/db/schema/schema";
+import { groupTerms, servingPool, users } from "~/lib/db/schema/schema";
 import { localDay } from "~/lib/schedule-team";
 import {
   addTargets,
@@ -31,6 +15,7 @@ import {
   termWindow,
 } from "~/lib/serving-pool";
 import { db } from "~/server";
+import { servedCounts } from "~/server/served-counts";
 import { affectedRow } from "../errors";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
@@ -50,31 +35,6 @@ const checkScope = (role: PoolRole, scope: string) => {
     });
   }
 };
-
-/** How often each account served in each role: in the window, and ever. */
-function servedCounts(from: Date | null, before: Date) {
-  const inTerm = from
-    ? and(gte(schedules.date, from), lt(schedules.date, before))
-    : lt(schedules.date, before);
-  return db
-    .select({
-      last: sql<Date | string | null>`max(${schedules.date})`,
-      role: scheduleAssignments.role,
-      served: sql<number>`count(*) filter (where ${inTerm})`.mapWith(Number),
-      userId: scheduleAssignments.userId,
-    })
-    .from(scheduleAssignments)
-    .innerJoin(schedules, eq(schedules.id, scheduleAssignments.scheduleId))
-    .where(
-      and(
-        isNotNull(scheduleAssignments.userId),
-        // Nobody served at a cancelled gathering.
-        eq(schedules.cancelled, false),
-        lte(schedules.date, new Date())
-      )
-    )
-    .groupBy(scheduleAssignments.userId, scheduleAssignments.role);
-}
 
 export const servingPoolRouter = createTRPCRouter({
   /** Adds a member to a role; a leader can lead the service, PA Besar or both. */

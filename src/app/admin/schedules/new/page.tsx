@@ -25,7 +25,7 @@ export default async function EditorPage({
       section="Schedules"
       title="Add schedule"
     >
-      <AddScheduleForm day={day} />
+      <AddScheduleForm day={day} importing={params.tab === "import"} />
     </AdminShell>
   );
 }
