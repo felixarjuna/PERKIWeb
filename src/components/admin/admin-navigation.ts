@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   HandHeart,
@@ -10,6 +11,7 @@ import {
   Settings,
   Users,
   UsersRound,
+  Utensils,
 } from "lucide-react";
 import { isStaffRole, type Role } from "~/lib/roles";
 
@@ -28,14 +30,16 @@ export const adminNavigation = [
   },
   {
     group: "Community",
-    icon: Users,
-    title: "Groups",
+    icon: Utensils,
+    parent: "Serving",
+    title: "Cooking & cleaning",
     url: "/admin/groups",
   },
   {
     group: "Community",
-    icon: HandHelping,
-    title: "Serving pool",
+    icon: Users,
+    parent: "Serving",
+    title: "Serving teams",
     url: "/admin/serving",
   },
   {
@@ -88,3 +92,40 @@ export const navigationFor = (role: Role) =>
   isStaffRole(role)
     ? adminNavigation
     : adminNavigation.filter((item) => item.url === "/admin/takeaways");
+
+type NavigationItem = (typeof adminNavigation)[number];
+
+/** Icons of the collapsible entries that hold several pages. */
+const PARENT_ICONS: Record<string, LucideIcon> = { Serving: HandHelping };
+
+export type SidebarEntry =
+  | NavigationItem
+  | { icon: LucideIcon; items: NavigationItem[]; title: string };
+
+/**
+ * The sidebar's entries in order: pages that share a `parent` are gathered
+ * into one collapsible entry where the first of them stands.
+ */
+export function sidebarEntries(items: readonly NavigationItem[]) {
+  const entries: SidebarEntry[] = [];
+  for (const item of items) {
+    const parent = "parent" in item ? item.parent : undefined;
+    if (!parent) {
+      entries.push(item);
+      continue;
+    }
+    const existing = entries.find(
+      (entry) => "items" in entry && entry.title === parent
+    );
+    if (existing && "items" in existing) {
+      existing.items.push(item);
+    } else {
+      entries.push({
+        icon: PARENT_ICONS[parent] ?? item.icon,
+        items: [item],
+        title: parent,
+      });
+    }
+  }
+  return entries;
+}

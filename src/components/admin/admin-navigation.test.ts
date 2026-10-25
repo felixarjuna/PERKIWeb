@@ -1,6 +1,10 @@
-import { Users } from "lucide-react";
+import { HandHelping } from "lucide-react";
 import { expect, it } from "vitest";
-import { adminNavigation, navigationFor } from "./admin-navigation";
+import {
+  adminNavigation,
+  navigationFor,
+  sidebarEntries,
+} from "./admin-navigation";
 
 it("separates the overview and member directory from content management", () => {
   expect(adminNavigation.map((item) => item.url)).toEqual([
@@ -18,9 +22,25 @@ it("separates the overview and member directory from content management", () => 
   ]);
 });
 
-it("shows Groups with a people icon", () => {
-  const groups = adminNavigation.find((item) => item.url === "/admin/groups");
-  expect(groups?.icon).toBe(Users);
+it("nests cooking and cleaning and the serving teams under Serving", () => {
+  const community = adminNavigation.filter(
+    (item) => item.group === "Community"
+  );
+  expect(
+    sidebarEntries(community).map((entry) =>
+      "items" in entry
+        ? { [entry.title]: entry.items.map((item) => item.title) }
+        : entry.title
+    )
+  ).toEqual([
+    "Overview",
+    "Members",
+    { Serving: ["Cooking & cleaning", "Serving teams"] },
+    "Access",
+    "Name links",
+  ]);
+  const [, , serving] = sidebarEntries(community);
+  expect(serving && "items" in serving ? serving.icon : null).toBe(HandHelping);
 });
 
 it("shows writers only the takeaways page", () => {

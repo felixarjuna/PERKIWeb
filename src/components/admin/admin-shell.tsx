@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import type { Role } from "~/lib/roles";
-import { type adminNavigation, navigationFor } from "./admin-navigation";
+import { adminNavigation, navigationFor } from "./admin-navigation";
 
 type AdminSection = (typeof adminNavigation)[number]["title"];
 
@@ -44,6 +44,8 @@ export default function AdminShell({
   driveConfigured: boolean;
   driveUrl: string | null;
 }) {
+  const page = adminNavigation.find((item) => item.title === section);
+  const parent = page && "parent" in page ? page.parent : null;
   return (
     <div className="type-body min-h-screen bg-background text-foreground">
       <SidebarProvider>
@@ -67,6 +69,14 @@ export default function AdminShell({
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
+                {parent ? (
+                  <>
+                    <BreadcrumbItem className="hidden sm:inline-flex">
+                      {parent}
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden sm:block" />
+                  </>
+                ) : null}
                 <BreadcrumbItem>
                   <BreadcrumbPage>{section}</BreadcrumbPage>
                 </BreadcrumbItem>

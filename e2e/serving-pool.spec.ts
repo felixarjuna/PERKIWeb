@@ -11,7 +11,7 @@ const ROLE_PARAM = /role=liturgist/;
 const PAUSED_PARAM = /status=paused/;
 const FIFTEENTH = /15th/;
 
-test("members who are not staff get a 404 at the serving pool", async ({
+test("members who are not staff get a 404 at the serving teams", async ({
   page,
 }) => {
   const response = await page.goto("/admin/serving");
@@ -34,11 +34,11 @@ test("mita add a leader, filter by role and pause them", async ({ page }) => {
   const add = page.getByRole("dialog");
   await add.getByPlaceholder("Search members…").fill(name);
   await add.getByRole("option", { name }).click();
-  await add.getByRole("button", { name: "Add to pool" }).click();
-  await expect(toast(page, "Added to the serving pool.")).toBeVisible();
+  await add.getByRole("button", { name: "Add to team" }).click();
+  await expect(toast(page, "Added to the serving teams.")).toBeVisible();
 
-  await page.getByLabel("Search the serving pool").fill(name);
-  const table = page.getByRole("table", { name: "Serving pool" });
+  await page.getByLabel("Search the serving teams").fill(name);
+  const table = page.getByRole("table", { name: "Serving teams" });
   await expect(table.getByRole("row")).toHaveCount(3);
 
   await selectOption(page, "Role", "Leader · Service");
@@ -80,12 +80,12 @@ test("mita add a leader for the service only", async ({ page }) => {
   await add.getByPlaceholder("Search members…").fill(name);
   await add.getByRole("option", { name }).click();
   await add.getByRole("radio", { name: "Service" }).click();
-  await add.getByRole("button", { name: "Add to pool" }).click();
-  await expect(toast(page, "Added to the serving pool.")).toBeVisible();
+  await add.getByRole("button", { name: "Add to team" }).click();
+  await expect(toast(page, "Added to the serving teams.")).toBeVisible();
 
-  await page.getByLabel("Search the serving pool").fill(name);
+  await page.getByLabel("Search the serving teams").fill(name);
   const rows = page
-    .getByRole("table", { name: "Serving pool" })
+    .getByRole("table", { name: "Serving teams" })
     .getByRole("row")
     .filter({ hasText: name });
   await expect(rows).toHaveCount(1);

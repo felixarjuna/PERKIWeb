@@ -114,7 +114,7 @@ export function AddDialog({
   const add = api.servingPool.add.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
-      toast.success("Added to the serving pool.");
+      toast.success("Added to the serving teams.");
       await refresh();
       onOpenChange(false);
     },
@@ -125,7 +125,7 @@ export function AddDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add to the serving pool</DialogTitle>
+          <DialogTitle>Add to the serving teams</DialogTitle>
           <DialogDescription>
             Pick a member and the role they can serve in.
           </DialogDescription>
@@ -186,7 +186,7 @@ export function AddDialog({
               Cancel
             </Button>
             <Button disabled={!userId || add.isPending} type="submit">
-              {add.isPending ? "Adding…" : "Add to pool"}
+              {add.isPending ? "Adding…" : "Add to team"}
             </Button>
           </DialogFooter>
         </form>

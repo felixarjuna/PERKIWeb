@@ -360,7 +360,7 @@ export default function PoolImport() {
         utils.servingPool.invalidate(),
         utils.servingPoolImport.preview.invalidate(),
       ]);
-      toast.success("Serving pool imported", {
+      toast.success("Serving teams imported", {
         description: `${result.added} added, ${result.updated} updated.`,
       });
       router.push("/admin/serving");
@@ -457,7 +457,8 @@ export default function PoolImport() {
             </Button>
             <p className="type-caption text-muted-foreground">
               Nobody is removed. The sheet gives pauses no end, so they run
-              until {shownDay(data.pauseEnd)}; change one on the pool page.
+              until {shownDay(data.pauseEnd)}; change one on the Serving teams
+              page.
             </p>
           </div>
         </>

@@ -114,7 +114,7 @@ export default function ServingPool() {
   const remove = api.servingPool.remove.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
-      toast.success("Removed from the pool.");
+      toast.success("Removed from the serving teams.");
       await refresh();
       setOpen(null);
     },
@@ -167,7 +167,7 @@ export default function ServingPool() {
         <AdminSearch
           className="w-full sm:w-64"
           id="pool-search"
-          label="Search the serving pool"
+          label="Search the serving teams"
           onChange={(event) => setFilters({ q: event.target.value }, true)}
           placeholder="Search name or email"
           value={filters.q}
@@ -214,13 +214,13 @@ export default function ServingPool() {
         </Button>
       </div>
       {query.isPending ? (
-        <QueryMessage>Loading the serving pool…</QueryMessage>
+        <QueryMessage>Loading the serving teams…</QueryMessage>
       ) : (
         <DataTable
           empty={
             entries.length
               ? "Nobody matches these filters. Try another search or reset the filters."
-              : "Nobody is in the pool yet. Add members to the roles they can serve in."
+              : "Nobody is on a serving team yet. Add members to the roles they can serve in."
           }
           footer={
             <p className="type-caption text-muted-foreground">
@@ -233,7 +233,7 @@ export default function ServingPool() {
                 : "No group term yet, so every past gathering counts."}
             </p>
           }
-          label="Serving pool"
+          label="Serving teams"
           table={table}
         />
       )}
@@ -262,7 +262,7 @@ export default function ServingPool() {
               {removing ? poolRoleLabels[removing.role] : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              They stay on past schedules; only their place in the pool goes.
+              They stay on past schedules; only their place on the team goes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

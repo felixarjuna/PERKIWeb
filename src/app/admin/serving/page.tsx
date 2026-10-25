@@ -25,10 +25,10 @@ export default async function ServingPoolPage({
           Import from sheet
         </Link>
       }
-      section="Serving pool"
+      section="Serving teams"
       subtitle="Who can serve in which role, and who has served least this term."
     >
-      <Suspense fallback={<p>Loading the serving pool…</p>}>
+      <Suspense fallback={<p>Loading the serving teams…</p>}>
         <ServingPool />
       </Suspense>
     </AdminShell>
