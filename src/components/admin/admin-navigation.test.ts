@@ -8,6 +8,7 @@ it("separates the overview and member directory from content management", () => 
     "/admin/groups",
     "/admin/access",
     "/admin/names",
+    "/admin/serving",
     "/admin/schedules",
     "/admin/speakers",
     "/admin/takeaways",
