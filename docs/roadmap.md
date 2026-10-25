@@ -56,6 +56,7 @@ Every row has five fields:
 | Members | Welcome and profile | I fill in my details once, so the fellowship knows how to reach and care for me. | Live | Show my small group on my profile ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | Account history | I can see when I joined and how my role changed. | Live | Add small-group entries to the history ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | My duties | I can see when I serve and when my group cooks or cleans. | Live | Reminders before a duty, part of the later WhatsApp work ([#93](https://github.com/felixarjuna/PERKIWeb/issues/93)). |
+| Members | Open slots | I see the empty slots in my serving roles on My duties and take one with one tap; the app says why when I can't. | In review ([#108](https://github.com/felixarjuna/PERKIWeb/issues/108)) | Owner review; giving a slot back and swaps come with schedule planning ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)). |
 | Members | Groups | I can see which cooking and cleaning group I am in. | Live | Show my group on my profile ([#70](https://github.com/felixarjuna/PERKIWeb/issues/70)). |
 | Members | Schedule details | When signed in, I can see who serves at each gathering, with their photos. | Live | No open issue. |
 | Members | My prayer requests | I can share a request, keep it private or have it published, and tell others I am praying for theirs. | Live | No open issue. |
