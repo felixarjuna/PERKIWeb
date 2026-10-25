@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { expect, it } from "vitest";
 import { adminNavigation, navigationFor } from "./admin-navigation";
 
@@ -6,15 +7,20 @@ it("separates the overview and member directory from content management", () => 
     "/admin/dashboard",
     "/admin/members",
     "/admin/groups",
+    "/admin/serving",
     "/admin/access",
     "/admin/names",
-    "/admin/serving",
     "/admin/schedules",
     "/admin/speakers",
     "/admin/takeaways",
     "/admin/prayers",
     "/admin/settings",
   ]);
+});
+
+it("shows Groups with a people icon", () => {
+  const groups = adminNavigation.find((item) => item.url === "/admin/groups");
+  expect(groups?.icon).toBe(Users);
 });
 
 it("shows writers only the takeaways page", () => {

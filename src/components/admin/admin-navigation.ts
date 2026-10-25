@@ -8,8 +8,8 @@ import {
   Mic,
   NotebookPen,
   Settings,
+  Users,
   UsersRound,
-  Utensils,
 } from "lucide-react";
 import { isStaffRole, type Role } from "~/lib/roles";
 
@@ -28,9 +28,15 @@ export const adminNavigation = [
   },
   {
     group: "Community",
-    icon: Utensils,
+    icon: Users,
     title: "Groups",
     url: "/admin/groups",
+  },
+  {
+    group: "Community",
+    icon: HandHelping,
+    title: "Serving pool",
+    url: "/admin/serving",
   },
   {
     group: "Community",
@@ -43,12 +49,6 @@ export const adminNavigation = [
     icon: Link2,
     title: "Name links",
     url: "/admin/names",
-  },
-  {
-    group: "Community",
-    icon: HandHelping,
-    title: "Serving pool",
-    url: "/admin/serving",
   },
   {
     group: "Content",
