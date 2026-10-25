@@ -45,16 +45,16 @@ export const adminNavigation = [
     url: "/admin/names",
   },
   {
+    group: "Community",
+    icon: HandHelping,
+    title: "Serving pool",
+    url: "/admin/serving",
+  },
+  {
     group: "Content",
     icon: CalendarDays,
     title: "Schedules",
     url: "/admin/schedules",
-  },
-  {
-    group: "Content",
-    icon: HandHelping,
-    title: "Serving pool",
-    url: "/admin/serving",
   },
   {
     group: "Content",
