@@ -22,6 +22,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_DOCS_URL: process.env.GOOGLE_DOCS_URL,
+    GOOGLE_SHEETS_URL: process.env.GOOGLE_SHEETS_URL,
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -43,6 +44,8 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     /** Where Google Docs are exported from; e2e serves fixtures locally. */
     GOOGLE_DOCS_URL: z.string().url().optional(),
+    /** Where the Sheets API lives; e2e serves fixtures locally. */
+    GOOGLE_SHEETS_URL: z.string().url().optional(),
     NEXTAUTH_SECRET:
       process.env.NODE_ENV === "production"
         ? z.string().min(1)
