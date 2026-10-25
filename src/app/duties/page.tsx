@@ -7,6 +7,7 @@ import {
 } from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
+import CalendarLink from "./calendar-link";
 import DutiesView from "./duties-view";
 import OpenSlots from "./open-slots";
 import UnavailableDates from "./unavailable-dates";
@@ -22,10 +23,11 @@ export default async function DutiesPage({
       authPageUrl("signin", requestedPath("/duties", await searchParams))
     );
   }
-  const [{ past, upcoming }, open, away] = await Promise.all([
+  const [{ past, upcoming }, open, away, feed] = await Promise.all([
     api.schedules.myDuties(),
     api.schedules.openSlots(),
     api.unavailability.mine(),
+    api.calendarFeed.mine(),
   ]);
   // Marking days matters to people who serve: in the pool or on the schedule.
   const serves = away.inPool || upcoming.length > 0 || away.ranges.length > 0;
@@ -38,6 +40,9 @@ export default async function DutiesPage({
         <OpenSlots active={open.active} slots={open.slots} />
         {serves ? <UnavailableDates ranges={away.ranges} /> : null}
         <DutiesView now={new Date()} past={past} upcoming={upcoming} />
+        {serves || past.length > 0 || feed ? (
+          <CalendarLink feed={feed} />
+        ) : null}
       </div>
     </Template>
   );
