@@ -4,7 +4,6 @@ import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { localDay } from "~/lib/schedule-team";
 import { SETTING_KEYS } from "~/lib/settings";
 import {
-  parseTakeawaySource,
   planDocsImport,
   type TakeawaySource,
   type TextChange,
@@ -35,8 +34,10 @@ async function readDoc(docId: string, name: string): Promise<TakeawaySource> {
       message: `The ${name} couldn't be read from Google. Try again.`,
     });
   });
-  return Promise.resolve(html)
-    .then(parseTakeawaySource)
+  // Loaded here, not at the top: the parser needs jsdom, which must not be
+  // part of appRouter's module graph (see takeaway-import.load.test.ts).
+  return import("~/lib/takeaway-source")
+    .then(({ parseTakeawaySource }) => parseTakeawaySource(html))
     .catch((error: unknown) => {
       throw new TRPCError({
         cause: error,
