@@ -789,3 +789,21 @@ export const authenticators = pgTable(
     }),
   })
 );
+
+/**
+ * A member's private calendar link (#105): the token in the feed URL. One per
+ * member; making a new one replaces the row, so the old link stops working.
+ * The token is 32 random bytes and is never sent to anyone but its member.
+ */
+export const calendarFeeds = pgTable("calendar_feeds", {
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+  token: text("token").notNull().unique(),
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
