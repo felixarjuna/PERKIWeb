@@ -5,6 +5,8 @@ import { insertSchedule } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
 import { adminLogin, loadUntilVisible, selectOption, toast } from "./helpers";
 
+const ONE_GATHERING = /One gathering/;
+
 test.use({ storageState: MEMBER_STORAGE_STATE });
 test.beforeEach(async ({ page }) => {
   await adminLogin(page);
@@ -130,7 +132,8 @@ test("schedule list shows a new schedule right after adding it", async ({
   const title = `Fresh ${uniqueSuffix()}`;
   await page.goto("/admin/schedules");
   await expect(page.getByLabel("Time period")).toBeVisible();
-  await page.getByRole("link", { name: "Add schedule" }).click();
+  await page.getByRole("button", { name: "Add schedule" }).click();
+  await page.getByRole("menuitem", { name: ONE_GATHERING }).click();
   await expect(page).toHaveURL("/admin/schedules/new");
   await createSchedule(page, title, scheduleDate());
 

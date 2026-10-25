@@ -2,7 +2,7 @@
 
 import { ChevronsUpDown, CircleAlert, LoaderCircle, X } from "lucide-react";
 import { DateTime } from "luxon";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, type KeyboardEvent, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -142,6 +142,54 @@ function SlotTrigger({
   );
 }
 
+const ARROWS: Record<string, [row: number, column: number]> = {
+  ArrowDown: [1, 0],
+  ArrowLeft: [0, -1],
+  ArrowRight: [0, 1],
+  ArrowUp: [-1, 0],
+};
+
+/**
+ * Moves focus to the nearest cell in an arrow's direction, skipping slots a
+ * gathering doesn't have, as in a spreadsheet. Returns whether it moved.
+ */
+function moveFocus(from: HTMLElement, key: string) {
+  const step = ARROWS[key];
+  const grid = from.closest("[data-plan-grid]");
+  if (!(step && grid)) {
+    return false;
+  }
+  const at = (element: Element) => ({
+    column: Number(element.getAttribute("data-plan-column")),
+    row: Number(element.getAttribute("data-plan-row")),
+  });
+  const here = at(from);
+  const [rowStep, columnStep] = step;
+  const [target] = [...grid.querySelectorAll<HTMLElement>("[data-plan-row]")]
+    .filter((cell) => {
+      const there = at(cell);
+      return rowStep === 0
+        ? there.row === here.row &&
+            Math.sign(there.column - here.column) === columnStep
+        : there.column === here.column &&
+            Math.sign(there.row - here.row) === rowStep;
+    })
+    .sort((a, b) => {
+      const distance = (cell: Element) =>
+        Math.abs(at(cell).row - here.row) +
+        Math.abs(at(cell).column - here.column);
+      return distance(a) - distance(b);
+    });
+  target?.focus();
+  return Boolean(target);
+}
+
+/** A key that types a letter or digit (not a shortcut). */
+const types = (event: KeyboardEvent<HTMLElement>) =>
+  event.key.length === 1 &&
+  event.key !== " " &&
+  !(event.ctrlKey || event.metaKey || event.altKey);
+
 /** Speakers for the preacher, the day's groups for cooking and cleaning. */
 function plainOptions(plan: Plan, schedule: PlanSchedule, column: PlanColumn) {
   const role = columnRole(column, schedule.type);
@@ -163,6 +211,7 @@ export function SlotPicker({
   column,
   onPick,
   pending,
+  position,
   showLabel,
 }: {
   plan: Plan;
@@ -170,6 +219,8 @@ export function SlotPicker({
   column: PlanColumn;
   onPick: (name: string | null, userId?: string) => void;
   pending: boolean;
+  /** The cell's place in the desk grid, for arrow keys; none on phones. */
+  position?: { column: number; row: number };
   /** Phones show the slot's name above the button; the grid has headers. */
   showLabel?: boolean;
 }) {
@@ -220,8 +271,20 @@ export function SlotPicker({
       >
         <PopoverTrigger asChild>
           <SlotTrigger
+            data-plan-column={position?.column}
+            data-plan-row={position?.row}
             holder={cell.value}
             label={`${label} on ${day}`}
+            onKeyDown={(event) => {
+              if (position && moveFocus(event.currentTarget, event.key)) {
+                event.preventDefault();
+              } else if (types(event)) {
+                // Typing in a cell opens its list, already searching.
+                event.preventDefault();
+                setSearch(event.key);
+                setOpen(true);
+              }
+            }}
             pending={pending}
             warnings={cell.warnings.length}
           />

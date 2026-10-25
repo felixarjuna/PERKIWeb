@@ -7,7 +7,9 @@ import {
   insertSchedule,
 } from "./db";
 import { uniqueSuffix } from "./fixtures";
-import { adminLogin } from "./helpers";
+import { adminLogin, toast } from "./helpers";
+
+const PLAN_MONTHS = /Plan months/;
 
 /** A month of its own far ahead, so other specs' gatherings stay out of it. */
 const ownMonth = () => {
@@ -48,7 +50,15 @@ test("mita fill a month in the planning grid and see the warnings", async ({
   await insertGroupWith(group, liturgist, `${key}-06`);
 
   await adminLogin(page);
-  await page.goto(`/admin/schedules?view=plan&month=${key}`);
+  // Planning starts from "Add schedule".
+  await page.goto("/admin/schedules");
+  await page.getByRole("button", { name: "Add schedule" }).click();
+  await page.getByRole("menuitem", { name: PLAN_MONTHS }).click();
+  await expect(page).toHaveURL("/admin/schedules/plan");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Plan months" })
+  ).toBeVisible();
+  await page.goto(`/admin/schedules/plan?from=${key}&months=3`);
   // The first read of a month can be slow while other specs run.
   await expect(page.getByRole("link", { name: title })).toBeVisible({
     timeout: 15_000,
@@ -96,6 +106,27 @@ test("mita fill a month in the planning grid and see the warnings", async ({
     page.getByRole("button", {
       name: `Note writer on 6 ${monthName}: Guest Writer`,
     })
+  ).toBeVisible();
+
+  // The first Saturday of the next month isn't added yet: its first slot adds it.
+  const next = DateTime.fromObject({ day: 1, month, year }).plus({
+    months: 1,
+  });
+  const saturday = next.plus({ days: (6 - next.weekday + 7) % 7 });
+  const nextDay = saturday.toFormat("d LLL");
+  await page
+    .getByRole("button", { name: `Note writer on ${nextDay}: open` })
+    .click();
+  await page.getByPlaceholder("Search or type a name…").fill("New Writer");
+  await page.getByRole("option", { name: "Use “New Writer”" }).click();
+  await expect(
+    toast(
+      page,
+      `Added Penelaahan Alkitab on ${saturday.toFormat("ccc d LLL")}.`
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: `Note writer on ${nextDay}: New Writer` })
   ).toBeVisible();
 
   // The public schedule shows the names.

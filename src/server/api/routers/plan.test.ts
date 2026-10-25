@@ -10,6 +10,7 @@ import {
   unavailability,
 } from "~/lib/db/schema/schema";
 import { buildPlan } from "~/lib/plan-grid";
+import { localTime } from "~/lib/schedule-team";
 import { db } from "~/server";
 import { insertSchedule } from "~/server/schedule-assignments";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
@@ -251,5 +252,54 @@ describe("planning grid", () => {
       members: [{ name: "Ana", userId: ana.id }],
       name: "Group 1",
     });
+  });
+
+  it("adds the gathering of a suggested row with the first slot, and reuses it for the next", async () => {
+    const { ana, mita } = await setup();
+    const api = callerFor(mita.id);
+
+    const first = await api.schedules.setPlanSlot({
+      column: "leader",
+      name: "Ana Putri",
+      newGathering: { day: "2026-12-05", type: "bible_study" },
+      userId: ana.id,
+    });
+    const second = await api.schedules.setPlanSlot({
+      column: "cleaningGroup",
+      name: "Group 1",
+      newGathering: { day: "2026-12-05", type: "bible_study" },
+    });
+    expect(second.scheduleId).toBe(first.scheduleId);
+
+    const [added, ...others] = await anonymousCaller().schedules.inRange({
+      before: new Date("2026-12-06T00:00:00Z"),
+      from: new Date("2026-12-05T00:00:00Z"),
+    });
+    expect(others).toEqual([]);
+    expect(added).toMatchObject({
+      cleaningGroup: "Group 1",
+      id: first.scheduleId,
+      leader: "Ana Putri",
+      title: "Penelaahan Alkitab",
+      type: "bible_study",
+    });
+    expect(localTime(added?.date ?? new Date())).toBe("15:30");
+    expect(added?.team).toEqual([
+      expect.objectContaining({ name: "Ana Putri", role: "leader" }),
+    ]);
+  });
+
+  it("reads several months at once", async () => {
+    const { mita } = await setup();
+    await db.transaction((tx) =>
+      insertSchedule(tx, { ...service, date: new Date("2026-12-12T14:30:00Z") })
+    );
+    const api = callerFor(mita.id);
+    expect(
+      (await api.schedules.plan({ month: "2026-11" })).schedules
+    ).toHaveLength(2);
+    expect(
+      (await api.schedules.plan({ month: "2026-11", months: 2 })).schedules
+    ).toHaveLength(3);
   });
 });

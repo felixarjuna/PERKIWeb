@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildPlan, type PlanData, type PlanSchedule } from "./plan-grid";
-import { startOn } from "./schedule-team";
+import {
+  buildPlan,
+  type PlanData,
+  type PlanSchedule,
+  planRows,
+  regularGatherings,
+} from "./plan-grid";
+import { localTime, startOn } from "./schedule-team";
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -286,5 +292,74 @@ describe("buildPlan", () => {
     expect(plan.groupNames(schedule({ date: on("2026-11-08") }))).toEqual([
       "Group A",
     ]);
+  });
+});
+
+describe("regularGatherings", () => {
+  it("lays out every Saturday at 15:30: PA Besar on the 1st, 3rd and 5th, a service on the 2nd and 4th", () => {
+    // January 2026 has five Saturdays: 3, 10, 17, 24, 31.
+    expect(
+      regularGatherings("2026-01", 1).map((g) => [g.day, g.type, g.title])
+    ).toEqual([
+      ["2026-01-03", "bible_study", "Penelaahan Alkitab"],
+      ["2026-01-10", "church_service", "Kebaktian"],
+      ["2026-01-17", "bible_study", "Penelaahan Alkitab"],
+      ["2026-01-24", "church_service", "Kebaktian"],
+      ["2026-01-31", "bible_study", "Penelaahan Alkitab"],
+    ]);
+    expect(
+      localTime(regularGatherings("2026-01", 1)[0]?.date ?? new Date())
+    ).toBe("15:30");
+  });
+
+  it("covers several months, counting Saturdays within each month", () => {
+    const days = regularGatherings("2026-01", 2);
+    expect(days).toHaveLength(9);
+    expect(days[5]).toMatchObject({ day: "2026-02-07", type: "bible_study" });
+    expect(days[6]).toMatchObject({
+      day: "2026-02-14",
+      type: "church_service",
+    });
+  });
+
+  it("keeps 15:30 in Aachen across the clock change", () => {
+    const [april] = regularGatherings("2026-04", 1);
+    expect(april?.day).toBe("2026-04-04");
+    expect(localTime(april?.date ?? new Date())).toBe("15:30");
+  });
+});
+
+describe("planRows", () => {
+  it("lists stored gatherings and suggests the regular days that have none, in date order", () => {
+    const stored = schedule({
+      date: on("2026-01-10"),
+      id: 4,
+      title: "Retreat",
+    });
+    const extra = schedule({
+      date: on("2026-01-14"),
+      id: 5,
+      title: "Prayer night",
+      type: "bible_study",
+    });
+    const rows = planRows([stored, extra], regularGatherings("2026-01", 1));
+    expect(
+      rows.map((row) => [row.key, row.suggested, row.schedule.title])
+    ).toEqual([
+      ["new 2026-01-03", true, "Penelaahan Alkitab"],
+      ["4", false, "Retreat"],
+      ["5", false, "Prayer night"],
+      ["new 2026-01-17", true, "Penelaahan Alkitab"],
+      ["new 2026-01-24", true, "Kebaktian"],
+      ["new 2026-01-31", true, "Penelaahan Alkitab"],
+    ]);
+    // A suggested row is empty, so nothing on it warns.
+    const plan = buildPlan(data({ schedules: [stored, extra] }));
+    const [first] = rows;
+    expect(first && plan.cell(first.schedule, "leader")).toEqual({
+      userId: null,
+      value: null,
+      warnings: [],
+    });
   });
 });

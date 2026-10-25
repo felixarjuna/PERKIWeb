@@ -30,11 +30,13 @@ import { monthRange } from "~/lib/months";
 import {
   columnRole,
   hasColumn,
+  PLAN_TITLES,
   type PlanColumn,
   type PlanData,
+  type PlanSchedule,
   planColumnLabels,
 } from "~/lib/plan-grid";
-import { localDay } from "~/lib/schedule-team";
+import { localDay, startOn } from "~/lib/schedule-team";
 import {
   type PoolRole,
   type PoolScope,
@@ -51,9 +53,11 @@ import {
 import { servedCounts } from "~/server/served-counts";
 import { resolveSpeakers } from "~/server/speakers";
 
+const ZONE = "Europe/Berlin";
+
 /** Midnight in Aachen at the start of a `yyyy-MM-dd` day. */
 const aachenStart = (day: string) =>
-  DateTime.fromISO(day, { zone: "Europe/Berlin" }).toJSDate();
+  DateTime.fromISO(day, { zone: ZONE }).toJSDate();
 
 /** Everyone who serves, with every spelling the schedule may write them by. */
 async function loadPeople(userIds: string[]): Promise<PlanData["people"]> {
@@ -113,8 +117,12 @@ async function loadPeople(userIds: string[]): Promise<PlanData["people"]> {
  * the group terms and the speakers. Staff only: it carries pause and
  * unavailability notes.
  */
-export async function loadPlan(month: string, now = new Date()) {
-  const { before, from } = monthRange(month);
+export async function loadPlan(month: string, months = 1, now = new Date()) {
+  const { from } = monthRange(month);
+  const before = DateTime.fromJSDate(from)
+    .setZone(ZONE)
+    .plus({ months })
+    .toJSDate();
   const first = localDay(from);
   const last = localDay(new Date(before.getTime() - 1));
   const today = localDay(now);
@@ -259,7 +267,7 @@ export async function loadPlan(month: string, now = new Date()) {
       startsOn: row.startsOn,
     })),
   };
-  return { ...data, month, today };
+  return { ...data, month, months, today };
 }
 
 /** Columns the schedule requires; an emptied one is stored as "". */
@@ -348,6 +356,81 @@ async function linkPicked(
 }
 
 /**
+ * The gathering a grid cell writes to, locked: a stored one by id, or the one
+ * on a regular day, added with the sheet's title at 15:30 when that day has
+ * none of that kind yet. A lock on the day keeps two cells of the same new
+ * row from adding it twice.
+ */
+async function targetSchedule(
+  tx: Transaction,
+  input: {
+    newGathering?: { day: string; type: PlanSchedule["type"] };
+    scheduleId?: number;
+  }
+): Promise<Locked> {
+  if (input.scheduleId) {
+    const [stored] = await tx
+      .select()
+      .from(schedules)
+      .where(eq(schedules.id, input.scheduleId))
+      .for("update");
+    if (!stored) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Schedule not found.",
+      });
+    }
+    return stored;
+  }
+  const wanted = input.newGathering;
+  const day = wanted && DateTime.fromISO(wanted.day, { zone: ZONE });
+  if (!(wanted && day?.isValid)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Pick a gathering to fill.",
+    });
+  }
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${wanted.day}))`);
+  const [existing] = await tx
+    .select()
+    .from(schedules)
+    .where(
+      and(
+        eq(schedules.type, wanted.type),
+        gte(schedules.date, day.startOf("day").toJSDate()),
+        lt(schedules.date, day.plus({ days: 1 }).startOf("day").toJSDate())
+      )
+    )
+    .orderBy(asc(schedules.id))
+    .limit(1)
+    .for("update");
+  if (existing) {
+    return existing;
+  }
+  const [added] = await tx
+    .insert(schedules)
+    .values({
+      bibleVerse: "",
+      cleaningGroup: "",
+      date: startOn({ day: day.day, month: day.month, year: day.year }),
+      description: "",
+      leader: "",
+      musician: "",
+      noteWriter: "",
+      title: PLAN_TITLES[wanted.type],
+      type: wanted.type,
+    })
+    .returning();
+  if (!added) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "The gathering couldn't be added.",
+    });
+  }
+  return added;
+}
+
+/**
  * Writes one slot from the grid: the schedule column, then that role's
  * assignment, as the schedule form does (the name resolved through name
  * links, or linked to the account picked from the pool). The rest of the
@@ -357,21 +440,13 @@ async function linkPicked(
 export function setPlanSlot(input: {
   column: PlanColumn;
   name: string | null;
-  scheduleId: number;
+  /** A regular day not added yet: the gathering is added first. */
+  newGathering?: { day: string; type: PlanSchedule["type"] };
+  scheduleId?: number;
   userId?: string;
 }) {
   return db.transaction(async (tx) => {
-    const [schedule] = await tx
-      .select()
-      .from(schedules)
-      .where(eq(schedules.id, input.scheduleId))
-      .for("update");
-    if (!schedule) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Schedule not found.",
-      });
-    }
+    const schedule = await targetSchedule(tx, input);
     if (!hasColumn(input.column, schedule.type)) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -389,12 +464,12 @@ export function setPlanSlot(input: {
       .where(eq(schedules.id, schedule.id));
     const role = columnRole(input.column, schedule.type);
     if (role === null) {
-      return { name };
+      return { name, scheduleId: schedule.id };
     }
     await writeAssignment(tx, schedule, input.column, role, name);
     if (name && input.userId && role !== "preacher") {
       await linkPicked(tx, schedule.id, role, input.userId);
     }
-    return { name };
+    return { name, scheduleId: schedule.id };
   });
 }

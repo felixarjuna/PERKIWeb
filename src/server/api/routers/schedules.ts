@@ -11,7 +11,7 @@ import {
 } from "~/lib/db/schema/schema";
 import { isMonth, monthsOf } from "~/lib/months";
 import type { Person } from "~/lib/people";
-import { PLAN_COLUMNS } from "~/lib/plan-grid";
+import { MAX_PLAN_MONTHS, PLAN_COLUMNS } from "~/lib/plan-grid";
 import {
   localDay,
   type Slot,
@@ -296,8 +296,13 @@ export const scheduleRouter = createTRPCRouter({
    * notes included).
    */
   plan: adminProcedure
-    .input(z.object({ month: z.string().refine(isMonth) }))
-    .query(({ input }) => loadPlan(input.month)),
+    .input(
+      z.object({
+        month: z.string().refine(isMonth),
+        months: z.number().int().min(1).max(MAX_PLAN_MONTHS).default(1),
+      })
+    )
+    .query(({ input }) => loadPlan(input.month, input.months)),
   /**
    * Staff only: fills or empties one slot from the planning grid. Warnings
    * are advice, so nothing here refuses a person.
@@ -307,7 +312,13 @@ export const scheduleRouter = createTRPCRouter({
       z.object({
         column: z.enum(PLAN_COLUMNS),
         name: z.string().trim().max(50).nullable(),
-        scheduleId: z.number().int().positive(),
+        newGathering: z
+          .object({
+            day: z.iso.date(),
+            type: z.enum(["church_service", "bible_study"]),
+          })
+          .optional(),
+        scheduleId: z.number().int().positive().optional(),
         userId: z.string().min(1).optional(),
       })
     )

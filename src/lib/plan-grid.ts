@@ -6,6 +6,7 @@ import {
   type PlanWarning,
   planWarnings,
   slotHolder,
+  startOn,
   termOn,
 } from "./schedule-team";
 import type { PoolRole, PoolScope, PoolStatus } from "./serving-pool";
@@ -25,6 +26,9 @@ export const PLAN_COLUMNS = [
 export type PlanColumn = (typeof PLAN_COLUMNS)[number];
 
 type GatheringType = "church_service" | "bible_study";
+
+/** Gatherings happen in Aachen, so months and days are read in its zone. */
+const ZONE = "Europe/Berlin";
 
 export const planColumnLabels: Record<PlanColumn, string> = {
   accommodation: "Accommodation",
@@ -405,3 +409,115 @@ export function buildPlan(data: PlanData) {
 }
 
 export type Plan = ReturnType<typeof buildPlan>;
+
+/** Titles a gathering gets when the grid adds it, as the sheet names them. */
+export const PLAN_TITLES: Record<GatheringType, string> = {
+  bible_study: "Penelaahan Alkitab",
+  church_service: "Kebaktian",
+};
+
+const SATURDAY = 6;
+
+/** A gathering the regular rhythm expects on a day. */
+export interface RegularGathering {
+  date: Date;
+  /** The Aachen day, `yyyy-MM-dd`. */
+  day: string;
+  title: string;
+  type: GatheringType;
+}
+
+/**
+ * The regular rhythm for `months` months from `from` (`yyyy-MM`): every
+ * Saturday at 15:30 in Aachen, PA Besar (a Bible study) on the 1st, 3rd and
+ * 5th Saturday of the month and a church service on the 2nd and 4th.
+ */
+export function regularGatherings(
+  from: string,
+  months: number
+): RegularGathering[] {
+  const start = DateTime.fromFormat(from, "yyyy-MM", { zone: ZONE });
+  if (!start.isValid) {
+    return [];
+  }
+  return Array.from({ length: months }, (_, index) =>
+    start.plus({ months: index })
+  ).flatMap((month) => {
+    const offset = (SATURDAY - month.weekday + 7) % 7;
+    const saturdays: RegularGathering[] = [];
+    for (
+      let day = month.plus({ days: offset });
+      day.month === month.month;
+      day = day.plus({ weeks: 1 })
+    ) {
+      const type: GatheringType =
+        saturdays.length % 2 === 0 ? "bible_study" : "church_service";
+      saturdays.push({
+        date: startOn({ day: day.day, month: day.month, year: day.year }),
+        day: day.toISODate() ?? "",
+        title: PLAN_TITLES[type],
+        type,
+      });
+    }
+    return saturdays;
+  });
+}
+
+/** A row of the grid: a stored gathering, or a regular day not added yet. */
+export interface PlanRow {
+  key: string;
+  schedule: PlanSchedule;
+  /** Not stored yet: filling a slot adds the gathering. */
+  suggested: boolean;
+}
+
+/** An empty gathering for a regular day, so the grid can offer its slots. */
+const suggestedSchedule = (gathering: RegularGathering): PlanSchedule => ({
+  accommodation: null,
+  cancelled: false,
+  cleaningGroup: null,
+  cookingGroup: null,
+  date: gathering.date,
+  flags: [],
+  id: 0,
+  leader: null,
+  multimedia: null,
+  musician: null,
+  noteWriter: null,
+  preacher: null,
+  title: gathering.title,
+  type: gathering.type,
+});
+
+/**
+ * The stored gatherings and, for every regular day without one, a suggested
+ * row, in date order. A day that has any gathering (a camp, a special
+ * service) gets no suggestion.
+ */
+export function planRows(
+  schedules: PlanSchedule[],
+  regular: RegularGathering[]
+): PlanRow[] {
+  const taken = new Set(schedules.map((schedule) => localDay(schedule.date)));
+  return [
+    ...schedules.map((schedule) => ({
+      key: String(schedule.id),
+      schedule,
+      suggested: false,
+    })),
+    ...regular
+      .filter((gathering) => !taken.has(gathering.day))
+      .map((gathering) => ({
+        key: `new ${gathering.day}`,
+        schedule: suggestedSchedule(gathering),
+        suggested: true,
+      })),
+  ].sort(
+    (a, b) =>
+      a.schedule.date.getTime() - b.schedule.date.getTime() ||
+      a.schedule.id - b.schedule.id
+  );
+}
+
+/** The longest stretch the grid lays out at once. */
+export const MAX_PLAN_MONTHS = 12;

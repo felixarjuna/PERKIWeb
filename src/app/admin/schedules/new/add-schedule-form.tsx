@@ -68,9 +68,19 @@ function ManualSchedule({ day }: { day?: string }) {
   );
 }
 
-export default function AddScheduleForm({ day }: { day?: string }) {
+export default function AddScheduleForm({
+  day,
+  importing = false,
+}: {
+  day?: string;
+  /** Opened from "Import from sheet" (`?tab=import`). */
+  importing?: boolean;
+}) {
   return (
-    <Tabs className="w-full" defaultValue="manual">
+    <Tabs
+      className="w-full"
+      defaultValue={importing ? "spreadsheet" : "manual"}
+    >
       <TabsList className="mb-6 grid w-full grid-cols-2 sm:w-fit">
         <TabsTrigger value="manual">Manual</TabsTrigger>
         <TabsTrigger value="spreadsheet">Import from sheet</TabsTrigger>
