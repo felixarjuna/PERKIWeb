@@ -8,9 +8,9 @@ import {
   assertLocalImportDatabase,
   type ImportPlanRow,
   pairTakeawaySources,
-  parseTakeawaySource,
   planTakeawayImport,
 } from "../src/lib/takeaway-import";
+import { parseTakeawaySource } from "../src/lib/takeaway-source";
 
 config({ quiet: true });
 const { values } = parseArgs({

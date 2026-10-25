@@ -3,10 +3,10 @@ import {
   assertLocalImportDatabase,
   changedPassage,
   pairTakeawaySources,
-  parseTakeawaySource,
   planDocsImport,
   planTakeawayImport,
 } from "./takeaway-import";
+import { parseTakeawaySource } from "./takeaway-source";
 
 const source = (heading: string, body = "Original text.") =>
   `<html><body><h3>${heading}</h3><p>${body}</p></body></html>`;
