@@ -10,6 +10,7 @@ import {
 
 export interface CalendarSchedule {
   accommodation: string | null;
+  cancelled: boolean;
   cleaningGroup: string;
   cookingGroup: string | null;
   date: Date;
@@ -34,6 +35,16 @@ function toItem(schedule: CalendarSchedule, today: string): CalendarItem {
     key: String(schedule.id),
     title: schedule.title,
   };
+  if (schedule.cancelled) {
+    // Called off: nothing to fill, but planners still see the date is taken.
+    const cancelled = <CalendarStatus tone="quiet">Cancelled</CalendarStatus>;
+    return {
+      ...item,
+      compactStatus: cancelled,
+      dimmed: true,
+      status: cancelled,
+    };
+  }
   if (localDay(schedule.date) < today) {
     return { ...item, dimmed: true };
   }

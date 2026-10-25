@@ -47,6 +47,15 @@ export async function generateMetadata({
   };
 }
 
+const emptyNotes = (cancelled: boolean, upcoming: boolean) => {
+  if (cancelled) {
+    return "This gathering was cancelled, so there are no notes from it.";
+  }
+  return upcoming
+    ? "Notes from this gathering appear here once they’re written."
+    : "No takeaway has been shared for this gathering yet.";
+};
+
 /** One gathering: its team and duties, then the takeaways written for it. */
 export default async function GatheringPage({ params }: GatheringPageProps) {
   const gathering = await loadGathering((await params).id);
@@ -85,9 +94,7 @@ export default async function GatheringPage({ params }: GatheringPageProps) {
         </h2>
         {notes.length === 0 ? (
           <p className="type-body rounded-xl bg-card p-4 text-muted-foreground sm:p-6">
-            {upcoming
-              ? "Notes from this gathering appear here once they’re written."
-              : "No takeaway has been shared for this gathering yet."}
+            {emptyNotes(gathering.cancelled, upcoming)}
           </p>
         ) : (
           <ul className="space-y-4">
