@@ -26,6 +26,9 @@ vi.mock("~/trpc/react", () => ({
     speakers: {
       active: { useQuery: () => ({ data: [{ name: "Pdt. Example" }] }) },
     },
+    unavailability: {
+      onDay: { useQuery: () => ({ data: [] }) },
+    },
     useUtils: () => ({}),
   },
 }));
