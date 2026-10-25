@@ -197,7 +197,7 @@ export function SpeakerDialog({
             />
           </div>
         </form>
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           <Button
             onClick={() => onOpenChange(false)}
             type="button"

@@ -38,11 +38,11 @@ test("staff import the serving pool from the sheet, linking an unknown name firs
   await expect(added.getByText(`Written as “${WES}”`)).toBeVisible();
 
   await page.getByRole("button", { name: NEW_ENTRIES }).click();
-  await expect(toast(page, "Serving pool imported")).toBeVisible();
+  await expect(toast(page, "Serving teams imported")).toBeVisible();
   await expect(page).toHaveURL("/admin/serving");
 
-  await page.getByLabel("Search the serving pool").fill(ANA);
-  const table = page.getByRole("table", { name: "Serving pool" });
+  await page.getByLabel("Search the serving teams").fill(ANA);
+  const table = page.getByRole("table", { name: "Serving teams" });
   // Ana leads both (two entries) and plays music: a header and three rows.
   await expect(table.getByRole("row")).toHaveCount(4);
 

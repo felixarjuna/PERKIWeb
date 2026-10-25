@@ -1,15 +1,23 @@
 "use client";
 
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
-import { ArrowUpRight, FolderOpen } from "lucide-react";
+import { ArrowUpRight, ChevronRight, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import type { ComponentProps } from "react";
-import { navigationFor } from "~/components/admin/admin-navigation";
+import { type ComponentProps, useState } from "react";
+import {
+  navigationFor,
+  sidebarEntries,
+} from "~/components/admin/admin-navigation";
 import { BotStatus } from "~/components/admin/bot-status";
 import { AssignmentReminder } from "~/components/admin/content/assignment-reminder";
 import { NavUser } from "~/components/nav-user";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +28,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "~/components/ui/sidebar";
@@ -29,8 +40,110 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { isStaffRole, type Role } from "~/lib/roles";
+import { cn } from "~/lib/utils";
 
 const GROUPS = ["Community", "Content"] as const;
+
+type Entry = ReturnType<typeof sidebarEntries>[number];
+type Section = Extract<Entry, { items: unknown }>;
+type Page = Exclude<Entry, Section>;
+
+function NavLink({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: Page;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const active = pathname.startsWith(item.url);
+  return (
+    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+      <Link
+        aria-current={active ? "page" : undefined}
+        href={item.url}
+        onClick={onNavigate}
+      >
+        <item.icon aria-hidden="true" />
+        <span>{item.title}</span>
+      </Link>
+    </SidebarMenuButton>
+  );
+}
+
+/**
+ * A collapsible entry holding several pages, open while one of them is shown.
+ * Collapsed to icons, it expands the sidebar to show its pages.
+ */
+function NavSection({
+  entry,
+  pathname,
+  onNavigate,
+}: {
+  entry: Section;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const current = entry.items.some((item) => pathname.startsWith(item.url));
+  const [open, setOpen] = useState(current);
+  const { isMobile, setOpen: setSidebarOpen, state } = useSidebar();
+  const iconsOnly = state === "collapsed" && !isMobile;
+  return (
+    <Collapsible
+      asChild
+      onOpenChange={(next) => {
+        if (iconsOnly) {
+          setSidebarOpen(true);
+          setOpen(true);
+        } else {
+          setOpen(next);
+        }
+      }}
+      open={open}
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            isActive={current && (iconsOnly || !open)}
+            tooltip={entry.title}
+          >
+            <entry.icon aria-hidden="true" />
+            <span>{entry.title}</span>
+            <ChevronRight
+              aria-hidden="true"
+              className={cn(
+                "ml-auto transition-transform",
+                open && "rotate-90"
+              )}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {entry.items.map((item) => {
+              const active = pathname.startsWith(item.url);
+              return (
+                <SidebarMenuSubItem key={item.url}>
+                  <SidebarMenuSubButton asChild isActive={active}>
+                    <Link
+                      aria-current={active ? "page" : undefined}
+                      href={item.url}
+                      onClick={onNavigate}
+                    >
+                      <item.icon aria-hidden="true" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
 
 /** Admin navigation, laid out like shadcn's sidebar-07 block. */
 export function AppSidebar({
@@ -87,30 +200,27 @@ export function AppSidebar({
           <SidebarGroup key={group}>
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarMenu>
-              {items.map((item) => {
-                const active = pathname.startsWith(item.url);
-                return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={item.title}
-                    >
-                      <Link
-                        aria-current={active ? "page" : undefined}
-                        href={item.url}
-                        onClick={close}
-                      >
-                        <item.icon aria-hidden="true" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                    {item.url === "/admin/takeaways" ? (
+              {sidebarEntries(items).map((entry) =>
+                "items" in entry ? (
+                  <NavSection
+                    entry={entry}
+                    key={entry.title}
+                    onNavigate={close}
+                    pathname={pathname}
+                  />
+                ) : (
+                  <SidebarMenuItem key={entry.url}>
+                    <NavLink
+                      item={entry}
+                      onNavigate={close}
+                      pathname={pathname}
+                    />
+                    {entry.url === "/admin/takeaways" ? (
                       <AssignmentReminder />
                     ) : null}
                   </SidebarMenuItem>
-                );
-              })}
+                )
+              )}
             </SidebarMenu>
           </SidebarGroup>
         ))}

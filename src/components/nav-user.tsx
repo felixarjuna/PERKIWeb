@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, ChevronsUpDown, Globe, LogOut } from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 
@@ -80,12 +80,6 @@ export function NavUser({
                 <Link href="/account">
                   <BadgeCheck aria-hidden="true" />
                   Account
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/schedule">
-                  <Globe aria-hidden="true" />
-                  Open the site
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

@@ -7,7 +7,7 @@ export default async function GroupsPage() {
   return (
     <AdminShell
       {...(await adminShellProps(role))}
-      section="Groups"
+      section="Cooking & cleaning"
       subtitle="The cooking and cleaning groups, term by term."
     >
       <GroupManager />

@@ -7,7 +7,7 @@ export default async function PoolImportPage() {
   return (
     <AdminShell
       {...(await adminShellProps(role))}
-      section="Serving pool"
+      section="Serving teams"
       subtitle="Read the sheet's List Pelayan tab and see what changes before importing."
       title="Import from sheet"
     >

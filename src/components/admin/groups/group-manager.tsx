@@ -27,9 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
 import type { TermStatus } from "~/lib/group-terms";
 import { api, type RouterOutputs } from "~/trpc/react";
+import { AddMemberDialog } from "./add-member-dialog";
 import { NewTermDialog } from "./new-term-dialog";
 
 type Term = RouterOutputs["groups"]["terms"]["terms"][number];
@@ -147,54 +147,27 @@ function MemberRow({
   );
 }
 
-function AddMember({ group }: { group: Group }) {
-  const [name, setName] = React.useState("");
-  const utils = api.useUtils();
-  const add = api.groups.addMember.useMutation({
-    onError: (error) => toast.error(error.message),
-  });
-  const id = `add-${group.id}`;
+function AddMember({ group, groups }: { group: Group; groups: Group[] }) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <form
-      className="mt-3 flex gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!name.trim()) {
-          return;
-        }
-        add.mutate(
-          { groupId: group.id, name },
-          {
-            onSuccess: async () => {
-              await utils.groups.invalidate();
-              toast.success(`${name.trim()} added to ${group.name}`);
-              setName("");
-            },
-          }
-        );
-      }}
-    >
-      <label className="sr-only" htmlFor={id}>
-        Add a person to {group.name}
-      </label>
-      <Input
-        autoComplete="off"
-        id={id}
-        maxLength={100}
-        onChange={(event) => setName(event.target.value)}
-        placeholder="Add a person"
-        value={name}
-      />
+    <>
       <Button
-        aria-label={`Add to ${group.name}`}
-        disabled={add.isPending || !name.trim()}
-        size="icon"
-        type="submit"
+        aria-label={`Add a person to ${group.name}`}
+        className="mt-3 w-full"
+        onClick={() => setOpen(true)}
+        type="button"
         variant="secondary"
       >
         <Plus aria-hidden="true" className="size-4" />
+        Add a person
       </Button>
-    </form>
+      <AddMemberDialog
+        group={group}
+        groups={groups}
+        onOpenChange={setOpen}
+        open={open}
+      />
+    </>
   );
 }
 
@@ -240,7 +213,7 @@ function GroupCard({
       ) : (
         <p className="type-body-sm mt-2 text-muted-foreground">No one yet.</p>
       )}
-      {editable ? <AddMember group={group} /> : null}
+      {editable ? <AddMember group={group} groups={groups} /> : null}
     </section>
   );
 }
