@@ -8,6 +8,7 @@ import {
   NotebookPen,
   Settings,
   UsersRound,
+  Utensils,
 } from "lucide-react";
 import { isStaffRole, type Role } from "~/lib/roles";
 
@@ -23,6 +24,12 @@ export const adminNavigation = [
     icon: UsersRound,
     title: "Members",
     url: "/admin/members",
+  },
+  {
+    group: "Community",
+    icon: Utensils,
+    title: "Groups",
+    url: "/admin/groups",
   },
   {
     group: "Community",
