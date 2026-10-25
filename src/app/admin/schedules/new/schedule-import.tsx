@@ -11,6 +11,7 @@ import {
   AdminSelect,
   QueryMessage,
 } from "~/components/admin/admin-controls";
+import { GatheringFlags } from "~/components/schedule/gathering-flags";
 import { TeamList } from "~/components/schedule/team";
 import { Button } from "~/components/ui/button";
 import type { FieldChange } from "~/lib/schedule-import";
@@ -30,9 +31,11 @@ type Entry = Preview["entries"][number];
 const FIELD_LABELS: Record<FieldChange["field"], string> = {
   accommodation: "Accommodation",
   bibleVerse: "Bible verse",
+  cancelled: "Status",
   cleaningGroup: "Cleaning",
   cookingGroup: "Cooking",
   description: "Description",
+  flags: "Flags",
   leader: "Leader",
   multimedia: "Multimedia",
   musician: "Musician",
@@ -137,6 +140,11 @@ function ImportList({
             title={entryTitle(entry.schedule)}
             verse={entry.schedule.bibleVerse}
           >
+            <GatheringFlags
+              cancelled={entry.schedule.cancelled}
+              className="mt-2"
+              flags={entry.schedule.flags}
+            />
             {entry.team.length > 0 ? (
               <div className="mt-3 border-t pt-3">
                 <p className="type-eyebrow text-muted-foreground">Team</p>

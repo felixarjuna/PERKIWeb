@@ -51,8 +51,10 @@ describe("schedule import router", () => {
     expect(preview.entries.map((entry) => [entry.day, entry.status])).toEqual([
       ["2026-01-03", "new"],
       ["2026-01-10", "new"],
+      ["2026-12-31", "new"],
     ]);
-    expect(preview.skipped).toHaveLength(2);
+    expect(preview.skipped).toHaveLength(1);
+    expect(preview.entries[2]?.schedule.cancelled).toBe(true);
     // The team as it will appear on the schedule: role, name and photo.
     expect(preview.entries[1]?.team).toContainEqual({
       image: null,
@@ -62,7 +64,7 @@ describe("schedule import router", () => {
     expect(await testDb.select().from(schedules)).toEqual([]);
 
     expect(await api.scheduleImport.run({ tab: "2026" })).toEqual({
-      added: 2,
+      added: 3,
       updated: 0,
     });
     const service = (await testDb.select().from(schedules)).find(
@@ -71,10 +73,16 @@ describe("schedule import router", () => {
     expect(service).toMatchObject({
       accommodation: "Gus",
       bibleVerse: "Habakuk 2",
+      cancelled: false,
       cookingGroup: "Group 1",
+      flags: ["communion"],
       preacher: "Pdt. Guest",
       title: "Kebaktian",
     });
+    const cancelled = (await testDb.select().from(schedules)).find(
+      (schedule) => schedule.cancelled
+    );
+    expect(cancelled).toMatchObject({ leader: "", musician: "" });
     expect(
       (await testDb.select().from(scheduleAssignments)).map((a) => a.role)
     ).toContain("liturgist");
@@ -88,7 +96,7 @@ describe("schedule import router", () => {
       added: 0,
       updated: 0,
     });
-    expect(await testDb.select().from(schedules)).toHaveLength(2);
+    expect(await testDb.select().from(schedules)).toHaveLength(3);
   });
 
   it("updates changed slots but keeps a title edited on the site", async () => {
@@ -130,6 +138,32 @@ describe("schedule import router", () => {
       musician: "Zoe",
       title: "Renamed on the site",
     });
+  });
+
+  it('cancels a gathering whose row is all "-", keeping its team', async () => {
+    const api = await admin();
+    await api.scheduleImport.run({ tab: "2026" });
+    google.values = SHEET_2026.map((cells) =>
+      cells[0] === "3.1.2026"
+        ? cells.map((cell, column) =>
+            column >= 2 && column <= 10 ? "-" : cell
+          )
+        : cells
+    );
+
+    expect(await api.scheduleImport.run({ tab: "2026" })).toEqual({
+      added: 0,
+      updated: 1,
+    });
+    const study = (await testDb.select().from(schedules)).find(
+      (schedule) => schedule.title === "Penelaahan Alkitab" && schedule.leader
+    );
+    expect(study).toMatchObject({ cancelled: true, leader: "Ana" });
+    expect(
+      (await testDb.select().from(scheduleAssignments)).some(
+        (a) => a.scheduleId === study?.id
+      )
+    ).toBe(true);
   });
 
   it("moves a schedule stored at 00:00 to the default 15:30", async () => {
