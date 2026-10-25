@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, lt, lte } from "drizzle-orm";
+import { and, desc, eq, gte, like, lt, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -11,6 +11,7 @@ import {
   scheduleAssignments,
   schedules,
   servingPool,
+  settings,
   takeaways,
   users,
 } from "~/lib/db/schema/schema";
@@ -225,6 +226,33 @@ export const setPublishedAt = async (id: number, publishedAt: Date) => {
       .update(takeaways)
       .set({ publishedAt })
       .where(eq(takeaways.id, id));
+  } finally {
+    await client.end();
+  }
+};
+
+/** Saves a workspace setting (keys in `src/lib/settings.ts`). */
+export const saveSetting = async (key: string, value: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .insert(settings)
+      .values({ key, value })
+      .onConflictDoUpdate({ set: { value }, target: settings.key });
+  } finally {
+    await client.end();
+  }
+};
+
+/** Deletes the accounts whose name starts with `prefix`, with their pool entries and links. */
+export const deleteUsersNamed = async (prefix: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .delete(users)
+      .where(like(users.name, `${prefix}%`));
   } finally {
     await client.end();
   }

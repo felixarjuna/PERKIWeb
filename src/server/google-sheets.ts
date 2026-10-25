@@ -1,10 +1,11 @@
-const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets";
-
 // The API key is validated in env.mjs; read directly so server tests need no
-// full environment. Which sheet to read is a workspace setting.
+// full environment. Which sheet to read is a workspace setting; e2e points
+// GOOGLE_SHEETS_URL at a local stand-in.
+const sheetsApi = () =>
+  `${process.env.GOOGLE_SHEETS_URL || "https://sheets.googleapis.com"}/v4/spreadsheets`;
 
 async function sheetsRequest<T>(path: string): Promise<T> {
-  const url = new URL(`${SHEETS_API}/${path}`);
+  const url = new URL(`${sheetsApi()}/${path}`);
   url.searchParams.set("key", process.env.NEXT_PUBLIC_GOOGLE_API_KEY ?? "");
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {

@@ -24,6 +24,8 @@ export const e2eEnv = {
   GOOGLE_CLIENT_SECRET: "e2e-google-client-secret",
   // Document imports read fixture documents, never the real Google Docs.
   GOOGLE_DOCS_URL: `http://127.0.0.1:${E2E_DOCS_PORT}`,
+  // Sheet imports read a fixture tab from the same stand-in.
+  GOOGLE_SHEETS_URL: `http://127.0.0.1:${E2E_DOCS_PORT}`,
   NEXT_PUBLIC_GOOGLE_API_KEY: "e2e-google-api-key",
   NEXTAUTH_SECRET: "e2e-secret-not-for-production",
   NEXTAUTH_URL: BASE_URL,

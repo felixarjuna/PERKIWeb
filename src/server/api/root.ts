@@ -10,6 +10,7 @@ import { rolesRouter } from "./routers/roles";
 import { scheduleImportRouter } from "./routers/schedule-import";
 import { scheduleRouter } from "./routers/schedules";
 import { servingPoolRouter } from "./routers/serving-pool";
+import { servingPoolImportRouter } from "./routers/serving-pool-import";
 import { settingsRouter } from "./routers/settings";
 import { speakerRouter } from "./routers/speakers";
 import { takeawayRouter } from "./routers/takeaway";
@@ -38,6 +39,7 @@ export const appRouter = createTRPCRouter({
   scheduleImport: scheduleImportRouter,
   schedules: scheduleRouter,
   servingPool: servingPoolRouter,
+  servingPoolImport: servingPoolImportRouter,
   settings: settingsRouter,
   speakers: speakerRouter,
   takeawayComments: takeawayCommentsRouter,

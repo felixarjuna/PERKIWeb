@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { schedules, speakers, users } from "~/lib/db/schema/schema";
@@ -9,33 +8,13 @@ import { db } from "~/server";
 import { sheetTabs, sheetValues } from "~/server/google-sheets";
 import { resolveAccounts } from "~/server/people";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
+import { fromGoogle, requireSheetId } from "~/server/schedule-sheet";
 import { scheduleSheetId } from "~/server/settings";
 import { resolveSpeakers } from "~/server/speakers";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 const YEAR_TAB = /^\d{4}$/;
 const tabInput = z.object({ tab: z.string().min(1).max(100) });
-
-async function requireSheetId() {
-  const id = await scheduleSheetId();
-  if (!id) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: "No schedule sheet is set. Add its link on the Settings page.",
-    });
-  }
-  return id;
-}
-
-/** Calls Google and turns its failures into one readable error. */
-const fromGoogle = <T>(request: () => Promise<T>): Promise<T> =>
-  request().catch((error: unknown) => {
-    throw new TRPCError({
-      cause: error,
-      code: "BAD_GATEWAY",
-      message: "The schedule sheet couldn't be read from Google. Try again.",
-    });
-  });
 
 /** Reads a tab and compares it with the stored schedules. */
 async function planTab(tab: string) {
