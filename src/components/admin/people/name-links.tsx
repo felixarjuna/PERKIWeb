@@ -31,7 +31,7 @@ const accountPerson = (account: Account) => ({
 });
 
 /** Searchable list of every account, with photos. */
-function AccountPicker({
+export function AccountPicker({
   label,
   onPick,
   disabled,
