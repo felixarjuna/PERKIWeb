@@ -112,6 +112,7 @@ export function termOn<T extends { startsOn: string }>(
 }
 
 interface ScheduleNeeds extends ScheduleSlots {
+  cancelled?: boolean;
   cleaningGroup?: string | null;
   cookingGroup?: string | null;
 }
@@ -139,11 +140,13 @@ const NEEDED = {
   readonly (readonly [string, keyof ScheduleNeeds])[]
 >;
 
-/** The slots of a schedule nobody has taken yet, by label. */
+/** The slots of a schedule nobody has taken yet, by label; none once it's cancelled. */
 export const openSlots = (schedule: ScheduleNeeds): string[] =>
-  NEEDED[schedule.type].flatMap(([label, column]) =>
-    filled(schedule[column] as string | null | undefined) ? [] : [label]
-  );
+  schedule.cancelled
+    ? []
+    : NEEDED[schedule.type].flatMap(([label, column]) =>
+        filled(schedule[column] as string | null | undefined) ? [] : [label]
+      );
 
 /** The schedule column a role fills on a type of gathering. */
 type SlotColumn =
@@ -183,12 +186,9 @@ export function slotColumn(
 /** The name in a slot column, or null when it's open. */
 export const slotHolder = (name: string | null | undefined) => filled(name);
 
-/**
- * Whether a gathering is cancelled. Schedules don't record it yet (#107);
- * once they have a `cancelled` column this reads it with no other change.
- */
-export const isCancelled = (schedule: object) =>
-  "cancelled" in schedule && schedule.cancelled === true;
+/** Whether a gathering is cancelled (#107): nobody serves, so no slot is open. */
+export const isCancelled = (schedule: { cancelled?: boolean }) =>
+  schedule.cancelled === true;
 
 /** Everything the hard rules need to decide whether a member may take a slot. */
 export interface TakeCheck {

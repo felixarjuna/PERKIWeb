@@ -96,11 +96,15 @@ const order = (duty: Duty) =>
 
 /**
  * Every gathering where the member serves or their group cooks or cleans,
- * split at the start of today in Aachen: upcoming soonest first, past most
+ * except cancelled ones, split at the start of today in Aachen: upcoming soonest first, past most
  * recent first. Only the member's own duties; nobody else's names.
  */
 export async function loadDuties(userId: string, now = new Date()) {
-  const found = [...(await slotDuties(userId)), ...(await groupDuties(userId))];
+  // Nobody serves at a cancelled gathering, so it isn't anyone's duty.
+  const found = [
+    ...(await slotDuties(userId)),
+    ...(await groupDuties(userId)),
+  ].filter(({ schedule }) => !schedule.cancelled);
   const byId = new Map<number, DutyDay>();
   for (const { duties, schedule } of found) {
     const day = byId.get(schedule.id) ?? { duties: [], schedule };

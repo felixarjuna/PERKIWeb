@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import React from "react";
 import { PeopleGrid } from "~/components/person-avatar";
+import { GatheringFlags } from "~/components/schedule/gathering-flags";
 import { PreachedBy, TeamList } from "~/components/schedule/team";
 import { Badge } from "~/components/ui/badge";
 import { Button, buttonVariants } from "~/components/ui/button";
@@ -215,11 +216,17 @@ export default function ScheduleCard({
   yours?: readonly Duty[];
 }) {
   const date = formatDate(schedule.date);
+  // A cancelled gathering stays on the timeline, crossed out, without its
+  // team or duties: nobody serves that day.
+  const { cancelled } = schedule;
   return (
     <article className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
       <div className="flex flex-col items-center">
         <time
-          className="flex flex-col items-center text-center"
+          className={cn(
+            "flex flex-col items-center text-center",
+            cancelled && "text-muted-foreground line-through"
+          )}
           dateTime={date.iso}
         >
           <span className="type-eyebrow text-muted-foreground">
@@ -238,7 +245,12 @@ export default function ScheduleCard({
           {[date.time, schedule.bibleVerse].filter(Boolean).join(" · ")}
         </p>
         {standalone ? null : (
-          <h3 className="type-heading mt-1 break-words">
+          <h3
+            className={cn(
+              "type-heading mt-1 break-words",
+              cancelled && "text-muted-foreground line-through"
+            )}
+          >
             <Link
               className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               href={`/schedule/${schedule.id}`}
@@ -247,16 +259,25 @@ export default function ScheduleCard({
             </Link>
           </h3>
         )}
+        <GatheringFlags
+          cancelled={cancelled}
+          className="mt-2"
+          flags={schedule.flags}
+        />
         <YourPart duties={yours} />
-        <PreachedBy className="mt-1.5" team={schedule.team} />
+        {cancelled ? null : (
+          <PreachedBy className="mt-1.5" team={schedule.team} />
+        )}
         <Description text={schedule.description} />
 
-        <TeamList className="mt-4" team={schedule.team} />
-        <div className="mt-3 flex flex-wrap gap-2">
+        {cancelled ? null : <TeamList className="mt-4" team={schedule.team} />}
+        <div className="mt-3 flex flex-wrap gap-2 empty:hidden">
           {standalone ? null : <TakeawayLink schedule={schedule} />}
-          {duties(schedule).map((duty) => (
-            <DutyDrawer duty={duty} key={duty.label} />
-          ))}
+          {cancelled
+            ? null
+            : duties(schedule).map((duty) => (
+                <DutyDrawer duty={duty} key={duty.label} />
+              ))}
         </div>
       </div>
     </article>

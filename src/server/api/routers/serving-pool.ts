@@ -68,6 +68,8 @@ function servedCounts(from: Date | null, before: Date) {
     .where(
       and(
         isNotNull(scheduleAssignments.userId),
+        // Nobody served at a cancelled gathering.
+        eq(schedules.cancelled, false),
         lte(schedules.date, new Date())
       )
     )

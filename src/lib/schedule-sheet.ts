@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { SCHEDULE_FLAGS, type ScheduleFlag } from "./schedule-flags";
 import { startOn } from "./schedule-team";
 
 /** Gatherings happen in Aachen; a sheet date is that calendar day there. */
@@ -9,6 +10,8 @@ const DATE_PATTERN = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
 export interface SheetSchedule {
   accommodation: string;
   bibleVerse: string;
+  /** Every slot is "-": the gathering is called off. */
+  cancelled: boolean;
   cleaningGroup: string;
   cookingGroup: string;
   date: Date;
@@ -16,6 +19,8 @@ export interface SheetSchedule {
   day: string;
   /** Public: the 2025 "Event Description", or the 2026 "Events" note. */
   description: string;
+  /** Event flags named in the row's notes (Holy Communion, online, Putzdienst). */
+  flags: ScheduleFlag[];
   /**
    * What an earlier import wrote as the description when the row has
    * internal "Special notes" (null when it has none). The import replaces it,
@@ -57,6 +62,19 @@ const SLOT_COLUMNS = [
   "piket",
 ];
 
+/** How the sheet's notes name each flag. */
+const FLAG_WORDS: Record<ScheduleFlag, RegExp> = {
+  communion: /perjamuan|holy communion|abendmahl/i,
+  online: /\bonline\b|\bzoom\b/i,
+  putzdienst: /putzdienst/i,
+};
+
+/** The flags a row's notes name; only the flag is read, never the note. */
+const flagsIn = (notes: string[]) =>
+  SCHEDULE_FLAGS.filter((flag) =>
+    notes.some((note) => FLAG_WORDS[flag].test(note))
+  );
+
 /** The sheet writes "-" (or nothing) for an empty slot. */
 const clean = (value: string | undefined) => {
   const trimmed = value?.trim() ?? "";
@@ -71,10 +89,11 @@ function readRow(
   columns: Map<string, number>,
   row: number
 ): { schedule: SheetSchedule } | { skipped: SkippedRow } {
-  const cell = (name: string) => {
+  const raw = (name: string) => {
     const column = columns.get(name);
-    return column === undefined ? "" : clean(cells[column]);
+    return column === undefined ? "" : (cells[column]?.trim() ?? "");
   };
+  const cell = (name: string) => clean(raw(name));
   const dateText = cells[0]?.trim() ?? "";
   const date = DateTime.fromFormat(dateText, "d.M.yyyy", { zone: ZONE });
   const day = date.toISODate();
@@ -91,7 +110,10 @@ function readRow(
       : "The row has no event.";
     return { skipped: { day, reason, row } };
   }
-  if (SLOT_COLUMNS.every((name) => cell(name) === "")) {
+  // "-" in every slot means the date is called off; nothing at all means
+  // it isn't planned yet.
+  const cancelled = SLOT_COLUMNS.every((name) => cell(name) === "");
+  if (cancelled && !SLOT_COLUMNS.some((name) => raw(name) === "-")) {
     return {
       skipped: { day, reason: "Nothing is planned on this date.", row },
     };
@@ -102,6 +124,7 @@ function readRow(
     schedule: {
       accommodation: cell("akomodasi"),
       bibleVerse: cell("bible verse") || cell("tema kotbah"),
+      cancelled,
       cleaningGroup: cell("piket"),
       cookingGroup: cell("masak"),
       date: startOn({ day: date.day, month: date.month, year: date.year }),
@@ -109,6 +132,7 @@ function readRow(
       // "Special notes" are for the team (who's away, reminders) and never
       // become the public description.
       description,
+      flags: flagsIn([cell("events"), cell("event description"), specialNotes]),
       formerDescription:
         specialNotes && !cell("event description")
           ? [cell("events"), specialNotes].filter(Boolean).join(" · ")

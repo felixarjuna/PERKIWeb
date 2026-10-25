@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import LoadMore from "~/components/load-more";
+import { GatheringFlags } from "~/components/schedule/gathering-flags";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { monthOf, monthRange } from "~/lib/months";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -84,6 +85,7 @@ function ScheduleRow({
             · {date.toFormat("HH:mm")}
           </p>
           <h2 className="type-subheading break-words">{record.title}</h2>
+          <GatheringFlags cancelled={record.cancelled} flags={record.flags} />
           {meta ? (
             <p className="type-body-sm text-muted-foreground">{meta}</p>
           ) : null}

@@ -136,6 +136,39 @@ describe("schedules router", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
+  it("stores a gathering's flags and whether it's cancelled", async () => {
+    const api = await signedIn();
+    await api.schedules.addSchedule({
+      ...validSchedule,
+      flags: ["online", "communion"],
+    });
+    const added = await onlySchedule();
+    expect(added).toMatchObject({
+      cancelled: false,
+      flags: ["communion", "online"],
+    });
+
+    await api.schedules.updateSchedule({
+      ...validSchedule,
+      cancelled: true,
+      flags: [],
+      id: added.id,
+    });
+    const page = await anonymousCaller().schedules.list({ limit: 5 });
+    expect(page.items[0]).toMatchObject({ cancelled: true, flags: [] });
+  });
+
+  it("rejects an unknown flag with BAD_REQUEST", async () => {
+    const api = await signedIn();
+    await expect(
+      api.schedules.addSchedule({
+        ...validSchedule,
+        // @ts-expect-error -- not a flag
+        flags: ["picnic"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
   it("updates a schedule", async () => {
     const api = await signedIn();
     await api.schedules.addSchedule(validSchedule);

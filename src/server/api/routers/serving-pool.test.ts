@@ -155,6 +155,15 @@ describe("servingPool", () => {
         leader: "Ana Putri",
         type: "bible_study",
       },
+      // Cancelled: nobody served.
+      {
+        ...gathering,
+        cancelled: true,
+        date: new Date("2026-10-24T13:30:00Z"),
+        leader: "Ana Putri",
+        musician: "Budi Santoso",
+        type: "bible_study",
+      },
       // Upcoming: not served yet.
       {
         ...gathering,

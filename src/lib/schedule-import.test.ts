@@ -5,11 +5,13 @@ import type { SheetSchedule } from "./schedule-sheet";
 const row: SheetSchedule = {
   accommodation: "",
   bibleVerse: "",
+  cancelled: false,
   cleaningGroup: "Group 3",
   cookingGroup: "",
   date: new Date("2026-01-03T14:30:00.000Z"),
   day: "2026-01-03",
   description: "",
+  flags: [],
   formerDescription: null,
   leader: "Ana",
   multimedia: "",
@@ -24,11 +26,13 @@ const row: SheetSchedule = {
 const stored: StoredSchedule = {
   accommodation: null,
   bibleVerse: "Roma 1",
+  cancelled: false,
   cleaningGroup: "Group 3",
   cookingGroup: null,
   // Stored at 18:00 Aachen time by hand; still the same day.
   date: new Date("2026-01-03T17:00:00.000Z"),
   description: "",
+  flags: [],
   id: 7,
   leader: "Ana",
   multimedia: null,
@@ -108,5 +112,48 @@ describe("planImport", () => {
     const service = { ...stored, id: 8, type: "church_service" };
     const [entry] = planImport([row], [service, stored]);
     expect(entry).toMatchObject({ id: 7, status: "unchanged" });
+  });
+
+  it("cancels a stored gathering without clearing its team", () => {
+    const cancelled = {
+      ...row,
+      cancelled: true,
+      cleaningGroup: "",
+      leader: "",
+      musician: "",
+      noteWriter: "",
+    };
+    expect(planImport([cancelled], [stored])[0]).toMatchObject({
+      changes: [{ field: "cancelled", from: "Planned", to: "Cancelled" }],
+      status: "changed",
+    });
+    expect(
+      planImport([cancelled], [{ ...stored, cancelled: true }])[0]
+    ).toMatchObject({ changes: [], status: "unchanged" });
+  });
+
+  it("plans a gathering again when the sheet fills it", () => {
+    expect(
+      planImport([row], [{ ...stored, cancelled: true }])[0]
+    ).toMatchObject({
+      changes: [{ field: "cancelled", from: "Cancelled", to: "Planned" }],
+      status: "changed",
+    });
+  });
+
+  it("adds the sheet's flags and keeps flags set on the site", () => {
+    const [entry] = planImport(
+      [{ ...row, flags: ["communion"] }],
+      [{ ...stored, flags: ["online"] }]
+    );
+    expect(entry).toMatchObject({
+      changes: [
+        { field: "flags", from: "Online", to: "Holy Communion, Online" },
+      ],
+      status: "changed",
+    });
+    expect(
+      planImport([row], [{ ...stored, flags: ["online"] }])[0]
+    ).toMatchObject({ status: "unchanged" });
   });
 });

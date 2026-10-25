@@ -7,8 +7,10 @@ import type { FieldPath, UseFormReturn } from "react-hook-form";
 import type { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import {
   accommodation,
@@ -35,6 +38,11 @@ import {
   musicians,
   noteWriter,
 } from "~/lib/data";
+import {
+  FLAG_LABELS,
+  orderedFlags,
+  SCHEDULE_FLAGS,
+} from "~/lib/schedule-flags";
 import { onPickedDay } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import type { addScheduleSchema } from "~/server/api/schema/schema";
@@ -165,6 +173,72 @@ function DateField({ form }: { form: Form }) {
         </FormItem>
       )}
     />
+  );
+}
+
+/** Event flags and cancelling, which the schedule shows as chips. */
+function SpecialDateFields({ form }: { form: Form }) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="flags"
+        render={({ field }) => {
+          const selected = field.value ?? [];
+          return (
+            <fieldset className="space-y-2">
+              <legend className="font-medium text-sm leading-none">
+                Flags
+              </legend>
+              <div className="flex flex-col gap-3 pt-1">
+                {SCHEDULE_FLAGS.map((flag) => (
+                  <FormItem className="flex items-center gap-3" key={flag}>
+                    <FormControl>
+                      <Checkbox
+                        checked={selected.includes(flag)}
+                        onCheckedChange={(checked) =>
+                          field.onChange(
+                            orderedFlags(
+                              checked
+                                ? [...selected, flag]
+                                : selected.filter((value) => value !== flag)
+                            )
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormLabel className="type-body-sm font-normal">
+                      {FLAG_LABELS[flag]}
+                    </FormLabel>
+                  </FormItem>
+                ))}
+              </div>
+            </fieldset>
+          );
+        }}
+      />
+      <FormField
+        control={form.control}
+        name="cancelled"
+        render={({ field }) => (
+          <FormItem className="flex items-start justify-between gap-4 rounded-lg bg-secondary p-4">
+            <div className="space-y-1">
+              <FormLabel>Cancelled</FormLabel>
+              <FormDescription className="type-body-sm">
+                Stays on the schedule, crossed out. Nobody serves, so it leaves
+                everyone's duties and the open slots. Takeaways are kept.
+              </FormDescription>
+            </div>
+            <FormControl>
+              <Switch
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </>
   );
 }
 
@@ -348,6 +422,13 @@ export function ScheduleFields({ form }: { form: Form }) {
             options={groupNames}
             placeholder="Choose a group"
           />
+        </Panel>
+
+        <Panel
+          description="Flags show as chips on the schedule, for everyone."
+          title="Special date"
+        >
+          <SpecialDateFields form={form} />
         </Panel>
       </div>
     </div>

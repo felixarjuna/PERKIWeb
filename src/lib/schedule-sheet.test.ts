@@ -6,9 +6,10 @@ describe("parseScheduleSheet", () => {
   const { schedules, skipped } = parseScheduleSheet(SHEET_2026);
 
   it("reads services and Bible studies by header, at 15:30 in Aachen", () => {
-    expect(schedules).toEqual([
+    expect(schedules.slice(0, 2)).toEqual([
       expect.objectContaining({
         bibleVerse: "",
+        cancelled: false,
         cleaningGroup: "Group 3",
         cookingGroup: "",
         date: new Date("2026-01-03T14:30:00.000Z"),
@@ -33,16 +34,50 @@ describe("parseScheduleSheet", () => {
     ]);
   });
 
-  it("skips special events and empty dates, and ignores the group list", () => {
+  it("skips special events and ignores the group list", () => {
     expect(skipped).toEqual([
       expect.objectContaining({ day: "2026-04-04", row: 6 }),
-      {
-        day: "2026-12-31",
-        reason: "Nothing is planned on this date.",
-        row: 7,
-      },
     ]);
     expect(skipped[0]?.reason).toContain("Bible Camp Pemuridan");
+  });
+
+  it('reads a row with every slot "-" as cancelled', () => {
+    expect(schedules.find((row) => row.day === "2026-12-31")).toMatchObject({
+      cancelled: true,
+      leader: "",
+      row: 7,
+      type: "bible_study",
+    });
+    expect(schedules.filter((row) => row.cancelled)).toHaveLength(1);
+  });
+
+  it("skips a date with nothing written in its slots", () => {
+    const { schedules: rows, skipped: empty } = parseScheduleSheet([
+      ["Tanggal", "Acara", "Leader", " Musik", "Catatan", "Piket"],
+      ["3.1.2026", "Penelaahan Alkitab", "", "", "", ""],
+    ]);
+    expect(rows).toEqual([]);
+    expect(empty).toEqual([
+      { day: "2026-01-03", reason: "Nothing is planned on this date.", row: 2 },
+    ]);
+  });
+
+  it("maps the event notes to flags", () => {
+    expect(schedules.map((row) => row.flags)).toEqual([[], ["communion"], []]);
+    const { schedules: rows } = parseScheduleSheet([
+      ["Tanggal", "Acara", "Leader", "Piket", "Events", "Special Notes"],
+      [
+        "3.1.2026",
+        "Penelaahan Alkitab",
+        "Ana",
+        "Group 3",
+        "Online (Zoom)",
+        "PUTZDIENST",
+      ],
+    ]);
+    expect(rows[0]?.flags).toEqual(["online", "putzdienst"]);
+    // The flag is imported; the note itself stays internal.
+    expect(rows[0]?.description).toBe("Online (Zoom)");
   });
 
   it("uses the 2025 layout's title, description and Bible verse columns", () => {

@@ -1,13 +1,18 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { schedules, speakers, users } from "~/lib/db/schema/schema";
-import { planImport } from "~/lib/schedule-import";
+import { orderedFlags } from "~/lib/schedule-flags";
+import { type ImportEntry, planImport } from "~/lib/schedule-import";
 import { parseScheduleSheet, type SheetSchedule } from "~/lib/schedule-sheet";
 import { type Slot, slotsFromSchedule } from "~/lib/schedule-team";
 import { db } from "~/server";
 import { sheetTabs, sheetValues } from "~/server/google-sheets";
 import { resolveAccounts } from "~/server/people";
-import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
+import {
+  insertSchedule,
+  syncAssignments,
+  type Transaction,
+} from "~/server/schedule-assignments";
 import { fromGoogle, requireSheetId } from "~/server/schedule-sheet";
 import { scheduleSheetId } from "~/server/settings";
 import { resolveSpeakers } from "~/server/speakers";
@@ -25,10 +30,12 @@ async function planTab(tab: string) {
     .select({
       accommodation: schedules.accommodation,
       bibleVerse: schedules.bibleVerse,
+      cancelled: schedules.cancelled,
       cleaningGroup: schedules.cleaningGroup,
       cookingGroup: schedules.cookingGroup,
       date: schedules.date,
       description: schedules.description,
+      flags: schedules.flags,
       id: schedules.id,
       leader: schedules.leader,
       multimedia: schedules.multimedia,
@@ -38,7 +45,7 @@ async function planTab(tab: string) {
       type: schedules.type,
     })
     .from(schedules);
-  return { entries: planImport(rows, stored), skipped };
+  return { entries: planImport(rows, stored), skipped, stored };
 }
 
 /** The columns the sheet owns, with empty optional slots stored as null. */
@@ -86,6 +93,37 @@ async function previewTeams(rows: SheetSchedule[]) {
     slotsOf(row).map((slot) => ({ ...slot, image: imageOf(slot) }));
 }
 
+type ChangedEntry = Exclude<ImportEntry, { status: "new" }>;
+
+/**
+ * Writes a changed row onto its stored schedule. A cancelled row keeps the
+ * stored team, so the date can be planned again as it was; flags set on the
+ * site stay, and the sheet only adds its own.
+ */
+async function updateFromSheet(
+  tx: Transaction,
+  entry: ChangedEntry,
+  storedFlags: readonly string[]
+) {
+  const row = entry.schedule;
+  const columns = row.cancelled ? null : syncedColumns(row);
+  const changes = (field: string) =>
+    entry.changes.some((change) => change.field === field);
+  await tx
+    .update(schedules)
+    .set({
+      ...columns,
+      cancelled: row.cancelled,
+      flags: orderedFlags([...storedFlags, ...row.flags]),
+      ...(changes("time") ? { date: row.date } : {}),
+      ...(changes("description") ? { description: row.description } : {}),
+    })
+    .where(eq(schedules.id, entry.id));
+  if (columns) {
+    await syncAssignments(tx, entry.id, columns);
+  }
+}
+
 export const scheduleImportRouter = createTRPCRouter({
   /** What importing the tab would do, without writing anything. */
   preview: adminProcedure.input(tabInput).query(async ({ input }) => {
@@ -108,7 +146,9 @@ export const scheduleImportRouter = createTRPCRouter({
    * The sheet is read again here, so the result never depends on a stale preview.
    */
   run: adminProcedure.input(tabInput).mutation(async ({ input }) => {
-    const { entries } = await planTab(input.tab);
+    const { entries, stored } = await planTab(input.tab);
+    const flagsOf = (id: number) =>
+      stored.find((schedule) => schedule.id === id)?.flags ?? [];
     return db.transaction(async (tx) => {
       let added = 0;
       let updated = 0;
@@ -119,26 +159,15 @@ export const scheduleImportRouter = createTRPCRouter({
           await insertSchedule(tx, {
             ...syncedColumns(row),
             bibleVerse: row.bibleVerse,
+            cancelled: row.cancelled,
             date: row.date,
             description: row.description,
+            flags: row.flags,
             title: row.title,
           });
           added += 1;
         } else if (entry.status === "changed") {
-          const columns = syncedColumns(row);
-          const changes = (field: string) =>
-            entry.changes.some((change) => change.field === field);
-          await tx
-            .update(schedules)
-            .set({
-              ...columns,
-              ...(changes("time") ? { date: row.date } : {}),
-              ...(changes("description")
-                ? { description: row.description }
-                : {}),
-            })
-            .where(eq(schedules.id, entry.id));
-          await syncAssignments(tx, entry.id, columns);
+          await updateFromSheet(tx, entry, flagsOf(entry.id));
           updated += 1;
         }
       }
