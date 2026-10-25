@@ -1,21 +1,12 @@
 "use client";
 
 import { format } from "date-fns";
-import { BookOpen, Check, Church, Layers } from "lucide-react";
+import { BookOpen, Church, Layers } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PersonAvatar } from "~/components/person-avatar";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Checkbox } from "~/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -38,9 +29,9 @@ import {
   scopesFor,
   statusLabels,
 } from "~/lib/serving-pool";
-import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { AdminSegmented, AdminSelect } from "../admin-controls";
+import { MemberPicker } from "../member-picker";
 import { entryName, type PoolEntry } from "./pool-columns";
 
 const MAX_NOTE = 500;
@@ -151,42 +142,12 @@ export function AddDialog({
           }}
         >
           <Field label={picked ? `Member: ${picked.name ?? ""}` : "Member"}>
-            <Command className="rounded-md bg-secondary">
-              <CommandInput placeholder="Search members…" />
-              <CommandList className="max-h-48">
-                <CommandEmpty>
-                  {accounts.isPending ? "Loading members…" : "No member found."}
-                </CommandEmpty>
-                <CommandGroup>
-                  {accounts.data?.map((account) => (
-                    <CommandItem
-                      aria-selected={account.id === userId}
-                      key={account.id}
-                      onSelect={() => setUserId(account.id)}
-                      value={`${account.name ?? ""} ${account.id}`}
-                    >
-                      <PersonAvatar
-                        person={{
-                          image: account.image,
-                          name: account.name ?? "Unnamed account",
-                        }}
-                        size="sm"
-                      />
-                      <span className="truncate">
-                        {account.name ?? "Unnamed account"}
-                      </span>
-                      <Check
-                        aria-hidden="true"
-                        className={cn(
-                          "ml-auto size-4",
-                          account.id !== userId && "invisible"
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+            <MemberPicker
+              accounts={accounts.data}
+              onChange={setUserId}
+              pending={accounts.isPending}
+              value={userId}
+            />
           </Field>
           <AdminSelect
             id="pool-group"
