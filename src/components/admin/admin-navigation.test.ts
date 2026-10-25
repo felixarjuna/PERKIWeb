@@ -22,7 +22,7 @@ it("separates the overview and member directory from content management", () => 
   ]);
 });
 
-it("nests cooking and cleaning and the serving teams under Serving", () => {
+it("nests cooking and cleaning and the serving teams under Duties", () => {
   const community = adminNavigation.filter(
     (item) => item.group === "Community"
   );
@@ -35,7 +35,7 @@ it("nests cooking and cleaning and the serving teams under Serving", () => {
   ).toEqual([
     "Overview",
     "Members",
-    { Serving: ["Cooking & cleaning", "Serving teams"] },
+    { Duties: ["Cooking & cleaning", "Serving teams"] },
     "Access",
     "Name links",
   ]);

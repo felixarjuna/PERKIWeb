@@ -31,14 +31,14 @@ export const adminNavigation = [
   {
     group: "Community",
     icon: Utensils,
-    parent: "Serving",
+    parent: "Duties",
     title: "Cooking & cleaning",
     url: "/admin/groups",
   },
   {
     group: "Community",
     icon: UserRoundCheck,
-    parent: "Serving",
+    parent: "Duties",
     title: "Serving teams",
     url: "/admin/serving",
   },
@@ -96,7 +96,7 @@ export const navigationFor = (role: Role) =>
 type NavigationItem = (typeof adminNavigation)[number];
 
 /** Icons of the collapsible entries that hold several pages. */
-const PARENT_ICONS: Record<string, LucideIcon> = { Serving: HeartHandshake };
+const PARENT_ICONS: Record<string, LucideIcon> = { Duties: HeartHandshake };
 
 export type SidebarEntry =
   | NavigationItem
