@@ -1,3 +1,4 @@
+import { AvatarStack as KiboAvatarStack } from "~/components/kibo-ui/avatar-stack";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { initials, type Person } from "~/lib/people";
 import { cn } from "~/lib/utils";
@@ -74,13 +75,15 @@ export function AvatarStack({
   const rest = people.length - shown.length;
   return (
     <span aria-hidden="true" className="flex items-center">
-      {shown.map((person) => (
-        <PersonAvatar
-          className="-ms-2 ring-2 ring-card first:ms-0"
-          key={person.name}
-          person={person}
-        />
-      ))}
+      <KiboAvatarStack animate>
+        {shown.map((person) => (
+          <PersonAvatar
+            className="size-full"
+            key={person.name}
+            person={person}
+          />
+        ))}
+      </KiboAvatarStack>
       {rest > 0 ? (
         <span className="type-caption ms-1.5 text-muted-foreground">
           +{rest}
