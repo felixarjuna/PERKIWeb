@@ -196,6 +196,12 @@ describe("takeRefusal", () => {
     );
   });
 
+  it("refuses a day the member marked as one they can't serve", () => {
+    expect(takeRefusal(check({ unavailable: true }))).toBe(
+      "You marked this day as one you can't serve."
+    );
+  });
+
   it("refuses members who aren't active in that role", () => {
     expect(takeRefusal(check({ entry: undefined }))).toBe(
       "You're not in the serving pool as musician. Ask a mita to add you."
