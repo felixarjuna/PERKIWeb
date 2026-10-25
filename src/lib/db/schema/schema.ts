@@ -592,6 +592,33 @@ export const servingPool = pgTable(
 );
 
 /**
+ * Days a member can't serve (#110), both ends included, as Aachen days. Only
+ * the member adds or removes their own; the note is for staff only.
+ */
+export const unavailability = pgTable(
+  "unavailability",
+  {
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    endsOn: date("endsOn", { mode: "string" }).notNull(),
+    id: serial("id").primaryKey().notNull(),
+    note: text("note"),
+    startsOn: date("startsOn", { mode: "string" }).notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("unavailability_user").on(t.userId),
+    check("unavailability_range_check", sql`${t.endsOn} >= ${t.startsOn}`),
+  ]
+);
+
+/**
  * Guest pastors who preach at services. They don't sign in, so they live
  * here rather than in `user`; the landing page's "Our pastors" lists the
  * active ones.
