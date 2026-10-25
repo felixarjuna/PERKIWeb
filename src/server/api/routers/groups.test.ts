@@ -277,6 +277,41 @@ describe("group management", () => {
     expect(JSON.stringify(after)).not.toContain(ana.id);
   });
 
+  it("adds a picked account under its name, linked even when the name is shared", async () => {
+    const mita = await currentTerm();
+    const first = await insertUser({ image: "/dewi.png", name: "Dewi" });
+    await insertUser({ name: "Dewi" });
+    const current = await termOnDay(mita, "2026-04-01");
+    await mita.groups.addMember({
+      groupId: groupNamed(current, "Group 2").id,
+      userId: first.id,
+    });
+
+    const [stored] = await testDb
+      .select({ name: groupMembers.name, userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.userId, first.id));
+    expect(stored).toEqual({ name: "Dewi", userId: first.id });
+    const after = await termOnDay(mita, "2026-04-01");
+    expect(memberNamed(after, "Dewi")).toMatchObject({
+      image: "/dewi.png",
+      linked: true,
+    });
+    // Still one group per term.
+    await expect(
+      mita.groups.addMember({
+        groupId: groupNamed(current, "Group 1").id,
+        userId: first.id,
+      })
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(
+      mita.groups.addMember({
+        groupId: groupNamed(current, "Group 1").id,
+        userId: "missing",
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
   it("keeps a person in one group per term", async () => {
     const mita = await currentTerm();
     const current = await termOnDay(mita, "2026-04-01");

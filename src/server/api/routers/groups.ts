@@ -219,7 +219,14 @@ async function startTerm(tx: Transaction, startsOn: string) {
   return { id: term.id };
 }
 
-async function addMember(tx: Transaction, groupId: number, name: string) {
+/** Adds by account (linked to it) or, for a guest, by name. */
+async function addMember(
+  tx: Transaction,
+  groupId: number,
+  added: { name: string } | { userId: string }
+) {
+  const account = "userId" in added ? await accountOf(tx, added.userId) : null;
+  const name = account?.name ?? ("name" in added ? added.name : "");
   const group = await groupOf(tx, groupId);
   await editableTerm(tx, group.termId);
   const termGroups = await tx
@@ -252,8 +259,20 @@ async function addMember(tx: Transaction, groupId: number, name: string) {
     groupId,
     name,
     position: await endOf(tx, groupId),
-    userId: accountFor(name) ?? null,
+    userId: account?.id ?? accountFor(name) ?? null,
   });
+}
+
+/** A named account, picked from the member directory. */
+async function accountOf(tx: Transaction, userId: string) {
+  const [account] = await tx
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(eq(users.id, userId));
+  if (!account?.name) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Member not found." });
+  }
+  return { id: account.id, name: account.name };
 }
 
 async function moveMember(tx: Transaction, memberId: number, groupId: number) {
@@ -275,11 +294,19 @@ async function moveMember(tx: Transaction, memberId: number, groupId: number) {
 const id = z.number().int().positive();
 
 export const groupRouter = createTRPCRouter({
-  /** Adds a person to a group of a current or upcoming term, linked by name. */
+  /**
+   * Adds a person to a group of a current or upcoming term: a picked account,
+   * or a guest by name (linked through name links when one matches).
+   */
   addMember: adminProcedure
-    .input(z.object({ groupId: id, name: z.string().trim().min(1).max(100) }))
+    .input(
+      z.union([
+        z.object({ groupId: id, userId: z.string().min(1) }),
+        z.object({ groupId: id, name: z.string().trim().min(1).max(100) }),
+      ])
+    )
     .mutation(({ input }) =>
-      db.transaction((tx) => addMember(tx, input.groupId, input.name))
+      db.transaction((tx) => addMember(tx, input.groupId, input))
     ),
   /** Removes a term that hasn't started yet. */
   deleteTerm: adminProcedure
