@@ -136,7 +136,7 @@ function Grid({
   saving: Save;
 }) {
   return (
-    <div className="@5xl:block hidden overflow-x-auto rounded-xl bg-card">
+    <div className="@3xl:block hidden overflow-x-auto rounded-xl bg-card">
       <table className="w-full border-separate border-spacing-0">
         <caption className="sr-only">
           Slots for each gathering this month
@@ -198,7 +198,7 @@ function List({
   saving: Save;
 }) {
   return (
-    <ul className="flex @5xl:hidden flex-col gap-3">
+    <ul className="flex @3xl:hidden flex-col gap-3">
       {schedules.map((schedule) => (
         <li
           className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:p-6"
