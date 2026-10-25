@@ -8,6 +8,7 @@ import {
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 import DutiesView from "./duties-view";
+import OpenSlots from "./open-slots";
 
 export default async function DutiesPage({
   searchParams,
@@ -20,13 +21,19 @@ export default async function DutiesPage({
       authPageUrl("signin", requestedPath("/duties", await searchParams))
     );
   }
-  const { past, upcoming } = await api.schedules.myDuties();
+  const [{ past, upcoming }, open] = await Promise.all([
+    api.schedules.myDuties(),
+    api.schedules.openSlots(),
+  ]);
   return (
     <Template
       subtitle="When you serve, and when your group cooks or cleans."
       title="Your duties"
     >
-      <DutiesView now={new Date()} past={past} upcoming={upcoming} />
+      <div className="space-y-8">
+        <OpenSlots active={open.active} slots={open.slots} />
+        <DutiesView now={new Date()} past={past} upcoming={upcoming} />
+      </div>
     </Template>
   );
 }

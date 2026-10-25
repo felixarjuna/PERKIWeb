@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 import {
   type Schedule,
   scheduleAssignments,
@@ -16,9 +17,11 @@ import {
   slotsFromSchedule,
   termOn,
 } from "~/lib/schedule-team";
+import { POOL_ROLES } from "~/lib/serving-pool";
 import type { ServingRole } from "~/lib/serving-roles";
 import { db } from "~/server";
 import { loadDuties } from "~/server/duties";
+import { loadOpenSlots, takeSlot } from "~/server/open-slots";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
 import { affectedRow } from "../errors";
 import {
@@ -265,6 +268,14 @@ export const scheduleRouter = createTRPCRouter({
       upcoming: await withDuties(upcoming),
     };
   }),
+  /**
+   * The empty slots in the coming weeks for the roles the signed-in member is
+   * active in, each with why they can't take it (if a hard rule says so) and
+   * a warning when they already serve that day.
+   */
+  openSlots: protectedProcedure.query(({ ctx }) =>
+    loadOpenSlots(ctx.session.user.id)
+  ),
   /** Every schedule's id, title, verse and date, newest first, for pickers. */
   options: takeawayProcedure.query(() =>
     db
@@ -277,6 +288,20 @@ export const scheduleRouter = createTRPCRouter({
       .from(schedules)
       .orderBy(desc(schedules.date), desc(schedules.id))
   ),
+  /**
+   * The signed-in member takes an open slot. The server checks every hard
+   * rule (`takeRefusal`) and refuses with a message for the member.
+   */
+  takeSlot: protectedProcedure
+    .input(
+      z.object({
+        role: z.enum(POOL_ROLES),
+        scheduleId: z.number().int().positive(),
+      })
+    )
+    .mutation(({ ctx, input }) =>
+      takeSlot(ctx.session.user.id, input.scheduleId, input.role)
+    ),
   updateSchedule: adminProcedure
     .input(updateScheduleSchema)
     .mutation(({ input }) =>

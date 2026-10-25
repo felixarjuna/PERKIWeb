@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { insertAssignment, insertGroupWith, insertSchedule } from "./db";
+import {
+  insertAssignment,
+  insertGroupWith,
+  insertPoolEntry,
+  insertSchedule,
+} from "./db";
 import { uniqueSuffix } from "./fixtures";
 import { createSignedInUser } from "./helpers";
 
@@ -65,6 +70,53 @@ test("a member without linked duties is told why and pointed to the schedule", a
   ).toBeVisible();
   await page.getByRole("link", { name: "See the schedule" }).click();
   await expect(page).toHaveURL("/schedule");
+});
+
+test("an active musician takes an open slot, and is told why another is refused", async ({
+  page,
+}) => {
+  const suffix = uniqueSuffix();
+  const user = await createSignedInUser(page, "Open slot");
+  const group = `C ${suffix.slice(-4)}`;
+  const open = `Open ${suffix}`;
+  const cooking = `Cooking ${suffix}`;
+  const openId = await insertSchedule(open, inDays(5), { musician: "-" });
+  await insertSchedule(cooking, inDays(6), {
+    cookingGroup: group,
+    musician: "-",
+    preacher: "Guest",
+    type: "church_service",
+  });
+  await insertGroupWith(group, user, inDays(6).toISOString().slice(0, 10));
+  await insertPoolEntry(user.id, "musician");
+
+  await page.goto("/duties");
+  const slots = page.getByRole("region", { name: "Open slots" });
+  await expect(
+    slots
+      .getByRole("listitem", { name: cooking })
+      .getByText(
+        "Your group cooks that day, so you can't serve as musician too."
+      )
+  ).toBeVisible();
+  await slots
+    .getByRole("listitem", { name: open })
+    .getByRole("button", { name: "Take Musician" })
+    .click();
+  await expect(
+    page.getByText("You're on the schedule as Musician.")
+  ).toBeVisible();
+  await expect(slots.getByRole("listitem", { name: open })).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("main")
+      .getByRole("article")
+      .filter({ hasText: open })
+      .getByRole("list", { name: "Your part" })
+  ).toHaveText("Musician");
+
+  await page.goto(`/schedule/${openId}`);
+  await expect(page.getByRole("main")).toContainText(user.name);
 });
 
 test("visitors are sent to sign in", async ({ page }) => {

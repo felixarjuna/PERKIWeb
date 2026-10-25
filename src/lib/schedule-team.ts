@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
-import type { ServingRole } from "./serving-roles";
+import type { PoolRole, PoolScope, PoolStatus } from "./serving-pool";
+import { type ServingRole, servingRoleLabels } from "./serving-roles";
 
 /** Gatherings happen in Aachen, so dates are read in its zone. */
 const ZONE = "Europe/Berlin";
@@ -143,3 +144,135 @@ export const openSlots = (schedule: ScheduleNeeds): string[] =>
   NEEDED[schedule.type].flatMap(([label, column]) =>
     filled(schedule[column] as string | null | undefined) ? [] : [label]
   );
+
+/** The schedule column a role fills on a type of gathering. */
+type SlotColumn =
+  | "accommodation"
+  | "leader"
+  | "multimedia"
+  | "musician"
+  | "noteWriter";
+
+/**
+ * The column a member taking a slot in `role` writes, or null when that kind
+ * of gathering has no such slot (a service has a liturgist, a Bible study a
+ * leader; multimedia and accommodation serve at services only).
+ */
+export function slotColumn(
+  role: ServingRole,
+  type: ScheduleSlots["type"]
+): SlotColumn | null {
+  const service = type === "church_service";
+  switch (role) {
+    case "liturgist":
+      return service ? "leader" : null;
+    case "leader":
+      return service ? null : "leader";
+    case "musician":
+      return "musician";
+    case "note_writer":
+      return "noteWriter";
+    case "multimedia":
+    case "accommodation":
+      return service ? role : null;
+    default:
+      return null;
+  }
+}
+
+/** The name in a slot column, or null when it's open. */
+export const slotHolder = (name: string | null | undefined) => filled(name);
+
+/**
+ * Whether a gathering is cancelled. Schedules don't record it yet (#107);
+ * once they have a `cancelled` column this reads it with no other change.
+ */
+export const isCancelled = (schedule: object) =>
+  "cancelled" in schedule && schedule.cancelled === true;
+
+/** Everything the hard rules need to decide whether a member may take a slot. */
+export interface TakeCheck {
+  cancelled: boolean;
+  /** The member's group cooks at this gathering. */
+  cooksThatDay: boolean;
+  /** The gathering's Aachen day, `yyyy-MM-dd`. */
+  day: string;
+  /** The member's pool entry for this role, if any. */
+  entry?: { pausedUntil: string | null; scope: PoolScope; status: PoolStatus };
+  /** Who is in the slot now, or null when it's open. */
+  holder: string | null;
+  /** The slot's holder is this member. */
+  mine: boolean;
+  role: PoolRole;
+  /** Today in Aachen, `yyyy-MM-dd`. */
+  today: string;
+  type: ScheduleSlots["type"];
+}
+
+const SCOPE_ONLY: Record<ScheduleSlots["type"], string> = {
+  bible_study: "Bible studies",
+  church_service: "services",
+};
+
+const GATHERING: Record<ScheduleSlots["type"], string> = {
+  bible_study: "A Bible study",
+  church_service: "A service",
+};
+
+/** Roles a member whose group cooks that day may not take. */
+const NOT_WHILE_COOKING: readonly ServingRole[] = ["liturgist", "musician"];
+
+const roleName = (role: ServingRole) => servingRoleLabels[role].toLowerCase();
+
+const shortDay = (day: string) =>
+  DateTime.fromISO(day, { zone: ZONE }).toFormat("d LLL");
+
+/**
+ * Why a member may not take a slot, as a message for them, or null when they
+ * may. A member takes an open slot only in a role they're active in, with the
+ * gathering in their scope, not paused that day, and (for liturgist and
+ * musician) not while their group cooks.
+ */
+export function takeRefusal(check: TakeCheck): string | null {
+  const role = roleName(check.role);
+  if (check.cancelled) {
+    return "This gathering is cancelled.";
+  }
+  if (check.day < check.today) {
+    return "This gathering has already happened.";
+  }
+  if (!slotColumn(check.role, check.type)) {
+    return `${GATHERING[check.type]} has no ${role} slot.`;
+  }
+  if (check.mine) {
+    return "You're already in this slot.";
+  }
+  if (check.holder) {
+    return `${check.holder} has already taken this slot.`;
+  }
+  const { entry } = check;
+  if (!entry) {
+    return `You're not in the serving pool as ${role}. Ask a mita to add you.`;
+  }
+  if (entry.status !== "active") {
+    return `You're a backup ${role}, so a mita fills this slot for you.`;
+  }
+  if (entry.scope !== "both" && entry.scope !== check.type) {
+    return `You serve as ${role} at ${SCOPE_ONLY[entry.scope]} only.`;
+  }
+  if (entry.pausedUntil && entry.pausedUntil >= check.day) {
+    return `You're paused until ${shortDay(entry.pausedUntil)}, so you can't take this slot.`;
+  }
+  if (check.cooksThatDay && NOT_WHILE_COOKING.includes(check.role)) {
+    return `Your group cooks that day, so you can't serve as ${role} too.`;
+  }
+  return null;
+}
+
+const ROLE_LIST = new Intl.ListFormat("en", { type: "conjunction" });
+
+/** A second slot on one day is allowed (the sheet allows it), with a warning. */
+export const sameDayWarning = (serving: readonly ServingRole[]) =>
+  serving.length > 0
+    ? `You already serve as ${ROLE_LIST.format(serving.map(roleName))} that day.`
+    : null;

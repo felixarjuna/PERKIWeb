@@ -10,6 +10,7 @@ import {
   profiles,
   scheduleAssignments,
   schedules,
+  servingPool,
   takeaways,
   users,
 } from "~/lib/db/schema/schema";
@@ -163,6 +164,23 @@ export const insertGroupWith = async (
     await db
       .insert(groupMembers)
       .values({ groupId: group?.id ?? 0, name: user.name, userId: user.id });
+  } finally {
+    await client.end();
+  }
+};
+
+/** Puts a member in the serving pool, active in a role at both kinds of gathering. */
+export const insertPoolEntry = async (
+  userId: string,
+  role: string,
+  values: Partial<typeof servingPool.$inferInsert> = {}
+) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .insert(servingPool)
+      .values({ role, scope: "both", userId, ...values });
   } finally {
     await client.end();
   }

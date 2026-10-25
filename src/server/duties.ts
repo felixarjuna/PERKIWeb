@@ -22,7 +22,8 @@ export interface DutyDay {
   schedule: Schedule;
 }
 
-const groupKey = (name: string | null) => name?.trim().toLowerCase() ?? "";
+export const groupKey = (name: string | null) =>
+  name?.trim().toLowerCase() ?? "";
 
 /** The gatherings that name one of these groups for cooking or cleaning. */
 const namingGroups = (keys: string[]) =>
