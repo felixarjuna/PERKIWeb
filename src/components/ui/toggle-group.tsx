@@ -16,7 +16,7 @@ function ToggleGroup({
   return (
     <ToggleGroupPrimitiveRoot
       className={cn(
-        "inline-flex h-10 items-center gap-1 rounded-lg bg-secondary p-1",
+        "inline-flex h-9 items-center gap-1 self-center rounded-lg bg-secondary p-1",
         className
       )}
       {...props}
@@ -31,7 +31,7 @@ function ToggleGroupItem({
   return (
     <ToggleGroupPrimitiveItem
       className={cn(
-        "type-caption inline-flex h-8 min-w-10 flex-1 items-center justify-center whitespace-nowrap rounded-md px-3 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-foreground",
+        "type-caption inline-flex h-7 min-w-9 flex-1 items-center justify-center whitespace-nowrap rounded-md px-2.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-foreground",
         className
       )}
       {...props}
