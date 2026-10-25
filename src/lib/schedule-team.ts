@@ -1,6 +1,10 @@
 import { DateTime } from "luxon";
 import type { PoolRole, PoolScope, PoolStatus } from "./serving-pool";
-import { type ServingRole, servingRoleLabels } from "./serving-roles";
+import {
+  SERVING_ROLES,
+  type ServingRole,
+  servingRoleLabels,
+} from "./serving-roles";
 
 /** Gatherings happen in Aachen, so dates are read in its zone. */
 const ZONE = "Europe/Berlin";
@@ -282,3 +286,123 @@ export const sameDayWarning = (serving: readonly ServingRole[]) =>
   serving.length > 0
     ? `You already serve as ${ROLE_LIST.format(serving.map(roleName))} that day.`
     : null;
+
+/** What the planning grid warns about; mita can always keep their choice. */
+export type PlanWarningCode =
+  | "unavailable"
+  | "paused"
+  | "scope"
+  | "not_in_pool"
+  | "cooking"
+  | "same_day"
+  | "week_before"
+  | "cooks_and_cleans";
+
+export interface PlanWarning {
+  code: PlanWarningCode;
+  message: string;
+}
+
+/**
+ * Everything the planning grid knows about one slot: a person in a role, or
+ * the day's cooking and cleaning groups.
+ */
+export type PlanCheck =
+  | {
+      cleaningGroup: string | null;
+      cookingGroup: string | null;
+      kind: "groups";
+    }
+  | {
+      /** Other slots the person holds that day. */
+      alsoServing?: readonly ServingRole[];
+      /** Their group cooks at this gathering. */
+      cooksThatDay?: boolean;
+      /** The gathering's Aachen day, `yyyy-MM-dd`. */
+      day: string;
+      /** Their pool entry for this role, if any. */
+      entry?: {
+        pausedUntil: string | null;
+        scope: PoolScope;
+        status: PoolStatus;
+      };
+      kind: "person";
+      /** The name belongs to an account; pool facts only exist for those. */
+      linked: boolean;
+      role: PoolRole;
+      /** The day they last served in this role in the week before, if any. */
+      servedWeekBefore?: string | null;
+      type: ScheduleSlots["type"];
+      /** They marked this day as one they can't serve (#110). */
+      unavailable?: { note: string | null } | null;
+    };
+
+const warning = (code: PlanWarningCode, message: string): PlanWarning => ({
+  code,
+  message,
+});
+
+/**
+ * The warnings for a slot in the planning grid, the most serious first.
+ * Unlike `takeRefusal` (members taking slots themselves) these never block:
+ * mita see them and decide.
+ */
+export function planWarnings(check: PlanCheck): PlanWarning[] {
+  if (check.kind === "groups") {
+    const cooking = filled(check.cookingGroup);
+    return cooking &&
+      cooking.toLowerCase() === filled(check.cleaningGroup)?.toLowerCase()
+      ? [warning("cooks_and_cleans", `${cooking} cooks and cleans this day.`)]
+      : [];
+  }
+  const role = roleName(check.role);
+  const warnings: PlanWarning[] = [];
+  if (check.unavailable) {
+    const { note } = check.unavailable;
+    warnings.push(
+      warning(
+        "unavailable",
+        note ? `Can't serve this day: ${note}` : "Can't serve this day."
+      )
+    );
+  }
+  const { entry } = check;
+  if (entry?.pausedUntil && entry.pausedUntil >= check.day) {
+    warnings.push(
+      warning("paused", `Paused until ${shortDay(entry.pausedUntil)}.`)
+    );
+  }
+  if (entry && entry.scope !== "both" && entry.scope !== check.type) {
+    warnings.push(
+      warning("scope", `Serves as ${role} at ${SCOPE_ONLY[entry.scope]} only.`)
+    );
+  }
+  if (!entry && check.linked) {
+    warnings.push(
+      warning("not_in_pool", `Not in the serving pool as ${role}.`)
+    );
+  }
+  if (check.cooksThatDay && NOT_WHILE_COOKING.includes(check.role)) {
+    warnings.push(warning("cooking", "Their group cooks this day."));
+  }
+  if (check.alsoServing?.length) {
+    const roles = [...check.alsoServing].sort(
+      (a, b) => SERVING_ROLES.indexOf(a) - SERVING_ROLES.indexOf(b)
+    );
+    warnings.push(
+      warning(
+        "same_day",
+        `Also serves as ${ROLE_LIST.format(roles.map(roleName))} this day.`
+      )
+    );
+  }
+  if (check.servedWeekBefore) {
+    warnings.push(
+      warning(
+        "week_before",
+        `Served as ${role} the week before (${shortDay(check.servedWeekBefore)}).`
+      )
+    );
+  }
+  return warnings;
+}

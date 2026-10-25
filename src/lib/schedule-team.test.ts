@@ -4,6 +4,8 @@ import {
   localDay,
   onPickedDay,
   openSlots,
+  type PlanCheck,
+  planWarnings,
   sameDayWarning,
   slotColumn,
   slotsFromSchedule,
@@ -284,5 +286,162 @@ describe("isCancelled", () => {
     expect(isCancelled({})).toBe(false);
     expect(isCancelled({ cancelled: false })).toBe(false);
     expect(isCancelled({ cancelled: true })).toBe(true);
+  });
+});
+
+describe("planWarnings", () => {
+  const person = (
+    overrides: Partial<Extract<PlanCheck, { kind: "person" }>> = {}
+  ): PlanCheck => ({
+    day: "2026-11-08",
+    entry: { pausedUntil: null, scope: "both", status: "active" },
+    kind: "person",
+    linked: true,
+    role: "musician",
+    type: "church_service",
+    ...overrides,
+  });
+  const messages = (planCheck: PlanCheck) =>
+    planWarnings(planCheck).map((warning) => warning.message);
+
+  it("has nothing to say about an active member in their role and scope", () => {
+    expect(planWarnings(person())).toEqual([]);
+    // A backup is someone mita fill in for; that's what the grid is for.
+    expect(
+      planWarnings(
+        person({
+          entry: { pausedUntil: null, scope: "both", status: "backup" },
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("warns about someone paused through that day, not after it", () => {
+    expect(
+      messages(
+        person({
+          entry: { pausedUntil: "2026-11-08", scope: "both", status: "active" },
+        })
+      )
+    ).toEqual(["Paused until 8 Nov."]);
+    expect(
+      planWarnings(
+        person({
+          entry: { pausedUntil: "2026-11-07", scope: "both", status: "active" },
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("warns about a gathering outside their scope", () => {
+    expect(
+      messages(
+        person({
+          entry: {
+            pausedUntil: null,
+            scope: "bible_study",
+            status: "active",
+          },
+        })
+      )
+    ).toEqual(["Serves as musician at Bible studies only."]);
+  });
+
+  it("warns about a linked member who isn't in the pool for the role, never about an unlinked name", () => {
+    expect(messages(person({ entry: undefined }))).toEqual([
+      "Not in the serving pool as musician.",
+    ]);
+    expect(planWarnings(person({ entry: undefined, linked: false }))).toEqual(
+      []
+    );
+  });
+
+  it("warns about a day they marked as one they can't serve, with their note", () => {
+    expect(messages(person({ unavailable: { note: null } }))).toEqual([
+      "Can't serve this day.",
+    ]);
+    expect(messages(person({ unavailable: { note: "Exam week" } }))).toEqual([
+      "Can't serve this day: Exam week",
+    ]);
+  });
+
+  it("warns about a liturgist or musician whose group cooks that day", () => {
+    expect(messages(person({ cooksThatDay: true }))).toEqual([
+      "Their group cooks this day.",
+    ]);
+    expect(
+      messages(
+        person({
+          cooksThatDay: true,
+          entry: {
+            pausedUntil: null,
+            scope: "church_service",
+            status: "active",
+          },
+          role: "liturgist",
+        })
+      )
+    ).toEqual(["Their group cooks this day."]);
+    // Other roles can serve and cook.
+    expect(
+      planWarnings(person({ cooksThatDay: true, role: "note_writer" }))
+    ).toEqual([]);
+  });
+
+  it("warns about a second slot on the same day", () => {
+    expect(
+      messages(person({ alsoServing: ["note_writer", "liturgist"] }))
+    ).toEqual(["Also serves as liturgist and note writer this day."]);
+  });
+
+  it("warns about someone who served in the role the week before", () => {
+    expect(messages(person({ servedWeekBefore: "2026-11-01" }))).toEqual([
+      "Served as musician the week before (1 Nov).",
+    ]);
+  });
+
+  it("lists every warning that applies, the most serious first", () => {
+    expect(
+      planWarnings(
+        person({
+          alsoServing: ["note_writer"],
+          cooksThatDay: true,
+          entry: {
+            pausedUntil: "2026-12-01",
+            scope: "bible_study",
+            status: "active",
+          },
+          servedWeekBefore: "2026-11-01",
+          unavailable: { note: null },
+        })
+      ).map((warning) => warning.code)
+    ).toEqual([
+      "unavailable",
+      "paused",
+      "scope",
+      "cooking",
+      "same_day",
+      "week_before",
+    ]);
+  });
+
+  it("warns when one group both cooks and cleans", () => {
+    expect(
+      messages({
+        cleaningGroup: " group 3",
+        cookingGroup: "Group 3",
+        kind: "groups",
+      })
+    ).toEqual(["Group 3 cooks and cleans this day."]);
+    expect(
+      planWarnings({
+        cleaningGroup: "Group 2",
+        cookingGroup: "Group 3",
+        kind: "groups",
+      })
+    ).toEqual([]);
+    expect(
+      planWarnings({ cleaningGroup: "-", cookingGroup: "-", kind: "groups" })
+    ).toEqual([]);
   });
 });

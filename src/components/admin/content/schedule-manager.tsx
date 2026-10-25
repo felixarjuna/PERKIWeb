@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
-import { CalendarDays, List } from "lucide-react";
+import { CalendarDays, List, Table2 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -14,13 +14,20 @@ import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented, QueryMessage } from "../admin-controls";
 import { type ContentFilters, scheduleQuery } from "./content-filters";
 import ContentToolbar from "./content-toolbar";
+import PlanGrid from "./plan-grid";
 import RecordActions from "./record-actions";
 import ScheduleCalendar from "./schedule-calendar";
 
 const VIEWS = [
   { icon: List, label: "List", value: "list" },
   { icon: CalendarDays, label: "Calendar", value: "calendar" },
+  { icon: Table2, label: "Plan", value: "plan" },
 ] as const;
+
+type View = (typeof VIEWS)[number]["value"];
+
+const viewOf = (value: string | null): View =>
+  VIEWS.find((view) => view.value === value)?.value ?? "list";
 
 /** Keeps the view and month in the URL, so back and reload land on the same month. */
 function updateUrl(values: Record<string, string | null>) {
@@ -109,7 +116,7 @@ function ScheduleRow({
 
 export default function ScheduleManager() {
   const params = useSearchParams();
-  const view = params.get("view") === "calendar" ? "calendar" : "list";
+  const view = viewOf(params.get("view"));
   const month = params.get("month") ?? monthOf(new Date());
   const utils = api.useUtils();
   const [filters, setFilters] = useState<ContentFilters>({
@@ -137,6 +144,8 @@ export default function ScheduleManager() {
     placeholderData: keepPreviousData,
   });
   const query = view === "calendar" ? calendar : list;
+  const loading = view !== "plan" && query.isLoading;
+  const failed = view !== "plan" && query.isError;
   const remove = api.schedules.deleteSchedule.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -153,7 +162,7 @@ export default function ScheduleManager() {
           onChange={(next) =>
             updateUrl({
               month: null,
-              view: next === "calendar" ? "calendar" : null,
+              view: next === "list" ? null : next,
             })
           }
           options={VIEWS}
@@ -163,8 +172,8 @@ export default function ScheduleManager() {
       {view === "list" ? (
         <ContentToolbar filters={filters} onChange={setFilters} schedules />
       ) : null}
-      {query.isLoading ? <QueryMessage>Loading schedules…</QueryMessage> : null}
-      {query.isError ? (
+      {loading ? <QueryMessage>Loading schedules…</QueryMessage> : null}
+      {failed ? (
         <QueryMessage
           error
           onRetry={() => {
@@ -172,14 +181,20 @@ export default function ScheduleManager() {
           }}
         />
       ) : null}
-      {!(query.isLoading || query.isError) && view === "calendar" ? (
+      {view === "plan" ? (
+        <PlanGrid
+          month={month}
+          onMonthChange={(next) => updateUrl({ month: next })}
+        />
+      ) : null}
+      {!(loading || failed) && view === "calendar" ? (
         <ScheduleCalendar
           month={month}
           onMonthChange={(next) => updateUrl({ month: next })}
           schedules={calendar.data ?? []}
         />
       ) : null}
-      {query.isLoading || query.isError || view === "calendar" ? null : (
+      {loading || failed || view !== "list" ? null : (
         <>
           <p aria-live="polite" className="type-caption text-muted-foreground">
             {records.length} schedules{list.hasNextPage ? " so far" : ""} ·

@@ -9,8 +9,9 @@ import {
   takeaways,
   users,
 } from "~/lib/db/schema/schema";
-import { monthsOf } from "~/lib/months";
+import { isMonth, monthsOf } from "~/lib/months";
 import type { Person } from "~/lib/people";
+import { PLAN_COLUMNS } from "~/lib/plan-grid";
 import {
   localDay,
   type Slot,
@@ -22,6 +23,7 @@ import type { ServingRole } from "~/lib/serving-roles";
 import { db } from "~/server";
 import { loadDuties } from "~/server/duties";
 import { loadOpenSlots, takeSlot } from "~/server/open-slots";
+import { loadPlan, setPlanSlot } from "~/server/plan";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
 import { affectedRow } from "../errors";
 import {
@@ -288,6 +290,28 @@ export const scheduleRouter = createTRPCRouter({
       .from(schedules)
       .orderBy(desc(schedules.date), desc(schedules.id))
   ),
+  /**
+   * Staff only: a month's gatherings with everything the planning grid
+   * needs to offer people and warn about them (pause and unavailability
+   * notes included).
+   */
+  plan: adminProcedure
+    .input(z.object({ month: z.string().refine(isMonth) }))
+    .query(({ input }) => loadPlan(input.month)),
+  /**
+   * Staff only: fills or empties one slot from the planning grid. Warnings
+   * are advice, so nothing here refuses a person.
+   */
+  setPlanSlot: adminProcedure
+    .input(
+      z.object({
+        column: z.enum(PLAN_COLUMNS),
+        name: z.string().trim().max(50).nullable(),
+        scheduleId: z.number().int().positive(),
+        userId: z.string().min(1).optional(),
+      })
+    )
+    .mutation(({ input }) => setPlanSlot(input)),
   /**
    * The signed-in member takes an open slot. The server checks every hard
    * rule (`takeRefusal`) and refuses with a message for the member.
