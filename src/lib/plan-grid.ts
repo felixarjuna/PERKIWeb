@@ -81,6 +81,13 @@ export function columnRole(
   }
 }
 
+/** A slot the generator filled (#112): why, and whether mita kept it. */
+export interface GeneratedSlot {
+  /** Kept by mita: "Regenerate" leaves it alone. */
+  locked?: boolean;
+  reason: string;
+}
+
 export interface PlanSchedule {
   accommodation: string | null;
   cancelled: boolean;
@@ -88,12 +95,16 @@ export interface PlanSchedule {
   cookingGroup: string | null;
   date: Date;
   flags: string[];
+  /** Slots the generator filled, by column; a manual pick drops its key. */
+  generated: Record<string, GeneratedSlot>;
   id: number;
   leader: string | null;
   multimedia: string | null;
   musician: string | null;
   noteWriter: string | null;
   preacher: string | null;
+  /** False for a draft only staff see (#112). */
+  published: boolean;
   title: string;
   type: GatheringType;
 }
@@ -111,6 +122,8 @@ export interface PlanData {
   }[];
   /** The latest day each account served (or is planned) in a role before the month. */
   before: { day: string; role: string; userId: string }[];
+  /** The groups that last cooked and cleaned before the month, for the rotation. */
+  lastGroups?: { cleaning: string | null; cooking: string | null };
   /** Members of the pool and anyone on the month's schedules. */
   people: {
     name: string;
@@ -181,11 +194,12 @@ const latest = (days: (string | null | undefined)[]) =>
   );
 
 /**
- * The month's grid as cells, warnings and picker options. Pure: built from
- * `PlanData` (current cell values included), so the same rules run on the
- * server's data in tests and in the browser.
+ * Finds the account behind a written name in a slot: the assignment's link
+ * first, then any spelling exactly one account goes by.
  */
-export function buildPlan(data: PlanData) {
+export function accountResolver(
+  data: Pick<PlanData, "assignments" | "people">
+) {
   const byKey = new Map<string, string | null>();
   for (const person of data.people) {
     for (const name of [person.name, person.writeAs, ...person.names]) {
@@ -203,9 +217,17 @@ export function buildPlan(data: PlanData) {
     data.assignments.map((row) => [`${row.scheduleId} ${row.role}`, row.userId])
   );
 
-  /** The account behind a written name in a slot, if any. */
-  const userFor = (scheduleId: number, role: ServingRole, name: string) =>
+  return (scheduleId: number, role: ServingRole, name: string) =>
     linkedTo.get(`${scheduleId} ${role}`) ?? byKey.get(nameKey(name)) ?? null;
+}
+
+/**
+ * The month's grid as cells, warnings and picker options. Pure: built from
+ * `PlanData` (current cell values included), so the same rules run on the
+ * server's data in tests and in the browser.
+ */
+export function buildPlan(data: PlanData) {
+  const userFor = accountResolver(data);
 
   const keyFor = (userId: string | null, name: string) =>
     userId ?? `name:${nameKey(name)}`;
@@ -479,12 +501,14 @@ const suggestedSchedule = (gathering: RegularGathering): PlanSchedule => ({
   cookingGroup: null,
   date: gathering.date,
   flags: [],
+  generated: {},
   id: 0,
   leader: null,
   multimedia: null,
   musician: null,
   noteWriter: null,
   preacher: null,
+  published: false,
   title: gathering.title,
   type: gathering.type,
 });

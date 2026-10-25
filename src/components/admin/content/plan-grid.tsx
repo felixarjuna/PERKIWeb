@@ -27,6 +27,7 @@ import { localDay, localTime } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { AdminSegmented, QueryMessage } from "../admin-controls";
+import { GenerateButton, PublishButton } from "./plan-actions";
 import { SlotPicker } from "./slot-picker";
 
 const ZONE = "Europe/Berlin";
@@ -61,7 +62,19 @@ function useSaveSlot() {
       setPending(null);
     },
   });
+  const lock = api.schedules.lockPlanSlot.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSettled: async () => {
+      await utils.schedules.invalidate();
+      setPending(null);
+    },
+  });
   return {
+    /** Keeps a generated pick, so "Regenerate" leaves it alone. */
+    lock: (row: PlanRow, column: PlanColumn) => {
+      setPending(row.key);
+      lock.mutate({ column, scheduleId: row.schedule.id });
+    },
     /** The row being saved (`row.key`), so a new row isn't added twice. */
     pending,
     save: (
@@ -131,10 +144,17 @@ function RowHeading({ row }: { row: PlanRow }) {
           >
             {schedule.title}
           </Link>
-          <GatheringFlags
-            cancelled={schedule.cancelled}
-            flags={schedule.flags}
-          />
+          <div className="flex flex-wrap gap-1">
+            {schedule.published ? null : (
+              <Badge className="w-fit" size="status" variant="draft">
+                Draft
+              </Badge>
+            )}
+            <GatheringFlags
+              cancelled={schedule.cancelled}
+              flags={schedule.flags}
+            />
+          </div>
         </>
       )}
     </div>
@@ -182,6 +202,9 @@ function Slot({
   return (
     <SlotPicker
       column={column}
+      onLock={
+        row.schedule.published ? undefined : () => saving.lock(row, column)
+      }
       onPick={(name, userId) => saving.save(row, column, name, userId)}
       pending={saving.pending === row.key}
       plan={plan}
@@ -381,6 +404,9 @@ export default function PlanGrid() {
   const start = DateTime.fromFormat(from, "yyyy-MM", { zone: ZONE });
   const end = start.plus({ months: count - 1 });
   const toAdd = rows.filter((row) => row.suggested).length;
+  const drafts = rows.filter(
+    (row) => !(row.suggested || row.schedule.published)
+  ).length;
   const warnings = plan
     ? rows.reduce(
         (sum, row) =>
@@ -407,11 +433,18 @@ export default function PlanGrid() {
           </h2>
           <p aria-live="polite" className="type-caption text-muted-foreground">
             {plural(rows.length - toAdd, "gathering")}
+            {drafts > 0 ? ` · ${plural(drafts, "draft")}` : ""}
             {toAdd > 0 ? ` · ${toAdd} not added yet` : ""}
             {warnings > 0 ? ` · ${plural(warnings, "warning")}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {plan ? (
+            <>
+              <GenerateButton count={count} from={from} rows={rows} />
+              <PublishButton count={count} from={from} rows={rows} />
+            </>
+          ) : null}
           <AdminSegmented
             label="How many months"
             onChange={(next) => updateUrl({ months: next })}

@@ -20,6 +20,8 @@ export interface CalendarSchedule {
   musician: string;
   noteWriter: string;
   preacher: string | null;
+  /** False for a draft only staff see (#112). */
+  published: boolean;
   title: string;
   type: "church_service" | "bible_study";
 }
@@ -33,7 +35,7 @@ function toItem(schedule: CalendarSchedule, today: string): CalendarItem {
     eyebrow: gatheringLine(schedule.date, schedule.type),
     href: `/admin/schedules/${schedule.id}/edit`,
     key: String(schedule.id),
-    title: schedule.title,
+    title: schedule.published ? schedule.title : `${schedule.title} (draft)`,
   };
   if (schedule.cancelled) {
     // Called off: nothing to fill, but planners still see the date is taken.

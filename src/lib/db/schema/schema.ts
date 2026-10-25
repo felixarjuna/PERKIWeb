@@ -6,6 +6,7 @@ import {
   index,
   integer,
   json,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -17,6 +18,7 @@ import {
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
+import type { GeneratedSlot } from "../../plan-grid";
 import { REVIEW_TARGETS } from "../../review-target";
 import { SCHEDULE_FLAGS, type ScheduleFlag } from "../../schedule-flags";
 import { POOL_ROLES, POOL_SCOPES, POOL_STATUSES } from "../../serving-pool";
@@ -53,12 +55,22 @@ export const schedules = pgTable(
       .$type<ScheduleFlag[]>()
       .notNull()
       .default(sql`'{}'::text[]`),
+    /**
+     * Slots the generator filled (#112) that mita haven't locked, each with
+     * why it picked that person or group. A manual pick drops its key.
+     */
+    generated: jsonb("generated")
+      .$type<Record<string, GeneratedSlot>>()
+      .notNull()
+      .default({}),
     id: serial("id").primaryKey().notNull(),
     leader: text("leader").notNull(),
     multimedia: text("multimedia"),
     musician: text("musician").notNull(),
     noteWriter: text("noteWriter").notNull(),
     preacher: text("preacher"),
+    /** A draft (#112) is only seen by staff until they publish its range. */
+    published: boolean("published").notNull().default(true),
     title: text("title").notNull(),
     type: eventTypeEnum("type").notNull(),
     updatedAt: timestamp("updatedAt", {

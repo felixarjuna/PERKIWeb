@@ -15,6 +15,7 @@ const schedule = (overrides: Partial<Schedule>): Schedule => ({
   date: new Date("2026-10-31T14:30:00Z"),
   description: "",
   flags: [],
+  generated: {},
   groupMembers: { cleaning: null, cooking: null },
   id: 1,
   leader: "Ana Putri",
@@ -22,6 +23,7 @@ const schedule = (overrides: Partial<Schedule>): Schedule => ({
   musician: "Toni Setiawan",
   noteWriter: "Kezia Singgih",
   preacher: null,
+  published: true,
   takeawayIds: [],
   team: [
     { image: null, name: "Ana Putri", role: "leader" },

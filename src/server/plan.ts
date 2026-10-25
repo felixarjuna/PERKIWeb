@@ -28,15 +28,24 @@ import {
 } from "~/lib/db/schema/schema";
 import { monthRange } from "~/lib/months";
 import {
+  type GeneratedRow,
+  type GenerateMode,
+  generatePlan,
+} from "~/lib/plan-generator";
+import {
   columnRole,
+  type GeneratedSlot,
   hasColumn,
+  MAX_PLAN_MONTHS,
   PLAN_TITLES,
   type PlanColumn,
   type PlanData,
   type PlanSchedule,
   planColumnLabels,
+  planRows,
+  regularGatherings,
 } from "~/lib/plan-grid";
-import { localDay, startOn } from "~/lib/schedule-team";
+import { localDay, slotHolder, startOn } from "~/lib/schedule-team";
 import {
   type PoolRole,
   type PoolScope,
@@ -111,6 +120,35 @@ async function loadPeople(userIds: string[]): Promise<PlanData["people"]> {
   });
 }
 
+/** The latest group named for one job before `before`, at a gathering that happened. */
+async function lastGroupIn(
+  column: typeof schedules.cookingGroup | typeof schedules.cleaningGroup,
+  before: Date
+) {
+  const [row] = await db
+    .select({ name: column })
+    .from(schedules)
+    .where(
+      and(
+        eq(schedules.cancelled, false),
+        lt(schedules.date, before),
+        sql`coalesce(trim(${column}), '') not in ('', '-')`
+      )
+    )
+    .orderBy(desc(schedules.date), desc(schedules.id))
+    .limit(1);
+  return row?.name?.trim() ?? null;
+}
+
+/** Where the cooking and cleaning rotations stood before the range. */
+async function lastGroupsBefore(before: Date) {
+  const [cooking, cleaning] = await Promise.all([
+    lastGroupIn(schedules.cookingGroup, before),
+    lastGroupIn(schedules.cleaningGroup, before),
+  ]);
+  return { cleaning, cooking };
+}
+
 /**
  * Everything the planning grid needs for one Aachen month (`yyyy-MM`): its
  * gatherings, the serving pool with this term's counts, who can't serve,
@@ -173,7 +211,7 @@ export async function loadPlan(month: string, months = 1, now = new Date()) {
     ]);
   const ids = rows.map((row) => row.id);
   const term = termWindow(terms, today);
-  const [assignments, latest, counts] = await Promise.all([
+  const [assignments, latest, counts, lastGroups] = await Promise.all([
     ids.length > 0
       ? db
           .select({
@@ -205,6 +243,7 @@ export async function loadPlan(month: string, months = 1, now = new Date()) {
       term.from ? aachenStart(term.from) : null,
       term.before ? aachenStart(term.before) : now
     ),
+    lastGroupsBefore(from),
   ]);
   const served = new Map(
     counts.map((count) => [`${count.userId} ${count.role}`, count.served])
@@ -229,6 +268,7 @@ export async function loadPlan(month: string, months = 1, now = new Date()) {
           ]
         : []
     ),
+    lastGroups,
     people: await loadPeople(userIds),
     pool: poolRows.map((row) => ({
       pausedUntil: row.pausedUntil,
@@ -245,12 +285,14 @@ export async function loadPlan(month: string, months = 1, now = new Date()) {
       cookingGroup: row.cookingGroup,
       date: row.date,
       flags: row.flags,
+      generated: row.generated,
       id: row.id,
       leader: row.leader,
       multimedia: row.multimedia,
       musician: row.musician,
       noteWriter: row.noteWriter,
       preacher: row.preacher,
+      published: row.published,
       title: row.title,
       type: row.type,
     })),
@@ -357,8 +399,8 @@ async function linkPicked(
 
 /**
  * The gathering a grid cell writes to, locked: a stored one by id, or the one
- * on a regular day, added with the sheet's title at 15:30 when that day has
- * none of that kind yet. A lock on the day keeps two cells of the same new
+ * on a regular day, added as a draft with the sheet's title at 15:30 when
+ * that day has none of that kind yet. A lock on the day keeps two cells of the same new
  * row from adding it twice.
  */
 async function targetSchedule(
@@ -417,6 +459,8 @@ async function targetSchedule(
       leader: "",
       musician: "",
       noteWriter: "",
+      // Planned ahead, so only staff see it until they publish the range.
+      published: false,
       title: PLAN_TITLES[wanted.type],
       type: wanted.type,
     })
@@ -460,7 +504,11 @@ export function setPlanSlot(input: {
     }
     await tx
       .update(schedules)
-      .set({ [input.column]: stored })
+      .set({
+        [input.column]: stored,
+        // Picked by hand: no longer the generator's, so "Regenerate" keeps it.
+        generated: sql`${schedules.generated} - ${input.column}::text`,
+      })
       .where(eq(schedules.id, schedule.id));
     const role = columnRole(input.column, schedule.type);
     if (role === null) {
@@ -472,4 +520,187 @@ export function setPlanSlot(input: {
     }
     return { name, scheduleId: schedule.id };
   });
+}
+
+/** Keeps a generated pick: "Regenerate" leaves a locked slot alone. */
+export async function lockPlanSlot(input: {
+  column: PlanColumn;
+  scheduleId: number;
+}) {
+  const [row] = await db
+    .update(schedules)
+    .set({
+      generated: sql`jsonb_set(${schedules.generated}, array[${input.column}::text, 'locked'], 'true'::jsonb)`,
+    })
+    .where(
+      and(
+        eq(schedules.id, input.scheduleId),
+        sql`${schedules.generated} ? ${input.column}::text`
+      )
+    )
+    .returning({ id: schedules.id });
+  if (!row) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "That slot wasn't filled by the generator.",
+    });
+  }
+  return row;
+}
+
+/** The first and last Aachen day of a range of whole months. */
+export function monthsSpan(from: string, through: string) {
+  const start = DateTime.fromFormat(from, "yyyy-MM", { zone: ZONE });
+  const end = DateTime.fromFormat(through, "yyyy-MM", { zone: ZONE });
+  if (!(start.isValid && end.isValid) || end < start) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Pick a range that ends after it starts.",
+    });
+  }
+  const months = Math.round(end.diff(start, "months").months) + 1;
+  if (months > MAX_PLAN_MONTHS) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Pick at most ${MAX_PLAN_MONTHS} months at once.`,
+    });
+  }
+  return {
+    before: end.plus({ months: 1 }).toJSDate(),
+    from: start.toJSDate(),
+    months,
+  };
+}
+
+/** One generated row as stored: the slot values and the generator's notes. */
+async function writeGeneratedRow(
+  tx: Transaction,
+  generated: GeneratedRow
+): Promise<number> {
+  const { row } = generated;
+  const day = localDay(row.schedule.date);
+  const schedule = await targetSchedule(
+    tx,
+    row.suggested
+      ? { newGathering: { day, type: row.schedule.type } }
+      : { scheduleId: row.schedule.id }
+  );
+  // Published or cancelled since the grid was read: leave it to mita.
+  if (schedule.published || schedule.cancelled) {
+    return 0;
+  }
+  // Only what is still the generator's unlocked pick is emptied.
+  const clears = generated.cleared.filter(
+    (column) =>
+      schedule.generated[column] && schedule.generated[column].locked !== true
+  );
+  const notes: Record<string, GeneratedSlot> = Object.fromEntries(
+    Object.entries(schedule.generated).filter(
+      ([column]) => !clears.includes(column as PlanColumn)
+    )
+  );
+  const changes: Partial<Record<PlanColumn, string | null>> = {};
+  for (const column of clears) {
+    changes[column] = REQUIRED.includes(column) ? "" : null;
+  }
+  const holds = (column: PlanColumn) =>
+    column in changes ? changes[column] : schedule[column];
+  for (const pick of generated.picks) {
+    // Someone filled it in the meantime.
+    if (slotHolder(holds(pick.column))) {
+      continue;
+    }
+    changes[pick.column] = pick.name;
+    notes[pick.column] = { reason: pick.reason };
+  }
+  const columns = Object.keys(changes) as PlanColumn[];
+  if (columns.length === 0) {
+    return 0;
+  }
+  await tx
+    .update(schedules)
+    .set({ ...(changes as Partial<Locked>), generated: notes })
+    .where(eq(schedules.id, schedule.id));
+  for (const column of columns) {
+    const role = columnRole(column, schedule.type);
+    if (role === null || role === "preacher") {
+      continue;
+    }
+    const name = slotHolder(changes[column]);
+    // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
+    await writeAssignment(
+      tx,
+      { ...schedule, ...changes } as Locked,
+      column,
+      role,
+      name
+    );
+    const userId = generated.picks.find((p) => p.column === column)?.userId;
+    if (name && userId) {
+      await linkPicked(tx, schedule.id, role, userId);
+    }
+  }
+  return generated.picks.filter((pick) => changes[pick.column] === pick.name)
+    .length;
+}
+
+/**
+ * Generates drafts for the months `from` through `through` (`yyyy-MM`):
+ * fills every open slot of draft gatherings and regular days not added yet
+ * (adding them as drafts), or with "regenerate" also refills the unlocked
+ * picks it made before. One run at a time; each row is locked while it's
+ * written and anything filled in the meantime is kept.
+ */
+export async function generateRange(input: {
+  from: string;
+  mode: GenerateMode;
+  through: string;
+}) {
+  const { months } = monthsSpan(input.from, input.through);
+  const data = await loadPlan(input.from, months);
+  const rows = planRows(data.schedules, regularGatherings(input.from, months));
+  const result = generatePlan({
+    data,
+    mode: input.mode,
+    rows,
+    today: data.today,
+  });
+  const filled = await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext('schedule-generator'))`
+    );
+    let count = 0;
+    for (const generated of result) {
+      if (generated.picks.length > 0 || generated.cleared.length > 0) {
+        // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
+        count += await writeGeneratedRow(tx, generated);
+      }
+    }
+    return count;
+  });
+  return {
+    filled,
+    open: result.reduce((sum, row) => sum + row.open.length, 0),
+  };
+}
+
+/**
+ * Publishes every draft gathering in the months `from` through `through`:
+ * from now on members see them on the schedule, in My duties, open slots
+ * and their calendars.
+ */
+export async function publishRange(input: { from: string; through: string }) {
+  const span = monthsSpan(input.from, input.through);
+  const rows = await db
+    .update(schedules)
+    .set({ published: true })
+    .where(
+      and(
+        eq(schedules.published, false),
+        gte(schedules.date, span.from),
+        lt(schedules.date, span.before)
+      )
+    )
+    .returning({ id: schedules.id });
+  return { published: rows.length };
 }

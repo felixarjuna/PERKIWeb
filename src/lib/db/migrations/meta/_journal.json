@@ -211,6 +211,13 @@
       "when": 1792934744058,
       "tag": "0029_calendar_feeds",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792953529233,
+      "tag": "0030_schedule_drafts",
+      "breakpoints": true
     }
   ]
 }
