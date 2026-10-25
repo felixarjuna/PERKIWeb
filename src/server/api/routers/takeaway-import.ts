@@ -8,6 +8,7 @@ import {
   type TakeawaySource,
   type TextChange,
 } from "~/lib/takeaway-import";
+import { parseTakeawaySource } from "~/lib/takeaway-source";
 import { db } from "~/server";
 import { docHtml } from "~/server/google-docs";
 import { getSettings } from "~/server/settings";
@@ -34,10 +35,8 @@ async function readDoc(docId: string, name: string): Promise<TakeawaySource> {
       message: `The ${name} couldn't be read from Google. Try again.`,
     });
   });
-  // Loaded here, not at the top: the parser needs jsdom, which must not be
-  // part of appRouter's module graph (see takeaway-import.load.test.ts).
-  return import("~/lib/takeaway-source")
-    .then(({ parseTakeawaySource }) => parseTakeawaySource(html))
+  return Promise.resolve(html)
+    .then(parseTakeawaySource)
     .catch((error: unknown) => {
       throw new TRPCError({
         cause: error,
