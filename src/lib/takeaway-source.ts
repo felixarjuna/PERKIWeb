@@ -9,12 +9,28 @@ import type { SourceEntry, TakeawaySource } from "./takeaway-import";
 const HEADING_TAG = /^H[1-6]$/;
 /** Head-only tags a fragment can leave in the body; they hold no text. */
 const NON_CONTENT_TAGS = new Set(["LINK", "META", "STYLE", "TITLE"]);
+/** Day first (03.01.2026, 03-01-2026) or year first (2026-01-03). */
 const SOURCE_DATE = /\b(\d{1,2})[./-](\d{1,2})[./-](20\d{2})\b/;
+const ISO_SOURCE_DATE = /\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/;
 const MARKDOWN_SPECIAL = /[\\`*_[\]<>~]/g;
 const NON_BREAKING_SPACE = /\u00a0/g;
 const WHITESPACE = /\s+/g;
 const BOLD_WEIGHT = 600;
 const OUTER_WHITESPACE = /^(\s*)([\s\S]*?)(\s*)$/;
+
+function sourceLink(text: string, href: string | null): string {
+  const trimmed = href?.trim();
+  // Exported comment/bookmark targets do not survive Markdown conversion.
+  // Keep their visible text without linking to a missing target.
+  if (!trimmed || trimmed.startsWith("#")) {
+    return text;
+  }
+  const target = new URL(trimmed);
+  if (!["https:", "http:", "mailto:"].includes(target.protocol)) {
+    throw new Error("Unsupported source link protocol.");
+  }
+  return `[${text}](<${target.href}>)`;
+}
 
 function inlineMarkdown(node: Node, window: Window): string {
   if (node.nodeType === 3) {
@@ -54,14 +70,7 @@ function inlineMarkdown(node: Node, window: Window): string {
     formatted = `*${formatted}*`;
   }
   if (node.tagName === "A") {
-    const href = node.getAttribute("href");
-    if (href) {
-      const target = new URL(href);
-      if (!["https:", "http:", "mailto:"].includes(target.protocol)) {
-        throw new Error("Unsupported source link protocol.");
-      }
-      return `[${formatted}](<${target.href}>)`;
-    }
+    formatted = sourceLink(formatted, node.getAttribute("href"));
   }
   return `${whitespace?.[1] ?? ""}${formatted}${whitespace?.[3] ?? ""}`;
 }
@@ -95,11 +104,16 @@ function blockMarkdown(element: Element, window: Window): string {
 }
 
 function headingDate(heading: string): string | undefined {
-  const match = SOURCE_DATE.exec(heading);
-  if (!match) {
+  const dayFirst = SOURCE_DATE.exec(heading);
+  const iso = dayFirst ? null : ISO_SOURCE_DATE.exec(heading);
+  const parts = dayFirst
+    ? [dayFirst[3], dayFirst[2], dayFirst[1]]
+    : iso && [iso[1], iso[2], iso[3]];
+  if (!parts) {
     return;
   }
-  const date = `${match[3]}-${match[2]?.padStart(2, "0")}-${match[1]?.padStart(2, "0")}`;
+  const [year, month, day] = parts;
+  const date = `${year}-${month?.padStart(2, "0")}-${day?.padStart(2, "0")}`;
   const parsed = new Date(`${date}T12:00:00Z`);
   if (
     !Number.isFinite(parsed.getTime()) ||
@@ -113,6 +127,14 @@ function headingDate(heading: string): string | undefined {
 function requireEntryBody(entry: SourceEntry | undefined, bodyBlocks: number) {
   if (entry && bodyBlocks === 0) {
     throw new Error(`Empty source entry: ${entry.heading}`);
+  }
+}
+
+function requireDatedEntries(entries: SourceEntry[], instructions: string[]) {
+  if (entries.length === 0 && instructions.length > 0) {
+    throw new Error(
+      "No dated entries found. Add a full date including the year (DD.MM.YYYY or YYYY-MM-DD) to each entry heading."
+    );
   }
 }
 
@@ -200,6 +222,7 @@ export function parseTakeawaySource(html: string): TakeawaySource {
         instructions.push(block);
       }
     }
+    requireDatedEntries(entries, instructions);
     if (!current || bodyBlocks === 0) {
       throw new Error("Empty source document or final entry.");
     }
