@@ -93,7 +93,7 @@ Every row has five fields:
 | Mita & owner (staff) | Group management | We can change the cooking and cleaning groups when they are reshuffled. | Live ([#104](https://github.com/felixarjuna/PERKIWeb/issues/104)) | Pick which group cooks and cleans at each gathering while planning the schedule ([#37](https://github.com/felixarjuna/PERKIWeb/issues/37)). |
 | Mita & owner (staff) | Names and guest speakers | Schedule names link to the right member, and guest preachers have their own profiles. | Live | No open issue. |
 | Mita & owner (staff) | Publish takeaways | We are the one check before a takeaway goes online. | Live | Publish corrections without taking the takeaway offline (PR [#97](https://github.com/felixarjuna/PERKIWeb/pull/97)). |
-| Mita & owner (staff) | Import takeaways from Docs | We bring the notes and TL;DR from the Google Docs into the site with one preview. | Live | No open issue. |
+| Mita & owner (staff) | Import takeaways from Docs | We bring the notes and TL;DR from the Google Docs into the site with one preview, picking the year's documents from the sources on Settings → Takeaways. | Live | Several sources, one pair per year ([#134](https://github.com/felixarjuna/PERKIWeb/issues/134), in review). |
 | Mita & owner (staff) | Monday WhatsApp post | We copy a ready-made WhatsApp post for each published takeaway. | Live | Send it automatically ([#93](https://github.com/felixarjuna/PERKIWeb/issues/93), needs answers). |
 | Mita & owner (staff) | Prayer review | We check, edit and publish prayer requests before others see them. | Live | No open issue. |
 | Mita & owner (staff) | Settings | We change the schedule sheet, documents and group links without a new release. | Live | No open issue. |

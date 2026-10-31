@@ -8,6 +8,7 @@ import React from "react";
 import { toast } from "sonner";
 import {
   AdminSegmented,
+  AdminSelect,
   QueryMessage,
 } from "~/components/admin/admin-controls";
 import { Button } from "~/components/ui/button";
@@ -196,26 +197,32 @@ function ImportList({
 }
 
 /**
- * Imports the notes and TL;DR documents. The preview shows what would be
+ * Imports the notes and TL;DR documents of the chosen source (Settings →
+ * Takeaways), starting on the one used last. The preview shows what would be
  * added and changed; nothing is written until the import is confirmed, and
  * running it again with the same documents changes nothing.
  */
 export default function DocsImport() {
   const router = useRouter();
   const utils = api.useUtils();
-  const status = api.takeawayImport.status.useQuery();
+  const sources = api.takeawayImport.sources.useQuery();
   const [view, setView] = React.useState("list");
-  const preview = api.takeawayImport.preview.useQuery(undefined, {
-    enabled: status.data?.configured === true,
-    retry: false,
-  });
+  const [picked, setPicked] = React.useState<string | null>(null);
+  const sourceId =
+    sources.data?.sources.find((source) => source.id === picked)?.id ??
+    sources.data?.selected ??
+    null;
+  const preview = api.takeawayImport.preview.useQuery(
+    { sourceId: sourceId ?? "" },
+    { enabled: sourceId !== null, retry: false }
+  );
   const run = api.takeawayImport.run.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async (result) => {
       await Promise.all([
         utils.takeaways.invalidate(),
         utils.schedules.invalidate(),
-        utils.takeawayImport.preview.invalidate(),
+        utils.takeawayImport.invalidate(),
       ]);
       toast.success("Takeaways imported", {
         description: `${result.added} added as drafts, ${result.updated} updated.`,
@@ -224,20 +231,23 @@ export default function DocsImport() {
     },
   });
 
-  if (status.isError) {
-    return <QueryMessage error onRetry={() => status.refetch()} />;
+  if (sources.isError) {
+    return <QueryMessage error onRetry={() => sources.refetch()} />;
   }
-  if (status.data && !status.data.configured) {
+  if (sources.isPending) {
+    return <QueryMessage>Loading sources…</QueryMessage>;
+  }
+  if (sourceId === null) {
     return (
       <QueryMessage>
-        The notes and TL;DR documents aren't set yet. Add their links on the{" "}
+        There's no document to import from yet. Add the notes document on{" "}
         <Link
           className="underline underline-offset-4"
-          href="/admin/settings/integrations"
+          href="/admin/settings/takeaways"
         >
-          Settings
-        </Link>{" "}
-        page.
+          Settings → Takeaways
+        </Link>
+        .
       </QueryMessage>
     );
   }
@@ -253,10 +263,21 @@ export default function DocsImport() {
   return (
     <div className="@container space-y-6">
       <p className="type-body-sm text-muted-foreground">
-        Reads both documents and matches each dated entry to the gathering held
-        that day.
+        Reads the source's notes and TL;DR documents and matches each dated
+        entry to the gathering held that day.
       </p>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <AdminSelect
+          className="w-full sm:w-56 [&_button]:min-h-11"
+          id="docs-import-source"
+          label="Source"
+          onChange={setPicked}
+          options={sources.data.sources.map((source) => ({
+            label: source.label,
+            value: source.id,
+          }))}
+          value={sourceId}
+        />
         <Button
           disabled={preview.isFetching}
           onClick={() => preview.refetch()}
@@ -296,7 +317,7 @@ export default function DocsImport() {
           </Button>
         </div>
       ) : null}
-      {preview.isPending && status.data?.configured ? (
+      {preview.isPending ? (
         <QueryMessage>Reading the documents…</QueryMessage>
       ) : null}
 
@@ -327,7 +348,7 @@ export default function DocsImport() {
           <div className="flex flex-wrap items-center gap-3">
             <Button
               disabled={toImport === 0 || run.isPending}
-              onClick={() => run.mutate()}
+              onClick={() => sourceId && run.mutate({ sourceId })}
               type="button"
             >
               {importLabel(toImport)}

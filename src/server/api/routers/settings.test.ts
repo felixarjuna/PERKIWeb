@@ -45,39 +45,110 @@ describe("settings router", () => {
       },
       driveFolder: null,
       scheduleSheet: null,
-      takeawayNotesDoc: null,
-      takeawayTldrDoc: null,
       whatsappGroup: null,
     });
   });
 
-  it("saves the notes and TL;DR documents from pasted links, once Google opens them", async () => {
+  it("adds, renames and removes takeaway sources from pasted links, once Google opens them", async () => {
     const api = await admin();
-    await api.settings.setTakeawayDoc({
-      document: "notes",
-      link: `https://docs.google.com/document/d/${DOC}/edit?tab=t.0`,
+    expect(await api.settings.takeawaySources()).toEqual({
+      changed: null,
+      sources: [],
+    });
+    const { id } = await api.settings.saveTakeawaySource({
+      id: null,
+      label: "2025",
+      notes: `https://docs.google.com/document/d/${DOC}/edit?tab=t.0`,
+      tldr: "",
+    });
+    await api.settings.saveTakeawaySource({
+      id: null,
+      label: "2026",
+      notes: DOC,
+      tldr: `https://docs.google.com/document/d/${DOC}/edit`,
+    });
+
+    await expect(
+      api.settings.saveTakeawaySource({
+        id: null,
+        label: "2027",
+        notes: `https://docs.google.com/spreadsheets/d/${ID}/edit`,
+        tldr: "",
+      })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Paste the link of a Google Doc (docs.google.com/document/…).",
     });
     await expect(
-      api.settings.setTakeawayDoc({
-        document: "tldr",
-        link: `https://docs.google.com/spreadsheets/d/${ID}/edit`,
+      api.settings.saveTakeawaySource({
+        id: null,
+        label: " 2026 ",
+        notes: DOC,
+        tldr: "",
       })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      api.settings.saveTakeawaySource({
+        id: "gone",
+        label: "Gone",
+        notes: DOC,
+        tldr: "",
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
     google.docOpens = false;
     await expect(
-      api.settings.setTakeawayDoc({ document: "tldr", link: ID })
+      api.settings.saveTakeawaySource({
+        id: null,
+        label: "2027",
+        notes: DOC,
+        tldr: "",
+      })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    google.docOpens = true;
 
-    const saved = await api.settings.integrations();
-    expect(saved.takeawayNotesDoc).toMatchObject({
-      id: DOC,
-      updatedBy: "Mita",
-      url: `https://docs.google.com/document/d/${DOC}/edit`,
+    await api.settings.saveTakeawaySource({
+      id,
+      label: "Year 2025",
+      notes: DOC,
+      tldr: "",
     });
-    expect(saved.takeawayTldrDoc).toBeNull();
+    const saved = await api.settings.takeawaySources();
+    expect(saved.changed).toMatchObject({ updatedBy: "Mita" });
+    expect(saved.sources).toEqual([
+      {
+        id,
+        label: "Year 2025",
+        notes: {
+          id: DOC,
+          url: `https://docs.google.com/document/d/${DOC}/edit`,
+        },
+        tldr: null,
+      },
+      expect.objectContaining({
+        label: "2026",
+        tldr: expect.objectContaining({ id: DOC }),
+      }),
+    ]);
 
-    await api.settings.setTakeawayDoc({ document: "notes", link: null });
-    expect((await api.settings.integrations()).takeawayNotesDoc).toBeNull();
+    await api.settings.removeTakeawaySource({ id });
+    expect(
+      (await api.settings.takeawaySources()).sources.map((s) => s.label)
+    ).toEqual(["2026"]);
+  });
+
+  it("keeps takeaway sources for staff", async () => {
+    const writer = callerFor((await insertUser({ role: "writer" })).id);
+    await expect(writer.settings.takeawaySources()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(
+      writer.settings.saveTakeawaySource({
+        id: null,
+        label: "x",
+        notes: DOC,
+        tldr: "",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("saves the sheet id from a pasted link and shows the file name", async () => {

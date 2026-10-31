@@ -141,9 +141,12 @@ test("deadline loading and query failure recover without losing the form", async
   await expect(page.getByText("Loading deadline…")).toBeVisible();
   gate.resolve();
   await retriesFinished.promise;
-  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  // The sources query rides in the same batched request, so it fails too and
+  // offers its own retry below; the deadline's comes first.
+  const retry = page.getByRole("button", { name: "Try again" });
+  await expect(retry).toHaveCount(2);
   await page.unroute(pattern);
-  await page.getByRole("button", { name: "Try again" }).click();
+  await retry.first().click();
   await expect(
     page.getByRole("combobox", { name: "Deadline weekday" })
   ).toBeVisible();
