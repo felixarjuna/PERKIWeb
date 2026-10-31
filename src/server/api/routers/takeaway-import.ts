@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { and, eq, ne, sql } from "drizzle-orm";
+import { z } from "zod";
 import { schedules, takeaways } from "~/lib/db/schema/schema";
 import { localDay } from "~/lib/schedule-team";
 import { SETTING_KEYS } from "~/lib/settings";
@@ -9,22 +10,14 @@ import {
   type TextChange,
 } from "~/lib/takeaway-import";
 import { parseTakeawaySource } from "~/lib/takeaway-source";
+import { preselectedSource } from "~/lib/takeaway-sources";
 import { db } from "~/server";
 import { docHtml } from "~/server/google-docs";
-import { getSettings } from "~/server/settings";
+import { getSetting, setSetting } from "~/server/settings";
+import { takeawaySource, takeawaySources } from "~/server/takeaway-sources";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 type Database = Pick<typeof db, "select">;
-
-async function docIds() {
-  const values = await getSettings([
-    SETTING_KEYS.takeawayNotesDocId,
-    SETTING_KEYS.takeawayTldrDocId,
-  ]);
-  const notes = values[SETTING_KEYS.takeawayNotesDocId];
-  const tldr = values[SETTING_KEYS.takeawayTldrDocId];
-  return notes && tldr ? { notes, tldr } : null;
-}
 
 /** Reads one document from Google and parses it into dated entries. */
 async function readDoc(docId: string, name: string): Promise<TakeawaySource> {
@@ -46,19 +39,29 @@ async function readDoc(docId: string, name: string): Promise<TakeawaySource> {
     });
 }
 
-/** Both documents, read again on every call so nothing depends on a stale preview. */
-async function readDocs() {
-  const ids = await docIds();
-  if (!ids) {
+const sourceInput = z.object({ sourceId: z.string() });
+
+/** No TL;DR document: every TL;DR counts as missing, so stored ones stay. */
+const NO_TLDRS: TakeawaySource = { entries: [], instructions: "" };
+
+/**
+ * The source's documents, read again on every call so nothing depends on a
+ * stale preview.
+ */
+async function readDocs(sourceId: string) {
+  const source = await takeawaySource(sourceId);
+  if (!source) {
     throw new TRPCError({
-      code: "PRECONDITION_FAILED",
+      code: "NOT_FOUND",
       message:
-        "The notes and TL;DR documents aren't set. Add their links on the Settings page.",
+        "This source isn't in Settings → Takeaways anymore. Pick another one.",
     });
   }
   const [notes, tldr] = await Promise.all([
-    readDoc(ids.notes, "notes document"),
-    readDoc(ids.tldr, "TL;DR document"),
+    readDoc(source.notesDocId, "notes document"),
+    source.tldrDocId
+      ? readDoc(source.tldrDocId, "TL;DR document")
+      : Promise.resolve(NO_TLDRS),
   ]);
   return { notes, tldr };
 }
@@ -105,8 +108,8 @@ async function planDocs(
 
 export const takeawayImportRouter = createTRPCRouter({
   /** What importing the documents would do, without writing anything. */
-  preview: adminProcedure.query(async () => {
-    const entries = await planDocs(db, await readDocs());
+  preview: adminProcedure.input(sourceInput).query(async ({ input }) => {
+    const entries = await planDocs(db, await readDocs(input.sourceId));
     return { entries };
   }),
   /**
@@ -114,9 +117,9 @@ export const takeawayImportRouter = createTRPCRouter({
    * changed takeaways that aren't published, all or nothing. Nothing is
    * deleted; published takeaways are never touched.
    */
-  run: adminProcedure.mutation(async () => {
-    const docs = await readDocs();
-    return db.transaction(async (tx) => {
+  run: adminProcedure.input(sourceInput).mutation(async ({ ctx, input }) => {
+    const docs = await readDocs(input.sourceId);
+    const result = await db.transaction(async (tx) => {
       // Plan under the same lock as the writes, so two imports can't both add a draft.
       await tx.execute(
         sql`lock table ${takeaways} in share row exclusive mode`
@@ -156,9 +159,22 @@ export const takeawayImportRouter = createTRPCRouter({
       }
       return { added, updated };
     });
+    await setSetting(
+      SETTING_KEYS.takeawayLastSourceId,
+      input.sourceId,
+      ctx.session.user.id
+    );
+    return result;
   }),
-  /** Whether both documents are set. */
-  status: adminProcedure.query(async () => ({
-    configured: (await docIds()) !== null,
-  })),
+  /** The sources to pick from, and the one the picker starts on. */
+  sources: adminProcedure.query(async () => {
+    const [sources, lastUsed] = await Promise.all([
+      takeawaySources(),
+      getSetting(SETTING_KEYS.takeawayLastSourceId),
+    ]);
+    return {
+      selected: preselectedSource(sources, lastUsed),
+      sources: sources.map(({ id, label }) => ({ id, label })),
+    };
+  }),
 });

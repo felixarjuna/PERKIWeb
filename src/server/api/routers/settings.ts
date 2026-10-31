@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -14,17 +15,41 @@ import {
   sheetUrl,
   whatsappGroupFrom,
 } from "~/lib/settings";
+import { labelTaken } from "~/lib/takeaway-sources";
 import { db } from "~/server";
 import { docHtml } from "~/server/google-docs";
 import { sheetTitle } from "~/server/google-sheets";
 import { emailSettings } from "~/server/invite-email";
 import { setSetting, takeawayDeadlineWeekday } from "~/server/settings";
+import {
+  takeawaySources,
+  updateTakeawaySources,
+} from "~/server/takeaway-sources";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 const linkInput = z.object({ link: z.string().max(500).nullable() });
 
 const invalid = (message: string) =>
   new TRPCError({ code: "BAD_REQUEST", message });
+
+/** The document id in a pasted link, once Google opens the document. */
+async function openableDoc(link: string) {
+  const docId = docIdFrom(link);
+  if (!docId) {
+    throw invalid(
+      "Paste the link of a Google Doc (docs.google.com/document/…)."
+    );
+  }
+  await docHtml(docId).catch((error: unknown) => {
+    throw new TRPCError({
+      cause: error,
+      code: "BAD_REQUEST",
+      message:
+        "Google couldn't open this document. Check the link, and that the document is shared with “Anyone with the link”.",
+    });
+  });
+  return docId;
+}
 
 /** Who last changed each integration setting, and when. */
 async function loadIntegrationRows() {
@@ -41,11 +66,6 @@ async function loadIntegrationRows() {
     .where(inArray(settings.key, keys));
   return (key: SettingKey) => rows.find((row) => row.key === key) ?? null;
 }
-
-const TAKEAWAY_DOC_KEYS = {
-  notes: SETTING_KEYS.takeawayNotesDocId,
-  tldr: SETTING_KEYS.takeawayTldrDocId,
-} as const;
 
 const changed = (row: { updatedAt: Date; updatedBy: string | null }) => ({
   updatedAt: row.updatedAt,
@@ -79,10 +99,6 @@ export const settingsRouter = createTRPCRouter({
     const drive = row(SETTING_KEYS.driveFolderUrl);
     const discord = row(SETTING_KEYS.discordInviteUrl);
     const whatsapp = row(SETTING_KEYS.whatsappGroupUrl);
-    const takeawayDoc = (key: SettingKey) => {
-      const doc = row(key);
-      return doc && { ...changed(doc), id: doc.value, url: docUrl(doc.value) };
-    };
     return {
       discordInvite: discord
         ? { ...changed(discord), isDefault: false, url: discord.value }
@@ -99,11 +115,55 @@ export const settingsRouter = createTRPCRouter({
         title: await sheetTitle(sheet.value).catch(() => null),
         url: sheetUrl(sheet.value),
       },
-      takeawayNotesDoc: takeawayDoc(TAKEAWAY_DOC_KEYS.notes),
-      takeawayTldrDoc: takeawayDoc(TAKEAWAY_DOC_KEYS.tldr),
       whatsappGroup: whatsapp && { ...changed(whatsapp), url: whatsapp.value },
     };
   }),
+  /** Removes a source; its documents themselves are left alone. */
+  removeTakeawaySource: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await updateTakeawaySources(ctx.session.user.id, (sources) =>
+        sources.filter((source) => source.id !== input.id)
+      );
+    }),
+  /**
+   * Adds a source (`id` null) or changes one, from pasted links or ids. Like
+   * the sheet, each document is only saved once Google opens it.
+   */
+  saveTakeawaySource: adminProcedure
+    .input(
+      z.object({
+        id: z.string().nullable(),
+        label: z.string().trim().min(1, "Give the source a name.").max(40),
+        notes: z.string().max(500),
+        tldr: z.string().max(500),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const notesDocId = await openableDoc(input.notes);
+      const tldrDocId =
+        input.tldr.trim() === "" ? null : await openableDoc(input.tldr);
+      const id = input.id ?? randomUUID();
+      await updateTakeawaySources(ctx.session.user.id, (sources) => {
+        if (labelTaken(sources, input.label, id)) {
+          throw invalid(`There's already a source named “${input.label}”.`);
+        }
+        const source = { id, label: input.label, notesDocId, tldrDocId };
+        if (input.id === null) {
+          return [...sources, source];
+        }
+        if (!sources.some((existing) => existing.id === id)) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "This source was removed meanwhile. Add it again.",
+          });
+        }
+        return sources.map((existing) =>
+          existing.id === id ? source : existing
+        );
+      });
+      return { id };
+    }),
   /** Back to the default invite with `null`. */
   setDiscordInvite: adminProcedure
     .input(linkInput)
@@ -210,34 +270,6 @@ export const settingsRouter = createTRPCRouter({
         ctx.session.user.id
       );
     }),
-  /**
-   * Sets the notes or TL;DR document "Import from Docs" reads, from a pasted
-   * link or id. Like the sheet, it's only saved once Google opens it.
-   */
-  setTakeawayDoc: adminProcedure
-    .input(linkInput.extend({ document: z.enum(["notes", "tldr"]) }))
-    .mutation(async ({ ctx, input }) => {
-      const key = TAKEAWAY_DOC_KEYS[input.document];
-      if (input.link === null) {
-        await setSetting(key, null, ctx.session.user.id);
-        return;
-      }
-      const docId = docIdFrom(input.link);
-      if (!docId) {
-        throw invalid(
-          "Paste the link of a Google Doc (docs.google.com/document/…)."
-        );
-      }
-      await docHtml(docId).catch((error: unknown) => {
-        throw new TRPCError({
-          cause: error,
-          code: "BAD_REQUEST",
-          message:
-            "Google couldn't open this document. Check the link, and that the document is shared with “Anyone with the link”.",
-        });
-      });
-      await setSetting(key, docId, ctx.session.user.id);
-    }),
   /** Hides the WhatsApp card on /account with `null`. */
   setWhatsappGroup: adminProcedure
     .input(linkInput)
@@ -251,4 +283,24 @@ export const settingsRouter = createTRPCRouter({
       await setSetting(SETTING_KEYS.whatsappGroupUrl, url, ctx.session.user.id);
     }),
   takeawayDeadline: adminProcedure.query(takeawayDeadlineWeekday),
+  /** The document pairs "Import from Docs" reads, on Settings → Takeaways. */
+  takeawaySources: adminProcedure.query(async () => {
+    const sources = await takeawaySources();
+    const [row] = await db
+      .select({ updatedAt: settings.updatedAt, updatedBy: users.name })
+      .from(settings)
+      .leftJoin(users, eq(users.id, settings.updatedById))
+      .where(eq(settings.key, SETTING_KEYS.takeawaySources));
+    return {
+      changed: row ?? null,
+      sources: sources.map((source) => ({
+        id: source.id,
+        label: source.label,
+        notes: { id: source.notesDocId, url: docUrl(source.notesDocId) },
+        tldr: source.tldrDocId
+          ? { id: source.tldrDocId, url: docUrl(source.tldrDocId) }
+          : null,
+      })),
+    };
+  }),
 });
