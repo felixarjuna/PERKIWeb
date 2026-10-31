@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { deleteSchedulesBetween, insertSchedule } from "./db";
 import { E2E_DOCS } from "./docs-server";
+import { uniqueSuffix } from "./fixtures";
 import { adminLogin, toast } from "./helpers";
 
 // The stand-in documents are dated 2031, which only this spec schedules.
@@ -9,30 +10,52 @@ const TWO_UP_TO_DATE = /2 already up to date/;
 const MONTH_TWO_NEW = /This month: 2 new/;
 const YEAR = { before: new Date("2032-01-01"), from: new Date("2031-01-01") };
 
-const saveDoc = async (page: Page, title: string, docId: string) => {
-  await page.getByRole("button", { name: `Change the ${title}` }).click();
-  const dialog = page.getByRole("dialog", { name: title });
-  await dialog
-    .getByLabel("Link")
-    .fill(`https://docs.google.com/document/d/${docId}/edit`);
+const docLink = (docId: string) =>
+  `https://docs.google.com/document/d/${docId}/edit`;
+
+const addSource = async (
+  page: Page,
+  label: string,
+  docs: { notes: string; tldr?: string }
+) => {
+  await page.getByRole("button", { name: "Add source" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add a source" });
+  await dialog.getByLabel("Name").fill(label);
+  await dialog.getByLabel("Notes document").fill(docLink(docs.notes));
+  if (docs.tldr) {
+    await dialog.getByLabel("TL;DR document").fill(docLink(docs.tldr));
+  }
   await dialog.getByRole("button", { name: "Save" }).click();
-  await expect(toast(page, `${title} saved`)).toBeVisible();
+  await expect(toast(page, `“${label}” saved`)).toBeVisible();
 };
 
-test("staff import takeaways from the Docs, and a second run changes nothing", async ({
+const openImport = async (page: Page) => {
+  await page.goto("/admin/takeaways/new");
+  await page.getByRole("tab", { name: "Import from Docs" }).click();
+};
+
+test("staff import takeaways from a chosen source, and a second run changes nothing", async ({
   page,
 }) => {
+  const suffix = uniqueSuffix();
+  const withTldr = `Docs ${suffix}`;
+  const notesOnly = `Notes only ${suffix}`;
   await deleteSchedulesBetween(YEAR.from, YEAR.before);
   await insertSchedule("Import Kebaktian", new Date("2031-01-03T14:30:00Z"));
   await insertSchedule("Import PA", new Date("2031-01-10T14:30:00Z"));
   await adminLogin(page);
 
-  await page.goto("/admin/settings/integrations");
-  await saveDoc(page, "Takeaway notes document", E2E_DOCS.notes);
-  await saveDoc(page, "TL;DR document", E2E_DOCS.tldr);
+  await page.goto("/admin/settings/takeaways");
+  await addSource(page, withTldr, E2E_DOCS);
+  await addSource(page, notesOnly, { notes: E2E_DOCS.notes });
+  await expect(
+    page.getByRole("button", { name: `Edit the source ${notesOnly}` })
+  ).toBeVisible();
 
-  await page.goto("/admin/takeaways/new");
-  await page.getByRole("tab", { name: "Import from Docs" }).click();
+  await openImport(page);
+  const source = page.getByLabel("Source");
+  await source.click();
+  await page.getByRole("option", { name: withTldr }).click();
   await expect(page.getByRole("status").getByText(TWO_NEW)).toBeVisible();
   await expect(page.getByText("No gathering on this date")).toBeVisible();
   await page.getByRole("radio", { name: "Calendar" }).click();
@@ -42,8 +65,9 @@ test("staff import takeaways from the Docs, and a second run changes nothing", a
   await expect(toast(page, "Takeaways imported")).toBeVisible();
   await expect(page).toHaveURL("/admin/takeaways");
 
-  await page.goto("/admin/takeaways/new");
-  await page.getByRole("tab", { name: "Import from Docs" }).click();
+  // The picker starts on the source used last, not the newest one.
+  await openImport(page);
+  await expect(source).toHaveText(withTldr);
   await expect(
     page.getByRole("button", { name: "Everything is up to date" })
   ).toBeDisabled();

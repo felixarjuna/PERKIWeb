@@ -6,7 +6,13 @@ export const SETTING_KEYS = {
   emailSender: "email_sender",
   scheduleSheetId: "schedule_sheet_id",
   takeawayDeadlineWeekday: "takeaway_deadline_weekday",
+  /** The source "Import from Docs" last ran with. */
+  takeawayLastSourceId: "takeaway_last_source_id",
+  /** Before #134: the single pair, read once to carry it over into sources. */
   takeawayNotesDocId: "takeaway_notes_doc_id",
+  /** The notes/TL;DR document pairs "Import from Docs" reads, as JSON. */
+  takeawaySources: "takeaway_sources",
+  /** Before #134, like `takeawayNotesDocId`. */
   takeawayTldrDocId: "takeaway_tldr_doc_id",
   whatsappGroupUrl: "whatsapp_group_url",
 } as const;
