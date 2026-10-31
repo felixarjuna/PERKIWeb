@@ -173,12 +173,16 @@ const pageSchema = z.object({
 const orderSchema = z.enum(["asc", "desc"]).default("desc");
 
 export const scheduleListSchema = pageSchema.extend({
+  /** Staff only: include drafts (#112); ignored for everyone else. */
+  drafts: z.boolean().optional(),
   order: orderSchema,
 });
 
 /** Every schedule from `from` (inclusive) to `before` (exclusive), earliest first. */
 export const scheduleRangeSchema = z.object({
   before: z.date().optional(),
+  /** Staff only: include drafts (#112); ignored for everyone else. */
+  drafts: z.boolean().optional(),
   from: z.date(),
 });
 

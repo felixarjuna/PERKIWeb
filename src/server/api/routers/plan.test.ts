@@ -271,15 +271,22 @@ describe("planning grid", () => {
     });
     expect(second.scheduleId).toBe(first.scheduleId);
 
-    const [added, ...others] = await anonymousCaller().schedules.inRange({
+    const day = {
       before: new Date("2026-12-06T00:00:00Z"),
       from: new Date("2026-12-05T00:00:00Z"),
+    };
+    // Planned ahead: a draft only staff see until they publish it (#112).
+    expect(await anonymousCaller().schedules.inRange(day)).toEqual([]);
+    const [added, ...others] = await api.schedules.inRange({
+      ...day,
+      drafts: true,
     });
     expect(others).toEqual([]);
     expect(added).toMatchObject({
       cleaningGroup: "Group 1",
       id: first.scheduleId,
       leader: "Ana Putri",
+      published: false,
       title: "Penelaahan Alkitab",
       type: "bible_study",
     });

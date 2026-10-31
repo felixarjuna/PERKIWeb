@@ -171,6 +171,8 @@ export async function loadOpenSlots(
       and(
         // Nobody serves at a cancelled gathering, so none of its slots are open.
         eq(schedules.cancelled, false),
+        // Drafts (#112) aren't offered until staff publish them.
+        eq(schedules.published, true),
         gte(schedules.date, today.toJSDate()),
         lt(schedules.date, today.plus({ weeks: OPEN_SLOT_WEEKS }).toJSDate())
       )
@@ -244,7 +246,7 @@ export function takeSlot(
       .from(schedules)
       .where(eq(schedules.id, scheduleId))
       .for("update");
-    if (!schedule) {
+    if (!schedule?.published) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Schedule not found.",
