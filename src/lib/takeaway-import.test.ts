@@ -16,6 +16,47 @@ const UNMATCHED = /unmatched/i;
 const LOCAL = /local/i;
 
 describe("takeaway document import", () => {
+  it("preserves text from Google Docs comment and bookmark links", () => {
+    const parsed = parseTakeawaySource(
+      source(
+        "03-01-2026 Title",
+        'A point<a href="#cmnt1">[1]</a>. <a href="#cmnt_ref1">Back</a> <a href="#heading.example"><strong>Related section</strong></a> <a href="https://example.com/reading">Reading</a>'
+      )
+    );
+    expect(parsed.entries.at(0)?.content).toBe(
+      "### 03-01-2026 Title\n\nA point\\[1\\]. Back **Related section** [Reading](<https://example.com/reading>)"
+    );
+  });
+
+  it("continues rejecting unsafe source link protocols", () => {
+    expect(() =>
+      parseTakeawaySource(
+        source("03-01-2026 Title", '<a href="javascript:alert(1)">Unsafe</a>')
+      )
+    ).toThrow("Unsupported source link protocol.");
+  });
+
+  it("reads year-first (ISO) heading dates", () => {
+    const parsed = parseTakeawaySource(
+      source("2025-01-04: Nuh, Bergaul dengan Allah")
+    );
+    expect(parsed.entries.at(0)?.date).toBe("2025-01-04");
+  });
+
+  it("rejects an impossible year-first heading date", () => {
+    expect(() => parseTakeawaySource(source("2025-17-05: Yosua I"))).toThrow(
+      "Invalid source date: 2025-17-05: Yosua I"
+    );
+  });
+
+  it("explains that headings need a year instead of guessing gathering dates", () => {
+    expect(() =>
+      parseTakeawaySource(source("TL;DR PA Besar 13.12 : Title"))
+    ).toThrow(
+      "No dated entries found. Add a full date including the year (DD.MM.YYYY or YYYY-MM-DD) to each entry heading."
+    );
+  });
+
   it("separates instructions and preserves headings, paragraphs, emphasis and lists", () => {
     const parsed = parseTakeawaySource(
       "<html><body><p>Instructions</p><h3>03-01-2026: Title</h3><p>One <strong>important</strong> point.</p><ul><li>First</li><li>Second</li></ul><h3>10.01.2026 Other</h3><p>Next.</p></body></html>"
