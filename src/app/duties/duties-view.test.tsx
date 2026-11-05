@@ -21,6 +21,7 @@ const gathering = (
   description: "",
   duties,
   flags: [],
+  generated: {},
   groupMembers: { cleaning: null, cooking: null },
   id,
   leader: "Ana Putri",
@@ -28,6 +29,7 @@ const gathering = (
   musician: "Toni Setiawan",
   noteWriter: "Kezia Singgih",
   preacher: null,
+  published: true,
   takeawayIds: [],
   team: [
     { image: null, name: "Ana Putri", role: "leader" },

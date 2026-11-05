@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import LoadMore from "~/components/load-more";
 import { GatheringFlags } from "~/components/schedule/gathering-flags";
+import { Badge } from "~/components/ui/badge";
 import { useDebouncedValue } from "~/hooks/use-debounced-value";
 import { monthOf, monthRange } from "~/lib/months";
 import { api, type RouterOutputs } from "~/trpc/react";
@@ -85,7 +86,14 @@ function ScheduleRow({
             · {date.toFormat("HH:mm")}
           </p>
           <h2 className="type-subheading break-words">{record.title}</h2>
-          <GatheringFlags cancelled={record.cancelled} flags={record.flags} />
+          <div className="flex flex-wrap gap-1">
+            {record.published ? null : (
+              <Badge size="status" variant="draft">
+                Draft
+              </Badge>
+            )}
+            <GatheringFlags cancelled={record.cancelled} flags={record.flags} />
+          </div>
           {meta ? (
             <p className="type-body-sm text-muted-foreground">{meta}</p>
           ) : null}
@@ -125,17 +133,20 @@ export default function ScheduleManager() {
     now
   );
   const list = api.schedules.list.useInfiniteQuery(
-    { ...input, limit: PAGE_SIZE },
+    { ...input, drafts: true, limit: PAGE_SIZE },
     {
       enabled: view === "list",
       getNextPageParam: (page) => page.nextCursor,
       placeholderData: keepPreviousData,
     }
   );
-  const calendar = api.schedules.inRange.useQuery(monthRange(month), {
-    enabled: view === "calendar",
-    placeholderData: keepPreviousData,
-  });
+  const calendar = api.schedules.inRange.useQuery(
+    { ...monthRange(month), drafts: true },
+    {
+      enabled: view === "calendar",
+      placeholderData: keepPreviousData,
+    }
+  );
   const query = view === "calendar" ? calendar : list;
   const remove = api.schedules.deleteSchedule.useMutation({
     onError: (error) => toast.error(error.message),

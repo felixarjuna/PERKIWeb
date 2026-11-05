@@ -21,9 +21,16 @@ import {
 import { POOL_ROLES } from "~/lib/serving-pool";
 import type { ServingRole } from "~/lib/serving-roles";
 import { db } from "~/server";
+import { isAdmin } from "~/server/authz";
 import { loadDuties } from "~/server/duties";
 import { loadOpenSlots, takeSlot } from "~/server/open-slots";
-import { loadPlan, setPlanSlot } from "~/server/plan";
+import {
+  generateRange,
+  loadPlan,
+  lockPlanSlot,
+  publishRange,
+  setPlanSlot,
+} from "~/server/plan";
 import { insertSchedule, syncAssignments } from "~/server/schedule-assignments";
 import { affectedRow } from "../errors";
 import {
@@ -123,6 +130,32 @@ async function withTeams(rows: Schedule[], withPhotos: boolean) {
   });
 }
 
+interface Viewer {
+  session: { user?: { id: string } } | null;
+}
+
+/** Drafts (#112) reach staff only, and only when they ask for them. */
+const seesDrafts = async (ctx: Viewer, wanted: boolean | undefined) =>
+  wanted && ctx.session?.user ? isAdmin(ctx.session.user.id) : false;
+
+/** Only published gatherings, unless the viewer may see drafts. */
+const visible = (drafts: boolean) =>
+  drafts ? undefined : eq(schedules.published, true);
+
+/** One schedule by id; a draft only for staff, otherwise as if it didn't exist. */
+async function findVisible(ctx: Viewer, id: number) {
+  const [row] = await db.select().from(schedules).where(eq(schedules.id, id));
+  if (!(row && (row.published || (await seesDrafts(ctx, true))))) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Schedule not found.",
+    });
+  }
+  return row;
+}
+
+const monthInput = z.string().refine(isMonth);
+
 export const scheduleRouter = createTRPCRouter({
   addSchedule: adminProcedure
     .input(addScheduleSchema)
@@ -154,15 +187,25 @@ export const scheduleRouter = createTRPCRouter({
         "Schedule"
       )
     ),
+  /**
+   * Staff only: fills the open slots of the drafts in a range of months
+   * (adding regular days as drafts), or refills the unlocked generated ones.
+   */
+  generate: adminProcedure
+    .input(
+      z.object({
+        from: monthInput,
+        mode: z.enum(["fill", "regenerate"]),
+        through: monthInput,
+      })
+    )
+    .mutation(({ input }) => generateRange(input)),
   /** One gathering with its team and takeaways, for its own page. */
   getGathering: publicProcedure
     .input(queryByIdSchema)
     .query(async ({ ctx, input }) => {
-      const rows = await db
-        .select()
-        .from(schedules)
-        .where(eq(schedules.id, input.id));
-      const [gathering] = await withTeams(rows, Boolean(ctx.session?.user));
+      const row = await findVisible(ctx, input.id);
+      const [gathering] = await withTeams([row], Boolean(ctx.session?.user));
       if (!gathering) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -173,30 +216,19 @@ export const scheduleRouter = createTRPCRouter({
     }),
   getScheduleById: publicProcedure
     .input(queryByIdSchema)
-    .query(async ({ input }) => {
-      const schedule = await db
-        .select()
-        .from(schedules)
-        .where(eq(schedules.id, input.id))
-        .then((res) => res.at(0));
-
-      if (schedule === undefined) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Error occurs when loading schedule from database.",
-        });
-      }
-
+    .query(async ({ ctx, input }) => {
+      const schedule = await findVisible(ctx, input.id);
       return { ...schedule, id: +schedule.id };
     }),
   /** Every schedule in a date window, earliest first, with their teams. */
   inRange: publicProcedure
     .input(scheduleRangeSchema)
     .query(async ({ ctx, input }) => {
+      const drafts = await seesDrafts(ctx, input.drafts);
       const rows = await db
         .select()
         .from(schedules)
-        .where(inWindow(schedules.date, input))
+        .where(and(inWindow(schedules.date, input), visible(drafts)))
         .orderBy(asc(schedules.date), asc(schedules.id));
       return withTeams(rows, Boolean(ctx.session?.user));
     }),
@@ -208,11 +240,13 @@ export const scheduleRouter = createTRPCRouter({
   list: publicProcedure
     .input(scheduleListSchema)
     .query(async ({ ctx, input }) => {
+      const drafts = await seesDrafts(ctx, input.drafts);
       const rows = await db
         .select()
         .from(schedules)
         .where(
           and(
+            visible(drafts),
             input.type === "all" ? undefined : eq(schedules.type, input.type),
             inWindow(schedules.date, input),
             matchesWords(
@@ -239,12 +273,29 @@ export const scheduleRouter = createTRPCRouter({
         nextCursor: page.nextCursor,
       };
     }),
+  /**
+   * Staff only: a month's gatherings with everything the planning grid
+   * needs to offer people and warn about them (pause and unavailability
+   * notes included).
+   */
+  /** Staff only: keeps a generated pick, so "Regenerate" leaves it alone. */
+  lockPlanSlot: adminProcedure
+    .input(
+      z.object({
+        column: z.enum(PLAN_COLUMNS),
+        scheduleId: z.number().int().positive(),
+      })
+    )
+    .mutation(({ input }) => lockPlanSlot(input)),
   /** The Aachen months (`yyyy-MM`) with gatherings, newest first, for filters. */
   months: publicProcedure.query(async () =>
     monthsOf(
-      (await db.selectDistinct({ date: schedules.date }).from(schedules)).map(
-        (row) => row.date
-      )
+      (
+        await db
+          .selectDistinct({ date: schedules.date })
+          .from(schedules)
+          .where(visible(false))
+      ).map((row) => row.date)
     )
   ),
   /**
@@ -290,19 +341,21 @@ export const scheduleRouter = createTRPCRouter({
       .from(schedules)
       .orderBy(desc(schedules.date), desc(schedules.id))
   ),
-  /**
-   * Staff only: a month's gatherings with everything the planning grid
-   * needs to offer people and warn about them (pause and unavailability
-   * notes included).
-   */
   plan: adminProcedure
     .input(
       z.object({
-        month: z.string().refine(isMonth),
+        month: monthInput,
         months: z.number().int().min(1).max(MAX_PLAN_MONTHS).default(1),
       })
     )
     .query(({ input }) => loadPlan(input.month, input.months)),
+  /**
+   * Staff only: publishes every draft in a range of months, so members see
+   * them everywhere at once.
+   */
+  publishRange: adminProcedure
+    .input(z.object({ from: monthInput, through: monthInput }))
+    .mutation(({ input }) => publishRange(input)),
   /**
    * Staff only: fills or empties one slot from the planning grid. Warnings
    * are advice, so nothing here refuses a person.
@@ -344,7 +397,8 @@ export const scheduleRouter = createTRPCRouter({
         const row = affectedRow(
           await tx
             .update(schedules)
-            .set({ ...input })
+            // Saved from the form: every slot is mita's choice now.
+            .set({ ...input, generated: {} })
             .where(eq(schedules.id, input.id))
             .returning({ id: schedules.id }),
           "Schedule"

@@ -1,6 +1,14 @@
 "use client";
 
-import { ChevronsUpDown, CircleAlert, LoaderCircle, X } from "lucide-react";
+import {
+  ChevronsUpDown,
+  CircleAlert,
+  LoaderCircle,
+  Lock,
+  LockOpen,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { DateTime } from "luxon";
 import { type ComponentProps, type KeyboardEvent, useState } from "react";
 import { Button } from "~/components/ui/button";
@@ -21,6 +29,7 @@ import { nameKey } from "~/lib/people";
 import {
   columnLabel,
   columnRole,
+  type GeneratedSlot,
   type Plan,
   type PlanColumn,
   type PlanOption,
@@ -52,6 +61,49 @@ export function WarningList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * Why the generator put this person or group here (#112), with a button to
+ * keep the pick when "Regenerate" runs again.
+ */
+function GeneratedNote({
+  slot,
+  label,
+  onLock,
+  pending,
+}: {
+  slot: GeneratedSlot;
+  label: string;
+  onLock?: () => void;
+  pending: boolean;
+}) {
+  const Icon = slot.locked ? Lock : Sparkles;
+  return (
+    <div className="flex items-start gap-1">
+      <p className="type-caption flex min-w-0 flex-1 gap-1 text-pretty text-muted-foreground">
+        <Icon aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
+        <span>
+          {slot.locked ? "Locked. " : "Generated: "}
+          {slot.reason}
+        </span>
+      </p>
+      {onLock && !slot.locked ? (
+        <Button
+          aria-label={`Lock ${label}`}
+          className="-my-1 size-8 shrink-0"
+          disabled={pending}
+          onClick={onLock}
+          size="icon"
+          title="Lock: Regenerate keeps this pick"
+          type="button"
+          variant="ghost"
+        >
+          <LockOpen aria-hidden="true" className="size-4" />
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -209,6 +261,7 @@ export function SlotPicker({
   plan,
   schedule,
   column,
+  onLock,
   onPick,
   pending,
   position,
@@ -217,6 +270,8 @@ export function SlotPicker({
   plan: Plan;
   schedule: PlanSchedule;
   column: PlanColumn;
+  /** Keeps a generated pick; only drafts can be regenerated. */
+  onLock?: () => void;
   onPick: (name: string | null, userId?: string) => void;
   pending: boolean;
   /** The cell's place in the desk grid, for arrow keys; none on phones. */
@@ -227,6 +282,7 @@ export function SlotPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const cell = plan.cell(schedule, column);
+  const generated = schedule.generated[column];
   const role = columnRole(column, schedule.type);
   const label = columnLabel(column, schedule.type);
   const day = DateTime.fromJSDate(schedule.date)
@@ -362,6 +418,14 @@ export function SlotPicker({
         </PopoverContent>
       </Popover>
       <WarningList warnings={cell.warnings} />
+      {generated && cell.value ? (
+        <GeneratedNote
+          label={`${label} on ${day}`}
+          onLock={onLock}
+          pending={pending}
+          slot={generated}
+        />
+      ) : null}
     </div>
   );
 }
