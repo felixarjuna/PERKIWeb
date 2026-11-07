@@ -6,6 +6,7 @@ import {
   groupMembers,
   groups,
   groupTerms,
+  libraryBooks,
   type NewSchedule,
   profiles,
   scheduleAssignments,
@@ -272,6 +273,24 @@ export const insertUnavailability = async (
     await drizzle(client)
       .insert(unavailability)
       .values({ endsOn, note, startsOn, userId });
+  } finally {
+    await client.end();
+  }
+};
+
+/** Puts a book on the library shelf, PERKI's own and available. */
+export const insertLibraryBook = async (title: string, author: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    const [book] = await drizzle(client)
+      .insert(libraryBooks)
+      .values({ acceptedAt: new Date(), author, title })
+      .returning({ id: libraryBooks.id });
+    if (!book) {
+      throw new Error("Failed to insert the library book");
+    }
+    return book;
   } finally {
     await client.end();
   }

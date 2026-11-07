@@ -29,6 +29,8 @@ import {
 } from "~/lib/library";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { BookStateBadge } from "./book-state-badge";
+import { BorrowDialog } from "./borrow-dialog";
+import MyBooks from "./my-books";
 
 type Book = RouterOutputs["library"]["list"][number];
 
@@ -133,7 +135,13 @@ export function LibraryFiltersBar({
   );
 }
 
-export function BookCard({ book }: { book: Book }) {
+export function BookCard({
+  book,
+  onBorrow,
+}: {
+  book: Book;
+  onBorrow?: () => void;
+}) {
   return (
     <article className="rounded-xl bg-card p-4 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
@@ -150,6 +158,17 @@ export function BookCard({ book }: { book: Book }) {
         <p className="type-body-sm mt-3 line-clamp-3 text-muted-foreground">
           {book.description}
         </p>
+      ) : null}
+      {onBorrow && book.state.kind === "available" ? (
+        <Button
+          aria-label={`Borrow ${book.title}`}
+          className="mt-4"
+          onClick={onBorrow}
+          size="sm"
+          type="button"
+        >
+          Borrow
+        </Button>
       ) : null}
     </article>
   );
@@ -204,6 +223,7 @@ const countLabel = (count: number) =>
 /** Every book in the library, searchable and sortable, with its state. */
 export default function LibraryCatalog() {
   const [filters, setFilters] = useLibraryFilters();
+  const [borrowing, setBorrowing] = React.useState<Book | null>(null);
   // Search runs on the server once typing pauses.
   const q = useDebouncedValue(filters.q);
   const books = api.library.list.useQuery(
@@ -216,30 +236,34 @@ export default function LibraryCatalog() {
   }
 
   return (
-    <div className="space-y-4">
-      <LibraryFiltersBar filters={filters} onChange={setFilters} />
-      {/* Always mounted so screen readers hear the count and empty results. */}
-      <div role="status">
-        {books.data.length === 0 ? (
-          <EmptyLibrary
-            filters={{ ...filters, q }}
-            onClear={() => setFilters(NO_LIBRARY_FILTERS)}
-          />
-        ) : (
-          <p className="type-caption text-muted-foreground tabular-nums">
-            {countLabel(books.data.length)}
-          </p>
-        )}
+    <div className="space-y-8">
+      <MyBooks />
+      <div className="space-y-4">
+        <LibraryFiltersBar filters={filters} onChange={setFilters} />
+        {/* Always mounted so screen readers hear the count and empty results. */}
+        <div role="status">
+          {books.data.length === 0 ? (
+            <EmptyLibrary
+              filters={{ ...filters, q }}
+              onClear={() => setFilters(NO_LIBRARY_FILTERS)}
+            />
+          ) : (
+            <p className="type-caption text-muted-foreground tabular-nums">
+              {countLabel(books.data.length)}
+            </p>
+          )}
+        </div>
+        {books.data.length > 0 ? (
+          <ul aria-busy={books.isPlaceholderData} className="space-y-3">
+            {books.data.map((book) => (
+              <li key={book.id}>
+                <BookCard book={book} onBorrow={() => setBorrowing(book)} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
-      {books.data.length > 0 ? (
-        <ul aria-busy={books.isPlaceholderData} className="space-y-3">
-          {books.data.map((book) => (
-            <li key={book.id}>
-              <BookCard book={book} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <BorrowDialog book={borrowing} onClose={() => setBorrowing(null)} />
     </div>
   );
 }

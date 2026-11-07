@@ -51,6 +51,15 @@ export interface HistoryEvent {
   type: string;
 }
 
+const subjectPhrase: Record<string, string> = {
+  added: "lent by",
+  borrowed: "to",
+  edited: "lent by",
+  returned: "from",
+};
+
+const text = (value: unknown) => (typeof value === "string" ? value : null);
+
 /** A history line: its heading and the who/what under it. */
 export function historyLine(event: HistoryEvent) {
   const parts: string[] = [];
@@ -63,12 +72,27 @@ export function historyLine(event: HistoryEvent) {
   if (event.type === "edited" && changed.length > 0) {
     parts.push(`changed ${changed.join(", ")}`);
   }
-  if (event.subject) {
-    parts.push(
-      event.type === "added" || event.type === "edited"
-        ? `lent by ${event.subject}`
-        : `for ${event.subject}`
-    );
+  // A member borrowing or extending for themselves is said once.
+  const self =
+    event.subject === event.actor &&
+    (event.type === "borrowed" || event.type === "extended");
+  if (event.subject && !self) {
+    parts.push(`${subjectPhrase[event.type] ?? "for"} ${event.subject}`);
   }
-  return { detail: parts.join(" · "), title: eventLabel(event.type) };
+  const dueOn = text(event.details.dueOn);
+  if (dueOn && event.type === "borrowed") {
+    parts.push(`due ${dayLabel(dueOn)}`);
+  }
+  if (dueOn && event.type === "extended") {
+    parts.push(`until ${dayLabel(dueOn)}`);
+  }
+  const note = text(event.details.note);
+  if (note) {
+    parts.push(`“${note}”`);
+  }
+  const byHand = event.type === "borrowed" && event.details.byHand === true;
+  return {
+    detail: parts.join(" · "),
+    title: byHand ? "Lent by hand" : eventLabel(event.type),
+  };
 }

@@ -72,4 +72,57 @@ describe("historyLine", () => {
       })
     ).toEqual({ detail: "", title: "Withdrawn" });
   });
+
+  it("tells borrows, returns and extensions apart, with who and until when", () => {
+    const line = (event: Partial<Parameters<typeof historyLine>[0]>) =>
+      historyLine({
+        actor: null,
+        details: {},
+        subject: null,
+        type: "",
+        ...event,
+      });
+    expect(
+      line({
+        actor: "Ana",
+        details: { dueOn: "2026-12-07" },
+        subject: "Ana",
+        type: "borrowed",
+      })
+    ).toEqual({ detail: "by Ana · due 7 Dec", title: "Borrowed" });
+    expect(
+      line({
+        actor: "Mita",
+        details: { byHand: true, dueOn: "2026-12-07" },
+        subject: "Ana",
+        type: "borrowed",
+      })
+    ).toEqual({
+      detail: "by Mita · to Ana · due 7 Dec",
+      title: "Lent by hand",
+    });
+    expect(
+      line({
+        actor: "Ana",
+        details: { dueOn: "2027-01-06", from: "2026-12-07" },
+        subject: "Ana",
+        type: "extended",
+      })
+    ).toEqual({ detail: "by Ana · until 6 Jan", title: "Loan extended" });
+    expect(
+      line({
+        actor: "Mita",
+        details: { dueOn: "2027-04-01", from: "2026-12-07", note: "Thesis" },
+        subject: "Ana",
+        type: "extended",
+      })
+    ).toEqual({
+      detail: "by Mita · for Ana · until 1 Apr · “Thesis”",
+      title: "Loan extended",
+    });
+    expect(line({ actor: "Mita", subject: "Ana", type: "returned" })).toEqual({
+      detail: "by Mita · from Ana",
+      title: "Returned",
+    });
+  });
 });

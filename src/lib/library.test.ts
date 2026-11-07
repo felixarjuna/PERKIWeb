@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   bookState,
+  borrowRefusal,
+  dueLabel,
   dueOnFrom,
+  extendedDueOn,
+  extendRefusal,
+  extensionsLeftLabel,
   HOLD_DAYS,
   holdEndsOn,
   inShelfState,
@@ -258,5 +263,64 @@ describe("filters", () => {
     );
     expect(inShelfState(overdue, "overdue")).toBe(true);
     expect(inShelfState(overdue, "borrowed")).toBe(true);
+  });
+});
+
+describe("lending", () => {
+  const loan = { dueOn: "2026-12-07", extensions: 0, userId: "ana" };
+
+  it("lends only a book on the shelf with no open loan", () => {
+    expect(borrowRefusal({ kind: "available", queue: 0 })).toBeNull();
+    expect(
+      borrowRefusal({
+        dueOn: "2026-12-07",
+        holderId: "budi",
+        kind: "borrowed",
+        overdue: false,
+        queue: 0,
+      })
+    ).toContain("borrowed");
+    expect(borrowRefusal({ kind: "offered" })).toContain("isn't on the shelf");
+    expect(borrowRefusal({ kind: "withdrawn" })).toContain("left the library");
+    expect(
+      borrowRefusal({
+        holdEndsOn: "2026-11-14",
+        kind: "reserved",
+        queue: 0,
+        reservedFor: "budi",
+      })
+    ).toContain("held");
+  });
+
+  it("extends by 30 days from the due date, twice, for the holder only", () => {
+    expect(extendedDueOn("2026-12-07")).toBe("2027-01-06");
+    expect(extendRefusal(loan, "ana", TODAY)).toBeNull();
+    expect(extendRefusal({ ...loan, extensions: 1 }, "ana", TODAY)).toBeNull();
+    expect(extendRefusal({ ...loan, extensions: 2 }, "ana", TODAY)).toBe(
+      "Already extended 2 times. Ask the librarian."
+    );
+    expect(extendRefusal(loan, "budi", TODAY)).toContain("Only the member");
+  });
+
+  it("allows extending on the due date but not after it", () => {
+    expect(extendRefusal(loan, "ana", "2026-12-07")).toBeNull();
+    expect(extendRefusal(loan, "ana", "2026-12-08")).toBe(
+      "It's past the due date. Ask the librarian."
+    );
+  });
+
+  it("refuses an extension while someone waits", () => {
+    expect(extendRefusal(loan, "ana", TODAY, 1)).toBe(
+      "Someone is waiting for this book."
+    );
+  });
+
+  it("labels the due date for the holder", () => {
+    expect(dueLabel("2026-12-07", TODAY)).toBe("Due 7 Dec");
+    expect(dueLabel("2026-12-07", "2026-12-07")).toBe("Due 7 Dec");
+    expect(dueLabel("2026-12-07", "2026-12-09")).toBe("Overdue since 8 Dec");
+    expect(extensionsLeftLabel(0)).toBe("2 extensions left");
+    expect(extensionsLeftLabel(1)).toBe("1 extension left");
+    expect(extensionsLeftLabel(3)).toBe("No extensions left");
   });
 });
