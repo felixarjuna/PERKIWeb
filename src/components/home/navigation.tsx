@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpen,
   Calendar,
   ClipboardList,
   HandHeart,
@@ -24,9 +25,10 @@ const navigations = [
   { href: "/prayers", icon: HandHeart, name: "Prayer" },
 ] as const;
 
-/** Only signed-in members have duties to look at. */
+/** Only signed-in members have duties to look at and books to borrow. */
 const memberNavigations = [
   { href: "/duties", icon: ClipboardList, name: "Duties" },
+  { href: "/library", icon: BookOpen, name: "Library" },
 ] as const;
 
 const itemClass =

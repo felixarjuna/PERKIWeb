@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   CalendarDays,
   HandHeart,
   HeartHandshake,
@@ -77,6 +78,12 @@ export const adminNavigation = [
     icon: HandHeart,
     title: "Prayers",
     url: "/admin/prayers",
+  },
+  {
+    group: "Content",
+    icon: BookOpen,
+    title: "Library",
+    url: "/admin/library",
   },
   // Rendered at the bottom of the sidebar, above the account menu.
   {

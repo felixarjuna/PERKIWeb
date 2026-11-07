@@ -4,6 +4,7 @@ import { accessRouter } from "./routers/access";
 import { botRouter } from "./routers/bot";
 import { calendarFeedRouter } from "./routers/calendar-feed";
 import { groupRouter } from "./routers/groups";
+import { libraryRouter } from "./routers/library";
 import { peopleRouter } from "./routers/people";
 import { profileRouter } from "./routers/profile";
 import { reviewInboxRouter } from "./routers/review-inbox";
@@ -34,6 +35,7 @@ export const appRouter = createTRPCRouter({
   bot: botRouter,
   calendarFeed: calendarFeedRouter,
   groups: groupRouter,
+  library: libraryRouter,
   people: peopleRouter,
   prayers: prayerRouter,
   profiles: profileRouter,

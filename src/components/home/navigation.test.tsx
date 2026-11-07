@@ -77,14 +77,18 @@ describe("navigation account item", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
   });
 
-  it("links members, not visitors, to their duties", () => {
+  it("links members, not visitors, to their duties and the library", () => {
     render(<Navigation />);
     expect(
       screen.getByRole("link", { name: "Duties" }).getAttribute("href")
     ).toBe("/duties");
+    expect(
+      screen.getByRole("link", { name: "Library" }).getAttribute("href")
+    ).toBe("/library");
     cleanup();
     state.session = null;
     render(<Navigation />);
     expect(screen.queryByRole("link", { name: "Duties" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Library" })).toBeNull();
   });
 });
