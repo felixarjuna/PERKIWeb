@@ -86,6 +86,11 @@ const parse = (day: string) => DateTime.fromISO(day, { zone: ZONE });
 export const addDays = (day: string, days: number) =>
   parse(day).plus({ days }).toISODate() ?? day;
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Whether `day` is a real calendar day written `yyyy-MM-dd` ("2026-02-30" isn't). */
+export const isDay = (day: string) => ISO_DAY.test(day) && parse(day).isValid;
+
 /** The due date of a loan that starts on `today`. */
 export const dueOnFrom = (today: string) => addDays(today, LOAN_DAYS);
 

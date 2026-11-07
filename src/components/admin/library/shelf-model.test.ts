@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { historyLine, type ShelfLending, shelfLabel } from "./shelf-model";
+import {
+  historyLine,
+  type ShelfLending,
+  shelfLabel,
+  withdrawRefusal,
+} from "./shelf-model";
 
 const book = (overrides: Partial<ShelfLending>): ShelfLending => ({
   dueOn: null,
@@ -124,5 +129,15 @@ describe("historyLine", () => {
       detail: "by Mita · from Ana",
       title: "Returned",
     });
+  });
+});
+
+describe("withdrawRefusal", () => {
+  it("asks for the return before a book that's out can leave", () => {
+    expect(withdrawRefusal(book({ kind: "borrowed" }))).toBe(
+      "Mark it returned before withdrawing it."
+    );
+    expect(withdrawRefusal(book({ kind: "available" }))).toBeNull();
+    expect(withdrawRefusal(book({ kind: "reserved" }))).toBeNull();
   });
 });

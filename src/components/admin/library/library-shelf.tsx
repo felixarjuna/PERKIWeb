@@ -36,7 +36,7 @@ import { AdminSearch, AdminSelect, QueryMessage } from "../admin-controls";
 import { BookDialog, type ShelfBook } from "./book-dialog";
 import { BookHistory } from "./book-history";
 import { DueDateDialog, LendDialog } from "./loan-dialogs";
-import { shelfLabel } from "./shelf-model";
+import { shelfLabel, withdrawRefusal } from "./shelf-model";
 
 const stateOptions = SHELF_STATES.map((state) => ({
   label: SHELF_STATE_LABELS[state],
@@ -147,6 +147,8 @@ function ShelfRow({
   onRestore,
   restoring,
 }: { book: ShelfBook } & RowActions) {
+  const cantWithdraw = withdrawRefusal(book);
+  const hintId = `withdraw-${book.id}`;
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
@@ -210,11 +212,23 @@ function ShelfRow({
             Bring back
           </Button>
         ) : (
-          <Button onClick={onWithdraw} size="sm" type="button" variant="ghost">
+          <Button
+            aria-describedby={cantWithdraw ? hintId : undefined}
+            disabled={cantWithdraw !== null}
+            onClick={onWithdraw}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
             Withdraw
           </Button>
         )}
       </div>
+      {cantWithdraw ? (
+        <p className="type-caption mt-2 text-muted-foreground" id={hintId}>
+          {cantWithdraw}
+        </p>
+      ) : null}
     </li>
   );
 }

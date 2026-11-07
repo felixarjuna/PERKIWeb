@@ -12,6 +12,7 @@ import {
   extendedDueOn,
   extendRefusal,
   inShelfState,
+  isDay,
   isOverdue,
   LIBRARY_SHOWS,
   LIBRARY_SORTS,
@@ -47,7 +48,6 @@ import { adminProcedure, createTRPCRouter, protectedProcedure } from "../trpc";
 const MAX_QUERY = 200;
 /** Past borrows My books lists, newest first. */
 const MAX_PAST_LOANS = 20;
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 const bookId = z.object({ id: z.number().int().positive() });
 
@@ -109,6 +109,9 @@ const loanFailed = (error: unknown) => {
   }
   throw error;
 };
+
+const WITHDRAW_WHILE_OUT =
+  "This book is out with a member. Mark it returned first.";
 
 const noOpenLoan = () =>
   new TRPCError({
@@ -543,7 +546,7 @@ export const libraryRouter = createTRPCRouter({
   setDueOn: adminProcedure
     .input(
       bookId.extend({
-        dueOn: z.string().regex(ISO_DAY, "Pick a date."),
+        dueOn: z.string().refine(isDay, "Pick a date."),
         note: optionalText(MAX_LOAN_NOTE),
       })
     )
@@ -621,6 +624,13 @@ export const libraryRouter = createTRPCRouter({
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "This book is already withdrawn.",
+          });
+        }
+        // Its loan would stay open forever, still due for the holder.
+        if (await openLoanOf(tx, book.id)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: WITHDRAW_WHILE_OUT,
           });
         }
         await tx

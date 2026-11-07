@@ -4,6 +4,19 @@ import { buttonVariants } from "~/components/ui/button";
 import { dayLabel, isOverdue } from "~/lib/library";
 import { cn } from "~/lib/utils";
 
+/**
+ * The card's data, or null when it can't be read (e.g. before
+ * `deploy:migrate` adds the library tables), so the account page still
+ * renders without the card. Nothing is logged: the error may name the member.
+ */
+export async function orNothing<T>(load: () => Promise<T>) {
+  try {
+    return await load();
+  } catch {
+    return null;
+  }
+}
+
 /** "Mere Christianity, due 7 Dec", "2 books, next due 7 Dec", … */
 export function booksSummary(
   holding: { dueOn: string; title: string }[],
