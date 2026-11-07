@@ -13,6 +13,7 @@ import {
   inLineLabel,
   inShelfState,
   joinRefusal,
+  isDay,
   LOAN_DAYS,
   lentLabel,
   libraryFiltersFrom,
@@ -462,6 +463,16 @@ describe("lending", () => {
     expect(extensionsLeftLabel(0)).toBe("2 extensions left");
     expect(extensionsLeftLabel(1)).toBe("1 extension left");
     expect(extensionsLeftLabel(3)).toBe("No extensions left");
+  });
+
+  it("accepts only real calendar days", () => {
+    expect(isDay("2026-12-07")).toBe(true);
+    expect(isDay("2028-02-29")).toBe(true);
+    expect(isDay("2027-02-29")).toBe(false);
+    expect(isDay("2026-02-30")).toBe(false);
+    expect(isDay("2026-13-01")).toBe(false);
+    expect(isDay("7 Dec")).toBe(false);
+    expect(isDay("2026-12-07T10:00")).toBe(false);
   });
 });
 

@@ -250,6 +250,10 @@ describe("library lending", () => {
     await expect(
       staff.setDueOn({ dueOn: "2026-11-06", id, note: "" })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // A day that doesn't exist is a bad request, not a database error.
+    await expect(
+      staff.setDueOn({ dueOn: "2027-02-30", id, note: "" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await staff.setDueOn({ dueOn: "2027-04-01", id, note: "Long study" });
     const [loan] = await testDb.select().from(libraryLoans);
     expect(loan).toMatchObject({
@@ -301,5 +305,19 @@ describe("library lending", () => {
     expect(await staff.manage({ state: "overdue" })).toMatchObject([
       { holder: "Ana Putri", id, overdue: true },
     ]);
+  });
+
+  it("refuses to withdraw a book while it's out", async () => {
+    const { ana, id, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    await callerFor(ana.id).library.borrow({ id });
+    await expect(staff.withdraw({ id })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "This book is out with a member. Mark it returned first.",
+    });
+    expect(await statusOf(id)).toBe("borrowed");
+    await staff.markReturned({ id });
+    await staff.withdraw({ id });
+    expect(await statusOf(id)).toBe("withdrawn");
   });
 });
