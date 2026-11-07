@@ -5,6 +5,7 @@ import {
   libraryBooks,
   libraryEvents,
   libraryLoans,
+  libraryReservations,
   users,
 } from "~/lib/db/schema/schema";
 import {
@@ -13,6 +14,7 @@ import {
   extendRefusal,
   inShelfState,
   isOverdue,
+  joinRefusal,
   LIBRARY_SHOWS,
   LIBRARY_SORTS,
   MAX_AUTHOR,
@@ -21,6 +23,8 @@ import {
   MAX_LOAN_NOTE,
   MAX_TITLE,
   memberBookState,
+  queueOrder,
+  queuePosition,
   SHELF_STATES,
   shownFor,
   sortBooks,
@@ -29,12 +33,16 @@ import { db } from "~/server";
 import {
   libraryToday,
   loadLending,
+  lockAndSettle,
   lockBook,
   logEvent,
   openLoanOf,
   refreshStatus,
+  settleBook,
+  settleRunOutHolds,
   startLoan,
   statesOf,
+  withReadyEmails,
 } from "~/server/library";
 import {
   isPgError,
@@ -60,13 +68,17 @@ const optionalText = (max: number) =>
     .optional()
     .transform((value) => value || null);
 
-const bookInput = z.object({
+/** What a member types when offering a book of their own. */
+const offerInput = z.object({
   author: z.string().trim().min(1, "Add the author.").max(MAX_AUTHOR),
   description: optionalText(MAX_DESCRIPTION),
   language: optionalText(MAX_LANGUAGE),
+  title: z.string().trim().min(1, "Add the title.").max(MAX_TITLE),
+});
+
+const bookInput = offerInput.extend({
   /** The member who lends it; null when PERKI owns it. */
   ownerId: z.string().min(1).nullable(),
-  title: z.string().trim().min(1, "Add the title.").max(MAX_TITLE),
 });
 
 const EDITABLE = [
@@ -142,7 +154,49 @@ async function peopleById(ids: (string | null | undefined)[]) {
   );
 }
 
+const notInLine = () =>
+  new TRPCError({
+    code: "BAD_REQUEST",
+    message: "You're not in line for this book.",
+  });
+
+/** Every book's waiting/ready queue and derived state. */
+async function lendingOf(books: readonly { id: number; status: string }[]) {
+  const [{ lines }, states] = await Promise.all([
+    loadLending(
+      db,
+      books.map((book) => book.id)
+    ),
+    statesOf(db, books),
+  ]);
+  return { lines, states };
+}
+
 export const libraryRouter = createTRPCRouter({
+  /** Staff, once an offered book is in their hands: puts it on the shelf. */
+  accept: adminProcedure.input(bookId).mutation(({ ctx, input }) =>
+    db.transaction(async (tx) => {
+      const book = await lockBook(tx, input.id);
+      if (book.status !== "offered") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This book is already on the shelf.",
+        });
+      }
+      await tx
+        .update(libraryBooks)
+        .set({ acceptedAt: new Date(), status: "available" })
+        .where(eq(libraryBooks.id, book.id));
+      await logEvent(tx, {
+        actorId: ctx.session.user.id,
+        bookId: book.id,
+        subjectId: book.ownerId,
+        type: "accepted",
+      });
+      return { id: book.id };
+    })
+  ),
+
   /** Staff: adds a book straight onto the shelf, PERKI's or a member's. */
   add: adminProcedure.input(bookInput).mutation(({ ctx, input }) =>
     db
@@ -177,16 +231,64 @@ export const libraryRouter = createTRPCRouter({
    * due in `LOAN_DAYS`. Only staff's Mark returned ends it.
    */
   borrow: protectedProcedure.input(bookId).mutation(({ ctx, input }) =>
-    db
-      .transaction((tx) =>
-        startLoan(tx, {
+    withReadyEmails((tx, notices) =>
+      startLoan(
+        tx,
+        {
           actorId: ctx.session.user.id,
           bookId: input.id,
           userId: ctx.session.user.id,
-        })
+        },
+        notices
       )
-      .catch(loanFailed)
+    ).catch(loanFailed)
   ),
+
+  /**
+   * Staff: cancels a member's place in line. A cancelled hold passes to the
+   * next in line at once.
+   */
+  cancelReservation: adminProcedure
+    .input(z.object({ reservationId: z.number().int().positive() }))
+    .mutation(({ ctx, input }) =>
+      withReadyEmails(async (tx, notices) => {
+        const [found] = await tx
+          .select({ bookId: libraryReservations.bookId })
+          .from(libraryReservations)
+          .where(eq(libraryReservations.id, input.reservationId));
+        if (!found) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Reservation not found.",
+          });
+        }
+        const book = await lockBook(tx, found.bookId);
+        const [cancelled] = await tx
+          .update(libraryReservations)
+          .set({ status: "cancelled" })
+          .where(
+            and(
+              eq(libraryReservations.id, input.reservationId),
+              inArray(libraryReservations.status, ["waiting", "ready"])
+            )
+          )
+          .returning({ userId: libraryReservations.userId });
+        if (!cancelled) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This reservation has already ended.",
+          });
+        }
+        await logEvent(tx, {
+          actorId: ctx.session.user.id,
+          bookId: book.id,
+          subjectId: cancelled.userId,
+          type: "cancelled",
+        });
+        notices.push(...(await settleBook(tx, book)));
+        return { id: input.reservationId };
+      })
+    ),
 
   /**
    * The holder: moves the due date `LOAN_DAYS` on, at most `MAX_EXTENSIONS`
@@ -252,6 +354,7 @@ export const libraryRouter = createTRPCRouter({
   history: adminProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .query(async ({ input }) => {
+      await settleRunOutHolds();
       const [book] = await db
         .select({ id: libraryBooks.id, title: libraryBooks.title })
         .from(libraryBooks)
@@ -264,9 +367,12 @@ export const libraryRouter = createTRPCRouter({
         .from(libraryEvents)
         .where(eq(libraryEvents.bookId, input.id))
         .orderBy(desc(libraryEvents.at), desc(libraryEvents.id));
-      const people = await peopleById(
-        events.flatMap((event) => [event.actorId, event.subjectId])
-      );
+      const { lines } = await loadLending(db, [book.id]);
+      const line = queueOrder(lines.get(book.id) ?? []);
+      const people = await peopleById([
+        ...events.flatMap((event) => [event.actorId, event.subjectId]),
+        ...line.map((reservation) => reservation.userId),
+      ]);
       const nameOf = (id: string | null) =>
         id ? (people.get(id)?.name ?? "Removed account") : null;
       return {
@@ -278,24 +384,105 @@ export const libraryRouter = createTRPCRouter({
           subject: nameOf(event.subjectId),
           type: event.type,
         })),
+        /** Who's in line, the one whose turn it is first. */
+        queue: line.map((reservation) => ({
+          expiresOn: reservation.expiresOn,
+          id: reservation.id,
+          name: nameOf(reservation.userId) ?? "Removed account",
+          position: queuePosition(line, reservation.userId),
+          status: reservation.status,
+        })),
         title: book.title,
       };
     }),
+
+  /**
+   * Signed-in members: a place in line for a book someone else has. Returns
+   * their place; they borrow it once the librarian has it back.
+   */
+  joinQueue: protectedProcedure.input(bookId).mutation(({ ctx, input }) =>
+    withReadyEmails(async (tx, notices) => {
+      const viewerId = ctx.session.user.id;
+      const book = await lockAndSettle(tx, input.id, notices);
+      const { lines } = await loadLending(tx, [book.id]);
+      const line = lines.get(book.id) ?? [];
+      const state = (await statesOf(tx, [book])).get(book.id);
+      const inLine = line.some((entry) => entry.userId === viewerId);
+      const refusal = state ? joinRefusal(state, viewerId, inLine) : null;
+      if (refusal) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: refusal });
+      }
+      const [reservation] = await tx
+        .insert(libraryReservations)
+        .values({ bookId: book.id, userId: viewerId })
+        .returning();
+      if (!reservation) {
+        throw new Error("Failed to join the queue");
+      }
+      await logEvent(tx, {
+        actorId: viewerId,
+        bookId: book.id,
+        subjectId: viewerId,
+        type: "queued",
+      });
+      return {
+        position: queuePosition(
+          [...line, { ...reservation, status: "waiting" as const }],
+          viewerId
+        ),
+      };
+    })
+  ),
+
+  /**
+   * Signed-in members: gives up their place in line, or the hold that's
+   * theirs, which then passes to the next in line.
+   */
+  leaveQueue: protectedProcedure.input(bookId).mutation(({ ctx, input }) =>
+    withReadyEmails(async (tx, notices) => {
+      const viewerId = ctx.session.user.id;
+      const book = await lockAndSettle(tx, input.id, notices);
+      const [left] = await tx
+        .update(libraryReservations)
+        .set({ status: "cancelled" })
+        .where(
+          and(
+            eq(libraryReservations.bookId, book.id),
+            eq(libraryReservations.userId, viewerId),
+            inArray(libraryReservations.status, ["waiting", "ready"])
+          )
+        )
+        .returning({ id: libraryReservations.id });
+      if (!left) {
+        throw notInLine();
+      }
+      await logEvent(tx, {
+        actorId: viewerId,
+        bookId: book.id,
+        subjectId: viewerId,
+        type: "left_queue",
+      });
+      notices.push(...(await settleBook(tx, book)));
+      return { id: book.id };
+    })
+  ),
 
   /** Staff: lends a book to a named member, e.g. one without a phone at hand. */
   lend: adminProcedure
     .input(bookId.extend({ userId: z.string().min(1) }))
     .mutation(({ ctx, input }) =>
-      db
-        .transaction((tx) =>
-          startLoan(tx, {
+      withReadyEmails((tx, notices) =>
+        startLoan(
+          tx,
+          {
             actorId: ctx.session.user.id,
             bookId: input.id,
             byHand: true,
             userId: input.userId,
-          })
+          },
+          notices
         )
-        .catch(loanFailed)
+      ).catch(loanFailed)
     ),
 
   /**
@@ -311,6 +498,7 @@ export const libraryRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      await settleRunOutHolds();
       const books = await db
         .select({
           addedAt: libraryBooks.createdAt,
@@ -318,6 +506,7 @@ export const libraryRouter = createTRPCRouter({
           description: libraryBooks.description,
           id: libraryBooks.id,
           language: libraryBooks.language,
+          ownerId: libraryBooks.ownerId,
           status: libraryBooks.status,
           title: libraryBooks.title,
         })
@@ -331,15 +520,25 @@ export const libraryRouter = createTRPCRouter({
           )
         )
         .orderBy(asc(libraryBooks.id));
-      const states = await statesOf(db, books);
+      const { lines, states } = await lendingOf(books);
+      const viewerId = ctx.session.user.id;
       const items = books
-        .map(({ status: _status, ...book }) => ({
-          ...book,
-          state: memberBookState(
+        .map(({ ownerId, status: _status, ...book }) => {
+          const state = memberBookState(
             states.get(book.id) ?? { kind: "available", queue: 0 },
-            ctx.session.user.id
-          ),
-        }))
+            viewerId,
+            queuePosition(lines.get(book.id) ?? [], viewerId)
+          );
+          // An offered book is "mine" to the member who offered it, never
+          // naming the owner to anyone else.
+          return {
+            ...book,
+            state:
+              state.kind === "offered"
+                ? { ...state, mine: ownerId === viewerId }
+                : state,
+          };
+        })
         .filter((book) => shownFor(book.state, input.show));
       return sortBooks(items, input.sort);
     }),
@@ -356,6 +555,7 @@ export const libraryRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
+      await settleRunOutHolds();
       const books = await db
         .select()
         .from(libraryBooks)
@@ -428,7 +628,7 @@ export const libraryRouter = createTRPCRouter({
    * way a loan ends; the next Borrow never counts as the return.
    */
   markReturned: adminProcedure.input(bookId).mutation(({ ctx, input }) =>
-    db.transaction(async (tx) => {
+    withReadyEmails(async (tx, notices) => {
       const book = await lockBook(tx, input.id);
       const loan = await openLoanOf(tx, book.id);
       if (!loan) {
@@ -439,7 +639,6 @@ export const libraryRouter = createTRPCRouter({
         .update(libraryLoans)
         .set({ returnedAt: new Date(), returnedById: actorId })
         .where(eq(libraryLoans.id, loan.id));
-      const status = await refreshStatus(tx, book);
       await logEvent(tx, {
         actorId,
         bookId: book.id,
@@ -448,6 +647,9 @@ export const libraryRouter = createTRPCRouter({
         subjectId: loan.userId,
         type: "returned",
       });
+      // The first in line's 7 days start today.
+      notices.push(...(await settleBook(tx, book)));
+      const status = await refreshStatus(tx, book);
       return { id: book.id, status };
     })
   ),
@@ -457,6 +659,7 @@ export const libraryRouter = createTRPCRouter({
    * whether they may extend it, and the ones they've given back.
    */
   mine: protectedProcedure.query(async ({ ctx }) => {
+    await settleRunOutHolds();
     const viewerId = ctx.session.user.id;
     const loans = await db
       .select({
@@ -474,10 +677,26 @@ export const libraryRouter = createTRPCRouter({
       .where(eq(libraryLoans.userId, viewerId))
       .orderBy(asc(libraryLoans.dueOn), asc(libraryLoans.id));
     const open = loans.filter((loan) => loan.returnedAt === null);
-    const { lines } = await loadLending(
-      db,
-      open.map((loan) => loan.bookId)
-    );
+    const waitingFor = await db
+      .select({
+        author: libraryBooks.author,
+        bookId: libraryReservations.bookId,
+        title: libraryBooks.title,
+      })
+      .from(libraryReservations)
+      .innerJoin(libraryBooks, eq(libraryBooks.id, libraryReservations.bookId))
+      .where(
+        and(
+          eq(libraryReservations.userId, viewerId),
+          inArray(libraryReservations.status, ["waiting", "ready"]),
+          ne(libraryBooks.status, "withdrawn")
+        )
+      )
+      .orderBy(asc(libraryReservations.createdAt));
+    const { lines } = await loadLending(db, [
+      ...open.map((loan) => loan.bookId),
+      ...waitingFor.map((entry) => entry.bookId),
+    ]);
     const today = libraryToday();
     const past = loans.flatMap(({ author, borrowedAt, returnedAt, title }) =>
       returnedAt ? [{ author, borrowedAt, returnedAt, title }] : []
@@ -500,14 +719,109 @@ export const libraryRouter = createTRPCRouter({
         title: loan.title,
       })),
       past: past.slice(0, MAX_PAST_LOANS),
+      /** Books they wait for: their place, or until when it's held for them. */
+      queue: waitingFor.map((entry) => {
+        const line = queueOrder(lines.get(entry.bookId) ?? []);
+        const [turn] = line;
+        const ready = turn?.status === "ready" && turn.userId === viewerId;
+        return {
+          ...entry,
+          holdEndsOn: ready ? (turn.expiresOn ?? null) : null,
+          position: ready ? null : queuePosition(line, viewerId),
+        };
+      }),
     };
   }),
+
+  /**
+   * Signed-in members: the books they lend to the library, each with who
+   * has it now and until when, and who borrowed it before. Only the owner
+   * sees these holders; the general list never does.
+   */
+  myLentBooks: protectedProcedure.query(async ({ ctx }) => {
+    await settleRunOutHolds();
+    const books = await db
+      .select()
+      .from(libraryBooks)
+      .where(eq(libraryBooks.ownerId, ctx.session.user.id))
+      .orderBy(asc(libraryBooks.title), asc(libraryBooks.id));
+    if (books.length === 0) {
+      return [];
+    }
+    const states = await statesOf(db, books);
+    const loans = await db
+      .select({
+        bookId: libraryLoans.bookId,
+        borrowedAt: libraryLoans.borrowedAt,
+        returnedAt: libraryLoans.returnedAt,
+        userId: libraryLoans.userId,
+      })
+      .from(libraryLoans)
+      .where(
+        inArray(
+          libraryLoans.bookId,
+          books.map((book) => book.id)
+        )
+      )
+      .orderBy(desc(libraryLoans.borrowedAt), desc(libraryLoans.id));
+    const people = await peopleById(loans.map((loan) => loan.userId));
+    const nameOf = (id: string) => people.get(id)?.name ?? "Removed account";
+    return books.map((book) => {
+      const state = states.get(book.id) ?? { kind: "available", queue: 0 };
+      return {
+        author: book.author,
+        dueOn: state.kind === "borrowed" ? state.dueOn : null,
+        holder: state.kind === "borrowed" ? nameOf(state.holderId) : null,
+        id: book.id,
+        kind: state.kind,
+        loans: loans
+          .filter((loan) => loan.bookId === book.id)
+          .map((loan) => ({
+            borrowedAt: loan.borrowedAt,
+            borrower: nameOf(loan.userId),
+            returnedAt: loan.returnedAt,
+          })),
+        overdue: state.kind === "borrowed" && state.overdue,
+        title: book.title,
+      };
+    });
+  }),
+
+  /**
+   * Signed-in members: offers a book of their own to the library. It stays
+   * theirs and is listed as Offered until the librarian accepts it.
+   */
+  offer: protectedProcedure.input(offerInput).mutation(({ ctx, input }) =>
+    db.transaction(async (tx) => {
+      const viewerId = ctx.session.user.id;
+      const [book] = await tx
+        .insert(libraryBooks)
+        .values({
+          ...input,
+          createdById: viewerId,
+          ownerId: viewerId,
+          status: "offered",
+        })
+        .returning({ id: libraryBooks.id });
+      if (!book) {
+        throw new Error("Failed to offer the book");
+      }
+      await logEvent(tx, {
+        actorId: viewerId,
+        bookId: book.id,
+        details: { author: input.author, title: input.title },
+        subjectId: viewerId,
+        type: "offered",
+      });
+      return book;
+    })
+  ),
 
   /** Staff: brings a withdrawn book back onto the shelf. */
   restore: adminProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(({ ctx, input }) =>
-      db.transaction(async (tx) => {
+      withReadyEmails(async (tx, notices) => {
         const book = await lockBook(tx, input.id);
         if (book.status !== "withdrawn") {
           throw new TRPCError({
@@ -523,15 +837,16 @@ export const libraryRouter = createTRPCRouter({
             status: "available",
           })
           .where(eq(libraryBooks.id, book.id));
-        const status = await refreshStatus(tx, {
-          id: book.id,
-          status: "available",
-        });
         await logEvent(tx, {
           actorId: ctx.session.user.id,
           bookId: book.id,
           type: "restored",
         });
+        const status = await refreshStatus(tx, {
+          id: book.id,
+          status: "available",
+        });
+        notices.push(...(await settleBook(tx, { ...book, status })));
         return { id: book.id, status };
       })
     ),
@@ -627,11 +942,28 @@ export const libraryRouter = createTRPCRouter({
           .update(libraryBooks)
           .set({ status: "withdrawn" })
           .where(eq(libraryBooks.id, book.id));
-        await logEvent(tx, {
-          actorId: ctx.session.user.id,
-          bookId: book.id,
-          type: "withdrawn",
-        });
+        const actorId = ctx.session.user.id;
+        await logEvent(tx, { actorId, bookId: book.id, type: "withdrawn" });
+        // Nobody can wait for a book that left the library.
+        const cancelled = await tx
+          .update(libraryReservations)
+          .set({ status: "cancelled" })
+          .where(
+            and(
+              eq(libraryReservations.bookId, book.id),
+              inArray(libraryReservations.status, ["waiting", "ready"])
+            )
+          )
+          .returning({ userId: libraryReservations.userId });
+        for (const { userId } of cancelled) {
+          // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
+          await logEvent(tx, {
+            actorId,
+            bookId: book.id,
+            subjectId: userId,
+            type: "cancelled",
+          });
+        }
         return { id: book.id };
       })
     ),

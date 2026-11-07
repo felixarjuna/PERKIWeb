@@ -80,6 +80,7 @@ describe("library", () => {
           kind: "available",
           mine: false,
           overdue: false,
+          position: null,
         },
         title: "Mere Christianity",
       },
@@ -112,6 +113,7 @@ describe("library", () => {
       kind: "borrowed",
       mine: false,
       overdue: false,
+      position: null,
     });
     const sent = JSON.stringify(seen);
     expect(sent).not.toContain(budi.id);

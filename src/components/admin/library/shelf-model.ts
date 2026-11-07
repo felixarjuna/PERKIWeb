@@ -52,11 +52,22 @@ export interface HistoryEvent {
 }
 
 const subjectPhrase: Record<string, string> = {
+  accepted: "lent by",
   added: "lent by",
   borrowed: "to",
   edited: "lent by",
   returned: "from",
 };
+
+/** Things members do for themselves, so their name is said once. */
+const SELF_SERVICE = new Set([
+  "borrowed",
+  "extended",
+  "fulfilled",
+  "left_queue",
+  "offered",
+  "queued",
+]);
 
 const text = (value: unknown) => (typeof value === "string" ? value : null);
 
@@ -73,9 +84,7 @@ export function historyLine(event: HistoryEvent) {
     parts.push(`changed ${changed.join(", ")}`);
   }
   // A member borrowing or extending for themselves is said once.
-  const self =
-    event.subject === event.actor &&
-    (event.type === "borrowed" || event.type === "extended");
+  const self = event.subject === event.actor && SELF_SERVICE.has(event.type);
   if (event.subject && !self) {
     parts.push(`${subjectPhrase[event.type] ?? "for"} ${event.subject}`);
   }
@@ -85,6 +94,10 @@ export function historyLine(event: HistoryEvent) {
   }
   if (dueOn && event.type === "extended") {
     parts.push(`until ${dayLabel(dueOn)}`);
+  }
+  const expiresOn = text(event.details.expiresOn);
+  if (expiresOn && event.type === "ready") {
+    parts.push(`until ${dayLabel(expiresOn)}`);
   }
   const note = text(event.details.note);
   if (note) {

@@ -8,7 +8,15 @@ const state = vi.hoisted(() => ({
   borrowed: [] as unknown[],
   extended: [] as unknown[],
   input: undefined as unknown,
-  mine: { holding: [] as unknown[], past: [] as unknown[] },
+  joined: [] as unknown[],
+  left: [] as unknown[],
+  lent: [] as unknown[],
+  mine: {
+    holding: [] as unknown[],
+    past: [] as unknown[],
+    queue: [] as unknown[],
+  },
+  offered: [] as unknown[],
   params: "",
 }));
 vi.mock("~/trpc/react", () => {
@@ -21,6 +29,8 @@ vi.mock("~/trpc/react", () => {
       library: {
         borrow: { useMutation: mutation(state.borrowed) },
         extend: { useMutation: mutation(state.extended) },
+        joinQueue: { useMutation: mutation(state.joined) },
+        leaveQueue: { useMutation: mutation(state.left) },
         list: {
           useQuery: (input: unknown) => {
             state.input = input;
@@ -28,6 +38,8 @@ vi.mock("~/trpc/react", () => {
           },
         },
         mine: { useQuery: () => ({ data: state.mine }) },
+        myLentBooks: { useQuery: () => ({ data: state.lent }) },
+        offer: { useMutation: mutation(state.offered) },
       },
       useUtils: () => ({ library: { invalidate: vi.fn() } }),
     },
@@ -37,12 +49,15 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(state.params),
 }));
 
+const BORROW = /^Borrow/;
+
 const free: MemberBookState = {
   dueOn: null,
   holdEndsOn: null,
   kind: "available",
   mine: false,
   overdue: false,
+  position: null,
 };
 
 const book = (id: number, title: string, bookState = free) => ({
@@ -60,7 +75,11 @@ describe("LibraryCatalog", () => {
     state.books = [];
     state.borrowed.length = 0;
     state.extended.length = 0;
-    state.mine = { holding: [], past: [] };
+    state.joined.length = 0;
+    state.left.length = 0;
+    state.lent = [];
+    state.offered.length = 0;
+    state.mine = { holding: [], past: [], queue: [] };
     state.params = "";
   });
 
@@ -168,6 +187,7 @@ describe("LibraryCatalog", () => {
           title: "Miracles",
         },
       ],
+      queue: [],
     };
     state.books = [book(1, "Mere Christianity")];
     render(<LibraryCatalog />);
@@ -184,6 +204,137 @@ describe("LibraryCatalog", () => {
       screen.getByRole("button", { name: "Extend Mere Christianity" })
     );
     expect(state.extended).toEqual([{ loanId: 11 }]);
+    vi.useRealTimers();
+  });
+
+  it("queues for a borrowed book and shows the place in line", () => {
+    state.books = [
+      book(1, "Mere Christianity", {
+        ...free,
+        dueOn: "2026-12-07",
+        kind: "borrowed",
+      }),
+      book(2, "The Four Loves", {
+        ...free,
+        dueOn: "2026-12-07",
+        kind: "borrowed",
+        position: 2,
+      }),
+    ];
+    render(<LibraryCatalog />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Join the queue for Mere Christianity",
+      })
+    );
+    expect(state.joined).toEqual([{ id: 1 }]);
+    expect(screen.getByText("2nd in line")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", {
+        name: "Join the queue for The Four Loves",
+      })
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Leave the queue for The Four Loves" })
+    );
+    expect(state.left).toEqual([{ id: 2 }]);
+  });
+
+  it("lets the member it's reserved for borrow it", () => {
+    state.books = [
+      book(1, "Mere Christianity", {
+        ...free,
+        holdEndsOn: "2026-11-14",
+        kind: "reserved",
+        mine: true,
+      }),
+    ];
+    render(<LibraryCatalog />);
+    expect(screen.getByText("Reserved for you · until 14 Nov")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Borrow Mere Christianity" })
+    ).toBeTruthy();
+  });
+
+  it("tells the member who offered a book to hand it over", () => {
+    state.books = [
+      book(1, "Nachfolge", { ...free, kind: "offered", mine: true }),
+      book(2, "Miracles", { ...free, kind: "offered" }),
+    ];
+    render(<LibraryCatalog />);
+    expect(
+      screen.getByText("Hand it to the librarian; it appears once accepted.")
+    ).toBeTruthy();
+    expect(screen.getByText("Not on the shelf yet.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: BORROW })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Offer a book" }));
+    fireEvent.change(screen.getByLabelText("Title"), {
+      target: { value: "Life Together" },
+    });
+    fireEvent.change(screen.getByLabelText("Author"), {
+      target: { value: "Dietrich Bonhoeffer" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Offer book" }));
+    expect(state.offered).toEqual([
+      {
+        author: "Dietrich Bonhoeffer",
+        description: "",
+        language: "",
+        title: "Life Together",
+      },
+    ]);
+  });
+
+  it("shows what the member waits for and the books they lend", () => {
+    vi.useFakeTimers({
+      now: new Date("2026-11-07T11:00:00Z"),
+      toFake: ["Date"],
+    });
+    state.mine = {
+      holding: [],
+      past: [],
+      queue: [
+        {
+          author: "C. S. Lewis",
+          bookId: 1,
+          holdEndsOn: "2026-11-14",
+          position: null,
+          title: "Mere Christianity",
+        },
+        {
+          author: "C. S. Lewis",
+          bookId: 2,
+          holdEndsOn: null,
+          position: 1,
+          title: "The Four Loves",
+        },
+      ],
+    };
+    state.lent = [
+      {
+        author: "Dietrich Bonhoeffer",
+        dueOn: "2026-12-07",
+        holder: "Budi Santoso",
+        id: 3,
+        kind: "borrowed",
+        loans: [
+          {
+            borrowedAt: new Date("2026-11-07T11:00:00Z"),
+            borrower: "Budi Santoso",
+            returnedAt: null,
+          },
+        ],
+        overdue: false,
+        title: "Nachfolge",
+      },
+    ];
+    render(<LibraryCatalog />);
+    const waiting = screen.getByRole("region", { name: "Waiting for" });
+    expect(waiting.textContent).toContain("Reserved for you · until 14 Nov");
+    expect(waiting.textContent).toContain("1st in line");
+    const lent = screen.getByRole("region", { name: "Books you lend" });
+    expect(lent.textContent).toContain("With Budi Santoso until 7 Dec");
+    expect(lent.textContent).toContain("Lent 1 time");
     vi.useRealTimers();
   });
 });

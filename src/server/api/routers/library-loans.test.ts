@@ -109,6 +109,7 @@ describe("library lending", () => {
     expect(await callerFor(budi.id).library.mine()).toEqual({
       holding: [],
       past: [],
+      queue: [],
     });
   });
 
@@ -129,6 +130,7 @@ describe("library lending", () => {
         },
       ],
       past: [],
+      queue: [],
     });
   });
 

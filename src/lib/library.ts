@@ -55,6 +55,7 @@ export const LIBRARY_EVENT_TYPES = [
   "ready",
   "expired",
   "cancelled",
+  "fulfilled",
 ] as const;
 export type LibraryEventType = (typeof LIBRARY_EVENT_TYPES)[number];
 
@@ -66,6 +67,7 @@ const EVENT_LABELS: Record<LibraryEventType, string> = {
   edited: "Details edited",
   expired: "Hold ran out",
   extended: "Loan extended",
+  fulfilled: "Reservation collected",
   left_queue: "Left the queue",
   offered: "Offered to the library",
   queued: "Joined the queue",
@@ -146,11 +148,48 @@ export function queueOrder(reservations: readonly ReservationLine[]) {
   });
 }
 
+/** What `settleQueue` changes: holds that ran out, and whose turn starts. */
+export interface QueueSettlement {
+  expire: number[];
+  ready: { expiresOn: string; id: number; userId: string } | null;
+}
+
+/**
+ * What a book's queue needs written on `today` once nobody has the book: a
+ * ready hold that ran out expires, and when nobody's hold is running the
+ * first in line gets theirs for `HOLD_DAYS` from today. Applied lazily, when
+ * the book is next read or written, so no scheduled job is needed.
+ */
+export function settleQueue(
+  reservations: readonly ReservationLine[],
+  today: string
+): QueueSettlement {
+  const line = queueOrder(reservations);
+  const [first] = line;
+  if (!first) {
+    return { expire: [], ready: null };
+  }
+  const running = first.status === "ready" && (first.expiresOn ?? "") >= today;
+  if (running) {
+    return { expire: [], ready: null };
+  }
+  const expire = line
+    .filter((reservation) => reservation.status === "ready")
+    .map((reservation) => reservation.id);
+  const next = line.find((reservation) => reservation.status === "waiting");
+  return {
+    expire,
+    ready: next
+      ? { expiresOn: holdEndsOn(today), id: next.id, userId: next.userId }
+      : null,
+  };
+}
+
 /**
  * A book's state on `today`. Offered and withdrawn come from the book; the
- * rest from its open loan and queue. A hold that ran out passes to the next
- * in line for `HOLD_DAYS` from the day after, without anyone writing it, so
- * no scheduled job is needed; once the queue runs out the book is available.
+ * rest from its open loan and queue. Without a loan, the queue reads as
+ * `settleQueue` would leave it, so a hold that ran out shows as the next
+ * person's turn even before anyone has written it.
  */
 export function bookState(
   book: { status: BookStatus },
@@ -171,26 +210,75 @@ export function bookState(
       queue: line.length,
     };
   }
-  const [first] = line;
-  // Nobody's turn has started: the queue waits for a return.
-  if (!(first?.status === "ready" && first.expiresOn)) {
-    return { kind: "available", queue: line.length };
+  const settled = settleQueue(line, today);
+  const expired = new Set(settled.expire);
+  const left = line.filter((reservation) => !expired.has(reservation.id));
+  const [first] = left;
+  const turn = settled.ready ?? (first?.status === "ready" ? first : null);
+  if (!turn?.expiresOn) {
+    return { kind: "available", queue: 0 };
   }
-  let endsOn = first.expiresOn;
-  for (const [index, reservation] of line.entries()) {
-    if (index > 0) {
-      endsOn = holdEndsOn(addDays(endsOn, 1));
-    }
-    if (today <= endsOn) {
-      return {
-        holdEndsOn: endsOn,
-        kind: "reserved",
-        queue: line.length - index - 1,
-        reservedFor: reservation.userId,
-      };
-    }
+  return {
+    holdEndsOn: turn.expiresOn,
+    kind: "reserved",
+    queue: left.length - 1,
+    reservedFor: turn.userId,
+  };
+}
+
+/** The member's place among those still waiting (1 = next), or null. */
+export function queuePosition(
+  reservations: readonly ReservationLine[],
+  userId: string
+) {
+  const waiting = queueOrder(reservations).filter(
+    (reservation) => reservation.status === "waiting"
+  );
+  const index = waiting.findIndex(
+    (reservation) => reservation.userId === userId
+  );
+  return index === -1 ? null : index + 1;
+}
+
+const ORDINAL_TEENS = new Set([11, 12, 13]);
+const ORDINAL_SUFFIXES: Record<number, string> = { 1: "st", 2: "nd", 3: "rd" };
+
+/** "1st in line", "2nd in line", "11th in line". */
+export function inLineLabel(position: number) {
+  const suffix = ORDINAL_TEENS.has(position % 100)
+    ? "th"
+    : (ORDINAL_SUFFIXES[position % 10] ?? "th");
+  return `${position}${suffix} in line`;
+}
+
+/**
+ * Why a member can't join a book's queue, or null when they can: only a book
+ * someone else has or has held for them, once per member.
+ */
+export function joinRefusal(
+  state: BookState,
+  viewerId: string,
+  queued: boolean
+): string | null {
+  switch (state.kind) {
+    case "borrowed":
+      if (state.holderId === viewerId) {
+        return "You have this book.";
+      }
+      break;
+    case "reserved":
+      if (state.reservedFor === viewerId) {
+        return "It's reserved for you. Borrow it at the shelf.";
+      }
+      break;
+    case "available":
+      return "It's on the shelf. Borrow it there.";
+    case "offered":
+      return "This book isn't on the shelf yet.";
+    default:
+      return "This book has left the library.";
   }
-  return { kind: "available", queue: 0 };
+  return queued ? "You're already in line for this book." : null;
 }
 
 /**
@@ -203,11 +291,14 @@ export interface MemberBookState {
   kind: BookKind;
   mine: boolean;
   overdue: boolean;
+  /** The viewer's place in the queue (1 = next), or null when not waiting. */
+  position: number | null;
 }
 
 export function memberBookState(
   state: BookState,
-  viewerId: string
+  viewerId: string,
+  position: number | null = null
 ): MemberBookState {
   switch (state.kind) {
     case "borrowed": {
@@ -218,6 +309,7 @@ export function memberBookState(
         kind: "borrowed",
         mine,
         overdue: mine && state.overdue,
+        position,
       };
     }
     case "reserved": {
@@ -228,6 +320,7 @@ export function memberBookState(
         kind: "reserved",
         mine,
         overdue: false,
+        position: mine ? null : position,
       };
     }
     default:
@@ -237,6 +330,7 @@ export function memberBookState(
         kind: state.kind,
         mine: false,
         overdue: false,
+        position: null,
       };
   }
 }
@@ -255,7 +349,12 @@ export function stateLabel(state: MemberBookState): string {
         ? `Yours until ${dayLabel(state.dueOn)}`
         : `Borrowed until ${dayLabel(state.dueOn)}`;
     case "reserved":
-      return state.mine ? "Reserved for you" : "Reserved";
+      if (state.mine) {
+        return state.holdEndsOn
+          ? `Reserved for you · until ${dayLabel(state.holdEndsOn)}`
+          : "Reserved for you";
+      }
+      return "Reserved";
     case "offered":
       return "Offered";
     case "withdrawn":
@@ -416,17 +515,22 @@ export function inShelfState(state: BookState, filter: ShelfState) {
 export const extendedDueOn = (dueOn: string) => addDays(dueOn, LOAN_DAYS);
 
 /**
- * Why a book can't be borrowed now, or null when it can: only a book on the
- * shelf with no open loan. (A held book goes to its reserver with the queue.)
+ * Why a book can't be borrowed now, or null when it can: a book on the shelf
+ * with no open loan, or one held for `borrowerId`.
  */
-export function borrowRefusal(state: BookState): string | null {
+export function borrowRefusal(
+  state: BookState,
+  borrowerId?: string
+): string | null {
   switch (state.kind) {
     case "available":
       return null;
     case "borrowed":
       return "Someone has borrowed this book. Ask the librarian if you have it in hand.";
     case "reserved":
-      return "This book is held for the next in line.";
+      return state.reservedFor === borrowerId
+        ? null
+        : "This book is held for the next in line.";
     case "offered":
       return "This book isn't on the shelf yet.";
     default:
@@ -479,4 +583,39 @@ export function extensionsLeftLabel(extensions: number) {
     return "No extensions left";
   }
   return `${left} ${left === 1 ? "extension" : "extensions"} left`;
+}
+
+/** The hint a member sees on a book they offered, until it's accepted. */
+export const OFFERED_HINT =
+  "Hand it to the librarian; it appears once accepted.";
+
+/** Where a lender's book is: "With Budi until 7 Dec", "On the shelf", … */
+export function lentLabel(
+  book: {
+    dueOn: string | null;
+    holder: string | null;
+    kind: BookKind;
+    overdue: boolean;
+  },
+  today: string
+) {
+  switch (book.kind) {
+    case "borrowed": {
+      const holder = book.holder ?? "a member";
+      if (!book.dueOn) {
+        return `With ${holder}`;
+      }
+      return book.overdue || isOverdue(book.dueOn, today)
+        ? `With ${holder}, overdue since ${dayLabel(addDays(book.dueOn, 1))}`
+        : `With ${holder} until ${dayLabel(book.dueOn)}`;
+    }
+    case "reserved":
+      return "Held for the next in line";
+    case "offered":
+      return `Offered. ${OFFERED_HINT}`;
+    case "withdrawn":
+      return "Withdrawn from the library";
+    default:
+      return "On the shelf";
+  }
 }
