@@ -7,7 +7,11 @@ import React from "react";
 import { toast } from "sonner";
 import { AccountPicker } from "~/components/admin/people/name-links";
 import { OpenLink } from "~/components/admin/settings/open-link";
-import { BookByline, LanguageChip } from "~/components/library/language";
+import {
+  BookByline,
+  BookCategory,
+  LanguageChip,
+} from "~/components/library/language";
 import { PersonAvatar } from "~/components/person-avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -79,10 +83,10 @@ function whose(copy: Pick<Copy, "borrower" | "format" | "owner">) {
 function CopyCard({ copy, children }: { copy: Copy; children?: ReactNode }) {
   return (
     <li className="rounded-xl bg-card p-4">
+      <BookCategory category={copy.category} />
       <p className="type-body break-words">{copy.title}</p>
       <BookByline
         author={copy.author}
-        category={copy.category}
         language={copy.language}
         publisher={copy.publisher}
       />
