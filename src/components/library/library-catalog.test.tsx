@@ -333,8 +333,15 @@ describe("LibraryCatalog", () => {
     expect(waiting.textContent).toContain("Reserved for you · until 14 Nov");
     expect(waiting.textContent).toContain("1st in line");
     const lent = screen.getByRole("region", { name: "Books you lend" });
-    expect(lent.textContent).toContain("With Budi Santoso until 7 Dec");
+    expect(lent.textContent).toContain("Borrowed by Budi Santoso until 7 Dec");
     expect(lent.textContent).toContain("Lent 1 time");
+    // The lends only: who, from and to; never the librarian's event log.
+    expect(lent.textContent).toContain(
+      "Budi Santoso · from 7 Nov 2026, has it now"
+    );
+    for (const logWording of ["History", "Returned", "Joined the queue"]) {
+      expect(lent.textContent).not.toContain(logWording);
+    }
     vi.useRealTimers();
   });
 });

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   libraryBooks,
   libraryLoans,
-  libraryReservations,
+  libraryQueue,
 } from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
@@ -188,9 +188,7 @@ describe("library lending", () => {
   it("refuses an extension while someone waits", async () => {
     const { ana, budi, id } = await setup();
     const { loanId } = await callerFor(ana.id).library.borrow({ id });
-    await testDb
-      .insert(libraryReservations)
-      .values({ bookId: id, userId: budi.id });
+    await testDb.insert(libraryQueue).values({ bookId: id, userId: budi.id });
     await expect(
       callerFor(ana.id).library.extend({ loanId })
     ).rejects.toMatchObject({ message: "Someone is waiting for this book." });
@@ -240,8 +238,8 @@ describe("library lending", () => {
     await expect(staff.lend({ id, userId: budi.id })).rejects.toMatchObject({
       code: "CONFLICT",
     });
-    const [out] = await staff.manage({ state: "borrowed" });
-    expect(out).toMatchObject({
+    const [borrowed] = await staff.manage({ state: "borrowed" });
+    expect(borrowed).toMatchObject({
       dueOn: "2026-12-07",
       extensions: 0,
       holder: "Ana Putri",
@@ -307,13 +305,13 @@ describe("library lending", () => {
     ]);
   });
 
-  it("refuses to withdraw a book while it's out", async () => {
+  it("refuses to withdraw a book while it's borrowed", async () => {
     const { ana, id, mita } = await setup();
     const staff = callerFor(mita.id).library;
     await callerFor(ana.id).library.borrow({ id });
     await expect(staff.withdraw({ id })).rejects.toMatchObject({
       code: "BAD_REQUEST",
-      message: "This book is out with a member. Mark it returned first.",
+      message: "This book is borrowed by a member. Mark it returned first.",
     });
     expect(await statusOf(id)).toBe("borrowed");
     await staff.markReturned({ id });

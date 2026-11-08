@@ -120,7 +120,10 @@ function WaitingBook({
   );
 }
 
-/** A book the member lends: where it is now, and who borrowed it before. */
+/**
+ * A book the member lends: where it is now, and its lends (borrower, from,
+ * to) from `library_loans`. Never the librarian's event log.
+ */
 function LentBook({ book, today }: { book: Lent; today: string }) {
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
@@ -149,7 +152,7 @@ function LentBook({ book, today }: { book: Lent; today: string }) {
                 {loan.borrower}
                 <span className="text-muted-foreground">
                   {" "}
-                  · {onDay(loan.borrowedAt)}
+                  · from {onDay(loan.borrowedAt)}
                   {loan.returnedAt
                     ? ` to ${onDay(loan.returnedAt)}`
                     : ", has it now"}

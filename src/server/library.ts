@@ -2,9 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, isNull, lt } from "drizzle-orm";
 import {
   libraryBooks,
-  libraryEvents,
+  libraryHistory,
   libraryLoans,
-  libraryReservations,
+  libraryQueue,
 } from "~/lib/db/schema/schema";
 import {
   type BookState,
@@ -41,7 +41,7 @@ export async function loadLending(executor: Executor, bookIds: number[]) {
       .select({
         bookId: libraryLoans.bookId,
         dueOn: libraryLoans.dueOn,
-        userId: libraryLoans.userId,
+        userId: libraryLoans.borrowerId,
       })
       .from(libraryLoans)
       .where(
@@ -52,18 +52,18 @@ export async function loadLending(executor: Executor, bookIds: number[]) {
       ),
     executor
       .select({
-        bookId: libraryReservations.bookId,
-        createdAt: libraryReservations.createdAt,
-        expiresOn: libraryReservations.expiresOn,
-        id: libraryReservations.id,
-        status: libraryReservations.status,
-        userId: libraryReservations.userId,
+        bookId: libraryQueue.bookId,
+        createdAt: libraryQueue.createdAt,
+        expiresOn: libraryQueue.expiresOn,
+        id: libraryQueue.id,
+        status: libraryQueue.status,
+        userId: libraryQueue.userId,
       })
-      .from(libraryReservations)
+      .from(libraryQueue)
       .where(
         and(
-          inArray(libraryReservations.bookId, bookIds),
-          inArray(libraryReservations.status, ["waiting", "ready"])
+          inArray(libraryQueue.bookId, bookIds),
+          inArray(libraryQueue.status, ["waiting", "ready"])
         )
       ),
   ]);
@@ -170,7 +170,7 @@ export const logEvent = (
     type: LibraryEventType;
   }
 ) =>
-  tx.insert(libraryEvents).values({
+  tx.insert(libraryHistory).values({
     actorId: event.actorId,
     bookId: event.bookId,
     details: event.details ?? {},
@@ -215,9 +215,9 @@ export async function settleBook(
     const reservation = line.find((entry) => entry.id === id);
     // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
     await tx
-      .update(libraryReservations)
+      .update(libraryQueue)
       .set({ status: "expired" })
-      .where(eq(libraryReservations.id, id));
+      .where(eq(libraryQueue.id, id));
     await logEvent(tx, {
       actorId: null,
       bookId: book.id,
@@ -229,13 +229,13 @@ export async function settleBook(
   const notices: ReadyNotice[] = [];
   if (plan.ready) {
     await tx
-      .update(libraryReservations)
+      .update(libraryQueue)
       .set({
         expiresOn: plan.ready.expiresOn,
         readyAt: new Date(),
         status: "ready",
       })
-      .where(eq(libraryReservations.id, plan.ready.id));
+      .where(eq(libraryQueue.id, plan.ready.id));
     await logEvent(tx, {
       actorId: null,
       bookId: book.id,
@@ -290,13 +290,10 @@ export async function lockAndSettle(
  */
 export async function settleRunOutHolds(today = libraryToday()) {
   const due = await db
-    .selectDistinct({ bookId: libraryReservations.bookId })
-    .from(libraryReservations)
+    .selectDistinct({ bookId: libraryQueue.bookId })
+    .from(libraryQueue)
     .where(
-      and(
-        eq(libraryReservations.status, "ready"),
-        lt(libraryReservations.expiresOn, today)
-      )
+      and(eq(libraryQueue.status, "ready"), lt(libraryQueue.expiresOn, today))
     );
   if (due.length === 0) {
     return;
@@ -349,23 +346,23 @@ export async function startLoan(
   const dueOn = dueOnFrom(today);
   const [loan] = await tx
     .insert(libraryLoans)
-    .values({ bookId: book.id, dueOn, userId })
+    .values({ bookId: book.id, borrowerId: userId, dueOn })
     .returning({ id: libraryLoans.id });
   if (!loan) {
     throw new Error("Failed to start the loan");
   }
   if (state?.kind === "reserved") {
     const [fulfilled] = await tx
-      .update(libraryReservations)
+      .update(libraryQueue)
       .set({ status: "fulfilled" })
       .where(
         and(
-          eq(libraryReservations.bookId, book.id),
-          eq(libraryReservations.userId, userId),
-          eq(libraryReservations.status, "ready")
+          eq(libraryQueue.bookId, book.id),
+          eq(libraryQueue.userId, userId),
+          eq(libraryQueue.status, "ready")
         )
       )
-      .returning({ id: libraryReservations.id });
+      .returning({ id: libraryQueue.id });
     if (fulfilled) {
       await logEvent(tx, {
         actorId,

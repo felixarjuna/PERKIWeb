@@ -73,7 +73,7 @@ test("a member borrows and extends a book, others see only the due date, and the
     .getByRole("listitem")
     .filter({ has: staff.getByRole("heading", { name: title }) });
   await expect(row).toContainText(
-    `Out with ${holder.name} until ${dayLabel(twice)}`
+    `Borrowed by ${holder.name} until ${dayLabel(twice)}`
   );
   await row.getByRole("button", { name: `Mark ${title} returned` }).click();
   await staff

@@ -42,7 +42,7 @@ describe("shelfLabel", () => {
       shelfLabel(
         book({ dueOn: "2026-12-07", holder: "Ana", kind: "borrowed", queue: 2 })
       )
-    ).toBe("Out with Ana until 7 Dec · 2 waiting");
+    ).toBe("Borrowed by Ana until 7 Dec · 2 waiting");
     expect(
       shelfLabel(
         book({
@@ -52,7 +52,7 @@ describe("shelfLabel", () => {
           overdue: true,
         })
       )
-    ).toBe("Overdue since 2 Nov, with Ana");
+    ).toBe("Overdue since 2 Nov, borrowed by Ana");
     expect(
       shelfLabel(
         book({ holdEndsOn: "2026-11-14", holder: "Budi", kind: "reserved" })
@@ -204,7 +204,7 @@ describe("historyLine", () => {
 });
 
 describe("withdrawRefusal", () => {
-  it("asks for the return before a book that's out can leave", () => {
+  it("asks for the return before a borrowed book can leave", () => {
     expect(withdrawRefusal(book({ kind: "borrowed" }))).toBe(
       "Mark it returned before withdrawing it."
     );

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { libraryBooks, libraryReservations } from "~/lib/db/schema/schema";
+import { libraryBooks, libraryQueue } from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
 
@@ -52,9 +52,9 @@ const statusOf = async (id: number) => {
 const reservationsOf = (bookId: number) =>
   testDb
     .select()
-    .from(libraryReservations)
-    .where(eq(libraryReservations.bookId, bookId))
-    .orderBy(libraryReservations.id);
+    .from(libraryQueue)
+    .where(eq(libraryQueue.bookId, bookId))
+    .orderBy(libraryQueue.id);
 
 describe("library queue", () => {
   beforeEach(() => {

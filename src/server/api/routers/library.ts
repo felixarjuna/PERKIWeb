@@ -3,9 +3,9 @@ import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import {
   libraryBooks,
-  libraryEvents,
+  libraryHistory,
   libraryLoans,
-  libraryReservations,
+  libraryQueue,
   users,
 } from "~/lib/db/schema/schema";
 import {
@@ -104,7 +104,7 @@ const ownerMissing = (error: unknown) => {
 
 /**
  * A second loan that slipped past the check (the partial unique index) reads
- * as the book being out; a missing member as NOT_FOUND.
+ * as the book being borrowed; a missing member as NOT_FOUND.
  */
 const loanFailed = (error: unknown) => {
   if (isPgError(error, PG_UNIQUE_VIOLATION)) {
@@ -125,12 +125,12 @@ const loanFailed = (error: unknown) => {
 };
 
 const WITHDRAW_WHILE_OUT =
-  "This book is out with a member. Mark it returned first.";
+  "This book is borrowed by a member. Mark it returned first.";
 
 const noOpenLoan = () =>
   new TRPCError({
     code: "BAD_REQUEST",
-    message: "This book isn't out with anyone.",
+    message: "Nobody has borrowed this book.",
   });
 
 /** Who has the book or has it held for them, for staff. */
@@ -246,9 +246,9 @@ export const libraryRouter = createTRPCRouter({
     .mutation(({ ctx, input }) =>
       withReadyEmails(async (tx, notices) => {
         const [found] = await tx
-          .select({ bookId: libraryReservations.bookId })
-          .from(libraryReservations)
-          .where(eq(libraryReservations.id, input.reservationId));
+          .select({ bookId: libraryQueue.bookId })
+          .from(libraryQueue)
+          .where(eq(libraryQueue.id, input.reservationId));
         if (!found) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -257,15 +257,15 @@ export const libraryRouter = createTRPCRouter({
         }
         const book = await lockBook(tx, found.bookId);
         const [cancelled] = await tx
-          .update(libraryReservations)
+          .update(libraryQueue)
           .set({ status: "cancelled" })
           .where(
             and(
-              eq(libraryReservations.id, input.reservationId),
-              inArray(libraryReservations.status, ["waiting", "ready"])
+              eq(libraryQueue.id, input.reservationId),
+              inArray(libraryQueue.status, ["waiting", "ready"])
             )
           )
-          .returning({ userId: libraryReservations.userId });
+          .returning({ userId: libraryQueue.userId });
         if (!cancelled) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -298,7 +298,7 @@ export const libraryRouter = createTRPCRouter({
           .where(
             and(
               eq(libraryLoans.id, input.loanId),
-              eq(libraryLoans.userId, viewerId)
+              eq(libraryLoans.borrowerId, viewerId)
             )
           );
         if (!found) {
@@ -318,7 +318,7 @@ export const libraryRouter = createTRPCRouter({
         const today = libraryToday();
         const state = (await statesOf(tx, [book], today)).get(book.id);
         const refusal = extendRefusal(
-          loan,
+          { ...loan, userId: loan.borrowerId },
           viewerId,
           today,
           state && "queue" in state ? state.queue : 0
@@ -356,9 +356,9 @@ export const libraryRouter = createTRPCRouter({
       }
       const events = await db
         .select()
-        .from(libraryEvents)
-        .where(eq(libraryEvents.bookId, input.id))
-        .orderBy(desc(libraryEvents.at), desc(libraryEvents.id));
+        .from(libraryHistory)
+        .where(eq(libraryHistory.bookId, input.id))
+        .orderBy(desc(libraryHistory.at), desc(libraryHistory.id));
       const { lines } = await loadLending(db, [book.id]);
       const line = queueOrder(lines.get(book.id) ?? []);
       const people = await peopleById([
@@ -405,7 +405,7 @@ export const libraryRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: refusal });
       }
       const [reservation] = await tx
-        .insert(libraryReservations)
+        .insert(libraryQueue)
         .values({ bookId: book.id, userId: viewerId })
         .returning();
       if (!reservation) {
@@ -437,16 +437,16 @@ export const libraryRouter = createTRPCRouter({
       const started: ReadyNotice[] = [];
       const book = await lockAndSettle(tx, input.id, started);
       const [left] = await tx
-        .update(libraryReservations)
+        .update(libraryQueue)
         .set({ status: "cancelled" })
         .where(
           and(
-            eq(libraryReservations.bookId, book.id),
-            eq(libraryReservations.userId, viewerId),
-            inArray(libraryReservations.status, ["waiting", "ready"])
+            eq(libraryQueue.bookId, book.id),
+            eq(libraryQueue.userId, viewerId),
+            inArray(libraryQueue.status, ["waiting", "ready"])
           )
         )
-        .returning({ id: libraryReservations.id });
+        .returning({ id: libraryQueue.id });
       if (!left) {
         throw notInLine();
       }
@@ -643,7 +643,7 @@ export const libraryRouter = createTRPCRouter({
         bookId: book.id,
         details: { dueOn: loan.dueOn },
         loanId: loan.id,
-        subjectId: loan.userId,
+        subjectId: loan.borrowerId,
         type: "returned",
       });
       // The first in line's 7 days start today.
@@ -673,26 +673,26 @@ export const libraryRouter = createTRPCRouter({
       })
       .from(libraryLoans)
       .innerJoin(libraryBooks, eq(libraryBooks.id, libraryLoans.bookId))
-      .where(eq(libraryLoans.userId, viewerId))
+      .where(eq(libraryLoans.borrowerId, viewerId))
       .orderBy(asc(libraryLoans.dueOn), asc(libraryLoans.id));
     const open = loans.filter((loan) => loan.returnedAt === null);
     const waitingFor = await db
       .select({
         author: libraryBooks.author,
-        bookId: libraryReservations.bookId,
+        bookId: libraryQueue.bookId,
         bookStatus: libraryBooks.status,
         title: libraryBooks.title,
       })
-      .from(libraryReservations)
-      .innerJoin(libraryBooks, eq(libraryBooks.id, libraryReservations.bookId))
+      .from(libraryQueue)
+      .innerJoin(libraryBooks, eq(libraryBooks.id, libraryQueue.bookId))
       .where(
         and(
-          eq(libraryReservations.userId, viewerId),
-          inArray(libraryReservations.status, ["waiting", "ready"]),
+          eq(libraryQueue.userId, viewerId),
+          inArray(libraryQueue.status, ["waiting", "ready"]),
           ne(libraryBooks.status, "withdrawn")
         )
       )
-      .orderBy(asc(libraryReservations.createdAt));
+      .orderBy(asc(libraryQueue.createdAt));
     // Reads only: the queue as `bookState` derives it, even before the
     // list has written a run-out hold.
     const { lines, states } = await lendingOf(
@@ -757,8 +757,8 @@ export const libraryRouter = createTRPCRouter({
       .select({
         bookId: libraryLoans.bookId,
         borrowedAt: libraryLoans.borrowedAt,
+        borrowerId: libraryLoans.borrowerId,
         returnedAt: libraryLoans.returnedAt,
-        userId: libraryLoans.userId,
       })
       .from(libraryLoans)
       .where(
@@ -768,7 +768,7 @@ export const libraryRouter = createTRPCRouter({
         )
       )
       .orderBy(desc(libraryLoans.borrowedAt), desc(libraryLoans.id));
-    const people = await peopleById(loans.map((loan) => loan.userId));
+    const people = await peopleById(loans.map((loan) => loan.borrowerId));
     const nameOf = (id: string) => people.get(id)?.name ?? "Removed account";
     return books.map((book) => {
       const state = states.get(book.id) ?? { kind: "available", queue: 0 };
@@ -782,7 +782,7 @@ export const libraryRouter = createTRPCRouter({
           .filter((loan) => loan.bookId === book.id)
           .map((loan) => ({
             borrowedAt: loan.borrowedAt,
-            borrower: nameOf(loan.userId),
+            borrower: nameOf(loan.borrowerId),
             returnedAt: loan.returnedAt,
           })),
         overdue: state.kind === "borrowed" && state.overdue,
@@ -889,7 +889,7 @@ export const libraryRouter = createTRPCRouter({
             ...(input.note ? { note: input.note } : {}),
           },
           loanId: loan.id,
-          subjectId: loan.userId,
+          subjectId: loan.borrowerId,
           type: "extended",
         });
         return { dueOn: input.dueOn };
@@ -954,15 +954,15 @@ export const libraryRouter = createTRPCRouter({
         await logEvent(tx, { actorId, bookId: book.id, type: "withdrawn" });
         // Nobody can wait for a book that left the library.
         const cancelled = await tx
-          .update(libraryReservations)
+          .update(libraryQueue)
           .set({ status: "cancelled" })
           .where(
             and(
-              eq(libraryReservations.bookId, book.id),
-              inArray(libraryReservations.status, ["waiting", "ready"])
+              eq(libraryQueue.bookId, book.id),
+              inArray(libraryQueue.status, ["waiting", "ready"])
             )
           )
-          .returning({ userId: libraryReservations.userId });
+          .returning({ userId: libraryQueue.userId });
         for (const { userId } of cancelled) {
           // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
           await logEvent(tx, {

@@ -515,7 +515,7 @@ describe("lentLabel", () => {
     expect(lent({})).toBe("On the shelf");
     expect(
       lent({ dueOn: "2026-12-07", holder: "Budi", kind: "borrowed" })
-    ).toBe("With Budi until 7 Dec");
+    ).toBe("Borrowed by Budi until 7 Dec");
     expect(
       lent({
         dueOn: "2026-11-01",
@@ -523,7 +523,7 @@ describe("lentLabel", () => {
         kind: "borrowed",
         overdue: true,
       })
-    ).toBe("With Budi, overdue since 2 Nov");
+    ).toBe("Overdue since 2 Nov, borrowed by Budi");
     expect(lent({ kind: "reserved" })).toBe("Held for the next in line");
     expect(lent({ kind: "offered" })).toBe(
       "Offered. Hand it to the librarian; it appears once accepted."

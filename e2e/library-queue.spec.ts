@@ -166,7 +166,7 @@ test("a member offers their own book, the librarian accepts it, and the lender s
     .getByRole("listitem")
     .filter({ has: page.getByRole("heading", { name: title }) });
   await expect(mine).toContainText(
-    `With ${reader.user.name} until ${dayLabel(dueOnFrom(today))}`
+    `Borrowed by ${reader.user.name} until ${dayLabel(dueOnFrom(today))}`
   );
   await expect(mine).toContainText("Lent 1 time");
 });

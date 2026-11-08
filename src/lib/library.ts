@@ -39,7 +39,7 @@ export const RESERVATION_STATUSES = [
 ] as const;
 export type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
 
-/** What `library_events.type` records; both history views read them. */
+/** What `library_history.type` records; both history views read them. */
 export const LIBRARY_EVENT_TYPES = [
   "added",
   "edited",
@@ -516,7 +516,7 @@ export type ShelfState = (typeof SHELF_STATES)[number];
 export const SHELF_STATE_LABELS: Record<ShelfState, string> = {
   all: "Every book",
   available: "Available",
-  borrowed: "Out",
+  borrowed: "Borrowed",
   offered: "Offered",
   overdue: "Overdue",
   reserved: "Reserved",
@@ -619,7 +619,7 @@ export function extensionsLeftLabel(extensions: number) {
 export const OFFERED_HINT =
   "Hand it to the librarian; it appears once accepted.";
 
-/** Where a lender's book is: "With Budi until 7 Dec", "On the shelf", … */
+/** Where a lender's book is: "Borrowed by Budi until 7 Dec", "On the shelf", … */
 export function lentLabel(
   book: {
     dueOn: string | null;
@@ -633,11 +633,11 @@ export function lentLabel(
     case "borrowed": {
       const holder = book.holder ?? "a member";
       if (!book.dueOn) {
-        return `With ${holder}`;
+        return `Borrowed by ${holder}`;
       }
       return book.overdue || isOverdue(book.dueOn, today)
-        ? `With ${holder}, overdue since ${dayLabel(addDays(book.dueOn, 1))}`
-        : `With ${holder} until ${dayLabel(book.dueOn)}`;
+        ? `Overdue since ${dayLabel(addDays(book.dueOn, 1))}, borrowed by ${holder}`
+        : `Borrowed by ${holder} until ${dayLabel(book.dueOn)}`;
     }
     case "reserved":
       return "Held for the next in line";
