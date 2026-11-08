@@ -11,7 +11,7 @@ export interface ShelfLending {
 }
 
 /**
- * "Out with Ana until 7 Dec · 2 waiting"; "" when the badge says it all (a
+ * "Borrowed by Ana until 7 Dec · 2 waiting"; "" when the badge says it all (a
  * free book nobody waits for, a withdrawn one).
  */
 export function shelfLabel(book: ShelfLending): string {
@@ -20,11 +20,11 @@ export function shelfLabel(book: ShelfLending): string {
   switch (book.kind) {
     case "borrowed":
       if (!book.dueOn) {
-        return `Out with ${holder}${waiting}`;
+        return `Borrowed by ${holder}${waiting}`;
       }
       return book.overdue
-        ? `Overdue since ${dayLabel(addDays(book.dueOn, 1))}, with ${holder}${waiting}`
-        : `Out with ${holder} until ${dayLabel(book.dueOn)}${waiting}`;
+        ? `Overdue since ${dayLabel(addDays(book.dueOn, 1))}, borrowed by ${holder}${waiting}`
+        : `Borrowed by ${holder} until ${dayLabel(book.dueOn)}${waiting}`;
     case "reserved":
       return `Held for ${holder}${book.holdEndsOn ? ` until ${dayLabel(book.holdEndsOn)}` : ""}${waiting}`;
     case "offered":
@@ -36,7 +36,7 @@ export function shelfLabel(book: ShelfLending): string {
   }
 }
 
-/** Why staff can't withdraw a book now: one that's out needs its return first. */
+/** Why staff can't withdraw a book now: a borrowed one needs its return first. */
 export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
   book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
 

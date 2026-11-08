@@ -2,9 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   libraryBooks,
-  libraryEvents,
+  libraryHistory,
   libraryLoans,
-  libraryReservations,
+  libraryQueue,
 } from "~/lib/db/schema/schema";
 import {
   type BookState,
@@ -39,7 +39,7 @@ export async function loadLending(executor: Executor, bookIds: number[]) {
       .select({
         bookId: libraryLoans.bookId,
         dueOn: libraryLoans.dueOn,
-        userId: libraryLoans.userId,
+        userId: libraryLoans.borrowerId,
       })
       .from(libraryLoans)
       .where(
@@ -50,18 +50,18 @@ export async function loadLending(executor: Executor, bookIds: number[]) {
       ),
     executor
       .select({
-        bookId: libraryReservations.bookId,
-        createdAt: libraryReservations.createdAt,
-        expiresOn: libraryReservations.expiresOn,
-        id: libraryReservations.id,
-        status: libraryReservations.status,
-        userId: libraryReservations.userId,
+        bookId: libraryQueue.bookId,
+        createdAt: libraryQueue.createdAt,
+        expiresOn: libraryQueue.expiresOn,
+        id: libraryQueue.id,
+        status: libraryQueue.status,
+        userId: libraryQueue.userId,
       })
-      .from(libraryReservations)
+      .from(libraryQueue)
       .where(
         and(
-          inArray(libraryReservations.bookId, bookIds),
-          inArray(libraryReservations.status, ["waiting", "ready"])
+          inArray(libraryQueue.bookId, bookIds),
+          inArray(libraryQueue.status, ["waiting", "ready"])
         )
       ),
   ]);
@@ -143,7 +143,7 @@ export const logEvent = (
     type: LibraryEventType;
   }
 ) =>
-  tx.insert(libraryEvents).values({
+  tx.insert(libraryHistory).values({
     actorId: event.actorId,
     bookId: event.bookId,
     details: event.details ?? {},
@@ -187,7 +187,7 @@ export async function startLoan(
   const dueOn = dueOnFrom(today);
   const [loan] = await tx
     .insert(libraryLoans)
-    .values({ bookId: book.id, dueOn, userId })
+    .values({ bookId: book.id, borrowerId: userId, dueOn })
     .returning({ id: libraryLoans.id });
   if (!loan) {
     throw new Error("Failed to start the loan");

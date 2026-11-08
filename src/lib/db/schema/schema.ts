@@ -879,6 +879,10 @@ export const libraryLoans = pgTable(
     })
       .defaultNow()
       .notNull(),
+    /** The member who has (had) the book. */
+    borrowerId: text("borrowerId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     dueOn: date("dueOn", { mode: "string" }).notNull(),
     /** Members extend up to `MAX_EXTENSIONS` times; staff can go past it. */
     extensions: integer("extensions").default(0).notNull(),
@@ -889,13 +893,10 @@ export const libraryLoans = pgTable(
     returnedById: text("returnedById").references(() => users.id, {
       onDelete: "set null",
     }),
-    userId: text("userId")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
   },
   (t) => [
     index("library_loans_book").on(t.bookId),
-    index("library_loans_user").on(t.userId),
+    index("library_loans_borrower").on(t.borrowerId),
     uniqueIndex("library_loans_open_book")
       .on(t.bookId)
       .where(sql`${t.returnedAt} is null`),
@@ -908,8 +909,8 @@ export const libraryLoans = pgTable(
  * return until `expiresOn` (an Aachen day); a member has at most one waiting
  * or ready reservation per book.
  */
-export const libraryReservations = pgTable(
-  "library_reservations",
+export const libraryQueue = pgTable(
+  "library_queue",
   {
     bookId: integer("bookId")
       .notNull()
@@ -929,13 +930,13 @@ export const libraryReservations = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
   },
   (t) => [
-    index("library_reservations_book").on(t.bookId),
-    index("library_reservations_user").on(t.userId),
-    uniqueIndex("library_reservations_open_member")
+    index("library_queue_book").on(t.bookId),
+    index("library_queue_member").on(t.userId),
+    uniqueIndex("library_queue_open_member")
       .on(t.bookId, t.userId)
       .where(sql`${t.status} in ('waiting', 'ready')`),
     check(
-      "library_reservations_status_check",
+      "library_queue_status_check",
       sql`${t.status} in (${sqlList(RESERVATION_STATUSES)})`
     ),
   ]
@@ -947,8 +948,8 @@ export const libraryReservations = pgTable(
  * the librarian's and the lenders' history views. `type` has no check so
  * later kinds need no migration.
  */
-export const libraryEvents = pgTable(
-  "library_events",
+export const libraryHistory = pgTable(
+  "library_history",
   {
     actorId: text("actorId").references(() => users.id, {
       onDelete: "set null",
@@ -973,5 +974,5 @@ export const libraryEvents = pgTable(
     }),
     type: text("type").notNull(),
   },
-  (t) => [index("library_events_book").on(t.bookId, t.at)]
+  (t) => [index("library_history_book").on(t.bookId, t.at)]
 );

@@ -1,5 +1,5 @@
 {
-  "id": "5322498d-6f51-45f2-80af-dde055e0d1b1",
+  "id": "00872085-d3ad-4d5e-96c0-2969388a7758",
   "prevId": "a0b49cbd-fc75-4456-b7d2-2807d278754f",
   "version": "7",
   "dialect": "postgresql",
@@ -676,8 +676,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.library_events": {
-      "name": "library_events",
+    "public.library_history": {
+      "name": "library_history",
       "schema": "",
       "columns": {
         "actorId": {
@@ -732,8 +732,8 @@
         }
       },
       "indexes": {
-        "library_events_book": {
-          "name": "library_events_book",
+        "library_history_book": {
+          "name": "library_history_book",
           "columns": [
             {
               "expression": "bookId",
@@ -755,9 +755,9 @@
         }
       },
       "foreignKeys": {
-        "library_events_actorId_user_id_fk": {
-          "name": "library_events_actorId_user_id_fk",
-          "tableFrom": "library_events",
+        "library_history_actorId_user_id_fk": {
+          "name": "library_history_actorId_user_id_fk",
+          "tableFrom": "library_history",
           "tableTo": "user",
           "columnsFrom": [
             "actorId"
@@ -768,9 +768,9 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "library_events_bookId_library_books_id_fk": {
-          "name": "library_events_bookId_library_books_id_fk",
-          "tableFrom": "library_events",
+        "library_history_bookId_library_books_id_fk": {
+          "name": "library_history_bookId_library_books_id_fk",
+          "tableFrom": "library_history",
           "tableTo": "library_books",
           "columnsFrom": [
             "bookId"
@@ -781,9 +781,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "library_events_loanId_library_loans_id_fk": {
-          "name": "library_events_loanId_library_loans_id_fk",
-          "tableFrom": "library_events",
+        "library_history_loanId_library_loans_id_fk": {
+          "name": "library_history_loanId_library_loans_id_fk",
+          "tableFrom": "library_history",
           "tableTo": "library_loans",
           "columnsFrom": [
             "loanId"
@@ -794,9 +794,9 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "library_events_subjectId_user_id_fk": {
-          "name": "library_events_subjectId_user_id_fk",
-          "tableFrom": "library_events",
+        "library_history_subjectId_user_id_fk": {
+          "name": "library_history_subjectId_user_id_fk",
+          "tableFrom": "library_history",
           "tableTo": "user",
           "columnsFrom": [
             "subjectId"
@@ -868,8 +868,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "userId": {
-          "name": "userId",
+        "borrowerId": {
+          "name": "borrowerId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -891,11 +891,11 @@
           "method": "btree",
           "with": {}
         },
-        "library_loans_user": {
-          "name": "library_loans_user",
+        "library_loans_borrower": {
+          "name": "library_loans_borrower",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "borrowerId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -950,12 +950,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "library_loans_userId_user_id_fk": {
-          "name": "library_loans_userId_user_id_fk",
+        "library_loans_borrowerId_user_id_fk": {
+          "name": "library_loans_borrowerId_user_id_fk",
           "tableFrom": "library_loans",
           "tableTo": "user",
           "columnsFrom": [
-            "userId"
+            "borrowerId"
           ],
           "columnsTo": [
             "id"
@@ -975,8 +975,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.library_reservations": {
-      "name": "library_reservations",
+    "public.library_queue": {
+      "name": "library_queue",
       "schema": "",
       "columns": {
         "bookId": {
@@ -1025,8 +1025,8 @@
         }
       },
       "indexes": {
-        "library_reservations_book": {
-          "name": "library_reservations_book",
+        "library_queue_book": {
+          "name": "library_queue_book",
           "columns": [
             {
               "expression": "bookId",
@@ -1040,8 +1040,8 @@
           "method": "btree",
           "with": {}
         },
-        "library_reservations_user": {
-          "name": "library_reservations_user",
+        "library_queue_member": {
+          "name": "library_queue_member",
           "columns": [
             {
               "expression": "userId",
@@ -1055,8 +1055,8 @@
           "method": "btree",
           "with": {}
         },
-        "library_reservations_open_member": {
-          "name": "library_reservations_open_member",
+        "library_queue_open_member": {
+          "name": "library_queue_open_member",
           "columns": [
             {
               "expression": "bookId",
@@ -1072,16 +1072,16 @@
             }
           ],
           "isUnique": true,
-          "where": "\"library_reservations\".\"status\" in ('waiting', 'ready')",
+          "where": "\"library_queue\".\"status\" in ('waiting', 'ready')",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "library_reservations_bookId_library_books_id_fk": {
-          "name": "library_reservations_bookId_library_books_id_fk",
-          "tableFrom": "library_reservations",
+        "library_queue_bookId_library_books_id_fk": {
+          "name": "library_queue_bookId_library_books_id_fk",
+          "tableFrom": "library_queue",
           "tableTo": "library_books",
           "columnsFrom": [
             "bookId"
@@ -1092,9 +1092,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "library_reservations_userId_user_id_fk": {
-          "name": "library_reservations_userId_user_id_fk",
-          "tableFrom": "library_reservations",
+        "library_queue_userId_user_id_fk": {
+          "name": "library_queue_userId_user_id_fk",
+          "tableFrom": "library_queue",
           "tableTo": "user",
           "columnsFrom": [
             "userId"
@@ -1110,9 +1110,9 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "library_reservations_status_check": {
-          "name": "library_reservations_status_check",
-          "value": "\"library_reservations\".\"status\" in ('waiting', 'ready', 'fulfilled', 'expired', 'cancelled')"
+        "library_queue_status_check": {
+          "name": "library_queue_status_check",
+          "value": "\"library_queue\".\"status\" in ('waiting', 'ready', 'fulfilled', 'expired', 'cancelled')"
         }
       },
       "isRLSEnabled": false

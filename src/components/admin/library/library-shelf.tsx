@@ -60,7 +60,7 @@ function setParam(key: string, value: string, replace: boolean) {
 
 const KIND_LABELS: Record<ShelfBook["kind"], string> = {
   available: "Available",
-  borrowed: "Out",
+  borrowed: "Borrowed",
   offered: "Offered",
   reserved: "Reserved",
   withdrawn: "Withdrawn",
@@ -87,7 +87,7 @@ interface RowActions {
   restoring: boolean;
 }
 
-/** Mark returned and Extend for a book that's out; Lend for one on the shelf. */
+/** Mark returned and Extend for a borrowed book; Lend for one on the shelf. */
 function LendingActions({
   book,
   onExtend,
