@@ -6,7 +6,7 @@ import { LanguageChip, LanguagePicker, pickedLanguage } from "./language";
 describe("LanguageChip", () => {
   it("shows the flag beside the name, the flag hidden from screen readers", () => {
     const { container } = render(<LanguageChip language="de" />);
-    expect(container.textContent).toBe("Deutsch");
+    expect(container.textContent).toBe("Language: Deutsch");
     expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
       "true"
     );
@@ -14,7 +14,7 @@ describe("LanguageChip", () => {
 
   it("shows an older free-text language as typed, without a flag", () => {
     const { container } = render(<LanguageChip language="Indonesian" />);
-    expect(container.textContent).toBe("Indonesian");
+    expect(container.textContent).toBe("Language: Indonesian");
     expect(container.querySelector("svg")).toBeNull();
   });
 

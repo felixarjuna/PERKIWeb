@@ -335,7 +335,7 @@ describe("memberBookState", () => {
       ["available", "offered", "withdrawn"].map((kind) =>
         label(kind as MemberBookState["kind"])
       )
-    ).toEqual(["Available", "Offered", "Withdrawn"]);
+    ).toEqual(["Available", "Offered", "Removed"]);
   });
 });
 
@@ -535,7 +535,7 @@ describe("lentLabel", () => {
     expect(lent({ kind: "offered" })).toBe(
       "Offered. Hand it to the librarian; it appears once accepted."
     );
-    expect(lent({ kind: "withdrawn" })).toBe("Withdrawn from the library");
+    expect(lent({ kind: "withdrawn" })).toBe("Removed from the library");
   });
 });
 

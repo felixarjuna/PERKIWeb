@@ -74,7 +74,7 @@ test("staff import the library from the sheet, linking an owner first", async ({
 
   await page.goto("/library");
   const lantern = await search(page, "The Lantern Case");
-  await expect(lantern.getByText("🇬🇧English")).toBeVisible();
+  await expect(lantern).toContainText("English");
   await expect(lantern.getByText("Crossway")).toBeVisible();
   await expect(lantern.getByText("Apologetics")).toBeVisible();
   await expect(lantern.getByText(BORROWED_UNTIL)).toBeVisible();

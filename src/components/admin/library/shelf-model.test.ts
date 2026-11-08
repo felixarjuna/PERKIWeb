@@ -107,7 +107,7 @@ describe("historyLine", () => {
         subject: null,
         type: "withdrawn",
       })
-    ).toEqual({ detail: "", title: "Withdrawn" });
+    ).toEqual({ detail: "", title: "Removed from the library" });
   });
 
   it("tells borrows, returns and extensions apart, with who and until when", () => {
@@ -220,7 +220,7 @@ describe("historyLine", () => {
 describe("withdrawRefusal", () => {
   it("asks for the return before a borrowed book can leave", () => {
     expect(withdrawRefusal(book({ kind: "borrowed" }))).toBe(
-      "Mark it returned before withdrawing it."
+      "Mark it returned before removing it."
     );
     expect(withdrawRefusal(book({ kind: "available" }))).toBeNull();
     expect(withdrawRefusal(book({ kind: "reserved" }))).toBeNull();

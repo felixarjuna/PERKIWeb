@@ -69,12 +69,14 @@ test("the librarian adds a member's book, members find it, and a withdraw hides 
     .getByRole("listitem")
     .filter({ has: page.getByRole("heading", { name: title }) });
   await expect(row).toContainText(`Lent by ${lender}`);
-  await row.getByRole("button", { name: "Withdraw" }).click();
+  await row.getByRole("button", { name: "Remove from library" }).click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Withdraw" })
+    .getByRole("button", { name: "Remove from library" })
     .click();
-  await expect(toast(page, `“${title}” withdrawn`)).toBeVisible();
+  await expect(
+    toast(page, `“${title}” removed from the library`)
+  ).toBeVisible();
   await expect(row).toHaveCount(0);
 
   await member.reload();
@@ -82,11 +84,13 @@ test("the librarian adds a member's book, members find it, and a withdraw hides 
   await memberContext.close();
 
   await page.getByLabel("Show", { exact: true }).click();
-  await page.getByRole("option", { exact: true, name: "Withdrawn" }).click();
+  await page
+    .getByRole("option", { exact: true, name: "Removed from library" })
+    .click();
   await row.getByRole("button", { name: `History of ${title}` }).click();
   const history = page.getByRole("list", { name: "History" });
   await expect(history.getByRole("listitem").first()).toContainText(
-    "Withdrawn"
+    "Removed from the library"
   );
   await expect(history.getByRole("listitem").last()).toContainText(
     "Added to the library"

@@ -38,7 +38,7 @@ export function shelfLabel(book: ShelfLending): string {
 
 /** Why staff can't withdraw a book now: a borrowed one needs its return first. */
 export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
-  book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
+  book.kind === "borrowed" ? "Mark it returned before removing it." : null;
 
 /**
  * Whether staff can lend a book by hand: one on the shelf, or one held for

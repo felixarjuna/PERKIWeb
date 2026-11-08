@@ -116,12 +116,12 @@ const EVENT_LABELS: Record<LibraryEventType, string> = {
   offered: "Offered to the library",
   queued: "Joined the queue",
   ready: "Reserved for the next in line",
-  restored: "Brought back",
+  restored: "Put back in the library",
   returned: "Returned",
-  withdrawn: "Withdrawn",
+  withdrawn: "Removed from the library",
 };
 
-/** A history line's heading, e.g. "Withdrawn". */
+/** A history line's heading, e.g. "Removed from the library". */
 export const eventLabel = (type: string) =>
   EVENT_LABELS[type as LibraryEventType] ?? type;
 
@@ -463,7 +463,7 @@ export function stateLabel(state: MemberBookState): string {
     case "ebook":
       return `Ebook · ask ${state.askName ?? "the librarian"}`;
     case "withdrawn":
-      return "Withdrawn";
+      return "Removed";
     default:
       return "Available";
   }
@@ -599,7 +599,7 @@ export const SHELF_STATE_LABELS: Record<ShelfState, string> = {
   overdue: "Overdue",
   reserved: "Reserved",
   shelf: "In the library",
-  withdrawn: "Withdrawn",
+  withdrawn: "Removed from library",
 };
 
 export const shelfStateOf = (value: string | null): ShelfState =>
@@ -726,7 +726,7 @@ export function lentLabel(
     case "ebook":
       return "Ebook: members ask you for it";
     case "withdrawn":
-      return "Withdrawn from the library";
+      return "Removed from the library";
     default:
       return "On the shelf";
   }

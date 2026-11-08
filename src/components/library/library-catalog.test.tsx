@@ -128,7 +128,7 @@ describe("LibraryCatalog", () => {
       .getByRole("heading", { name: "Mere Christianity" })
       .closest("article");
     expect(card?.textContent).toContain(
-      "C. S. LewisDeutschPublisher: HarperOneCategory: Apologetics"
+      "Category: ApologeticsMere ChristianityC. S. LewisLanguage: Deutsch·Publisher: HarperOne"
     );
     expect(screen.getByText("Available")).toBeTruthy();
     expect(screen.getByText("Borrowed until 7 Dec")).toBeTruthy();
@@ -373,7 +373,7 @@ describe("LibraryCatalog", () => {
     expect(waiting.textContent).toContain("Reserved for you · until 14 Nov");
     expect(waiting.textContent).toContain("1st in line");
     const lent = screen.getByRole("region", { name: "Books you lend" });
-    expect(lent.textContent).toContain("Dietrich BonhoefferDeutsch");
+    expect(lent.textContent).toContain("Dietrich BonhoefferLanguage: Deutsch");
     expect(lent.textContent).toContain("Borrowed by Budi Santoso until 7 Dec");
     expect(lent.textContent).toContain("Lent 1 time");
     // The lends only: who, from and to; never the librarian's event log.
