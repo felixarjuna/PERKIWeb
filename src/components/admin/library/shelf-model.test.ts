@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { historyLine, type ShelfLending, shelfLabel } from "./shelf-model";
+import {
+  historyLine,
+  type ShelfLending,
+  shelfLabel,
+  withdrawRefusal,
+} from "./shelf-model";
 
 const book = (overrides: Partial<ShelfLending>): ShelfLending => ({
   dueOn: null,
@@ -19,7 +24,7 @@ describe("shelfLabel", () => {
       shelfLabel(
         book({ dueOn: "2026-12-07", holder: "Ana", kind: "borrowed", queue: 2 })
       )
-    ).toBe("Out with Ana until 7 Dec · 2 waiting");
+    ).toBe("Borrowed by Ana until 7 Dec · 2 waiting");
     expect(
       shelfLabel(
         book({
@@ -29,7 +34,7 @@ describe("shelfLabel", () => {
           overdue: true,
         })
       )
-    ).toBe("Overdue since 2 Nov, with Ana");
+    ).toBe("Overdue since 2 Nov, borrowed by Ana");
     expect(
       shelfLabel(
         book({ holdEndsOn: "2026-11-14", holder: "Budi", kind: "reserved" })
@@ -71,5 +76,68 @@ describe("historyLine", () => {
         type: "withdrawn",
       })
     ).toEqual({ detail: "", title: "Withdrawn" });
+  });
+
+  it("tells borrows, returns and extensions apart, with who and until when", () => {
+    const line = (event: Partial<Parameters<typeof historyLine>[0]>) =>
+      historyLine({
+        actor: null,
+        details: {},
+        subject: null,
+        type: "",
+        ...event,
+      });
+    expect(
+      line({
+        actor: "Ana",
+        details: { dueOn: "2026-12-07" },
+        subject: "Ana",
+        type: "borrowed",
+      })
+    ).toEqual({ detail: "by Ana · due 7 Dec", title: "Borrowed" });
+    expect(
+      line({
+        actor: "Mita",
+        details: { byHand: true, dueOn: "2026-12-07" },
+        subject: "Ana",
+        type: "borrowed",
+      })
+    ).toEqual({
+      detail: "by Mita · to Ana · due 7 Dec",
+      title: "Lent by hand",
+    });
+    expect(
+      line({
+        actor: "Ana",
+        details: { dueOn: "2027-01-06", from: "2026-12-07" },
+        subject: "Ana",
+        type: "extended",
+      })
+    ).toEqual({ detail: "by Ana · until 6 Jan", title: "Loan extended" });
+    expect(
+      line({
+        actor: "Mita",
+        details: { dueOn: "2027-04-01", from: "2026-12-07", note: "Thesis" },
+        subject: "Ana",
+        type: "extended",
+      })
+    ).toEqual({
+      detail: "by Mita · for Ana · until 1 Apr · “Thesis”",
+      title: "Loan extended",
+    });
+    expect(line({ actor: "Mita", subject: "Ana", type: "returned" })).toEqual({
+      detail: "by Mita · from Ana",
+      title: "Returned",
+    });
+  });
+});
+
+describe("withdrawRefusal", () => {
+  it("asks for the return before a borrowed book can leave", () => {
+    expect(withdrawRefusal(book({ kind: "borrowed" }))).toBe(
+      "Mark it returned before withdrawing it."
+    );
+    expect(withdrawRefusal(book({ kind: "available" }))).toBeNull();
+    expect(withdrawRefusal(book({ kind: "reserved" }))).toBeNull();
   });
 });

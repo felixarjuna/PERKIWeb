@@ -18,6 +18,8 @@ export const MAX_TITLE = 200;
 export const MAX_AUTHOR = 200;
 export const MAX_LANGUAGE = 50;
 export const MAX_DESCRIPTION = 1000;
+/** Longest note staff keep on a loan when they set its due date. */
+export const MAX_LOAN_NOTE = 300;
 
 export const BOOK_STATUSES = [
   "offered",
@@ -83,6 +85,11 @@ const parse = (day: string) => DateTime.fromISO(day, { zone: ZONE });
 /** `day` moved by `days` calendar days, as `yyyy-MM-dd`. */
 export const addDays = (day: string, days: number) =>
   parse(day).plus({ days }).toISODate() ?? day;
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Whether `day` is a real calendar day written `yyyy-MM-dd` ("2026-02-30" isn't). */
+export const isDay = (day: string) => ISO_DAY.test(day) && parse(day).isValid;
 
 /** The due date of a loan that starts on `today`. */
 export const dueOnFrom = (today: string) => addDays(today, LOAN_DAYS);
@@ -408,4 +415,73 @@ export function inShelfState(state: BookState, filter: ShelfState) {
     default:
       return state.kind === filter;
   }
+}
+
+/** The new due date when a loan due on `dueOn` is extended once. */
+export const extendedDueOn = (dueOn: string) => addDays(dueOn, LOAN_DAYS);
+
+/**
+ * Why a book can't be borrowed now, or null when it can: only a book on the
+ * shelf with no open loan. (A held book goes to its reserver with the queue.)
+ */
+export function borrowRefusal(state: BookState): string | null {
+  switch (state.kind) {
+    case "available":
+      return null;
+    case "borrowed":
+      return "Someone has borrowed this book. Ask the librarian if you have it in hand.";
+    case "reserved":
+      return "This book is held for the next in line.";
+    case "offered":
+      return "This book isn't on the shelf yet.";
+    default:
+      return "This book has left the library.";
+  }
+}
+
+export interface LoanLine {
+  dueOn: string;
+  extensions: number;
+  userId: string;
+}
+
+/**
+ * Why the member can't extend this loan themselves, or null when they can:
+ * only the holder, at most `MAX_EXTENSIONS` times, not after the due date,
+ * and not while anyone waits in the queue (`waiting`). Staff can go past it.
+ */
+export function extendRefusal(
+  loan: LoanLine,
+  viewerId: string,
+  today: string,
+  waiting = 0
+): string | null {
+  if (loan.userId !== viewerId) {
+    return "Only the member who has the book can extend it.";
+  }
+  if (isOverdue(loan.dueOn, today)) {
+    return "It's past the due date. Ask the librarian.";
+  }
+  if (loan.extensions >= MAX_EXTENSIONS) {
+    return `Already extended ${MAX_EXTENSIONS} times. Ask the librarian.`;
+  }
+  if (waiting > 0) {
+    return "Someone is waiting for this book.";
+  }
+  return null;
+}
+
+/** What a member reads under a book they hold: "Due 7 Dec" or "Overdue since 8 Dec". */
+export const dueLabel = (dueOn: string, today: string) =>
+  isOverdue(dueOn, today)
+    ? `Overdue since ${dayLabel(addDays(dueOn, 1))}`
+    : `Due ${dayLabel(dueOn)}`;
+
+/** "1 extension left", "No extensions left". */
+export function extensionsLeftLabel(extensions: number) {
+  const left = Math.max(0, MAX_EXTENSIONS - extensions);
+  if (left === 0) {
+    return "No extensions left";
+  }
+  return `${left} ${left === 1 ? "extension" : "extensions"} left`;
 }

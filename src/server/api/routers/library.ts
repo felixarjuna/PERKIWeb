@@ -1,15 +1,25 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
-import { libraryBooks, libraryHistory, users } from "~/lib/db/schema/schema";
+import {
+  libraryBooks,
+  libraryHistory,
+  libraryLoans,
+  users,
+} from "~/lib/db/schema/schema";
 import {
   type BookState,
+  extendedDueOn,
+  extendRefusal,
   inShelfState,
+  isDay,
+  isOverdue,
   LIBRARY_SHOWS,
   LIBRARY_SORTS,
   MAX_AUTHOR,
   MAX_DESCRIPTION,
   MAX_LANGUAGE,
+  MAX_LOAN_NOTE,
   MAX_TITLE,
   memberBookState,
   SHELF_STATES,
@@ -17,12 +27,29 @@ import {
   sortBooks,
 } from "~/lib/library";
 import { db } from "~/server";
-import { lockBook, logEvent, refreshStatus, statesOf } from "~/server/library";
-import { isPgError, PG_FOREIGN_KEY_VIOLATION } from "../errors";
+import {
+  libraryToday,
+  loadLending,
+  lockBook,
+  logEvent,
+  openLoanOf,
+  refreshStatus,
+  startLoan,
+  statesOf,
+} from "~/server/library";
+import {
+  isPgError,
+  PG_FOREIGN_KEY_VIOLATION,
+  PG_UNIQUE_VIOLATION,
+} from "../errors";
 import { matchesWords } from "../paging";
 import { adminProcedure, createTRPCRouter, protectedProcedure } from "../trpc";
 
 const MAX_QUERY = 200;
+/** Past borrows My books lists, newest first. */
+const MAX_PAST_LOANS = 20;
+
+const bookId = z.object({ id: z.number().int().positive() });
 
 /** Empty optional text is stored as null. */
 const optionalText = (max: number) =>
@@ -60,6 +87,37 @@ const ownerMissing = (error: unknown) => {
   }
   throw error;
 };
+
+/**
+ * A second loan that slipped past the check (the partial unique index) reads
+ * as the book being borrowed; a missing member as NOT_FOUND.
+ */
+const loanFailed = (error: unknown) => {
+  if (isPgError(error, PG_UNIQUE_VIOLATION)) {
+    throw new TRPCError({
+      cause: error,
+      code: "CONFLICT",
+      message: "Someone has borrowed this book.",
+    });
+  }
+  if (isPgError(error, PG_FOREIGN_KEY_VIOLATION)) {
+    throw new TRPCError({
+      cause: error,
+      code: "NOT_FOUND",
+      message: "Member not found.",
+    });
+  }
+  throw error;
+};
+
+const WITHDRAW_WHILE_OUT =
+  "This book is borrowed by a member. Mark it returned first.";
+
+const noOpenLoan = () =>
+  new TRPCError({
+    code: "BAD_REQUEST",
+    message: "Nobody has borrowed this book.",
+  });
 
 /** Who has the book or has it held for them, for staff. */
 const personWith = (state: BookState) => {
@@ -117,6 +175,82 @@ export const libraryRouter = createTRPCRouter({
       .catch(ownerMissing)
   ),
 
+  /**
+   * Signed-in members, with the book in hand at the shelf: starts their loan,
+   * due in `LOAN_DAYS`. Only staff's Mark returned ends it.
+   */
+  borrow: protectedProcedure.input(bookId).mutation(({ ctx, input }) =>
+    db
+      .transaction((tx) =>
+        startLoan(tx, {
+          actorId: ctx.session.user.id,
+          bookId: input.id,
+          userId: ctx.session.user.id,
+        })
+      )
+      .catch(loanFailed)
+  ),
+
+  /**
+   * The holder: moves the due date `LOAN_DAYS` on, at most `MAX_EXTENSIONS`
+   * times, not after it's due and not while anyone waits.
+   */
+  extend: protectedProcedure
+    .input(z.object({ loanId: z.number().int().positive() }))
+    .mutation(({ ctx, input }) =>
+      db.transaction(async (tx) => {
+        const viewerId = ctx.session.user.id;
+        const [found] = await tx
+          .select({ bookId: libraryLoans.bookId })
+          .from(libraryLoans)
+          .where(
+            and(
+              eq(libraryLoans.id, input.loanId),
+              eq(libraryLoans.borrowerId, viewerId)
+            )
+          );
+        if (!found) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Loan not found.",
+          });
+        }
+        const book = await lockBook(tx, found.bookId);
+        const loan = await openLoanOf(tx, book.id);
+        if (loan?.id !== input.loanId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This book has already been returned.",
+          });
+        }
+        const today = libraryToday();
+        const state = (await statesOf(tx, [book], today)).get(book.id);
+        const refusal = extendRefusal(
+          { ...loan, userId: loan.borrowerId },
+          viewerId,
+          today,
+          state && "queue" in state ? state.queue : 0
+        );
+        if (refusal) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: refusal });
+        }
+        const dueOn = extendedDueOn(loan.dueOn);
+        await tx
+          .update(libraryLoans)
+          .set({ dueOn, extensions: loan.extensions + 1 })
+          .where(eq(libraryLoans.id, loan.id));
+        await logEvent(tx, {
+          actorId: viewerId,
+          bookId: book.id,
+          details: { dueOn, from: loan.dueOn },
+          loanId: loan.id,
+          subjectId: viewerId,
+          type: "extended",
+        });
+        return { dueOn };
+      })
+    ),
+
   /** Staff: one book's history, newest first, with who did what. */
   history: adminProcedure
     .input(z.object({ id: z.number().int().positive() }))
@@ -150,6 +284,22 @@ export const libraryRouter = createTRPCRouter({
         title: book.title,
       };
     }),
+
+  /** Staff: lends a book to a named member, e.g. one without a phone at hand. */
+  lend: adminProcedure
+    .input(bookId.extend({ userId: z.string().min(1) }))
+    .mutation(({ ctx, input }) =>
+      db
+        .transaction((tx) =>
+          startLoan(tx, {
+            actorId: ctx.session.user.id,
+            bookId: input.id,
+            byHand: true,
+            userId: input.userId,
+          })
+        )
+        .catch(loanFailed)
+    ),
 
   /**
    * Signed-in members: every book that hasn't left the library, with its
@@ -223,6 +373,26 @@ export const libraryRouter = createTRPCRouter({
         const state = states.get(book.id);
         return state ? inShelfState(state, input.state) : false;
       });
+      const openLoans = shown.length
+        ? await db
+            .select({
+              bookId: libraryLoans.bookId,
+              extensions: libraryLoans.extensions,
+            })
+            .from(libraryLoans)
+            .where(
+              and(
+                inArray(
+                  libraryLoans.bookId,
+                  shown.map((book) => book.id)
+                ),
+                isNull(libraryLoans.returnedAt)
+              )
+            )
+        : [];
+      const extensions = new Map(
+        openLoans.map((loan) => [loan.bookId, loan.extensions])
+      );
       const people = await peopleById(
         shown.flatMap((book) => {
           const state = states.get(book.id);
@@ -237,6 +407,7 @@ export const libraryRouter = createTRPCRouter({
           author: book.author,
           description: book.description,
           dueOn: state.kind === "borrowed" ? state.dueOn : null,
+          extensions: extensions.get(book.id) ?? 0,
           holdEndsOn: state.kind === "reserved" ? state.holdEndsOn : null,
           holder: holderId ? (people.get(holderId)?.name ?? null) : null,
           id: book.id,
@@ -254,6 +425,86 @@ export const libraryRouter = createTRPCRouter({
         };
       });
     }),
+
+  /**
+   * Staff, when the book is back on the shelf: ends its open loan. The only
+   * way a loan ends; the next Borrow never counts as the return.
+   */
+  markReturned: adminProcedure.input(bookId).mutation(({ ctx, input }) =>
+    db.transaction(async (tx) => {
+      const book = await lockBook(tx, input.id);
+      const loan = await openLoanOf(tx, book.id);
+      if (!loan) {
+        throw noOpenLoan();
+      }
+      const actorId = ctx.session.user.id;
+      await tx
+        .update(libraryLoans)
+        .set({ returnedAt: new Date(), returnedById: actorId })
+        .where(eq(libraryLoans.id, loan.id));
+      const status = await refreshStatus(tx, book);
+      await logEvent(tx, {
+        actorId,
+        bookId: book.id,
+        details: { dueOn: loan.dueOn },
+        loanId: loan.id,
+        subjectId: loan.borrowerId,
+        type: "returned",
+      });
+      return { id: book.id, status };
+    })
+  ),
+
+  /**
+   * Signed-in members: the books they hold, each with its due date and
+   * whether they may extend it, and the ones they've given back.
+   */
+  mine: protectedProcedure.query(async ({ ctx }) => {
+    const viewerId = ctx.session.user.id;
+    const loans = await db
+      .select({
+        author: libraryBooks.author,
+        bookId: libraryLoans.bookId,
+        borrowedAt: libraryLoans.borrowedAt,
+        dueOn: libraryLoans.dueOn,
+        extensions: libraryLoans.extensions,
+        loanId: libraryLoans.id,
+        returnedAt: libraryLoans.returnedAt,
+        title: libraryBooks.title,
+      })
+      .from(libraryLoans)
+      .innerJoin(libraryBooks, eq(libraryBooks.id, libraryLoans.bookId))
+      .where(eq(libraryLoans.borrowerId, viewerId))
+      .orderBy(asc(libraryLoans.dueOn), asc(libraryLoans.id));
+    const open = loans.filter((loan) => loan.returnedAt === null);
+    const { lines } = await loadLending(
+      db,
+      open.map((loan) => loan.bookId)
+    );
+    const today = libraryToday();
+    const past = loans.flatMap(({ author, borrowedAt, returnedAt, title }) =>
+      returnedAt ? [{ author, borrowedAt, returnedAt, title }] : []
+    );
+    past.sort((a, b) => b.returnedAt.getTime() - a.returnedAt.getTime());
+    return {
+      holding: open.map((loan) => ({
+        author: loan.author,
+        bookId: loan.bookId,
+        dueOn: loan.dueOn,
+        extendRefusal: extendRefusal(
+          { ...loan, userId: viewerId },
+          viewerId,
+          today,
+          lines.get(loan.bookId)?.length ?? 0
+        ),
+        extensions: loan.extensions,
+        loanId: loan.loanId,
+        overdue: isOverdue(loan.dueOn, today),
+        title: loan.title,
+      })),
+      past: past.slice(0, MAX_PAST_LOANS),
+    };
+  }),
 
   /** Staff: brings a withdrawn book back onto the shelf. */
   restore: adminProcedure
@@ -285,6 +536,50 @@ export const libraryRouter = createTRPCRouter({
           type: "restored",
         });
         return { id: book.id, status };
+      })
+    ),
+
+  /**
+   * Staff: sets the open loan's due date directly, past the members' limit,
+   * with an optional note kept on the loan and in the history.
+   */
+  setDueOn: adminProcedure
+    .input(
+      bookId.extend({
+        dueOn: z.string().refine(isDay, "Pick a date."),
+        note: optionalText(MAX_LOAN_NOTE),
+      })
+    )
+    .mutation(({ ctx, input }) =>
+      db.transaction(async (tx) => {
+        const book = await lockBook(tx, input.id);
+        const loan = await openLoanOf(tx, book.id);
+        if (!loan) {
+          throw noOpenLoan();
+        }
+        if (input.dueOn < libraryToday()) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Pick today or a later day.",
+          });
+        }
+        await tx
+          .update(libraryLoans)
+          .set({ dueOn: input.dueOn, note: input.note ?? loan.note })
+          .where(eq(libraryLoans.id, loan.id));
+        await logEvent(tx, {
+          actorId: ctx.session.user.id,
+          bookId: book.id,
+          details: {
+            dueOn: input.dueOn,
+            from: loan.dueOn,
+            ...(input.note ? { note: input.note } : {}),
+          },
+          loanId: loan.id,
+          subjectId: loan.borrowerId,
+          type: "extended",
+        });
+        return { dueOn: input.dueOn };
       })
     ),
 
@@ -329,6 +624,13 @@ export const libraryRouter = createTRPCRouter({
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "This book is already withdrawn.",
+          });
+        }
+        // Its loan would stay open forever, still due for the holder.
+        if (await openLoanOf(tx, book.id)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: WITHDRAW_WHILE_OUT,
           });
         }
         await tx

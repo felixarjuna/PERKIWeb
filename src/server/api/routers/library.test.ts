@@ -190,10 +190,11 @@ describe("library", () => {
     const { budi, mita } = await setup();
     const staff = callerFor(mita.id).library;
     const { id } = await staff.add(book);
+    await staff.withdraw({ id });
+    // A loan left open on a withdrawn book (withdraw now refuses that).
     await testDb
       .insert(libraryLoans)
       .values({ bookId: id, borrowerId: budi.id, dueOn: "2026-12-07" });
-    await staff.withdraw({ id });
     await expect(staff.restore({ id })).resolves.toEqual({
       id,
       status: "borrowed",

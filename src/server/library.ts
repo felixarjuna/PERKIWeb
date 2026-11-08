@@ -10,6 +10,8 @@ import {
   type BookState,
   type BookStatus,
   bookState,
+  borrowRefusal,
+  dueOnFrom,
   type LibraryEventType,
   type OpenLoan,
   type ReservationLine,
@@ -149,3 +151,55 @@ export const logEvent = (
     subjectId: event.subjectId ?? null,
     type: event.type,
   });
+
+/** The book's open loan, read after `lockBook` so nobody changes it meanwhile. */
+export async function openLoanOf(tx: Tx, bookId: number) {
+  const [loan] = await tx
+    .select()
+    .from(libraryLoans)
+    .where(
+      and(eq(libraryLoans.bookId, bookId), isNull(libraryLoans.returnedAt))
+    );
+  return loan ?? null;
+}
+
+/**
+ * Starts a loan for `userId`, due `LOAN_DAYS` from today in Aachen, after
+ * checking under the book's row lock that it's on the shelf and free. Used
+ * by a member's Borrow and the librarian's Lend by hand (`byHand`).
+ */
+export async function startLoan(
+  tx: Tx,
+  {
+    actorId,
+    bookId,
+    byHand = false,
+    userId,
+  }: { actorId: string; bookId: number; byHand?: boolean; userId: string }
+) {
+  const book = await lockBook(tx, bookId);
+  const today = libraryToday();
+  const state = (await statesOf(tx, [book], today)).get(book.id);
+  const refusal = state ? borrowRefusal(state) : null;
+  if (refusal) {
+    throw new TRPCError({ code: "CONFLICT", message: refusal });
+  }
+  const dueOn = dueOnFrom(today);
+  const [loan] = await tx
+    .insert(libraryLoans)
+    .values({ bookId: book.id, borrowerId: userId, dueOn })
+    .returning({ id: libraryLoans.id });
+  if (!loan) {
+    throw new Error("Failed to start the loan");
+  }
+  await refreshStatus(tx, book);
+  await logEvent(tx, {
+    actorId,
+    bookId: book.id,
+    details: byHand ? { byHand, dueOn } : { dueOn },
+    loanId: loan.id,
+    subjectId: userId,
+    type: "borrowed",
+  });
+  return { dueOn, loanId: loan.id };
+}

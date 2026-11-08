@@ -7,8 +7,10 @@ import {
 } from "~/lib/auth-redirect";
 import { auth } from "~/server/auth";
 import { getRole } from "~/server/authz";
+import { libraryToday } from "~/server/library";
 import { api } from "~/trpc/server";
 import AccountActions from "./account-actions";
+import BooksCard, { orNothing } from "./books-card";
 import DutiesCard from "./duties-card";
 import ProfileSummary from "./profile-summary";
 import RoleCard from "./role-card";
@@ -26,9 +28,10 @@ export default async function AccountPage({
     );
   }
 
-  const [role, duties] = await Promise.all([
+  const [role, duties, books] = await Promise.all([
     getRole(session.user.id),
     api.schedules.myDuties(),
+    orNothing(() => api.library.mine()),
   ]);
   const canDelete = role !== "owner";
 
@@ -40,6 +43,9 @@ export default async function AccountPage({
       <div className="flex w-full flex-col gap-4">
         <ProfileSummary />
         <DutiesCard next={duties.upcoming[0] ?? null} />
+        {books ? (
+          <BooksCard holding={books.holding} today={libraryToday()} />
+        ) : null}
         <RoleCard />
         <WhatsappCard />
         <AccountActions canDelete={canDelete} />

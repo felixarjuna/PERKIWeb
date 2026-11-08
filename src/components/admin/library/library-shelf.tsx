@@ -1,7 +1,14 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
-import { History, Pencil, Plus } from "lucide-react";
+import {
+  BookCheck,
+  CalendarPlus,
+  HandHelping,
+  History,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
@@ -28,7 +35,8 @@ import { api } from "~/trpc/react";
 import { AdminSearch, AdminSelect, QueryMessage } from "../admin-controls";
 import { BookDialog, type ShelfBook } from "./book-dialog";
 import { BookHistory } from "./book-history";
-import { shelfLabel } from "./shelf-model";
+import { DueDateDialog, LendDialog } from "./loan-dialogs";
+import { shelfLabel, withdrawRefusal } from "./shelf-model";
 
 const stateOptions = SHELF_STATES.map((state) => ({
   label: SHELF_STATE_LABELS[state],
@@ -68,21 +76,79 @@ function variantOf(book: ShelfBook): BadgeProps["variant"] {
   return book.kind === "reserved" ? "review" : "draft";
 }
 
+interface RowActions {
+  onEdit: () => void;
+  onExtend: () => void;
+  onHistory: () => void;
+  onLend: () => void;
+  onRestore: () => void;
+  onReturn: () => void;
+  onWithdraw: () => void;
+  restoring: boolean;
+}
+
+/** Mark returned and Extend for a borrowed book; Lend for one on the shelf. */
+function LendingActions({
+  book,
+  onExtend,
+  onLend,
+  onReturn,
+}: { book: ShelfBook } & Pick<RowActions, "onExtend" | "onLend" | "onReturn">) {
+  if (book.kind === "borrowed") {
+    return (
+      <>
+        <Button
+          aria-label={`Mark ${book.title} returned`}
+          onClick={onReturn}
+          size="sm"
+          type="button"
+        >
+          <BookCheck aria-hidden="true" />
+          Mark returned
+        </Button>
+        <Button
+          aria-label={`Extend ${book.title}`}
+          onClick={onExtend}
+          size="sm"
+          type="button"
+          variant="secondary"
+        >
+          <CalendarPlus aria-hidden="true" />
+          Extend
+        </Button>
+      </>
+    );
+  }
+  if (book.kind === "available") {
+    return (
+      <Button
+        aria-label={`Lend ${book.title}`}
+        onClick={onLend}
+        size="sm"
+        type="button"
+        variant="secondary"
+      >
+        <HandHelping aria-hidden="true" />
+        Lend
+      </Button>
+    );
+  }
+  return null;
+}
+
 function ShelfRow({
   book,
   onEdit,
+  onExtend,
   onHistory,
+  onLend,
+  onReturn,
   onWithdraw,
   onRestore,
   restoring,
-}: {
-  book: ShelfBook;
-  onEdit: () => void;
-  onHistory: () => void;
-  onWithdraw: () => void;
-  onRestore: () => void;
-  restoring: boolean;
-}) {
+}: { book: ShelfBook } & RowActions) {
+  const cantWithdraw = withdrawRefusal(book);
+  const hintId = `withdraw-${book.id}`;
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
@@ -96,6 +162,9 @@ function ShelfRow({
             {[
               book.owner ? `Lent by ${book.owner.name}` : "PERKI's book",
               shelfLabel(book),
+              book.kind === "borrowed" && book.extensions > 0
+                ? `extended ${book.extensions}×`
+                : "",
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -106,6 +175,12 @@ function ShelfRow({
         </Badge>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
+        <LendingActions
+          book={book}
+          onExtend={onExtend}
+          onLend={onLend}
+          onReturn={onReturn}
+        />
         <Button
           aria-label={`Edit ${book.title}`}
           onClick={onEdit}
@@ -137,11 +212,23 @@ function ShelfRow({
             Bring back
           </Button>
         ) : (
-          <Button onClick={onWithdraw} size="sm" type="button" variant="ghost">
+          <Button
+            aria-describedby={cantWithdraw ? hintId : undefined}
+            disabled={cantWithdraw !== null}
+            onClick={onWithdraw}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
             Withdraw
           </Button>
         )}
       </div>
+      {cantWithdraw ? (
+        <p className="type-caption mt-2 text-muted-foreground" id={hintId}>
+          {cantWithdraw}
+        </p>
+      ) : null}
     </li>
   );
 }
@@ -163,12 +250,23 @@ export default function LibraryShelf() {
   }>({ open: false });
   const [history, setHistory] = React.useState<ShelfBook | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<ShelfBook | null>(null);
+  const [returning, setReturning] = React.useState<ShelfBook | null>(null);
+  const [lending, setLending] = React.useState<ShelfBook | null>(null);
+  const [extending, setExtending] = React.useState<ShelfBook | null>(null);
 
   const withdraw = api.library.withdraw.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success(`“${withdrawing?.title ?? "The book"}” withdrawn`);
       setWithdrawing(null);
+      await utils.library.invalidate();
+    },
+  });
+  const markReturned = api.library.markReturned.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: async () => {
+      toast.success(`“${returning?.title ?? "The book"}” is back on the shelf`);
+      setReturning(null);
       await utils.library.invalidate();
     },
   });
@@ -236,8 +334,11 @@ export default function LibraryShelf() {
                   book={book}
                   key={book.id}
                   onEdit={() => setEditing({ book, open: true })}
+                  onExtend={() => setExtending(book)}
                   onHistory={() => setHistory(book)}
+                  onLend={() => setLending(book)}
                   onRestore={() => restore.mutate({ id: book.id })}
+                  onReturn={() => setReturning(book)}
                   onWithdraw={() => setWithdrawing(book)}
                   restoring={restore.isPending}
                 />
@@ -253,6 +354,43 @@ export default function LibraryShelf() {
         open={editing.open}
       />
       <BookHistory book={history} onClose={() => setHistory(null)} />
+      <LendDialog book={lending} onClose={() => setLending(null)} />
+      <DueDateDialog book={extending} onClose={() => setExtending(null)} />
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setReturning(null);
+          }
+        }}
+        open={returning !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Mark “{returning?.title}” returned?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Only once the book is back on the shelf. This ends{" "}
+              {returning?.holder ? `${returning.holder}'s` : "the"} loan and
+              members can borrow it again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={markReturned.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (returning) {
+                  markReturned.mutate({ id: returning.id });
+                }
+              }}
+            >
+              Mark returned
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog
         onOpenChange={(open) => {
           if (!open) {

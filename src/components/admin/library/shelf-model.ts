@@ -11,7 +11,7 @@ export interface ShelfLending {
 }
 
 /**
- * "Out with Ana until 7 Dec · 2 waiting"; "" when the badge says it all (a
+ * "Borrowed by Ana until 7 Dec · 2 waiting"; "" when the badge says it all (a
  * free book nobody waits for, a withdrawn one).
  */
 export function shelfLabel(book: ShelfLending): string {
@@ -20,11 +20,11 @@ export function shelfLabel(book: ShelfLending): string {
   switch (book.kind) {
     case "borrowed":
       if (!book.dueOn) {
-        return `Out with ${holder}${waiting}`;
+        return `Borrowed by ${holder}${waiting}`;
       }
       return book.overdue
-        ? `Overdue since ${dayLabel(addDays(book.dueOn, 1))}, with ${holder}${waiting}`
-        : `Out with ${holder} until ${dayLabel(book.dueOn)}${waiting}`;
+        ? `Overdue since ${dayLabel(addDays(book.dueOn, 1))}, borrowed by ${holder}${waiting}`
+        : `Borrowed by ${holder} until ${dayLabel(book.dueOn)}${waiting}`;
     case "reserved":
       return `Held for ${holder}${book.holdEndsOn ? ` until ${dayLabel(book.holdEndsOn)}` : ""}${waiting}`;
     case "offered":
@@ -35,6 +35,10 @@ export function shelfLabel(book: ShelfLending): string {
       return book.queue > 0 ? `${book.queue} waiting` : "";
   }
 }
+
+/** Why staff can't withdraw a book now: a borrowed one needs its return first. */
+export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
+  book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
 
 const FIELD_LABELS: Record<string, string> = {
   author: "author",
@@ -51,6 +55,15 @@ export interface HistoryEvent {
   type: string;
 }
 
+const subjectPhrase: Record<string, string> = {
+  added: "lent by",
+  borrowed: "to",
+  edited: "lent by",
+  returned: "from",
+};
+
+const text = (value: unknown) => (typeof value === "string" ? value : null);
+
 /** A history line: its heading and the who/what under it. */
 export function historyLine(event: HistoryEvent) {
   const parts: string[] = [];
@@ -63,12 +76,27 @@ export function historyLine(event: HistoryEvent) {
   if (event.type === "edited" && changed.length > 0) {
     parts.push(`changed ${changed.join(", ")}`);
   }
-  if (event.subject) {
-    parts.push(
-      event.type === "added" || event.type === "edited"
-        ? `lent by ${event.subject}`
-        : `for ${event.subject}`
-    );
+  // A member borrowing or extending for themselves is said once.
+  const self =
+    event.subject === event.actor &&
+    (event.type === "borrowed" || event.type === "extended");
+  if (event.subject && !self) {
+    parts.push(`${subjectPhrase[event.type] ?? "for"} ${event.subject}`);
   }
-  return { detail: parts.join(" · "), title: eventLabel(event.type) };
+  const dueOn = text(event.details.dueOn);
+  if (dueOn && event.type === "borrowed") {
+    parts.push(`due ${dayLabel(dueOn)}`);
+  }
+  if (dueOn && event.type === "extended") {
+    parts.push(`until ${dayLabel(dueOn)}`);
+  }
+  const note = text(event.details.note);
+  if (note) {
+    parts.push(`“${note}”`);
+  }
+  const byHand = event.type === "borrowed" && event.details.byHand === true;
+  return {
+    detail: parts.join(" · "),
+    title: byHand ? "Lent by hand" : eventLabel(event.type),
+  };
 }
