@@ -44,6 +44,7 @@ describe("settings router", () => {
         url: DEFAULT_DISCORD_INVITE_URL,
       },
       driveFolder: null,
+      librarySheet: null,
       scheduleSheet: null,
       whatsappGroup: null,
     });
@@ -188,6 +189,19 @@ describe("settings router", () => {
     await api.settings.setScheduleSheet({ link: null });
 
     expect((await api.settings.integrations()).scheduleSheet).toBeNull();
+  });
+
+  it("keeps the library sheet apart from the schedule sheet", async () => {
+    const api = await admin();
+    await api.settings.setLibrarySheet({ link: ID });
+    const saved = await api.settings.integrations();
+    expect(saved.librarySheet).toMatchObject({ id: ID, updatedBy: "Mita" });
+    expect(saved.scheduleSheet).toBeNull();
+    await expect(
+      api.settings.setLibrarySheet({ link: "https://example.com" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await api.settings.setLibrarySheet({ link: null });
+    expect((await api.settings.integrations()).librarySheet).toBeNull();
   });
 
   it("shows a Drive folder still set in the environment until one is saved", async () => {

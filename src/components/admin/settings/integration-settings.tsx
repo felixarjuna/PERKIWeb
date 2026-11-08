@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import EmailSettings from "./email-settings";
 import { changedBy, OpenLink } from "./open-link";
 import { SettingRow, SettingsGroup } from "./settings-layout";
@@ -108,7 +108,56 @@ function LinkDialog({
   );
 }
 
-type Editing = "discord" | "drive" | "sheet" | "whatsapp" | null;
+type Sheet = RouterOutputs["settings"]["integrations"]["scheduleSheet"];
+
+/** A Google Sheet setting: its file name, who set it, and Add or Change. */
+function SheetRow({
+  title,
+  label,
+  description,
+  sheet,
+  onEdit,
+}: {
+  title: string;
+  label: string;
+  description: string;
+  sheet: Sheet;
+  onEdit: () => void;
+}) {
+  return (
+    <SettingRow
+      description={
+        <>
+          {description}
+          {sheet ? changedBy(sheet) : ""}
+        </>
+      }
+      title={title}
+    >
+      {sheet ? (
+        <OpenLink
+          href={sheet.url}
+          label={sheet.title ?? "Sheet can't be opened right now"}
+        />
+      ) : (
+        <span className="type-body-sm text-muted-foreground">
+          Not set, so the import is off
+        </span>
+      )}
+      <Button
+        aria-label={`Change the ${label}`}
+        onClick={onEdit}
+        size="sm"
+        type="button"
+        variant="secondary"
+      >
+        {sheet ? "Change" : "Add"}
+      </Button>
+    </SettingRow>
+  );
+}
+
+type Editing = "discord" | "drive" | "library" | "sheet" | "whatsapp" | null;
 
 /** Settings → Integrations: the outside services the workspace links to. */
 export default function IntegrationSettings() {
@@ -120,6 +169,7 @@ export default function IntegrationSettings() {
     await Promise.all([
       utils.settings.invalidate(),
       utils.scheduleImport.invalidate(),
+      utils.libraryImport.invalidate(),
     ]);
     toast.success(message);
   };
@@ -129,6 +179,13 @@ export default function IntegrationSettings() {
     onSuccess: (result) =>
       done(
         result.title ? `Connected “${result.title}”` : "Schedule sheet removed"
+      )(),
+  });
+  const library = api.settings.setLibrarySheet.useMutation({
+    onError,
+    onSuccess: (result) =>
+      done(
+        result.title ? `Connected “${result.title}”` : "Library sheet removed"
       )(),
   });
   const drive = api.settings.setDriveFolder.useMutation({
@@ -150,8 +207,13 @@ export default function IntegrationSettings() {
   if (query.isPending) {
     return <QueryMessage>Loading settings…</QueryMessage>;
   }
-  const { discordInvite, driveFolder, scheduleSheet, whatsappGroup } =
-    query.data;
+  const {
+    discordInvite,
+    driveFolder,
+    librarySheet,
+    scheduleSheet,
+    whatsappGroup,
+  } = query.data;
   const close = (open: boolean) => {
     if (!open) {
       setEditing(null);
@@ -161,36 +223,20 @@ export default function IntegrationSettings() {
   return (
     <>
       <SettingsGroup title="Google">
-        <SettingRow
-          description={
-            <>
-              The sheet “Import from sheet” reads. Paste the new file's link
-              when a new year starts.
-              {scheduleSheet ? changedBy(scheduleSheet) : ""}
-            </>
-          }
+        <SheetRow
+          description="The sheet “Import from sheet” reads. Paste the new file's link when a new year starts."
+          label="schedule sheet"
+          onEdit={() => setEditing("sheet")}
+          sheet={scheduleSheet}
           title="Schedule sheet"
-        >
-          {scheduleSheet ? (
-            <OpenLink
-              href={scheduleSheet.url}
-              label={scheduleSheet.title ?? "Sheet can't be opened right now"}
-            />
-          ) : (
-            <span className="type-body-sm text-muted-foreground">
-              Not set, so the import is off
-            </span>
-          )}
-          <Button
-            aria-label="Change the schedule sheet"
-            onClick={() => setEditing("sheet")}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            {scheduleSheet ? "Change" : "Add"}
-          </Button>
-        </SettingRow>
+        />
+        <SheetRow
+          description="The book list the library's “Import from sheet” reads, its first tab."
+          label="library sheet"
+          onEdit={() => setEditing("library")}
+          sheet={librarySheet}
+          title="Library sheet"
+        />
         <SettingRow
           description={
             <>
@@ -301,6 +347,23 @@ export default function IntegrationSettings() {
             : undefined
         }
         title="Schedule sheet"
+      />
+      <LinkDialog
+        description="Paste the book list's link. It's saved only if Google can open it, so the sheet must be shared with “Anyone with the link”."
+        onOpenChange={close}
+        onSave={(link) => library.mutate({ link })}
+        open={editing === "library"}
+        pending={library.isPending}
+        placeholder="https://docs.google.com/spreadsheets/d/…"
+        remove={
+          librarySheet
+            ? {
+                label: "Remove sheet",
+                onRemove: () => library.mutate({ link: null }),
+              }
+            : undefined
+        }
+        title="Library sheet"
       />
       <LinkDialog
         description="The shared folder mita open from the sidebar."

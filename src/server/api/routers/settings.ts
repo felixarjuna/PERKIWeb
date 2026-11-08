@@ -90,6 +90,49 @@ function driveFolderOf(
     : null;
 }
 
+/**
+ * Saves a Google Sheet setting from a pasted link or id (`null` removes it).
+ * It's only saved once Google opens it, so a typo or a private sheet is
+ * caught here, not on import.
+ */
+async function saveSheet(
+  key: SettingKey,
+  link: string | null,
+  userId: string
+): Promise<{ title: string | null }> {
+  if (link === null) {
+    await setSetting(key, null, userId);
+    return { title: null };
+  }
+  const sheetId = sheetIdFrom(link);
+  if (!sheetId) {
+    throw invalid(
+      "Paste the link of a Google Sheet (docs.google.com/spreadsheets/…)."
+    );
+  }
+  const title = await sheetTitle(sheetId).catch((error: unknown) => {
+    throw new TRPCError({
+      cause: error,
+      code: "BAD_REQUEST",
+      message:
+        "Google couldn't open this sheet. Check the link, and that the sheet is shared with “Anyone with the link”.",
+    });
+  });
+  await setSetting(key, sheetId, userId);
+  return { title };
+}
+
+/** A sheet setting as Settings → Integrations shows it, or null when unset. */
+const sheetOf = async (
+  row: { updatedAt: Date; updatedBy: string | null; value: string } | null
+) =>
+  row && {
+    ...changed(row),
+    id: row.value,
+    title: await sheetTitle(row.value).catch(() => null),
+    url: sheetUrl(row.value),
+  };
+
 export const settingsRouter = createTRPCRouter({
   email: adminProcedure.query(emailSettings),
   /** Everything on Settings → Integrations, with where each value comes from. */
@@ -109,12 +152,8 @@ export const settingsRouter = createTRPCRouter({
             url: DEFAULT_DISCORD_INVITE_URL,
           },
       driveFolder: driveFolderOf(drive),
-      scheduleSheet: sheet && {
-        ...changed(sheet),
-        id: sheet.value,
-        title: await sheetTitle(sheet.value).catch(() => null),
-        url: sheetUrl(sheet.value),
-      },
+      librarySheet: await sheetOf(row(SETTING_KEYS.librarySheetId)),
+      scheduleSheet: await sheetOf(sheet),
       whatsappGroup: whatsapp && { ...changed(whatsapp), url: whatsapp.value },
     };
   }),
@@ -225,42 +264,21 @@ export const settingsRouter = createTRPCRouter({
           target: settings.key,
         });
     }),
+  /** Sets the library's book list (#147), checked the same way. */
+  setLibrarySheet: adminProcedure
+    .input(linkInput)
+    .mutation(({ ctx, input }) =>
+      saveSheet(SETTING_KEYS.librarySheetId, input.link, ctx.session.user.id)
+    ),
   /**
    * Sets the schedule sheet from a pasted link or id. It's only saved once
    * Google opens it, so a typo or a private sheet is caught here, not on import.
    */
   setScheduleSheet: adminProcedure
     .input(linkInput)
-    .mutation(async ({ ctx, input }) => {
-      if (input.link === null) {
-        await setSetting(
-          SETTING_KEYS.scheduleSheetId,
-          null,
-          ctx.session.user.id
-        );
-        return { title: null };
-      }
-      const sheetId = sheetIdFrom(input.link);
-      if (!sheetId) {
-        throw invalid(
-          "Paste the link of a Google Sheet (docs.google.com/spreadsheets/…)."
-        );
-      }
-      const title = await sheetTitle(sheetId).catch((error: unknown) => {
-        throw new TRPCError({
-          cause: error,
-          code: "BAD_REQUEST",
-          message:
-            "Google couldn't open this sheet. Check the link, and that the sheet is shared with “Anyone with the link”.",
-        });
-      });
-      await setSetting(
-        SETTING_KEYS.scheduleSheetId,
-        sheetId,
-        ctx.session.user.id
-      );
-      return { title };
-    }),
+    .mutation(({ ctx, input }) =>
+      saveSheet(SETTING_KEYS.scheduleSheetId, input.link, ctx.session.user.id)
+    ),
   setTakeawayDeadline: adminProcedure
     .input(z.object({ weekday: z.number().int().min(1).max(7) }))
     .mutation(async ({ ctx, input }) => {
