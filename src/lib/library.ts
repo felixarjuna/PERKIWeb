@@ -245,6 +245,31 @@ export function queuePosition(
   return index === -1 ? null : index + 1;
 }
 
+/**
+ * Where `userId` stands for a book in its derived `state`: the hold that's
+ * theirs, or their place among those still waiting behind it. Reads the
+ * queue as `bookState` does, so a run-out hold nobody has written yet
+ * already counts as passed on.
+ */
+export function placeInLine(
+  state: BookState,
+  reservations: readonly ReservationLine[],
+  userId: string
+): { holdEndsOn: string | null; position: number | null } {
+  const turn = state.kind === "reserved" ? state.reservedFor : null;
+  if (turn === userId && state.kind === "reserved") {
+    return { holdEndsOn: state.holdEndsOn, position: null };
+  }
+  const waiting = queueOrder(reservations).filter(
+    (reservation) =>
+      reservation.status === "waiting" && reservation.userId !== turn
+  );
+  const index = waiting.findIndex(
+    (reservation) => reservation.userId === userId
+  );
+  return { holdEndsOn: null, position: index === -1 ? null : index + 1 };
+}
+
 const ORDINAL_TEENS = new Set([11, 12, 13]);
 const ORDINAL_SUFFIXES: Record<number, string> = { 1: "st", 2: "nd", 3: "rd" };
 

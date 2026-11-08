@@ -255,7 +255,7 @@ describe("library queue", () => {
     });
     vi.setSystemTime(NOW.getTime() + 8 * DAY_MS);
     await callerFor(budi.id).library.list({});
-    expect(provider).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(provider).toHaveBeenCalledTimes(1));
     const [, request] = provider.mock.calls.at(0) ?? [];
     const body = JSON.parse(request.body);
     expect(body).toMatchObject({
@@ -265,6 +265,87 @@ describe("library queue", () => {
     expect(body.text).toContain("https://perki.example.com/library");
     expect(body.text).toContain("22 Nov");
     vi.unstubAllEnvs();
+  });
+
+  it("never makes a read wait for the email provider", async () => {
+    const { budi, id, mita } = await borrowedWithQueue();
+    vi.stubEnv("RESEND_API_KEY", "test-only-key");
+    await callerFor(mita.id).settings.setEmail({
+      enabled: true,
+      sender: "library@example.com",
+    });
+    await callerFor(mita.id).library.markReturned({ id });
+    await vi.waitFor(() => expect(provider).toHaveBeenCalledTimes(1));
+    // Resend hangs: the next hold still saves and the list still answers.
+    provider.mockReturnValue(new Promise(() => undefined));
+    vi.setSystemTime(NOW.getTime() + 8 * DAY_MS);
+    expect(await stateFor(budi.id, id)).toMatchObject({ mine: false });
+    await vi.waitFor(() => expect(provider).toHaveBeenCalledTimes(2));
+    vi.unstubAllEnvs();
+  });
+
+  it("only the list settles; My books reads the hold as it stands", async () => {
+    const { budi, citra, id, mita } = await borrowedWithQueue();
+    await callerFor(mita.id).library.markReturned({ id });
+    vi.setSystemTime(NOW.getTime() + 8 * DAY_MS);
+    expect((await callerFor(citra.id).library.mine()).queue).toEqual([
+      expect.objectContaining({ holdEndsOn: "2026-11-22", position: null }),
+    ]);
+    expect((await callerFor(budi.id).library.mine()).queue).toEqual([]);
+    expect((await reservationsOf(id))[0]?.status).toBe("ready");
+    await callerFor(budi.id).library.list({});
+    expect((await reservationsOf(id))[0]?.status).toBe("expired");
+  });
+
+  it("doesn't email a member about the hold they're leaving", async () => {
+    const { citra, id, mita } = await borrowedWithQueue();
+    vi.stubEnv("RESEND_API_KEY", "test-only-key");
+    await callerFor(mita.id).library.markReturned({ id });
+    await callerFor(mita.id).settings.setEmail({
+      enabled: true,
+      sender: "library@example.com",
+    });
+    // Budi's hold ran out; nobody read the list before Citra leaves.
+    vi.setSystemTime(NOW.getTime() + 8 * DAY_MS);
+    await callerFor(citra.id).library.leaveQueue({ id });
+    expect((await reservationsOf(id)).map((row) => row.status)).toEqual([
+      "expired",
+      "cancelled",
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(provider).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("lets staff lend a held book by hand to the member it's held for", async () => {
+    const { ana, budi, citra, id, mita } = await borrowedWithQueue();
+    const staff = callerFor(mita.id).library;
+    await staff.markReturned({ id });
+    await expect(staff.lend({ id, userId: citra.id })).rejects.toMatchObject({
+      message: "This book is held for the next in line.",
+    });
+    await expect(staff.lend({ id, userId: ana.id })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await staff.lend({ id, userId: budi.id });
+    const [first, second] = await reservationsOf(id);
+    expect(first?.status).toBe("fulfilled");
+    expect(second?.status).toBe("waiting");
+    expect(await statusOf(id)).toBe("borrowed");
+    const types = (await staff.history({ id })).events.map((e) => e.type);
+    expect(types.slice(0, 2)).toEqual(["borrowed", "fulfilled"]);
+  });
+
+  it("cancels everyone waiting when a held book is withdrawn", async () => {
+    const { budi, id, mita } = await borrowedWithQueue();
+    const staff = callerFor(mita.id).library;
+    await staff.markReturned({ id });
+    await staff.withdraw({ id });
+    expect((await reservationsOf(id)).map((row) => row.status)).toEqual([
+      "cancelled",
+      "cancelled",
+    ]);
+    expect((await callerFor(budi.id).library.mine()).queue).toEqual([]);
   });
 
   it("lets staff cancel a reservation, passing the hold on", async () => {
@@ -302,6 +383,26 @@ describe("library queue", () => {
 describe("offering and lending your own book", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("brings a withdrawn offer back as offered, still waiting to be accepted", async () => {
+    const { ana, citra, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    const { id } = await callerFor(citra.id).library.offer({
+      author: "Dietrich Bonhoeffer",
+      title: "Nachfolge",
+    });
+    await staff.withdraw({ id });
+    await expect(staff.restore({ id })).resolves.toEqual({
+      id,
+      status: "offered",
+    });
+    expect(await stateFor(ana.id, id)).toMatchObject({ kind: "offered" });
+    await expect(
+      callerFor(ana.id).library.borrow({ id })
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await staff.accept({ id });
+    expect(await stateFor(ana.id, id)).toMatchObject({ kind: "available" });
   });
 
   it("lists an offered book until the librarian accepts it", async () => {

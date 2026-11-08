@@ -24,6 +24,7 @@ import {
   MAX_LOAN_NOTE,
   MAX_TITLE,
   memberBookState,
+  placeInLine,
   queueOrder,
   queuePosition,
   SHELF_STATES,
@@ -32,19 +33,20 @@ import {
 } from "~/lib/library";
 import { db } from "~/server";
 import {
+  lendingOf,
   libraryToday,
   loadLending,
   lockAndSettle,
   lockBook,
   logEvent,
   openLoanOf,
-  refreshStatus,
   settleBook,
   settleRunOutHolds,
   startLoan,
   statesOf,
   withReadyEmails,
 } from "~/server/library";
+import type { ReadyNotice } from "~/server/library-email";
 import {
   isPgError,
   PG_FOREIGN_KEY_VIOLATION,
@@ -163,18 +165,6 @@ const notInLine = () =>
     message: "You're not in line for this book.",
   });
 
-/** Every book's waiting/ready queue and derived state. */
-async function lendingOf(books: readonly { id: number; status: string }[]) {
-  const [{ lines }, states] = await Promise.all([
-    loadLending(
-      db,
-      books.map((book) => book.id)
-    ),
-    statesOf(db, books),
-  ]);
-  return { lines, states };
-}
-
 export const libraryRouter = createTRPCRouter({
   /** Staff, once an offered book is in their hands: puts it on the shelf. */
   accept: adminProcedure.input(bookId).mutation(({ ctx, input }) =>
@@ -288,7 +278,7 @@ export const libraryRouter = createTRPCRouter({
           subjectId: cancelled.userId,
           type: "cancelled",
         });
-        notices.push(...(await settleBook(tx, book)));
+        notices.push(...(await settleBook(tx, book)).notices);
         return { id: input.reservationId };
       })
     ),
@@ -357,7 +347,6 @@ export const libraryRouter = createTRPCRouter({
   history: adminProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .query(async ({ input }) => {
-      await settleRunOutHolds();
       const [book] = await db
         .select({ id: libraryBooks.id, title: libraryBooks.title })
         .from(libraryBooks)
@@ -407,9 +396,9 @@ export const libraryRouter = createTRPCRouter({
     withReadyEmails(async (tx, notices) => {
       const viewerId = ctx.session.user.id;
       const book = await lockAndSettle(tx, input.id, notices);
-      const { lines } = await loadLending(tx, [book.id]);
+      const { lines, states } = await lendingOf(tx, [book]);
       const line = lines.get(book.id) ?? [];
-      const state = (await statesOf(tx, [book])).get(book.id);
+      const state = states.get(book.id);
       const inLine = line.some((entry) => entry.userId === viewerId);
       const refusal = state ? joinRefusal(state, viewerId, inLine) : null;
       if (refusal) {
@@ -444,7 +433,9 @@ export const libraryRouter = createTRPCRouter({
   leaveQueue: protectedProcedure.input(bookId).mutation(({ ctx, input }) =>
     withReadyEmails(async (tx, notices) => {
       const viewerId = ctx.session.user.id;
-      const book = await lockAndSettle(tx, input.id, notices);
+      // Settling may hand the leaving member a hold they're giving up now.
+      const started: ReadyNotice[] = [];
+      const book = await lockAndSettle(tx, input.id, started);
       const [left] = await tx
         .update(libraryReservations)
         .set({ status: "cancelled" })
@@ -465,7 +456,8 @@ export const libraryRouter = createTRPCRouter({
         subjectId: viewerId,
         type: "left_queue",
       });
-      notices.push(...(await settleBook(tx, book)));
+      started.push(...(await settleBook(tx, book)).notices);
+      notices.push(...started.filter((notice) => notice.userId !== viewerId));
       return { id: book.id };
     })
   ),
@@ -523,14 +515,18 @@ export const libraryRouter = createTRPCRouter({
           )
         )
         .orderBy(asc(libraryBooks.id));
-      const { lines, states } = await lendingOf(books);
+      const { lines, states } = await lendingOf(db, books);
       const viewerId = ctx.session.user.id;
       const items = books
         .map(({ ownerId, status: _status, ...book }) => {
+          const derived = states.get(book.id) ?? {
+            kind: "available" as const,
+            queue: 0,
+          };
           const state = memberBookState(
-            states.get(book.id) ?? { kind: "available", queue: 0 },
+            derived,
             viewerId,
-            queuePosition(lines.get(book.id) ?? [], viewerId)
+            placeInLine(derived, lines.get(book.id) ?? [], viewerId).position
           );
           // An offered book is "mine" to the member who offered it, never
           // naming the owner to anyone else.
@@ -651,9 +647,9 @@ export const libraryRouter = createTRPCRouter({
         type: "returned",
       });
       // The first in line's 7 days start today.
-      notices.push(...(await settleBook(tx, book)));
-      const status = await refreshStatus(tx, book);
-      return { id: book.id, status };
+      const settled = await settleBook(tx, book);
+      notices.push(...settled.notices);
+      return { id: book.id, status: settled.status };
     })
   ),
 
@@ -662,12 +658,12 @@ export const libraryRouter = createTRPCRouter({
    * whether they may extend it, and the ones they've given back.
    */
   mine: protectedProcedure.query(async ({ ctx }) => {
-    await settleRunOutHolds();
     const viewerId = ctx.session.user.id;
     const loans = await db
       .select({
         author: libraryBooks.author,
         bookId: libraryLoans.bookId,
+        bookStatus: libraryBooks.status,
         borrowedAt: libraryLoans.borrowedAt,
         dueOn: libraryLoans.dueOn,
         extensions: libraryLoans.extensions,
@@ -684,6 +680,7 @@ export const libraryRouter = createTRPCRouter({
       .select({
         author: libraryBooks.author,
         bookId: libraryReservations.bookId,
+        bookStatus: libraryBooks.status,
         title: libraryBooks.title,
       })
       .from(libraryReservations)
@@ -696,10 +693,15 @@ export const libraryRouter = createTRPCRouter({
         )
       )
       .orderBy(asc(libraryReservations.createdAt));
-    const { lines } = await loadLending(db, [
-      ...open.map((loan) => loan.bookId),
-      ...waitingFor.map((entry) => entry.bookId),
-    ]);
+    // Reads only: the queue as `bookState` derives it, even before the
+    // list has written a run-out hold.
+    const { lines, states } = await lendingOf(
+      db,
+      [...open, ...waitingFor].map((entry) => ({
+        id: entry.bookId,
+        status: entry.bookStatus,
+      }))
+    );
     const today = libraryToday();
     const past = loans.flatMap(({ author, borrowedAt, returnedAt, title }) =>
       returnedAt ? [{ author, borrowedAt, returnedAt, title }] : []
@@ -714,7 +716,7 @@ export const libraryRouter = createTRPCRouter({
           { ...loan, userId: viewerId },
           viewerId,
           today,
-          lines.get(loan.bookId)?.length ?? 0
+          queueOrder(lines.get(loan.bookId) ?? []).length
         ),
         extensions: loan.extensions,
         loanId: loan.loanId,
@@ -723,15 +725,15 @@ export const libraryRouter = createTRPCRouter({
       })),
       past: past.slice(0, MAX_PAST_LOANS),
       /** Books they wait for: their place, or until when it's held for them. */
-      queue: waitingFor.map((entry) => {
-        const line = queueOrder(lines.get(entry.bookId) ?? []);
-        const [turn] = line;
-        const ready = turn?.status === "ready" && turn.userId === viewerId;
-        return {
-          ...entry,
-          holdEndsOn: ready ? (turn.expiresOn ?? null) : null,
-          position: ready ? null : queuePosition(line, viewerId),
-        };
+      queue: waitingFor.flatMap(({ bookStatus: _status, ...entry }) => {
+        const state = states.get(entry.bookId);
+        const place = state
+          ? placeInLine(state, lines.get(entry.bookId) ?? [], viewerId)
+          : null;
+        // A hold that ran out and passed on is no longer theirs.
+        return place && (place.holdEndsOn || place.position)
+          ? [{ ...entry, ...place }]
+          : [];
       }),
     };
   }),
@@ -742,7 +744,6 @@ export const libraryRouter = createTRPCRouter({
    * sees these holders; the general list never does.
    */
   myLentBooks: protectedProcedure.query(async ({ ctx }) => {
-    await settleRunOutHolds();
     const books = await db
       .select()
       .from(libraryBooks)
@@ -832,25 +833,22 @@ export const libraryRouter = createTRPCRouter({
             message: "This book is already in the library.",
           });
         }
-        // Back on the shelf; the derived state decides the rest.
+        // An offer withdrawn before it arrived still waits to be accepted;
+        // a book that was on the shelf goes back, the derived state deciding
+        // the rest.
+        const back = book.acceptedAt ? "available" : "offered";
         await tx
           .update(libraryBooks)
-          .set({
-            acceptedAt: book.acceptedAt ?? new Date(),
-            status: "available",
-          })
+          .set({ status: back })
           .where(eq(libraryBooks.id, book.id));
         await logEvent(tx, {
           actorId: ctx.session.user.id,
           bookId: book.id,
           type: "restored",
         });
-        const status = await refreshStatus(tx, {
-          id: book.id,
-          status: "available",
-        });
-        notices.push(...(await settleBook(tx, { ...book, status })));
-        return { id: book.id, status };
+        const settled = await settleBook(tx, { ...book, status: back });
+        notices.push(...settled.notices);
+        return { id: book.id, status: settled.status };
       })
     ),
 

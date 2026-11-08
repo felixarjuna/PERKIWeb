@@ -40,6 +40,19 @@ export function shelfLabel(book: ShelfLending): string {
 export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
   book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
 
+/**
+ * Whether staff can lend a book by hand: one on the shelf, or one held for
+ * a member (who came without a phone), which the server lends only to them.
+ */
+export const lendsByHand = (kind: BookKind) =>
+  kind === "available" || kind === "reserved";
+
+/** The Lend dialog's first line. */
+export const lendHint = (book: Pick<ShelfLending, "holder" | "kind">) =>
+  book.kind === "reserved"
+    ? `It's held for ${book.holder ?? "the next in line"}: lend it to them only.`
+    : "For a member who can't tap Borrow themselves.";
+
 const FIELD_LABELS: Record<string, string> = {
   author: "author",
   description: "description",

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lt } from "drizzle-orm";
 import {
   libraryBooks,
   libraryEvents,
@@ -20,7 +20,7 @@ import {
 } from "~/lib/library";
 import { localDay } from "~/lib/schedule-team";
 import { db } from "~/server";
-import { type ReadyNotice, sendReadyEmails } from "~/server/library-email";
+import { type ReadyNotice, sendReadyEmailsLater } from "~/server/library-email";
 
 type Db = typeof db;
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -78,16 +78,14 @@ export async function loadLending(executor: Executor, bookIds: number[]) {
   return { lines, loans };
 }
 
-/** Every given book's derived state on `today`. */
-export async function statesOf(
-  executor: Executor,
+type Lending = Awaited<ReturnType<typeof loadLending>>;
+
+/** Every given book's derived state on `today`, from lending already loaded. */
+function statesFrom(
   books: readonly { id: number; status: string }[],
-  today = libraryToday()
+  { lines, loans }: Lending,
+  today: string
 ) {
-  const { lines, loans } = await loadLending(
-    executor,
-    books.map((book) => book.id)
-  );
   return new Map<number, BookState>(
     books.map((book) => [
       book.id,
@@ -99,6 +97,32 @@ export async function statesOf(
       ),
     ])
   );
+}
+
+/** Every given book's derived state on `today`. */
+export async function statesOf(
+  executor: Executor,
+  books: readonly { id: number; status: string }[],
+  today = libraryToday()
+) {
+  const lending = await loadLending(
+    executor,
+    books.map((book) => book.id)
+  );
+  return statesFrom(books, lending, today);
+}
+
+/** Every given book's queue and derived state, loaded once. */
+export async function lendingOf(
+  executor: Executor,
+  books: readonly { id: number; status: string }[],
+  today = libraryToday()
+) {
+  const lending = await loadLending(
+    executor,
+    books.map((book) => book.id)
+  );
+  return { lines: lending.lines, states: statesFrom(books, lending, today) };
 }
 
 /**
@@ -169,19 +193,20 @@ export async function openLoanOf(tx: Tx, bookId: number) {
 /**
  * Writes what the book's queue needs on `today` (`settleQueue`): a hold that
  * ran out expires and the next in line gets theirs; then refreshes `status`.
- * Runs under the book's row lock, in every library write and before reads.
- * Returns the holds that started, to email once the transaction commits.
+ * Runs under the book's row lock, in every library write and before the
+ * lists. Returns the book's status and the holds that started, to email
+ * once the transaction commits.
  */
 export async function settleBook(
   tx: Tx,
   book: { id: number; status: string; title: string },
   today = libraryToday()
-): Promise<ReadyNotice[]> {
+): Promise<{ notices: ReadyNotice[]; status: BookStatus }> {
   if (book.status === "offered" || book.status === "withdrawn") {
-    return [];
+    return { notices: [], status: book.status };
   }
   if (await openLoanOf(tx, book.id)) {
-    return [];
+    return { notices: [], status: await refreshStatus(tx, book) };
   }
   const { lines } = await loadLending(tx, [book.id]);
   const line = lines.get(book.id) ?? [];
@@ -225,20 +250,20 @@ export async function settleBook(
       userId: plan.ready.userId,
     });
   }
-  await refreshStatus(tx, book);
-  return notices;
+  return { notices, status: await refreshStatus(tx, book) };
 }
 
 /**
  * Runs a library write in one transaction and, once it has committed, sends
- * the ready emails it collected. An email never undoes the write.
+ * the ready emails it collected without waiting for them. An email never
+ * undoes the write.
  */
 export async function withReadyEmails<T>(
   write: (tx: Tx, notices: ReadyNotice[]) => Promise<T>
 ): Promise<T> {
   const notices: ReadyNotice[] = [];
   const result = await db.transaction((tx) => write(tx, notices));
-  await sendReadyEmails(notices);
+  sendReadyEmailsLater(notices);
   return result;
 }
 
@@ -249,7 +274,7 @@ export async function lockAndSettle(
   notices: ReadyNotice[]
 ) {
   const book = await lockBook(tx, id);
-  notices.push(...(await settleBook(tx, book)));
+  notices.push(...(await settleBook(tx, book)).notices);
   const [fresh] = await tx
     .select()
     .from(libraryBooks)
@@ -258,9 +283,10 @@ export async function lockAndSettle(
 }
 
 /**
- * Before a read: settles every book whose hold ran out, each under its own
- * row lock, so the list shows and stores the next person's turn. No job runs
- * this on a schedule; the next visitor does.
+ * Before the lists (`library.list`, `library.manage`): settles every book
+ * whose hold ran out, in one transaction with their rows locked in id order,
+ * so the list shows and stores the next person's turn. No job runs this on a
+ * schedule; the next visitor does. Emails go out without holding up the read.
  */
 export async function settleRunOutHolds(today = libraryToday()) {
   const due = await db
@@ -272,13 +298,26 @@ export async function settleRunOutHolds(today = libraryToday()) {
         lt(libraryReservations.expiresOn, today)
       )
     );
-  for (const { bookId } of due) {
-    // biome-ignore lint/performance/noAwaitInLoops: one book at a time, each under its own lock.
-    await withReadyEmails(async (tx, notices) => {
-      const book = await lockBook(tx, bookId);
-      notices.push(...(await settleBook(tx, book, today)));
-    });
+  if (due.length === 0) {
+    return;
   }
+  await withReadyEmails(async (tx, notices) => {
+    const books = await tx
+      .select()
+      .from(libraryBooks)
+      .where(
+        inArray(
+          libraryBooks.id,
+          due.map((row) => row.bookId)
+        )
+      )
+      .orderBy(asc(libraryBooks.id))
+      .for("update");
+    for (const book of books) {
+      // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
+      notices.push(...(await settleBook(tx, book, today)).notices);
+    }
+  });
 }
 
 /**

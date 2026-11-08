@@ -12,14 +12,15 @@ import {
   holdEndsOn,
   inLineLabel,
   inShelfState,
-  joinRefusal,
   isDay,
+  joinRefusal,
   LOAN_DAYS,
   lentLabel,
   libraryFiltersFrom,
   MAX_EXTENSIONS,
   type MemberBookState,
   memberBookState,
+  placeInLine,
   queuePosition,
   type ReservationLine,
   settleQueue,
@@ -186,6 +187,28 @@ describe("the queue", () => {
     expect(queuePosition(line, "dewi")).toBe(2);
     expect(queuePosition(line, "budi")).toBeNull();
     expect(queuePosition(line, "eka")).toBeNull();
+  });
+
+  it("reads a place from the derived state, before the queue is written", () => {
+    const line = [
+      reservation(1, "budi", { expiresOn: "2026-11-05", status: "ready" }),
+      reservation(2, "citra"),
+      reservation(3, "dewi"),
+    ];
+    // Budi's hold ran out unwritten: it's Citra's turn, Dewi is next.
+    const state = bookState(shelf, null, line, TODAY);
+    expect(placeInLine(state, line, "citra")).toEqual({
+      holdEndsOn: "2026-11-14",
+      position: null,
+    });
+    expect(placeInLine(state, line, "dewi")).toEqual({
+      holdEndsOn: null,
+      position: 1,
+    });
+    expect(placeInLine(state, line, "budi")).toEqual({
+      holdEndsOn: null,
+      position: null,
+    });
   });
 
   it("says the place in line", () => {

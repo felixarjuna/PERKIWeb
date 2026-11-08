@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   historyLine,
+  lendHint,
+  lendsByHand,
   type ShelfLending,
   shelfLabel,
   withdrawRefusal,
@@ -14,6 +16,22 @@ const book = (overrides: Partial<ShelfLending>): ShelfLending => ({
   overdue: false,
   queue: 0,
   ...overrides,
+});
+
+describe("lending by hand", () => {
+  it("lends a book on the shelf, or a held one to the member it's held for", () => {
+    expect(lendsByHand("available")).toBe(true);
+    expect(lendsByHand("reserved")).toBe(true);
+    expect(lendsByHand("borrowed")).toBe(false);
+    expect(lendsByHand("offered")).toBe(false);
+    expect(lendsByHand("withdrawn")).toBe(false);
+    expect(lendHint(book({}))).toBe(
+      "For a member who can't tap Borrow themselves."
+    );
+    expect(lendHint(book({ holder: "Budi", kind: "reserved" }))).toBe(
+      "It's held for Budi: lend it to them only."
+    );
+  });
 });
 
 describe("shelfLabel", () => {

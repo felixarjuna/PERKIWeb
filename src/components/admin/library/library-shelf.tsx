@@ -36,7 +36,7 @@ import { AdminSearch, AdminSelect, QueryMessage } from "../admin-controls";
 import { BookDialog, type ShelfBook } from "./book-dialog";
 import { BookHistory } from "./book-history";
 import { DueDateDialog, LendDialog } from "./loan-dialogs";
-import { shelfLabel, withdrawRefusal } from "./shelf-model";
+import { lendsByHand, shelfLabel, withdrawRefusal } from "./shelf-model";
 
 const stateOptions = SHELF_STATES.map((state) => ({
   label: SHELF_STATE_LABELS[state],
@@ -143,7 +143,7 @@ function LendingActions({
       </>
     );
   }
-  if (book.kind === "available") {
+  if (lendsByHand(book.kind)) {
     return (
       <Button
         aria-label={`Lend ${book.title}`}
