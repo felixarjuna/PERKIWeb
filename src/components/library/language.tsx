@@ -9,6 +9,9 @@ import {
 } from "~/lib/library";
 import { cn } from "~/lib/utils";
 
+const CHIP =
+  "type-caption inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground";
+
 /** A book's language: its flag (hidden from screen readers) and its name. */
 export function LanguageChip({
   language,
@@ -22,30 +25,44 @@ export function LanguageChip({
     return null;
   }
   return (
-    <span
-      className={cn(
-        "type-caption inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground",
-        className
-      )}
-    >
+    <span className={cn(CHIP, className)}>
       {label.flag ? <span aria-hidden="true">{label.flag}</span> : null}
       {label.name}
     </span>
   );
 }
 
-/** Author, then the language chip when the book has one. */
+/**
+ * Author, then chips for the language, publisher and category the book has
+ * (#147). An ebook says so in its state badge.
+ */
 export function BookByline({
   author,
   language,
+  publisher = null,
+  category = null,
 }: {
   author: string;
   language: string | null;
+  publisher?: string | null;
+  category?: string | null;
 }) {
   return (
     <p className="type-body-sm mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
       <span>{author}</span>
       <LanguageChip language={language} />
+      {publisher ? (
+        <span className={CHIP}>
+          <span className="sr-only">Publisher: </span>
+          {publisher}
+        </span>
+      ) : null}
+      {category ? (
+        <span className={CHIP}>
+          <span className="sr-only">Category: </span>
+          {category}
+        </span>
+      ) : null}
     </p>
   );
 }

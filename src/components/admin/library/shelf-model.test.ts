@@ -63,6 +63,20 @@ describe("shelfLabel", () => {
 });
 
 describe("historyLine", () => {
+  it("says when the import did it", () => {
+    expect(
+      historyLine({
+        actor: "Mita",
+        details: { dueOn: "2026-12-08", source: "sheet" },
+        subject: "Dara",
+        type: "borrowed",
+      })
+    ).toEqual({
+      detail: "by Mita · to Dara · due 8 Dec · from the sheet",
+      title: "Borrowed",
+    });
+  });
+
   it("says who did what", () => {
     expect(
       historyLine({

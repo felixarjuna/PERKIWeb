@@ -184,7 +184,12 @@ export function BookCard({
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           <h2 className="type-subheading break-words">{book.title}</h2>
-          <BookByline author={book.author} language={book.language} />
+          <BookByline
+            author={book.author}
+            category={book.category}
+            language={book.language}
+            publisher={book.publisher}
+          />
         </div>
         <BookStateBadge className="sm:mt-0.5" state={book.state} />
       </div>

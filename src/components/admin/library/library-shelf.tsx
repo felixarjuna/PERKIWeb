@@ -62,6 +62,7 @@ function setParam(key: string, value: string, replace: boolean) {
 const KIND_LABELS: Record<ShelfBook["kind"], string> = {
   available: "Available",
   borrowed: "Borrowed",
+  ebook: "Ebook",
   offered: "Offered",
   reserved: "Reserved",
   withdrawn: "Withdrawn",
@@ -181,7 +182,12 @@ function ShelfRow({
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           <h2 className="type-subheading break-words">{book.title}</h2>
-          <BookByline author={book.author} language={book.language} />
+          <BookByline
+            author={book.author}
+            category={book.category}
+            language={book.language}
+            publisher={book.publisher}
+          />
           <p className="type-caption mt-1 text-muted-foreground">
             {[
               book.owner ? `Lent by ${book.owner.name}` : "PERKI's book",

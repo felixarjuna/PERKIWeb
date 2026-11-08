@@ -2,6 +2,10 @@
 
 import React from "react";
 import { toast } from "sonner";
+import {
+  type BookDetails,
+  BookDetailsFields,
+} from "~/components/library/book-fields";
 import { LanguagePicker, pickedLanguage } from "~/components/library/language";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,7 +19,12 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { MAX_AUTHOR, MAX_DESCRIPTION, MAX_TITLE } from "~/lib/library";
+import {
+  type BookFormat,
+  MAX_AUTHOR,
+  MAX_DESCRIPTION,
+  MAX_TITLE,
+} from "~/lib/library";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented } from "../admin-controls";
 import { MemberPicker } from "../member-picker";
@@ -25,6 +34,7 @@ export type ShelfBook = RouterOutputs["library"]["manage"][number];
 interface Draft {
   author: string;
   description: string;
+  details: BookDetails;
   language: string;
   owned: "perki" | "member";
   /** "" while PERKI owns it. */
@@ -35,6 +45,11 @@ interface Draft {
 const draftOf = (book?: ShelfBook): Draft => ({
   author: book?.author ?? "",
   description: book?.description ?? "",
+  details: {
+    category: book?.category ?? "",
+    format: (book?.format ?? "physical") as BookFormat,
+    publisher: book?.publisher ?? "",
+  },
   language: book?.language ?? "",
   owned: book?.owner ? "member" : "perki",
   ownerId: book?.owner?.id ?? "",
@@ -115,6 +130,7 @@ export function BookDialog({
       return;
     }
     const input = {
+      ...draft.details,
       author: draft.author,
       description: draft.description,
       language,
@@ -135,7 +151,7 @@ export function BookDialog({
           <DialogTitle>{book ? "Edit book" : "Add a book"}</DialogTitle>
           <DialogDescription>
             {book
-              ? "Members see the title, author, language and description."
+              ? "Members see everything here but the owner, who is named only on an ebook."
               : "It goes straight onto the shelf as available."}
           </DialogDescription>
         </DialogHeader>
@@ -162,6 +178,16 @@ export function BookDialog({
             id="book-language"
             onChange={set("language")}
             value={draft.language}
+          />
+          <BookDetailsFields
+            formatHint={
+              draft.details.format === "ebook"
+                ? "Not lent from the shelf: members see whom to ask for it."
+                : "Lent from the shelf."
+            }
+            idPrefix="book"
+            onChange={set("details")}
+            value={draft.details}
           />
           <Field
             hint="Optional. A sentence or two about what it's about."

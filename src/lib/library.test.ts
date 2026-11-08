@@ -3,8 +3,10 @@ import {
   addDays,
   bookState,
   borrowRefusal,
+  cachedStatus,
   dueLabel,
   dueOnFrom,
+  EBOOK_REFUSAL,
   extendedDueOn,
   extendRefusal,
   extensionsLeftLabel,
@@ -266,6 +268,7 @@ describe("memberBookState", () => {
   it("never says who holds a book", () => {
     const seen = memberBookState(borrowed, "budi");
     expect(seen).toEqual({
+      askName: null,
       dueOn: "2026-11-01",
       holdEndsOn: null,
       kind: "borrowed",
@@ -320,6 +323,7 @@ describe("memberBookState", () => {
   it("labels the other states", () => {
     const label = (kind: MemberBookState["kind"]) =>
       stateLabel({
+        askName: null,
         dueOn: null,
         holdEndsOn: null,
         kind,
@@ -339,6 +343,7 @@ const state = (
   kind: MemberBookState["kind"],
   mine = false
 ): MemberBookState => ({
+  askName: null,
   dueOn: kind === "borrowed" ? TODAY : null,
   holdEndsOn: null,
   kind,
@@ -559,5 +564,74 @@ describe("languageLabel", () => {
   it("has nothing to show without a language", () => {
     expect(languageLabel(null)).toBeNull();
     expect(languageLabel("  ")).toBeNull();
+  });
+});
+
+describe("ebooks", () => {
+  const ebook = bookState(
+    { format: "ebook", status: "available" },
+    null,
+    [],
+    "2026-11-08"
+  );
+
+  it("are never on the shelf to borrow, queue for or lend", () => {
+    expect(ebook).toEqual({ kind: "ebook" });
+    expect(borrowRefusal(ebook, "ana")).toBe(EBOOK_REFUSAL);
+    expect(joinRefusal(ebook, "ana", false)).toBe(EBOOK_REFUSAL);
+    expect(EBOOK_REFUSAL).toBe("Ebooks aren't lent from the shelf.");
+    expect(cachedStatus(ebook)).toBe("available");
+  });
+
+  it("still read as offered or withdrawn first", () => {
+    expect(
+      bookState({ format: "ebook", status: "offered" }, null, [], "2026-11-08")
+    ).toEqual({ kind: "offered" });
+    expect(
+      bookState(
+        { format: "ebook", status: "withdrawn" },
+        null,
+        [],
+        "2026-11-08"
+      )
+    ).toEqual({ kind: "withdrawn" });
+  });
+
+  it("tell members whom to ask, and only for ebooks", () => {
+    const shared = memberBookState(ebook, "ana", null, "Budi Santoso");
+    expect(shared.askName).toBe("Budi Santoso");
+    expect(stateLabel(shared)).toBe("Ebook · ask Budi Santoso");
+    expect(stateLabel(memberBookState(ebook, "ana"))).toBe(
+      "Ebook · ask the librarian"
+    );
+    const physical = bookState(
+      { format: "physical", status: "available" },
+      null,
+      [],
+      "2026-11-08"
+    );
+    expect(memberBookState(physical, "ana", null, "Budi Santoso").askName).toBe(
+      null
+    );
+  });
+
+  it("aren't listed as available and sort after the shelf", () => {
+    const shared = memberBookState(ebook, "ana");
+    expect(shownFor(shared, "available")).toBe(false);
+    expect(shownFor(shared, "borrowed")).toBe(false);
+    const books = sortBooks(
+      [
+        { addedAt: new Date(), author: "A", id: 1, state: shared, title: "A" },
+        {
+          addedAt: new Date(),
+          author: "B",
+          id: 2,
+          state: memberBookState({ kind: "available", queue: 0 }, "ana"),
+          title: "B",
+        },
+      ],
+      "available"
+    );
+    expect(books.map((book) => book.id)).toEqual([2, 1]);
   });
 });
