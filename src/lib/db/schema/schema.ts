@@ -18,6 +18,7 @@ import {
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
+import { BOOK_STATUSES, RESERVATION_STATUSES } from "../../library";
 import type { GeneratedSlot } from "../../plan-grid";
 import { REVIEW_TARGETS } from "../../review-target";
 import { SCHEDULE_FLAGS, type ScheduleFlag } from "../../schedule-flags";
@@ -819,3 +820,159 @@ export const calendarFeeds = pgTable("calendar_feeds", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
 });
+
+/**
+ * The library's books (#136), PERKI's own (no owner) or lent to it by a
+ * member (`ownerId`). `status` is a cached hint refreshed on every write;
+ * readers derive a book's state from its open loan and reservations with
+ * `bookState` in `src/lib/library.ts`.
+ */
+export const libraryBooks = pgTable(
+  "library_books",
+  {
+    /** When the librarian took it onto the shelf; null while only offered. */
+    acceptedAt: timestamp("acceptedAt", { mode: "date", withTimezone: true }),
+    author: text("author").notNull(),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    createdById: text("createdById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    description: text("description"),
+    id: serial("id").primaryKey().notNull(),
+    /** Free text, e.g. "Indonesian". */
+    language: text("language"),
+    /** The member who lent it to the library; null means PERKI owns it. */
+    ownerId: text("ownerId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    status: text("status").default("available").notNull(),
+    title: text("title").notNull(),
+  },
+  (t) => [
+    index("library_books_owner").on(t.ownerId),
+    check(
+      "library_books_status_check",
+      sql`${t.status} in (${sqlList(BOOK_STATUSES)})`
+    ),
+  ]
+);
+
+/**
+ * Who has (had) which book. A loan is open while `returnedAt` is null; only
+ * the librarian's Mark returned closes it, and a book has at most one open
+ * loan. `dueOn` is an Aachen day.
+ */
+export const libraryLoans = pgTable(
+  "library_loans",
+  {
+    bookId: integer("bookId")
+      .notNull()
+      .references(() => libraryBooks.id, { onDelete: "cascade" }),
+    borrowedAt: timestamp("borrowedAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    /** The member who has (had) the book. */
+    borrowerId: text("borrowerId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    dueOn: date("dueOn", { mode: "string" }).notNull(),
+    /** Members extend up to `MAX_EXTENSIONS` times; staff can go past it. */
+    extensions: integer("extensions").default(0).notNull(),
+    id: serial("id").primaryKey().notNull(),
+    /** Staff only. */
+    note: text("note"),
+    returnedAt: timestamp("returnedAt", { mode: "date", withTimezone: true }),
+    returnedById: text("returnedById").references(() => users.id, {
+      onDelete: "set null",
+    }),
+  },
+  (t) => [
+    index("library_loans_book").on(t.bookId),
+    index("library_loans_borrower").on(t.borrowerId),
+    uniqueIndex("library_loans_open_book")
+      .on(t.bookId)
+      .where(sql`${t.returnedAt} is null`),
+    check("library_loans_extensions_check", sql`${t.extensions} >= 0`),
+  ]
+);
+
+/**
+ * The queue for a book. `ready` means it's that member's turn, from the
+ * return until `expiresOn` (an Aachen day); a member has at most one waiting
+ * or ready reservation per book.
+ */
+export const libraryQueue = pgTable(
+  "library_queue",
+  {
+    bookId: integer("bookId")
+      .notNull()
+      .references(() => libraryBooks.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    expiresOn: date("expiresOn", { mode: "string" }),
+    id: serial("id").primaryKey().notNull(),
+    readyAt: timestamp("readyAt", { mode: "date", withTimezone: true }),
+    status: text("status").default("waiting").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("library_queue_book").on(t.bookId),
+    index("library_queue_member").on(t.userId),
+    uniqueIndex("library_queue_open_member")
+      .on(t.bookId, t.userId)
+      .where(sql`${t.status} in ('waiting', 'ready')`),
+    check(
+      "library_queue_status_check",
+      sql`${t.status} in (${sqlList(RESERVATION_STATUSES)})`
+    ),
+  ]
+);
+
+/**
+ * Append-only log of everything that happened to a book (added, edited,
+ * withdrawn, borrowed, returned, queued, …; `LIBRARY_EVENT_TYPES`), read by
+ * the librarian's and the lenders' history views. `type` has no check so
+ * later kinds need no migration.
+ */
+export const libraryHistory = pgTable(
+  "library_history",
+  {
+    actorId: text("actorId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    at: timestamp("at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    bookId: integer("bookId")
+      .notNull()
+      .references(() => libraryBooks.id, { onDelete: "cascade" }),
+    details: jsonb("details")
+      .$type<Record<string, unknown>>()
+      .default({})
+      .notNull(),
+    id: serial("id").primaryKey().notNull(),
+    loanId: integer("loanId").references(() => libraryLoans.id, {
+      onDelete: "set null",
+    }),
+    /** The member it happened to, when not the actor (e.g. lent by hand). */
+    subjectId: text("subjectId").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").notNull(),
+  },
+  (t) => [index("library_history_book").on(t.bookId, t.at)]
+);

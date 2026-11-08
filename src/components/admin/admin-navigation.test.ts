@@ -18,6 +18,7 @@ it("separates the overview and member directory from content management", () => 
     "/admin/speakers",
     "/admin/takeaways",
     "/admin/prayers",
+    "/admin/library",
     "/admin/settings",
   ]);
 });
