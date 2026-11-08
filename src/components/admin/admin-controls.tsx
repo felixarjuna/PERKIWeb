@@ -19,6 +19,8 @@ export interface AdminOption {
   /** Shown before the label in a segmented control. */
   icon?: LucideIcon;
   label: string;
+  /** Shown before the label in a select, hidden from screen readers (a flag). */
+  prefix?: string;
   value: string;
 }
 
@@ -33,6 +35,8 @@ export function AdminSelect({
   onChange,
   options,
   hideLabel = false,
+  formLabel = false,
+  describedBy,
   className,
 }: {
   id: string;
@@ -41,13 +45,16 @@ export function AdminSelect({
   onChange: (value: string) => void;
   options: readonly AdminOption[];
   hideLabel?: boolean;
+  /** Labelled like the other fields of a form, not like a toolbar filter. */
+  formLabel?: boolean;
+  describedBy?: string;
   className?: string;
 }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       <Label
         className={cn(
-          "type-caption text-muted-foreground",
+          !formLabel && "type-caption text-muted-foreground",
           hideLabel && "sr-only"
         )}
         htmlFor={id}
@@ -58,15 +65,21 @@ export function AdminSelect({
         onValueChange={(next) => onChange(next === EMPTY_VALUE ? "" : next)}
         value={value || EMPTY_VALUE}
       >
-        <SelectTrigger id={id} variant="filter">
+        <SelectTrigger aria-describedby={describedBy} id={id} variant="filter">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
             <SelectItem
               key={option.value || EMPTY_VALUE}
+              textValue={option.label}
               value={option.value || EMPTY_VALUE}
             >
+              {option.prefix ? (
+                <span aria-hidden="true" className="mr-2">
+                  {option.prefix}
+                </span>
+              ) : null}
               {option.label}
             </SelectItem>
           ))}

@@ -16,11 +16,11 @@ import {
   isDay,
   isOverdue,
   joinRefusal,
+  LANGUAGE_CODES,
   LIBRARY_SHOWS,
   LIBRARY_SORTS,
   MAX_AUTHOR,
   MAX_DESCRIPTION,
-  MAX_LANGUAGE,
   MAX_LOAN_NOTE,
   MAX_TITLE,
   memberBookState,
@@ -74,7 +74,8 @@ const optionalText = (max: number) =>
 const offerInput = z.object({
   author: z.string().trim().min(1, "Add the author.").max(MAX_AUTHOR),
   description: optionalText(MAX_DESCRIPTION),
-  language: optionalText(MAX_LANGUAGE),
+  /** A code from `LIBRARY_LANGUAGES`, or none; never free text. */
+  language: z.enum(LANGUAGE_CODES).nullable().default(null),
   title: z.string().trim().min(1, "Add the title.").max(MAX_TITLE),
 });
 
@@ -667,6 +668,7 @@ export const libraryRouter = createTRPCRouter({
         borrowedAt: libraryLoans.borrowedAt,
         dueOn: libraryLoans.dueOn,
         extensions: libraryLoans.extensions,
+        language: libraryBooks.language,
         loanId: libraryLoans.id,
         returnedAt: libraryLoans.returnedAt,
         title: libraryBooks.title,
@@ -681,6 +683,7 @@ export const libraryRouter = createTRPCRouter({
         author: libraryBooks.author,
         bookId: libraryQueue.bookId,
         bookStatus: libraryBooks.status,
+        language: libraryBooks.language,
         title: libraryBooks.title,
       })
       .from(libraryQueue)
@@ -719,6 +722,7 @@ export const libraryRouter = createTRPCRouter({
           queueOrder(lines.get(loan.bookId) ?? []).length
         ),
         extensions: loan.extensions,
+        language: loan.language,
         loanId: loan.loanId,
         overdue: isOverdue(loan.dueOn, today),
         title: loan.title,
@@ -778,6 +782,7 @@ export const libraryRouter = createTRPCRouter({
         holder: state.kind === "borrowed" ? nameOf(state.holderId) : null,
         id: book.id,
         kind: state.kind,
+        language: book.language,
         loans: loans
           .filter((loan) => loan.bookId === book.id)
           .map((loan) => ({

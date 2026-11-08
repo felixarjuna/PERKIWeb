@@ -14,7 +14,9 @@ import {
   inShelfState,
   isDay,
   joinRefusal,
+  LIBRARY_LANGUAGES,
   LOAN_DAYS,
+  languageLabel,
   lentLabel,
   libraryFiltersFrom,
   MAX_EXTENSIONS,
@@ -529,5 +531,33 @@ describe("lentLabel", () => {
       "Offered. Hand it to the librarian; it appears once accepted."
     );
     expect(lent({ kind: "withdrawn" })).toBe("Withdrawn from the library");
+  });
+});
+
+describe("languageLabel", () => {
+  it("names the three languages with their flags", () => {
+    expect(LIBRARY_LANGUAGES.map((language) => language.code)).toEqual([
+      "en",
+      "de",
+      "id",
+    ]);
+    expect(languageLabel("en")).toEqual({ flag: "🇬🇧", name: "English" });
+    expect(languageLabel("de")).toEqual({ flag: "🇩🇪", name: "Deutsch" });
+    expect(languageLabel("id")).toEqual({
+      flag: "🇮🇩",
+      name: "Bahasa Indonesia",
+    });
+  });
+
+  it("shows a language typed before the list as it was, without a flag", () => {
+    expect(languageLabel("Indonesian")).toEqual({
+      flag: null,
+      name: "Indonesian",
+    });
+  });
+
+  it("has nothing to show without a language", () => {
+    expect(languageLabel(null)).toBeNull();
+    expect(languageLabel("  ")).toBeNull();
   });
 });

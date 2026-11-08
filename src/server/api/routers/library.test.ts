@@ -22,7 +22,7 @@ const setup = async () => {
 const book = {
   author: "C. S. Lewis",
   description: "",
-  language: "English",
+  language: "en" as const,
   ownerId: null,
   title: "Mere Christianity",
 };
@@ -73,7 +73,7 @@ describe("library", () => {
         author: "C. S. Lewis",
         description: null,
         id,
-        language: "English",
+        language: "en",
         state: {
           dueOn: null,
           holdEndsOn: null,
@@ -153,11 +153,35 @@ describe("library", () => {
     ]);
   });
 
+  it("takes a language from the list, or none, never free text", async () => {
+    const { ana, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    await expect(
+      staff.add({ ...book, language: "Indonesian" } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      callerFor(ana.id).library.offer({
+        author: "A",
+        language: "German",
+        title: "B",
+      } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    const { id } = await staff.add({ ...book, language: null });
+    await expect(
+      staff.update({ ...book, id, language: "fr" } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await staff.update({ ...book, id, language: "de" });
+    expect(await staff.manage({})).toMatchObject([{ id, language: "de" }]);
+    await staff.update({ ...book, id, language: null });
+    expect(await staff.manage({})).toMatchObject([{ id, language: null }]);
+  });
+
   it("hides withdrawn books by default, keeps their history and brings them back", async () => {
     const { ana, mita } = await setup();
     const staff = callerFor(mita.id).library;
     const { id } = await staff.add(book);
-    await staff.update({ ...book, id, language: "Indonesian" });
+    await staff.update({ ...book, id, language: "id" });
     await staff.withdraw({ id });
 
     expect(await callerFor(ana.id).library.list({ q: "mere" })).toEqual([]);

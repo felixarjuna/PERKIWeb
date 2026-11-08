@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { insertProfiledUser } from "./db";
 import { MEMBER_STORAGE_STATE, uniqueSuffix } from "./fixtures";
-import { adminLogin, toast } from "./helpers";
+import { adminLogin, selectOption, toast } from "./helpers";
 
 test.use({ storageState: MEMBER_STORAGE_STATE });
 
@@ -39,6 +39,7 @@ test("the librarian adds a member's book, members find it, and a withdraw hides 
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Title").fill(title);
   await dialog.getByLabel("Author").fill("C. S. Lewis");
+  await selectOption(page, "Language", "Deutsch");
   await dialog.getByRole("radio", { name: "A member" }).click();
   await dialog.getByPlaceholder("Search members…").fill(lender);
   await dialog.getByRole("option", { name: lender }).click();
@@ -60,6 +61,7 @@ test("the librarian adds a member's book, members find it, and a withdraw hides 
     .getByRole("listitem")
     .filter({ has: member.getByRole("heading", { name: title }) });
   await expect(card).toContainText("Available");
+  await expect(card).toContainText("🇩🇪Deutsch");
   await expect(card).not.toContainText(lender);
 
   await page.getByRole("searchbox", { name: "Search books" }).fill(suffix);

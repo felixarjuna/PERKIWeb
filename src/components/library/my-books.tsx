@@ -15,6 +15,7 @@ import {
 import { localDay } from "~/lib/schedule-team";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
+import { BookByline } from "./language";
 
 type Mine = RouterOutputs["library"]["mine"];
 type Held = Mine["holding"][number];
@@ -40,7 +41,7 @@ export function HeldBook({
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <h3 className="type-subheading break-words">{book.title}</h3>
-      <p className="type-body-sm mt-1 text-muted-foreground">{book.author}</p>
+      <BookByline author={book.author} language={book.language} />
       <p
         className={cn(
           "type-body mt-3 tabular-nums",
@@ -90,7 +91,7 @@ function WaitingBook({
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <h3 className="type-subheading break-words">{book.title}</h3>
-      <p className="type-body-sm mt-1 text-muted-foreground">{book.author}</p>
+      <BookByline author={book.author} language={book.language} />
       {book.holdEndsOn ? (
         <>
           <p className="type-body mt-3 tabular-nums">
@@ -128,7 +129,7 @@ function LentBook({ book, today }: { book: Lent; today: string }) {
   return (
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <h3 className="type-subheading break-words">{book.title}</h3>
-      <p className="type-body-sm mt-1 text-muted-foreground">{book.author}</p>
+      <BookByline author={book.author} language={book.language} />
       <p
         className={cn(
           "type-body mt-3 tabular-nums",

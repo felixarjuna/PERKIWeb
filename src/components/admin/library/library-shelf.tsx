@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
+import { BookByline } from "~/components/library/language";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -180,10 +181,7 @@ function ShelfRow({
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           <h2 className="type-subheading break-words">{book.title}</h2>
-          <p className="type-body-sm mt-1 text-muted-foreground">
-            {book.author}
-            {book.language ? ` · ${book.language}` : ""}
-          </p>
+          <BookByline author={book.author} language={book.language} />
           <p className="type-caption mt-1 text-muted-foreground">
             {[
               book.owner ? `Lent by ${book.owner.name}` : "PERKI's book",
