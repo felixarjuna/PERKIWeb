@@ -36,7 +36,7 @@ import { AdminSearch, AdminSelect, QueryMessage } from "../admin-controls";
 import { BookDialog, type ShelfBook } from "./book-dialog";
 import { BookHistory } from "./book-history";
 import { DueDateDialog, LendDialog } from "./loan-dialogs";
-import { shelfLabel, withdrawRefusal } from "./shelf-model";
+import { lendsByHand, shelfLabel, withdrawRefusal } from "./shelf-model";
 
 const stateOptions = SHELF_STATES.map((state) => ({
   label: SHELF_STATE_LABELS[state],
@@ -77,6 +77,8 @@ function variantOf(book: ShelfBook): BadgeProps["variant"] {
 }
 
 interface RowActions {
+  accepting: boolean;
+  onAccept: () => void;
   onEdit: () => void;
   onExtend: () => void;
   onHistory: () => void;
@@ -87,13 +89,35 @@ interface RowActions {
   restoring: boolean;
 }
 
-/** Mark returned and Extend for a borrowed book; Lend for one on the shelf. */
+/**
+ * Mark returned and Extend for a borrowed book; Lend for one on the shelf;
+ * Accept for one a member offered, once it's in the librarian's hands.
+ */
 function LendingActions({
+  accepting,
   book,
+  onAccept,
   onExtend,
   onLend,
   onReturn,
-}: { book: ShelfBook } & Pick<RowActions, "onExtend" | "onLend" | "onReturn">) {
+}: { book: ShelfBook } & Pick<
+  RowActions,
+  "accepting" | "onAccept" | "onExtend" | "onLend" | "onReturn"
+>) {
+  if (book.kind === "offered") {
+    return (
+      <Button
+        aria-label={`Accept ${book.title}`}
+        disabled={accepting}
+        onClick={onAccept}
+        size="sm"
+        type="button"
+      >
+        <BookCheck aria-hidden="true" />
+        Accept
+      </Button>
+    );
+  }
   if (book.kind === "borrowed") {
     return (
       <>
@@ -119,7 +143,7 @@ function LendingActions({
       </>
     );
   }
-  if (book.kind === "available") {
+  if (lendsByHand(book.kind)) {
     return (
       <Button
         aria-label={`Lend ${book.title}`}
@@ -137,7 +161,9 @@ function LendingActions({
 }
 
 function ShelfRow({
+  accepting,
   book,
+  onAccept,
   onEdit,
   onExtend,
   onHistory,
@@ -176,7 +202,9 @@ function ShelfRow({
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <LendingActions
+          accepting={accepting}
           book={book}
+          onAccept={onAccept}
           onExtend={onExtend}
           onLend={onLend}
           onReturn={onReturn}
@@ -270,6 +298,13 @@ export default function LibraryShelf() {
       await utils.library.invalidate();
     },
   });
+  const accept = api.library.accept.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: async () => {
+      toast.success("On the shelf and available");
+      await utils.library.invalidate();
+    },
+  });
   const restore = api.library.restore.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
@@ -331,8 +366,12 @@ export default function LibraryShelf() {
             <ul aria-busy={books.isPlaceholderData} className="space-y-3">
               {books.data.map((book) => (
                 <ShelfRow
+                  accepting={
+                    accept.isPending && accept.variables?.id === book.id
+                  }
                   book={book}
                   key={book.id}
+                  onAccept={() => accept.mutate({ id: book.id })}
                   onEdit={() => setEditing({ book, open: true })}
                   onExtend={() => setExtending(book)}
                   onHistory={() => setHistory(book)}

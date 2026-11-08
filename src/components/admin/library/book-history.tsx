@@ -1,6 +1,8 @@
 "use client";
 
 import { DateTime } from "luxon";
+import { toast } from "sonner";
+import { Button } from "~/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -8,7 +10,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { api } from "~/trpc/react";
+import { dayLabel, inLineLabel } from "~/lib/library";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
 import { historyLine } from "./shelf-model";
 
@@ -17,7 +20,60 @@ const when = (at: Date) =>
     .setZone("Europe/Berlin")
     .toFormat("d LLL yyyy, HH:mm");
 
-/** Everything that happened to one book, newest first. */
+type QueueEntry = RouterOutputs["library"]["history"]["queue"][number];
+
+const queueLine = (entry: QueueEntry) =>
+  entry.status === "ready"
+    ? `Reserved${entry.expiresOn ? ` until ${dayLabel(entry.expiresOn)}` : ""}`
+    : inLineLabel(entry.position ?? 1);
+
+/** Who's waiting for the book, each with Cancel for the librarian. */
+function BookQueue({ queue }: { queue: QueueEntry[] }) {
+  const utils = api.useUtils();
+  const cancel = api.library.cancelReservation.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: async () => {
+      toast.success("Reservation cancelled");
+      await utils.library.invalidate();
+    },
+  });
+  return (
+    <section aria-labelledby="book-queue" className="space-y-3">
+      <h3 className="type-eyebrow text-muted-foreground" id="book-queue">
+        Queue ({queue.length})
+      </h3>
+      <ul className="space-y-2">
+        {queue.map((entry) => (
+          <li
+            className="flex items-center justify-between gap-3 rounded-lg bg-secondary px-3 py-2"
+            key={entry.id}
+          >
+            <div className="min-w-0">
+              <p className="type-body-sm break-words">{entry.name}</p>
+              <p className="type-caption text-muted-foreground tabular-nums">
+                {queueLine(entry)}
+              </p>
+            </div>
+            <Button
+              aria-label={`Cancel ${entry.name}'s reservation`}
+              disabled={
+                cancel.isPending && cancel.variables?.reservationId === entry.id
+              }
+              onClick={() => cancel.mutate({ reservationId: entry.id })}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Everything that happened to one book, newest first, and who waits for it. */
 export function BookHistory({
   book,
   onClose,
@@ -42,7 +98,7 @@ export function BookHistory({
         <SheetHeader className="pt-5 text-left">
           <SheetTitle className="type-heading">{book?.title}</SheetTitle>
           <SheetDescription>
-            History of this book, newest first.
+            Who waits for this book, and its history, newest first.
           </SheetDescription>
         </SheetHeader>
         {history.isError ? (
@@ -50,6 +106,9 @@ export function BookHistory({
         ) : null}
         {history.isPending && !history.isError ? (
           <QueryMessage>Loading history…</QueryMessage>
+        ) : null}
+        {history.data && history.data.queue.length > 0 ? (
+          <BookQueue queue={history.data.queue} />
         ) : null}
         {history.data ? (
           <ol aria-label="History" className="flex flex-col">

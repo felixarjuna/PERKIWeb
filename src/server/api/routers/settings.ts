@@ -17,9 +17,9 @@ import {
 } from "~/lib/settings";
 import { labelTaken } from "~/lib/takeaway-sources";
 import { db } from "~/server";
+import { emailSettings } from "~/server/email";
 import { docHtml } from "~/server/google-docs";
 import { sheetTitle } from "~/server/google-sheets";
-import { emailSettings } from "~/server/invite-email";
 import { setSetting, takeawayDeadlineWeekday } from "~/server/settings";
 import {
   takeawaySources,

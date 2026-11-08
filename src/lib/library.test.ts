@@ -10,14 +10,20 @@ import {
   extensionsLeftLabel,
   HOLD_DAYS,
   holdEndsOn,
+  inLineLabel,
   inShelfState,
   isDay,
+  joinRefusal,
   LOAN_DAYS,
+  lentLabel,
   libraryFiltersFrom,
   MAX_EXTENSIONS,
   type MemberBookState,
   memberBookState,
+  placeInLine,
+  queuePosition,
   type ReservationLine,
+  settleQueue,
   shownFor,
   sortBooks,
   stateLabel,
@@ -97,24 +103,153 @@ describe("bookState", () => {
       queue: 1,
       reservedFor: "budi",
     });
-    // Budi's hold ran out on the 10th: Citra's starts on the 11th.
+    // Budi's hold ran out on the 10th: Citra's 7 days start when it passes.
     expect(bookState(shelf, null, line, "2026-11-12")).toEqual({
-      holdEndsOn: "2026-11-18",
+      holdEndsOn: "2026-11-19",
       kind: "reserved",
       queue: 0,
       reservedFor: "citra",
     });
-    expect(bookState(shelf, null, line, "2026-11-19")).toEqual({
+  });
+
+  it("is available once the last hold runs out", () => {
+    const line = [
+      reservation(1, "budi", { expiresOn: "2026-11-10", status: "ready" }),
+    ];
+    expect(bookState(shelf, null, line, "2026-11-11")).toEqual({
       kind: "available",
       queue: 0,
     });
   });
 
-  it("waits for a return before anyone's hold starts", () => {
+  it("holds a returned book for the first in line from the day it's back", () => {
     expect(bookState(shelf, null, [reservation(1, "budi")], TODAY)).toEqual({
-      kind: "available",
-      queue: 1,
+      holdEndsOn: "2026-11-14",
+      kind: "reserved",
+      queue: 0,
+      reservedFor: "budi",
     });
+  });
+});
+
+describe("settleQueue", () => {
+  it("leaves a running hold and a borrowed book alone", () => {
+    const ready = reservation(1, "budi", {
+      expiresOn: "2026-11-10",
+      status: "ready",
+    });
+    expect(settleQueue([ready, reservation(2, "citra")], "2026-11-10")).toEqual(
+      { expire: [], ready: null }
+    );
+    expect(settleQueue([], TODAY)).toEqual({ expire: [], ready: null });
+  });
+
+  it("gives a returned book to the first in line for 7 days", () => {
+    expect(
+      settleQueue([reservation(2, "citra"), reservation(1, "budi")], TODAY)
+    ).toEqual({
+      expire: [],
+      ready: { expiresOn: "2026-11-14", id: 1, userId: "budi" },
+    });
+  });
+
+  it("expires a run-out hold and passes the book to the next in line", () => {
+    const line = [
+      reservation(1, "budi", { expiresOn: "2026-11-05", status: "ready" }),
+      reservation(2, "citra"),
+    ];
+    expect(settleQueue(line, TODAY)).toEqual({
+      expire: [1],
+      ready: { expiresOn: "2026-11-14", id: 2, userId: "citra" },
+    });
+    expect(settleQueue(line.slice(0, 1), TODAY)).toEqual({
+      expire: [1],
+      ready: null,
+    });
+  });
+});
+
+describe("the queue", () => {
+  const borrowed = bookState(
+    shelf,
+    { dueOn: "2026-12-07", userId: "ana" },
+    [],
+    TODAY
+  );
+
+  it("counts places among those still waiting", () => {
+    const line = [
+      reservation(3, "dewi"),
+      reservation(1, "budi", { expiresOn: "2026-11-10", status: "ready" }),
+      reservation(2, "citra"),
+    ];
+    expect(queuePosition(line, "citra")).toBe(1);
+    expect(queuePosition(line, "dewi")).toBe(2);
+    expect(queuePosition(line, "budi")).toBeNull();
+    expect(queuePosition(line, "eka")).toBeNull();
+  });
+
+  it("reads a place from the derived state, before the queue is written", () => {
+    const line = [
+      reservation(1, "budi", { expiresOn: "2026-11-05", status: "ready" }),
+      reservation(2, "citra"),
+      reservation(3, "dewi"),
+    ];
+    // Budi's hold ran out unwritten: it's Citra's turn, Dewi is next.
+    const state = bookState(shelf, null, line, TODAY);
+    expect(placeInLine(state, line, "citra")).toEqual({
+      holdEndsOn: "2026-11-14",
+      position: null,
+    });
+    expect(placeInLine(state, line, "dewi")).toEqual({
+      holdEndsOn: null,
+      position: 1,
+    });
+    expect(placeInLine(state, line, "budi")).toEqual({
+      holdEndsOn: null,
+      position: null,
+    });
+  });
+
+  it("says the place in line", () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22].map(inLineLabel)).toEqual([
+      "1st in line",
+      "2nd in line",
+      "3rd in line",
+      "4th in line",
+      "11th in line",
+      "12th in line",
+      "13th in line",
+      "21st in line",
+      "22nd in line",
+    ]);
+  });
+
+  it("lets members join only a book someone else has", () => {
+    expect(joinRefusal(borrowed, "budi", false)).toBeNull();
+    expect(joinRefusal(borrowed, "ana", false)).toBe("You have this book.");
+    expect(joinRefusal(borrowed, "budi", true)).toBe(
+      "You're already in line for this book."
+    );
+    const held = bookState(
+      shelf,
+      null,
+      [reservation(1, "budi", { expiresOn: "2026-11-10", status: "ready" })],
+      TODAY
+    );
+    expect(joinRefusal(held, "citra", false)).toBeNull();
+    expect(joinRefusal(held, "budi", true)).toBe(
+      "It's reserved for you. Borrow it at the shelf."
+    );
+    expect(joinRefusal({ kind: "available", queue: 0 }, "budi", false)).toBe(
+      "It's on the shelf. Borrow it there."
+    );
+    expect(joinRefusal({ kind: "offered" }, "budi", false)).toBe(
+      "This book isn't on the shelf yet."
+    );
+    expect(joinRefusal({ kind: "withdrawn" }, "budi", false)).toBe(
+      "This book has left the library."
+    );
   });
 });
 
@@ -134,6 +269,7 @@ describe("memberBookState", () => {
       kind: "borrowed",
       mine: false,
       overdue: false,
+      position: null,
     });
     expect(JSON.stringify(seen)).not.toContain("ana");
     expect(stateLabel(seen)).toBe("Borrowed until 1 Nov");
@@ -159,10 +295,24 @@ describe("memberBookState", () => {
       [reservation(1, "budi", { expiresOn: "2026-11-10", status: "ready" })],
       TODAY
     );
-    expect(stateLabel(memberBookState(held, "budi"))).toBe("Reserved for you");
+    expect(stateLabel(memberBookState(held, "budi"))).toBe(
+      "Reserved for you · until 10 Nov"
+    );
     const other = memberBookState(held, "ana");
     expect(stateLabel(other)).toBe("Reserved");
     expect(other.holdEndsOn).toBeNull();
+  });
+
+  it("tells a member in line their place", () => {
+    const borrowedState = bookState(
+      shelf,
+      { dueOn: "2026-12-07", userId: "ana" },
+      [reservation(1, "budi"), reservation(2, "citra")],
+      TODAY
+    );
+    const seen = memberBookState(borrowedState, "citra", 2);
+    expect(seen.position).toBe(2);
+    expect(stateLabel(seen)).toBe("Borrowed until 7 Dec");
   });
 
   it("labels the other states", () => {
@@ -173,6 +323,7 @@ describe("memberBookState", () => {
         kind,
         mine: false,
         overdue: false,
+        position: null,
       });
     expect(
       ["available", "offered", "withdrawn"].map((kind) =>
@@ -191,6 +342,7 @@ const state = (
   kind,
   mine,
   overdue: false,
+  position: null,
 });
 
 describe("sortBooks", () => {
@@ -291,6 +443,17 @@ describe("lending", () => {
         reservedFor: "budi",
       })
     ).toContain("held");
+    expect(
+      borrowRefusal(
+        {
+          holdEndsOn: "2026-11-14",
+          kind: "reserved",
+          queue: 0,
+          reservedFor: "budi",
+        },
+        "budi"
+      )
+    ).toBeNull();
   });
 
   it("extends by 30 days from the due date, twice, for the holder only", () => {
@@ -333,5 +496,38 @@ describe("lending", () => {
     expect(isDay("2026-13-01")).toBe(false);
     expect(isDay("7 Dec")).toBe(false);
     expect(isDay("2026-12-07T10:00")).toBe(false);
+  });
+});
+
+describe("lentLabel", () => {
+  it("tells the lender where their book is", () => {
+    const lent = (overrides: Partial<Parameters<typeof lentLabel>[0]>) =>
+      lentLabel(
+        {
+          dueOn: null,
+          holder: null,
+          kind: "available",
+          overdue: false,
+          ...overrides,
+        },
+        TODAY
+      );
+    expect(lent({})).toBe("On the shelf");
+    expect(
+      lent({ dueOn: "2026-12-07", holder: "Budi", kind: "borrowed" })
+    ).toBe("Borrowed by Budi until 7 Dec");
+    expect(
+      lent({
+        dueOn: "2026-11-01",
+        holder: "Budi",
+        kind: "borrowed",
+        overdue: true,
+      })
+    ).toBe("Overdue since 2 Nov, borrowed by Budi");
+    expect(lent({ kind: "reserved" })).toBe("Held for the next in line");
+    expect(lent({ kind: "offered" })).toBe(
+      "Offered. Hand it to the librarian; it appears once accepted."
+    );
+    expect(lent({ kind: "withdrawn" })).toBe("Withdrawn from the library");
   });
 });

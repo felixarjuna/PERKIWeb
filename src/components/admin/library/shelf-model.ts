@@ -40,6 +40,19 @@ export function shelfLabel(book: ShelfLending): string {
 export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
   book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
 
+/**
+ * Whether staff can lend a book by hand: one on the shelf, or one held for
+ * a member (who came without a phone), which the server lends only to them.
+ */
+export const lendsByHand = (kind: BookKind) =>
+  kind === "available" || kind === "reserved";
+
+/** The Lend dialog's first line. */
+export const lendHint = (book: Pick<ShelfLending, "holder" | "kind">) =>
+  book.kind === "reserved"
+    ? `It's held for ${book.holder ?? "the next in line"}: lend it to them only.`
+    : "For a member who can't tap Borrow themselves.";
+
 const FIELD_LABELS: Record<string, string> = {
   author: "author",
   description: "description",
@@ -56,11 +69,22 @@ export interface HistoryEvent {
 }
 
 const subjectPhrase: Record<string, string> = {
+  accepted: "lent by",
   added: "lent by",
   borrowed: "to",
   edited: "lent by",
   returned: "from",
 };
+
+/** Things members do for themselves, so their name is said once. */
+const SELF_SERVICE = new Set([
+  "borrowed",
+  "extended",
+  "fulfilled",
+  "left_queue",
+  "offered",
+  "queued",
+]);
 
 const text = (value: unknown) => (typeof value === "string" ? value : null);
 
@@ -77,9 +101,7 @@ export function historyLine(event: HistoryEvent) {
     parts.push(`changed ${changed.join(", ")}`);
   }
   // A member borrowing or extending for themselves is said once.
-  const self =
-    event.subject === event.actor &&
-    (event.type === "borrowed" || event.type === "extended");
+  const self = event.subject === event.actor && SELF_SERVICE.has(event.type);
   if (event.subject && !self) {
     parts.push(`${subjectPhrase[event.type] ?? "for"} ${event.subject}`);
   }
@@ -89,6 +111,10 @@ export function historyLine(event: HistoryEvent) {
   }
   if (dueOn && event.type === "extended") {
     parts.push(`until ${dayLabel(dueOn)}`);
+  }
+  const expiresOn = text(event.details.expiresOn);
+  if (expiresOn && event.type === "ready") {
+    parts.push(`until ${dayLabel(expiresOn)}`);
   }
   const note = text(event.details.note);
   if (note) {

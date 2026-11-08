@@ -26,6 +26,7 @@ import { localDay } from "~/lib/schedule-team";
 import { api } from "~/trpc/react";
 import { accountName, MemberPicker } from "../member-picker";
 import type { ShelfBook } from "./book-dialog";
+import { lendHint } from "./shelf-model";
 
 const toDate = (day: string) => DateTime.fromISO(day).toJSDate();
 const toDay = (date: Date) => DateTime.fromJSDate(date).toISODate() ?? "";
@@ -75,8 +76,8 @@ export function LendDialog({
         <DialogHeader>
           <DialogTitle>Lend “{book?.title}”</DialogTitle>
           <DialogDescription>
-            For a member who can't tap Borrow themselves. It's due{" "}
-            {dayLabel(dueOnFrom(today))}, {LOAN_DAYS} days from today.
+            {book ? lendHint(book) : null} It's due {dayLabel(dueOnFrom(today))}
+            , {LOAN_DAYS} days from today.
           </DialogDescription>
         </DialogHeader>
         <MemberPicker
