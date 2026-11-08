@@ -127,26 +127,24 @@ test("deadline loading and query failure recover without losing the form", async
   await setTestSession(page, ADMIN);
   const pattern = "**/api/trpc/*settings.takeawayDeadline*";
   const gate = Promise.withResolvers<void>();
-  const retriesFinished = Promise.withResolvers<void>();
-  let requests = 0;
   await page.route(pattern, async (route) => {
     await gate.promise;
     await route.abort();
-    requests += 1;
-    if (requests === 4) {
-      retriesFinished.resolve();
-    }
   });
   await page.goto("/admin/settings/takeaways");
   await expect(page.getByText("Loading deadline…")).toBeVisible();
   gate.resolve();
-  await retriesFinished.promise;
-  // The sources query rides in the same batched request, so it fails too and
-  // offers its own retry below; the deadline's comes first.
-  const retry = page.getByRole("button", { name: "Try again" });
-  await expect(retry).toHaveCount(2);
+  // The sources query may ride in the same batch or its own, so it fails on
+  // its own schedule and shows its own message below. Only the deadline's
+  // matters here: it renders first on the page, and the client retries three
+  // times with backoff before giving up, so allow for that.
+  const retry = page
+    .getByRole("alert")
+    .first()
+    .getByRole("button", { name: "Try again" });
+  await expect(retry).toBeVisible({ timeout: 20_000 });
   await page.unroute(pattern);
-  await retry.first().click();
+  await retry.click();
   await expect(
     page.getByRole("combobox", { name: "Deadline weekday" })
   ).toBeVisible();
