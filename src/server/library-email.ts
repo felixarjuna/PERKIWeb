@@ -1,4 +1,5 @@
 import { inArray } from "drizzle-orm";
+import { after } from "next/server";
 import { users } from "~/lib/db/schema/schema";
 import { dayLabel } from "~/lib/library";
 import { db } from "~/server";
@@ -86,10 +87,19 @@ export async function sendReadyEmails(
 
 /**
  * Sends the ready emails without making the caller wait: a library read or
- * write answers at once, and the hold never depends on the email.
+ * write answers at once, and the hold never depends on the email. Inside a
+ * request, Next's `after()` keeps the function alive (on Vercel) until they
+ * are sent; outside one (scripts, tests) `after()` throws, and they're sent
+ * in the background instead.
  */
 export function sendReadyEmailsLater(notices: readonly ReadyNotice[]) {
-  if (notices.length > 0) {
-    sendReadyEmails(notices).catch(() => undefined);
+  if (notices.length === 0) {
+    return;
+  }
+  const send = () => sendReadyEmails(notices).catch(() => []);
+  try {
+    after(send);
+  } catch {
+    send();
   }
 }
