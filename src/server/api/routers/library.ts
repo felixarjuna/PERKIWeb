@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
-import { libraryBooks, libraryEvents, users } from "~/lib/db/schema/schema";
+import { libraryBooks, libraryHistory, users } from "~/lib/db/schema/schema";
 import {
   type BookState,
   inShelfState,
@@ -130,9 +130,9 @@ export const libraryRouter = createTRPCRouter({
       }
       const events = await db
         .select()
-        .from(libraryEvents)
-        .where(eq(libraryEvents.bookId, input.id))
-        .orderBy(desc(libraryEvents.at), desc(libraryEvents.id));
+        .from(libraryHistory)
+        .where(eq(libraryHistory.bookId, input.id))
+        .orderBy(desc(libraryHistory.at), desc(libraryHistory.id));
       const people = await peopleById(
         events.flatMap((event) => [event.actorId, event.subjectId])
       );

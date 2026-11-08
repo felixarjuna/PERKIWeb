@@ -37,7 +37,7 @@ export const RESERVATION_STATUSES = [
 ] as const;
 export type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
 
-/** What `library_events.type` records; both history views read them. */
+/** What `library_history.type` records; both history views read them. */
 export const LIBRARY_EVENT_TYPES = [
   "added",
   "edited",
@@ -385,7 +385,7 @@ export type ShelfState = (typeof SHELF_STATES)[number];
 export const SHELF_STATE_LABELS: Record<ShelfState, string> = {
   all: "Every book",
   available: "Available",
-  borrowed: "Out",
+  borrowed: "Borrowed",
   offered: "Offered",
   overdue: "Overdue",
   reserved: "Reserved",

@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   libraryBooks,
-  libraryEvents,
+  libraryHistory,
   libraryLoans,
-  libraryReservations,
+  libraryQueue,
 } from "~/lib/db/schema/schema";
 import { anonymousCaller, callerFor, insertUser } from "~/test/caller";
 import { testDb } from "~/test/db";
@@ -103,7 +103,7 @@ describe("library", () => {
     const { id } = await callerFor(mita.id).library.add(book);
     await testDb
       .insert(libraryLoans)
-      .values({ bookId: id, dueOn: "2026-12-07", userId: budi.id });
+      .values({ bookId: id, borrowerId: budi.id, dueOn: "2026-12-07" });
 
     const [seen] = await callerFor(ana.id).library.list({});
     expect(seen?.state).toEqual({
@@ -136,7 +136,7 @@ describe("library", () => {
     await staff.add({ ...book, title: "Zephaniah notes" });
     await testDb
       .insert(libraryLoans)
-      .values({ bookId: lent.id, dueOn: "2026-12-07", userId: budi.id });
+      .values({ bookId: lent.id, borrowerId: budi.id, dueOn: "2026-12-07" });
     const titles = async (sort: "available" | "title") =>
       (await callerFor(ana.id).library.list({ sort })).map(
         (item) => item.title
@@ -182,7 +182,7 @@ describe("library", () => {
         (item) => item.state.kind
       )
     ).toEqual(["available"]);
-    const events = await testDb.select().from(libraryEvents);
+    const events = await testDb.select().from(libraryHistory);
     expect(events.map((event) => event.type)).toContain("restored");
   });
 
@@ -192,7 +192,7 @@ describe("library", () => {
     const { id } = await staff.add(book);
     await testDb
       .insert(libraryLoans)
-      .values({ bookId: id, dueOn: "2026-12-07", userId: budi.id });
+      .values({ bookId: id, borrowerId: budi.id, dueOn: "2026-12-07" });
     await staff.withdraw({ id });
     await expect(staff.restore({ id })).resolves.toEqual({
       id,
@@ -223,17 +223,15 @@ describe("library", () => {
     const { id } = await callerFor(mita.id).library.add(book);
     await testDb
       .insert(libraryLoans)
-      .values({ bookId: id, dueOn: "2026-12-07", userId: budi.id });
+      .values({ bookId: id, borrowerId: budi.id, dueOn: "2026-12-07" });
     await expect(
       testDb
         .insert(libraryLoans)
-        .values({ bookId: id, dueOn: "2026-12-07", userId: ana.id })
+        .values({ bookId: id, borrowerId: ana.id, dueOn: "2026-12-07" })
     ).rejects.toThrow();
-    await testDb
-      .insert(libraryReservations)
-      .values({ bookId: id, userId: ana.id });
+    await testDb.insert(libraryQueue).values({ bookId: id, userId: ana.id });
     await expect(
-      testDb.insert(libraryReservations).values({ bookId: id, userId: ana.id })
+      testDb.insert(libraryQueue).values({ bookId: id, userId: ana.id })
     ).rejects.toThrow();
   });
 });

@@ -52,7 +52,7 @@ function setParam(key: string, value: string, replace: boolean) {
 
 const KIND_LABELS: Record<ShelfBook["kind"], string> = {
   available: "Available",
-  borrowed: "Out",
+  borrowed: "Borrowed",
   offered: "Offered",
   reserved: "Reserved",
   withdrawn: "Withdrawn",
