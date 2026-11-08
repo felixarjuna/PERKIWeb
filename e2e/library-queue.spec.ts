@@ -139,7 +139,7 @@ test("a member offers their own book, the librarian accepts it, and the lender s
   await search(page, suffix);
   const card = cardOf(page, title);
   await expect(card).toContainText("Offered");
-  await expect(card).toContainText("🇮🇩Bahasa Indonesia");
+  await expect(card).toContainText("Bahasa Indonesia");
   await expect(card).toContainText(
     "Hand it to the librarian; it appears once accepted."
   );

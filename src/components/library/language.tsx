@@ -8,6 +8,7 @@ import {
   languageLabel,
 } from "~/lib/library";
 import { cn } from "~/lib/utils";
+import { Flag } from "./flag";
 
 const CHIP =
   "type-caption inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground";
@@ -26,7 +27,7 @@ export function LanguageChip({
   }
   return (
     <span className={cn(CHIP, className)}>
-      {label.flag ? <span aria-hidden="true">{label.flag}</span> : null}
+      {label.code ? <Flag code={label.code} /> : null}
       {label.name}
     </span>
   );
@@ -79,7 +80,7 @@ const OPTIONS = [
   { label: "No language", value: "" },
   ...LIBRARY_LANGUAGES.map((language) => ({
     label: language.name,
-    prefix: language.flag,
+    prefix: <Flag code={language.code} />,
     value: language.code,
   })),
 ];

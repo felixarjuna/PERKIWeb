@@ -61,7 +61,7 @@ test("the librarian adds a member's book, members find it, and a withdraw hides 
     .getByRole("listitem")
     .filter({ has: member.getByRole("heading", { name: title }) });
   await expect(card).toContainText("Available");
-  await expect(card).toContainText("🇩🇪Deutsch");
+  await expect(card).toContainText("Deutsch");
   await expect(card).not.toContainText(lender);
 
   await page.getByRole("searchbox", { name: "Search books" }).fill(suffix);

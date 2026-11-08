@@ -25,9 +25,9 @@ export const MAX_LOAN_NOTE = 300;
  * code; a value from before the list (free text) is still shown as typed.
  */
 export const LIBRARY_LANGUAGES = [
-  { code: "en", flag: "🇬🇧", name: "English" },
-  { code: "de", flag: "🇩🇪", name: "Deutsch" },
-  { code: "id", flag: "🇮🇩", name: "Bahasa Indonesia" },
+  { code: "en", name: "English" },
+  { code: "de", name: "Deutsch" },
+  { code: "id", name: "Bahasa Indonesia" },
 ] as const;
 export const LANGUAGE_CODES = ["en", "de", "id"] as const;
 export type LanguageCode = (typeof LANGUAGE_CODES)[number];
@@ -36,20 +36,21 @@ export const isLanguageCode = (value: string): value is LanguageCode =>
   (LANGUAGE_CODES as readonly string[]).includes(value);
 
 /**
- * How a stored language reads: its flag and name, or an older free-text value
- * as it was typed, without a flag. Null when the book has no language.
+ * How a stored language reads: its code (for the flag) and name, or an older
+ * free-text value as it was typed, without a code. Null when the book has no
+ * language.
  */
 export const languageLabel = (
   stored: string | null
-): { flag: string | null; name: string } | null => {
+): { code: LanguageCode | null; name: string } | null => {
   const value = stored?.trim();
   if (!value) {
     return null;
   }
   const known = LIBRARY_LANGUAGES.find((language) => language.code === value);
   return known
-    ? { flag: known.flag, name: known.name }
-    : { flag: null, name: value };
+    ? { code: known.code, name: known.name }
+    : { code: null, name: value };
 };
 
 /** How a book is held: on the shelf, or an ebook its owner shares (#147). */

@@ -546,17 +546,17 @@ describe("languageLabel", () => {
       "de",
       "id",
     ]);
-    expect(languageLabel("en")).toEqual({ flag: "🇬🇧", name: "English" });
-    expect(languageLabel("de")).toEqual({ flag: "🇩🇪", name: "Deutsch" });
+    expect(languageLabel("en")).toEqual({ code: "en", name: "English" });
+    expect(languageLabel("de")).toEqual({ code: "de", name: "Deutsch" });
     expect(languageLabel("id")).toEqual({
-      flag: "🇮🇩",
+      code: "id",
       name: "Bahasa Indonesia",
     });
   });
 
   it("shows a language typed before the list as it was, without a flag", () => {
     expect(languageLabel("Indonesian")).toEqual({
-      flag: null,
+      code: null,
       name: "Indonesian",
     });
   });
