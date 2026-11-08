@@ -8,6 +8,7 @@ import {
   languageLabel,
 } from "~/lib/library";
 import { cn } from "~/lib/utils";
+import { Flag } from "./flag";
 
 /** A book's language: its flag (hidden from screen readers) and its name. */
 export function LanguageChip({
@@ -28,7 +29,7 @@ export function LanguageChip({
         className
       )}
     >
-      {label.flag ? <span aria-hidden="true">{label.flag}</span> : null}
+      {label.code ? <Flag code={label.code} /> : null}
       {label.name}
     </span>
   );
@@ -62,7 +63,7 @@ const OPTIONS = [
   { label: "No language", value: "" },
   ...LIBRARY_LANGUAGES.map((language) => ({
     label: language.name,
-    prefix: language.flag,
+    prefix: <Flag code={language.code} />,
     value: language.code,
   })),
 ];

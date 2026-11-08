@@ -6,14 +6,16 @@ import { LanguageChip, LanguagePicker, pickedLanguage } from "./language";
 describe("LanguageChip", () => {
   it("shows the flag beside the name, the flag hidden from screen readers", () => {
     const { container } = render(<LanguageChip language="de" />);
-    expect(container.textContent).toBe("🇩🇪Deutsch");
-    expect(screen.getByText("🇩🇪").getAttribute("aria-hidden")).toBe("true");
+    expect(container.textContent).toBe("Deutsch");
+    expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
+      "true"
+    );
   });
 
   it("shows an older free-text language as typed, without a flag", () => {
     const { container } = render(<LanguageChip language="Indonesian" />);
     expect(container.textContent).toBe("Indonesian");
-    expect(container.querySelector("[aria-hidden]")).toBeNull();
+    expect(container.querySelector("svg")).toBeNull();
   });
 
   it("shows nothing without a language", () => {
@@ -33,9 +35,9 @@ describe("LanguagePicker", () => {
     const options = screen.getAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual([
       "No language",
-      "🇬🇧English",
-      "🇩🇪Deutsch",
-      "🇮🇩Bahasa Indonesia",
+      "English",
+      "Deutsch",
+      "Bahasa Indonesia",
     ]);
     await userEvent.click(screen.getByRole("option", { name: "Deutsch" }));
     expect(onChange).toHaveBeenCalledWith("de");

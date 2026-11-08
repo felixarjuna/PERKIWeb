@@ -20,7 +20,7 @@ export interface AdminOption {
   icon?: LucideIcon;
   label: string;
   /** Shown before the label in a select, hidden from screen readers (a flag). */
-  prefix?: string;
+  prefix?: ReactNode;
   value: string;
 }
 
