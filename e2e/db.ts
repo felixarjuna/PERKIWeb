@@ -1,5 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, inArray, like, lt, lte } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  like,
+  lt,
+  lte,
+} from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -7,6 +17,7 @@ import {
   groups,
   groupTerms,
   libraryBooks,
+  libraryLoans,
   type NewSchedule,
   profiles,
   scheduleAssignments,
@@ -295,6 +306,25 @@ export const insertLibraryBook = async (
       throw new Error("Failed to insert the library book");
     }
     return book;
+  } finally {
+    await client.end();
+  }
+};
+
+/**
+ * Moves the due date of a book's open loan, so a spec can reach the days a
+ * member may extend (the last `EXTEND_WINDOW_DAYS` before it) without waiting.
+ */
+export const setOpenLoanDueOn = async (bookId: number, dueOn: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .update(libraryLoans)
+      .set({ dueOn })
+      .where(
+        and(eq(libraryLoans.bookId, bookId), isNull(libraryLoans.returnedAt))
+      );
   } finally {
     await client.end();
   }
