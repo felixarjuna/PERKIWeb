@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { LIBRARY_SHEET } from "~/test/fixtures/library-sheet";
+import { LENDING_SHEET, LIBRARY_SHEET } from "~/test/fixtures/library-sheet";
 import {
+  firstSaturdayOfNextMonth,
+  type LendingInput,
+  monthLabel,
   normaliseCategory,
   normalisePublisher,
+  parseLendingSheet,
   parseLibrarySheet,
+  planLendingHistory,
   planLibraryImport,
   type StoredBook,
+  sheetLoanEvents,
+  sheetMonth,
+  withoutCoveredLoans,
 } from "./library-import";
 
 const sheet = parseLibrarySheet(LIBRARY_SHEET);
@@ -156,8 +164,8 @@ describe("planLibraryImport", () => {
       "Small Lamps",
     ]);
     expect(plan.unmatched).toEqual([
-      { as: ["owner"], name: "Wren", rows: [4, 5] },
-      { as: ["borrower"], name: "Nadia", rows: [7] },
+      { as: ["owner"], lendingRows: [], name: "Wren", rows: [4, 5] },
+      { as: ["borrower"], lendingRows: [], name: "Nadia", rows: [7] },
     ]);
   });
 
@@ -256,5 +264,335 @@ describe("planLibraryImport", () => {
       }),
     ]);
     expect(plan.added).toHaveLength(12);
+  });
+});
+
+describe("firstSaturdayOfNextMonth", () => {
+  it("is the first Saturday of the month after", () => {
+    // June 2026 → Wednesday 1 July, so Saturday the 4th.
+    expect(firstSaturdayOfNextMonth("2026-06")).toBe("2026-07-04");
+  });
+
+  it("is the 1st when the next month starts on a Saturday", () => {
+    expect(firstSaturdayOfNextMonth("2026-07")).toBe("2026-08-01");
+  });
+
+  it("is the 7th after a month ending on a Saturday", () => {
+    // January 2026 ends on Saturday the 31st.
+    expect(firstSaturdayOfNextMonth("2026-01")).toBe("2026-02-07");
+  });
+
+  it("is the 7th when the next month starts on a Sunday", () => {
+    // March 2026 starts on a Sunday.
+    expect(firstSaturdayOfNextMonth("2026-02")).toBe("2026-03-07");
+  });
+
+  it("goes from December into January of the next year", () => {
+    expect(firstSaturdayOfNextMonth("2026-12")).toBe("2027-01-02");
+    expect(firstSaturdayOfNextMonth("2025-12")).toBe("2026-01-03");
+  });
+});
+
+describe("parseLendingSheet", () => {
+  const lending = parseLendingSheet(LENDING_SHEET);
+
+  it("carries the year and month down and skips separator rows", () => {
+    expect(
+      lending.rows.map(({ month, row, title }) => `${row} ${month} ${title}`)
+    ).toEqual([
+      "2 2025-12 Lowly Paths",
+      "4 2026-06 The Lantern Case",
+      "5 2026-06 Quiet Harbour",
+      "6 2026-06 Lowly Paths",
+      "8 2026-07 The Lantern Case",
+      "9 2026-07 Quiet Harbour",
+      "11 2026-08 The Lantern Case",
+      "12 2026-08 Morning Psalms",
+      "13 2026-08 Small Lamps",
+      "15 2026-09 The Lantern Case",
+      "16 2026-09 Lowly Paths",
+      "17 2026-09 Quiet Harbour",
+      "19 2026-10 Small Lamps",
+      "20 2026-10 Quiet Harbour",
+    ]);
+    expect(lending.skipped).toEqual([]);
+  });
+
+  it("reads extend, PERKI as no owner, and the borrower", () => {
+    expect(lending.rows[4]).toEqual({
+      borrower: "Kai",
+      extend: true,
+      month: "2026-07",
+      owner: null,
+      row: 8,
+      title: "The Lantern Case",
+    });
+    expect(lending.rows[2]).toMatchObject({ extend: false, owner: "Arlo" });
+  });
+
+  it("skips rows without a month or a borrower", () => {
+    expect(
+      parseLendingSheet([
+        ["Tahun", "Bulan", "Title", "Pemilik", "Peminjam", "Catatan"],
+        ["", "", "Early Book", "PERKI", "Dara"],
+        ["2026", "Smarch", "Odd Month", "PERKI", "Dara"],
+        ["2026", "Mei", "Nobody", "PERKI", ""],
+        ["", "", "Carried", "PERKI", "Dara"],
+      ])
+    ).toEqual({
+      rows: [
+        {
+          borrower: "Dara",
+          extend: false,
+          month: "2026-05",
+          owner: null,
+          row: 5,
+          title: "Carried",
+        },
+      ],
+      skipped: [
+        { reason: "No month", row: 2, title: "Early Book" },
+        { reason: "Unknown month “Smarch”", row: 3, title: "Odd Month" },
+        { reason: "No borrower", row: 4, title: "Nobody" },
+      ],
+    });
+  });
+
+  it("reads month names and numbers", () => {
+    expect(sheetMonth("2026", "Agustus")).toBe("2026-08");
+    expect(sheetMonth("2026", "march")).toBe("2026-03");
+    expect(sheetMonth("2026", "10")).toBe("2026-10");
+    expect(sheetMonth("", "Juli")).toBeNull();
+    expect(monthLabel("2026-07")).toBe("July 2026");
+  });
+});
+
+describe("planLendingHistory", () => {
+  const NOW = new Date("2026-11-08T11:00:00Z");
+  const lending = parseLendingSheet(LENDING_SHEET);
+
+  /** The book list planned first, as the import does. */
+  const inputFor = (
+    accountFor: (name: string) => string | undefined,
+    extra: Partial<LendingInput> = {}
+  ): LendingInput => {
+    const books = planLibraryImport({ accountFor, sheet, stored: [] });
+    return {
+      accountFor,
+      current: [],
+      imported: [],
+      now: NOW,
+      placed: books.placed,
+      sheet: lending,
+      unmatched: books.unmatched,
+      ...extra,
+    };
+  };
+  const refOf = (input: LendingInput, title: string, owner: string | null) =>
+    input.placed.find(
+      (copy) =>
+        copy.title === title &&
+        copy.format === "physical" &&
+        copy.ownerId === owner
+    )?.ref;
+  const summary = (plan: ReturnType<typeof planLendingHistory>) =>
+    plan.loans.map(
+      (loan) =>
+        `${loan.title} → ${loan.borrower}: ${loan.from}…${loan.to}, ${loan.extended.length} ext, due ${loan.dueOn}, ${loan.open ? "open" : "returned"}`
+    );
+
+  it("plans each loan with the first-Saturday dates, open or returned", () => {
+    const plan = planLendingHistory(inputFor(accounts("Wren", "Nadia")));
+    expect(summary(plan)).toEqual([
+      "Lowly Paths → Dara: 2025-12…2025-12, 0 ext, due 2026-01-03, returned",
+      "The Lantern Case → Kai: 2026-06…2026-07, 1 ext, due 2026-08-01, returned",
+      "Quiet Harbour → Dara: 2026-06…2026-07, 1 ext, due 2026-08-01, returned",
+      "Lowly Paths → Vito: 2026-06…2026-06, 0 ext, due 2026-07-04, returned",
+      "The Lantern Case → Dara: 2026-08…2026-09, 1 ext, due 2026-10-03, open",
+      "Lowly Paths → Arlo: 2026-09…2026-09, 0 ext, due 2026-10-03, returned",
+      "Quiet Harbour → Kai: 2026-09…2026-09, 0 ext, due 2026-10-03, returned",
+    ]);
+    const [lowly] = plan.loans;
+    // The 1st of the month, and the gathering at 15:30, both in Aachen.
+    expect(lowly?.borrowedAt.toISOString()).toBe("2025-11-30T23:00:00.000Z");
+    expect(lowly?.returnedAt?.toISOString()).toBe("2026-01-03T14:30:00.000Z");
+    const open = plan.loans.find((loan) => loan.open);
+    expect(open?.returnedAt).toBeNull();
+    expect(open?.extended).toEqual([{ dueOn: "2026-10-03", month: "2026-09" }]);
+  });
+
+  it("matches each copy by owner when a title has several", () => {
+    const input = inputFor(accounts("Wren", "Nadia"));
+    const plan = planLendingHistory(input);
+    const harbour = plan.loans.filter((loan) => loan.title === "Quiet Harbour");
+    expect(harbour.map((loan) => loan.ref)).toEqual([
+      refOf(input, "Quiet Harbour", "u-arlo"),
+      refOf(input, "Quiet Harbour", "u-vito"),
+    ]);
+  });
+
+  it("reports unknown titles, names without an account and lone extends", () => {
+    const input = inputFor(accounts("Wren", "Nadia"));
+    const plan = planLendingHistory(input);
+    expect(plan.problems).toEqual([
+      {
+        reason: "No copy with this title in the book list",
+        row: 12,
+        title: "Morning Psalms",
+      },
+      {
+        reason: "Borrower Nadia has no account yet",
+        row: 13,
+        title: "Small Lamps",
+      },
+      {
+        reason: "Borrower Nadia has no account yet",
+        row: 19,
+        title: "Small Lamps",
+      },
+      {
+        reason: "Owner Wren has no account yet",
+        row: 20,
+        title: "Quiet Harbour",
+      },
+    ]);
+    expect(plan.unmatchedExtends).toEqual([
+      {
+        reason:
+          "Extended for Arlo without an earlier lend, so counted as a lend",
+        row: 16,
+        title: "Lowly Paths",
+      },
+    ]);
+    expect(input.unmatched).toEqual([
+      { as: ["owner"], lendingRows: [20], name: "Wren", rows: [4, 5] },
+      { as: ["borrower"], lendingRows: [13, 19], name: "Nadia", rows: [7] },
+    ]);
+  });
+
+  it("keeps an open loan open even when its due date has passed", () => {
+    const plan = planLendingHistory(inputFor(accounts()));
+    const small = plan.loans.find((loan) => loan.title === "Small Lamps");
+    expect(small).toMatchObject({
+      dueOn: "2026-11-07",
+      extended: [{ dueOn: "2026-11-07", month: "2026-10" }],
+      from: "2026-08",
+      open: true,
+      returnedAt: null,
+    });
+    // Wren's copy came back at the gathering on 7 November.
+    const wren = plan.loans.find(
+      (loan) => loan.title === "Quiet Harbour" && loan.from === "2026-10"
+    );
+    expect(wren?.returnedAt?.toISOString()).toBe("2026-11-07T14:30:00.000Z");
+  });
+
+  it("never returns a book later than now", () => {
+    const now = new Date("2026-11-02T10:00:00Z");
+    const plan = planLendingHistory(inputFor(accounts(), { now }));
+    const wren = plan.loans.find(
+      (loan) => loan.title === "Quiet Harbour" && loan.from === "2026-10"
+    );
+    expect(wren?.returnedAt).toEqual(now);
+  });
+
+  it("writes nothing again on a rerun", () => {
+    const input = inputFor(accounts());
+    const first = planLendingHistory(input);
+    const again = planLendingHistory({
+      ...input,
+      current: first.loans
+        .filter((loan) => loan.open)
+        .map((loan, index) => ({
+          borrowerId: loan.borrowerId,
+          fromLentTo: false,
+          loanId: index + 1,
+          ref: loan.ref,
+        })),
+      imported: first.loans.map((loan) => ({
+        borrowerId: loan.borrowerId,
+        month: loan.from,
+        ref: loan.ref,
+      })),
+    });
+    expect(again.loans).toEqual([]);
+    expect(again.onSite).toEqual([]);
+    expect(again.imported).toBe(first.loans.length);
+  });
+
+  it("replaces a loan an earlier import started today, never one made on the site", () => {
+    const input = inputFor(accounts("Wren", "Nadia"));
+    const lantern = refOf(input, "The Lantern Case", null) ?? "";
+    const replaced = planLendingHistory({
+      ...input,
+      current: [
+        { borrowerId: "u-dara", fromLentTo: true, loanId: 7, ref: lantern },
+      ],
+    });
+    expect(replaced.loans.find((loan) => loan.open)).toMatchObject({
+      replacesLoanId: 7,
+    });
+    const onSite = planLendingHistory({
+      ...input,
+      current: [
+        { borrowerId: "u-kai", fromLentTo: false, loanId: 8, ref: lantern },
+      ],
+    });
+    expect(onSite.loans.some((loan) => loan.open)).toBe(false);
+    expect(onSite.onSite).toEqual([
+      expect.objectContaining({ borrower: "Dara", title: "The Lantern Case" }),
+    ]);
+  });
+
+  it("leaves a loan from today only to copies the history has no open loan for", () => {
+    const accountFor = accounts();
+    const books = planLibraryImport({ accountFor, sheet, stored: [] });
+    const plan = planLendingHistory(inputFor(accountFor));
+    const lentToday = (result: ReturnType<typeof withoutCoveredLoans>) =>
+      result.added
+        .filter((item) => item.borrowerId)
+        .map((item) => item.copy.title);
+    expect(lentToday(withoutCoveredLoans(books, plan))).toEqual([]);
+    const partial = {
+      ...plan,
+      loans: plan.loans.filter((loan) => loan.title !== "Small Lamps"),
+    };
+    expect(lentToday(withoutCoveredLoans(books, partial))).toEqual([
+      "Small Lamps",
+    ]);
+  });
+
+  it("writes month-precision history lines", () => {
+    const plan = planLendingHistory(inputFor(accounts("Wren", "Nadia")));
+    const kai = plan.loans.find(
+      (loan) => loan.title === "The Lantern Case" && loan.borrower === "Kai"
+    );
+    expect(kai && sheetLoanEvents(kai)).toEqual([
+      {
+        at: new Date("2026-05-31T22:00:00.000Z"),
+        details: {
+          dueOn: "2026-07-04",
+          month: "2026-06",
+          precision: "month",
+          source: "sheet",
+        },
+        type: "borrowed",
+      },
+      {
+        at: new Date("2026-06-30T22:00:00.000Z"),
+        details: {
+          dueOn: "2026-08-01",
+          month: "2026-07",
+          precision: "month",
+          source: "sheet",
+        },
+        type: "extended",
+      },
+      {
+        at: new Date("2026-08-01T13:30:00.000Z"),
+        details: { month: "2026-08", precision: "month", source: "sheet" },
+        type: "returned",
+      },
+    ]);
   });
 });
