@@ -146,6 +146,8 @@ describe("library queue", () => {
 
   it("refuses the holder's extension while someone waits, with the reason", async () => {
     const { ana, loanId } = await borrowedWithQueue();
+    // In the last 3 days before the due date, 7 Dec.
+    vi.setSystemTime(new Date("2026-12-05T11:00:00Z"));
     const [held] = (await callerFor(ana.id).library.mine()).holding;
     expect(held?.extendRefusal).toBe("Someone is waiting for this book.");
     await expect(

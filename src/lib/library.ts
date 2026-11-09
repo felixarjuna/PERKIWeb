@@ -8,6 +8,11 @@ import { DateTime } from "luxon";
 
 /** Days a loan runs, and how far each extension moves the due date. */
 export const LOAN_DAYS = 30;
+/**
+ * A member extends only in the last days before the due date: from
+ * `dueOn` minus these days through `dueOn`, both ends included.
+ */
+export const EXTEND_WINDOW_DAYS = 3;
 /** Extensions a member may ask for themselves; staff can go past it. */
 export const MAX_EXTENSIONS = 2;
 /** Days a returned book waits for the first in line, counted from the return. */
@@ -656,8 +661,9 @@ export interface LoanLine {
 
 /**
  * Why the member can't extend this loan themselves, or null when they can:
- * only the holder, at most `MAX_EXTENSIONS` times, not after the due date,
- * and not while anyone waits in the queue (`waiting`). Staff can go past it.
+ * only the holder, not after the due date, only in the last
+ * `EXTEND_WINDOW_DAYS` days before it, at most `MAX_EXTENSIONS` times, and
+ * not while anyone waits in the queue (`waiting`). Staff can go past it.
  */
 export function extendRefusal(
   loan: LoanLine,
@@ -670,6 +676,10 @@ export function extendRefusal(
   }
   if (isOverdue(loan.dueOn, today)) {
     return "It's past the due date. Ask the librarian.";
+  }
+  const opensOn = addDays(loan.dueOn, -EXTEND_WINDOW_DAYS);
+  if (today < opensOn) {
+    return `You can extend from ${dayLabel(opensOn)}.`;
   }
   if (loan.extensions >= MAX_EXTENSIONS) {
     return `Already extended ${MAX_EXTENSIONS} times. Ask the librarian.`;

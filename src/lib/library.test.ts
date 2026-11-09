@@ -7,6 +7,7 @@ import {
   dueLabel,
   dueOnFrom,
   EBOOK_REFUSAL,
+  EXTEND_WINDOW_DAYS,
   extendedDueOn,
   extendRefusal,
   extensionsLeftLabel,
@@ -463,14 +464,32 @@ describe("lending", () => {
     ).toBeNull();
   });
 
+  // Due 7 Dec: the window opens 4 Dec.
+  const IN_WINDOW = "2026-12-05";
+
   it("extends by 30 days from the due date, twice, for the holder only", () => {
     expect(extendedDueOn("2026-12-07")).toBe("2027-01-06");
-    expect(extendRefusal(loan, "ana", TODAY)).toBeNull();
-    expect(extendRefusal({ ...loan, extensions: 1 }, "ana", TODAY)).toBeNull();
-    expect(extendRefusal({ ...loan, extensions: 2 }, "ana", TODAY)).toBe(
+    expect(extendRefusal(loan, "ana", IN_WINDOW)).toBeNull();
+    expect(
+      extendRefusal({ ...loan, extensions: 1 }, "ana", IN_WINDOW)
+    ).toBeNull();
+    expect(extendRefusal({ ...loan, extensions: 2 }, "ana", IN_WINDOW)).toBe(
       "Already extended 2 times. Ask the librarian."
     );
-    expect(extendRefusal(loan, "budi", TODAY)).toContain("Only the member");
+    expect(extendRefusal(loan, "budi", IN_WINDOW)).toContain("Only the member");
+  });
+
+  it("allows extending only in the last 3 days before the due date", () => {
+    expect(EXTEND_WINDOW_DAYS).toBe(3);
+    expect(extendRefusal(loan, "ana", TODAY)).toBe(
+      "You can extend from 4 Dec."
+    );
+    expect(extendRefusal(loan, "ana", "2026-12-03")).toBe(
+      "You can extend from 4 Dec."
+    );
+    expect(extendRefusal(loan, "ana", "2026-12-04")).toBeNull();
+    expect(extendRefusal(loan, "ana", "2026-12-06")).toBeNull();
+    expect(extendRefusal(loan, "ana", "2026-12-07")).toBeNull();
   });
 
   it("allows extending on the due date but not after it", () => {
@@ -480,8 +499,21 @@ describe("lending", () => {
     );
   });
 
-  it("refuses an extension while someone waits", () => {
+  it("names the window before the extensions used or the queue", () => {
+    expect(extendRefusal(loan, "budi", TODAY)).toContain("Only the member");
+    expect(extendRefusal({ ...loan, extensions: 2 }, "ana", TODAY)).toBe(
+      "You can extend from 4 Dec."
+    );
     expect(extendRefusal(loan, "ana", TODAY, 1)).toBe(
+      "You can extend from 4 Dec."
+    );
+    expect(extendRefusal({ ...loan, extensions: 2 }, "ana", "2026-12-08")).toBe(
+      "It's past the due date. Ask the librarian."
+    );
+  });
+
+  it("refuses an extension while someone waits", () => {
+    expect(extendRefusal(loan, "ana", IN_WINDOW, 1)).toBe(
       "Someone is waiting for this book."
     );
   });

@@ -1,7 +1,7 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { dayLabel, dueOnFrom, holdEndsOn } from "~/lib/library";
+import { addDays, dayLabel, dueOnFrom, holdEndsOn } from "~/lib/library";
 import { localDay } from "~/lib/schedule-team";
-import { insertLibraryBook } from "./db";
+import { insertLibraryBook, setOpenLoanDueOn } from "./db";
 import { uniqueSuffix } from "./fixtures";
 import { adminLogin, createSignedInUser, selectOption, toast } from "./helpers";
 
@@ -40,7 +40,7 @@ test("a member queues for a borrowed book and borrows it once the librarian has 
 }) => {
   const suffix = uniqueSuffix();
   const title = `Life Together ${suffix}`;
-  await insertLibraryBook(title, "Dietrich Bonhoeffer");
+  const book = await insertLibraryBook(title, "Dietrich Bonhoeffer");
   const today = localDay(new Date());
 
   // A borrows the book.
@@ -58,7 +58,8 @@ test("a member queues for a borrowed book and borrows it once the librarian has 
   await expect(toast(waiting.page, "You're 1st in line")).toBeVisible();
   await expect(card).toContainText("1st in line");
 
-  // A can't extend while B waits, and sees why.
+  // A can't extend while B waits, even in the last days before it's due.
+  await setOpenLoanDueOn(book.id, addDays(today, 2));
   await page.reload();
   const held = page
     .getByRole("region", { name: "My books" })
