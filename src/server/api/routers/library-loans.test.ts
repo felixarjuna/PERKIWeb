@@ -122,7 +122,7 @@ describe("library lending", () => {
           author: "C. S. Lewis",
           bookId: id,
           dueOn: "2026-12-07",
-          extendRefusal: null,
+          extendRefusal: "You can extend from 4 Dec.",
           extensions: 0,
           language: null,
           loanId,
@@ -142,12 +142,16 @@ describe("library lending", () => {
     await expect(
       callerFor(budi.id).library.extend({ loanId })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    // Each time in the last 3 days before the due date.
+    vi.setSystemTime(new Date("2026-12-05T11:00:00Z"));
     await expect(member.extend({ loanId })).resolves.toEqual({
       dueOn: "2027-01-06",
     });
+    vi.setSystemTime(new Date("2027-01-04T11:00:00Z"));
     await expect(member.extend({ loanId })).resolves.toEqual({
       dueOn: "2027-02-05",
     });
+    vi.setSystemTime(new Date("2027-02-03T11:00:00Z"));
     await expect(member.extend({ loanId })).rejects.toMatchObject({
       code: "BAD_REQUEST",
       message: "Already extended 2 times. Ask the librarian.",
@@ -172,6 +176,30 @@ describe("library lending", () => {
     });
   });
 
+  it("extends only in the last 3 days before the due date", async () => {
+    const { ana, id } = await setup();
+    const { loanId } = await callerFor(ana.id).library.borrow({ id });
+    const member = callerFor(ana.id).library;
+    await expect(member.extend({ loanId })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "You can extend from 4 Dec.",
+    });
+    // 3 Dec in Aachen, the day before the window opens.
+    vi.setSystemTime(new Date("2026-12-03T22:30:00Z"));
+    await expect(member.extend({ loanId })).rejects.toMatchObject({
+      message: "You can extend from 4 Dec.",
+    });
+    // 4 Dec in Aachen (23:30 UTC on the 3rd).
+    vi.setSystemTime(new Date("2026-12-03T23:30:00Z"));
+    const [held] = (await member.mine()).holding;
+    expect(held?.extendRefusal).toBeNull();
+    await expect(member.extend({ loanId })).resolves.toEqual({
+      dueOn: "2027-01-06",
+    });
+    const [after] = (await member.mine()).holding;
+    expect(after?.extendRefusal).toBe("You can extend from 3 Jan.");
+  });
+
   it("refuses an extension after the due date", async () => {
     const { ana, id } = await setup();
     const { loanId } = await callerFor(ana.id).library.borrow({ id });
@@ -190,6 +218,7 @@ describe("library lending", () => {
     const { ana, budi, id } = await setup();
     const { loanId } = await callerFor(ana.id).library.borrow({ id });
     await testDb.insert(libraryQueue).values({ bookId: id, userId: budi.id });
+    vi.setSystemTime(new Date("2026-12-05T11:00:00Z"));
     await expect(
       callerFor(ana.id).library.extend({ loanId })
     ).rejects.toMatchObject({ message: "Someone is waiting for this book." });
