@@ -16,14 +16,15 @@ import { PersonAvatar } from "~/components/person-avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { languageLabel } from "~/lib/library";
-import type { ImportedField } from "~/lib/library-import";
+import { dayLabel, languageLabel } from "~/lib/library";
+import { type ImportedField, monthLabel } from "~/lib/library-import";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
 
 type Preview = RouterOutputs["libraryImport"]["preview"];
 type Copy = Preview["added"][number];
+type Loan = Preview["lending"]["loans"][number];
 
 const FIELD_LABELS: Record<ImportedField, string> = {
   category: "Category",
@@ -41,6 +42,121 @@ const fieldValue = (field: ImportedField, value: string | null) => {
 
 const rowsLabel = (rows: number[]) =>
   `${rows.length === 1 ? "row" : "rows"} ${rows.join(", ")}`;
+
+/** Where a name appears: the book list's rows, then the lending history's. */
+const whereLabel = (item: { lendingRows: number[]; rows: number[] }) =>
+  [
+    item.rows.length > 0 ? `Book list ${rowsLabel(item.rows)}` : null,
+    item.lendingRows.length > 0
+      ? `Lending history ${rowsLabel(item.lendingRows)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+/** "June – July 2026", "December 2025 – January 2026" or "August 2026". */
+function monthRange(from: string, to: string) {
+  if (from === to) {
+    return monthLabel(from);
+  }
+  const [first, firstYear] = monthLabel(from).split(" ");
+  return from.slice(0, 4) === to.slice(0, 4)
+    ? `${first} – ${monthLabel(to)}`
+    : `${first} ${firstYear} – ${monthLabel(to)}`;
+}
+
+const extensionsLabel = (count: number) => {
+  if (count === 0) {
+    return null;
+  }
+  return count === 1 ? "extended once" : `extended ${count} times`;
+};
+
+/** Whether the loan is still out, as the import will store it. */
+const loanState = (loan: Loan) =>
+  loan.returnedOn
+    ? `Returned ${dayLabel(loan.returnedOn)}`
+    : `Still out · due ${dayLabel(loan.dueOn)}`;
+
+function LoanCard({ loan }: { loan: Loan }) {
+  const extended = extensionsLabel(loan.extensions);
+  return (
+    <li className="rounded-xl bg-card p-4">
+      <p className="type-body break-words">{loan.title}</p>
+      <p className="type-body-sm text-muted-foreground">
+        {loan.borrower} · {monthRange(loan.from, loan.to)}
+        {extended ? ` · ${extended}` : ""}
+      </p>
+      <p className="type-caption mt-2 text-muted-foreground">
+        {loanState(loan)}
+        {loan.replaces ? " · replaces the loan started on import" : ""} ·{" "}
+        {rowsLabel(loan.rows)}
+      </p>
+    </li>
+  );
+}
+
+/** A lending history row with what's wrong with it. */
+function RowNote({
+  item,
+}: {
+  item: { reason: string; row: number; title: string };
+}) {
+  return (
+    <li className="type-body-sm rounded-xl bg-card p-4">
+      {item.title}
+      <span className="text-muted-foreground">
+        {" "}
+        · {item.reason} · row {item.row}
+      </span>
+    </li>
+  );
+}
+
+/**
+ * The "Peminjaman" tab: the loans the import writes, loans left alone since
+ * the book is out on the site, and rows to check.
+ */
+function LendingLists({ lending }: { lending: Preview["lending"] }) {
+  const toCheck = [
+    ...lending.problems,
+    ...lending.unmatchedExtends,
+    ...lending.skipped,
+  ].sort((a, b) => a.row - b.row);
+  return (
+    <>
+      <Group
+        count={lending.loans.length}
+        description="From the “Peminjaman” tab, which gives months only. A loan starts on the 1st and is due back at the gathering on the first Saturday of the month after the last month listed. It stays out only while the book list's “Lent to” still names the borrower; every other loan came back on that Saturday."
+        title="Lending history"
+      >
+        {lending.loans.map((loan) => (
+          <LoanCard key={loan.key} loan={loan} />
+        ))}
+      </Group>
+
+      <Group
+        count={lending.onSite.length}
+        description="These books are already out on the site, so the sheet's open loan is left alone."
+        title="Out on the site already"
+      >
+        {lending.onSite.map((loan) => (
+          <LoanCard key={loan.key} loan={loan} />
+        ))}
+      </Group>
+
+      <Group
+        count={toCheck.length}
+        description="Lending history rows the import can't place yet, or reads differently than written."
+        title="Lending rows to check"
+      >
+        {toCheck.map((item) => (
+          <RowNote item={item} key={`${item.row} ${item.reason}`} />
+        ))}
+      </Group>
+    </>
+  );
+}
 
 function Group({
   title,
@@ -115,7 +231,7 @@ function UnmatchedCard({
         <div className="min-w-0">
           <p className="type-body break-words">{item.name}</p>
           <p className="type-caption text-muted-foreground">
-            {uses.join(" · ")} · {rowsLabel(item.rows)}
+            {uses.join(" · ")} · {whereLabel(item)}
           </p>
         </div>
       </div>
@@ -165,7 +281,7 @@ function PreviewLists({
     <>
       <Group
         count={preview.unmatched.length}
-        description="These names match no account yet. A book whose owner isn't linked waits, so no book loses its lender; a book lent to someone without an account comes in without its loan. Linking a name also links it on schedules and later imports."
+        description="These names match no account yet. A book whose owner isn't linked waits, so no book loses its lender; a book lent to someone without an account comes in without its loan, and their lending history waits. Linking a name also links it on schedules and later imports."
         title="Names to link"
       >
         {preview.unmatched.map((item) => (
@@ -224,6 +340,8 @@ function PreviewLists({
           </CopyCard>
         ))}
       </Group>
+
+      <LendingLists lending={preview.lending} />
 
       <Group
         count={preview.ownerUnlinked.length}
@@ -352,18 +470,26 @@ function SheetForm({
         </div>
       </div>
       <p className="type-caption text-muted-foreground" id="library-sheet-hint">
-        The book list's link. Its first tab is read, so it must be shared with
-        “Anyone with the link”. Also on Settings → Integrations.
+        The book list's link. Its first tab and its “Peminjaman” tab (the
+        lending history) are read, so it must be shared with “Anyone with the
+        link”. Also on Settings → Integrations.
       </p>
     </form>
   );
 }
 
-const importLabel = (count: number) => {
-  if (count === 0) {
-    return "Everything is up to date";
-  }
-  return `Import ${count} ${count === 1 ? "book" : "books"}`;
+const plural = (count: number, one: string, many: string) =>
+  `${count} ${count === 1 ? one : many}`;
+
+/** "Import 8 books and 7 loans", "Import 2 loans", or up to date. */
+const importLabel = (books: number, loans: number) => {
+  const parts = [
+    books > 0 ? plural(books, "book", "books") : null,
+    loans > 0 ? plural(loans, "loan", "loans") : null,
+  ].filter(Boolean);
+  return parts.length > 0
+    ? `Import ${parts.join(" and ")}`
+    : "Everything is up to date";
 };
 
 /**
@@ -397,7 +523,7 @@ export default function LibraryImport() {
       await utils.library.invalidate();
       await utils.libraryImport.preview.invalidate();
       toast.success("Books imported", {
-        description: `${result.added} added, ${result.updated} updated, ${result.loans} ${result.loans === 1 ? "loan" : "loans"} started.`,
+        description: `${result.added} added, ${result.updated} updated, ${plural(result.loans, "loan", "loans")} added.`,
       });
       router.push("/admin/library");
     },
@@ -416,7 +542,8 @@ export default function LibraryImport() {
   }
 
   const { data } = preview;
-  const toImport = data ? data.added.length + data.changed.length : 0;
+  const booksToImport = data ? data.added.length + data.changed.length : 0;
+  const loansToImport = data ? data.lending.loans.length : 0;
 
   return (
     <div className="@container space-y-6">
@@ -478,7 +605,9 @@ export default function LibraryImport() {
             {data.copies} {data.copies === 1 ? "copy" : "copies"} in the sheet ·{" "}
             {data.added.length} new · {data.changed.length} changed ·{" "}
             {data.unchanged} up to date · {data.ownerUnlinked.length} waiting
-            for their owner · {data.skipped.length} skipped
+            for their owner · {data.skipped.length} skipped ·{" "}
+            {plural(data.lending.loans.length, "loan", "loans")} from the
+            lending history, {data.lending.imported} already imported
           </p>
 
           <PreviewLists
@@ -491,15 +620,18 @@ export default function LibraryImport() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              disabled={toImport === 0 || run.isPending}
+              disabled={booksToImport + loansToImport === 0 || run.isPending}
               onClick={() => run.mutate()}
               type="button"
             >
-              {run.isPending ? "Importing…" : importLabel(toImport)}
+              {run.isPending
+                ? "Importing…"
+                : importLabel(booksToImport, loansToImport)}
             </Button>
             <p className="type-caption text-muted-foreground">
-              One book per copy: each owner's, each format and each language.
-              Nothing is deleted, and running it again only adds what's new.
+              One book per copy: each owner's, each format and each language,
+              then their loans. Nothing is deleted, and running it again only
+              adds what's new.
             </p>
           </div>
         </>
