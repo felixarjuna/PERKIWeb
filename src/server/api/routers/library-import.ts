@@ -10,6 +10,7 @@ import {
   LENDING_TAB,
   type LendingSheet,
   type LibrarySheet,
+  type LoanUpdate,
   type PlannedLoan,
   parseLendingSheet,
   parseLibrarySheet,
@@ -24,8 +25,10 @@ import { sheetUrl } from "~/lib/settings";
 import { db } from "~/server";
 import { sheetTabs, sheetTitle, sheetValues } from "~/server/google-sheets";
 import { logEvent, startLoan } from "~/server/library";
+import { type ReadyNotice, sendReadyEmailsLater } from "~/server/library-email";
 import {
   loadSheetLoans,
+  writeLoanUpdate,
   writeSheetLoan,
 } from "~/server/library-lending-import";
 import { resolveAccounts } from "~/server/people";
@@ -132,6 +135,7 @@ async function planWith(executor: Executor, sheet: Sheet) {
     imported: held.imported,
     now: new Date(),
     placed: books.placed,
+    reserved: held.reserved,
     sheet: sheet.lending,
     unmatched: books.unmatched,
   });
@@ -219,6 +223,23 @@ const loanPreview = (
   to: loan.to,
 });
 
+/** A loan the rerun brings up to date, as the preview shows it. */
+const updatePreview = (
+  update: LoanUpdate,
+  accountOf: (userId: string) => { id: string; name: string } | null
+) => ({
+  action: update.action,
+  added: update.added.length,
+  borrower: accountOf(update.borrowerId)?.name ?? update.borrower,
+  dueOn: update.dueOn,
+  from: update.from,
+  key: `${update.loanId}`,
+  returnedOn: update.returnedAt ? localDay(update.returnedAt) : null,
+  rows: update.rows,
+  title: update.title,
+  to: update.to,
+});
+
 export const libraryImportRouter = createTRPCRouter({
   /**
    * What importing the sheet would do, without writing anything: new copies,
@@ -276,6 +297,9 @@ export const libraryImportRouter = createTRPCRouter({
         rows: sheet.lending.rows.length,
         skipped: lending.skipped,
         unmatchedExtends: lending.unmatchedExtends,
+        updates: lending.updates.map((update) =>
+          updatePreview(update, accountOf)
+        ),
       },
       ownerUnlinked: books.ownerUnlinked.map((copy) => ({
         ...copyOf(copy),
@@ -298,7 +322,9 @@ export const libraryImportRouter = createTRPCRouter({
 
   /**
    * Imports the sheet, all or nothing: adds new copies and fills in details,
-   * then writes the lending history's loans, then starts a loan today for a
+   * brings loans an earlier import wrote up to date (later `extend` rows,
+   * returns and reopens), then writes the lending history's new loans, then
+   * starts a loan today for a
    * "Lent to" the history doesn't know. The sheet is read again and planned
    * under a table lock, so the result never depends on a stale preview and
    * two runs can't both add a book or a loan. Nothing is deleted or cleared.
@@ -306,7 +332,8 @@ export const libraryImportRouter = createTRPCRouter({
   run: adminProcedure.mutation(async ({ ctx }) => {
     const sheet = await readSheet();
     const actorId = ctx.session.user.id;
-    return db.transaction(async (tx) => {
+    const notices: ReadyNotice[] = [];
+    const result = await db.transaction(async (tx) => {
       await tx.execute(
         sql`lock table ${libraryBooks} in share row exclusive mode`
       );
@@ -330,20 +357,36 @@ export const libraryImportRouter = createTRPCRouter({
       }
       const bookOf = (ref: string) =>
         ids.get(ref) ?? Number(ref.replace("id:", ""));
+      // Updates first: a loan returned now frees its book for a newer one.
+      for (const update of lending.updates) {
+        // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
+        await writeLoanUpdate(
+          tx,
+          { actorId, bookId: bookOf(update.ref), update },
+          notices
+        );
+      }
       for (const loan of lending.loans) {
         // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
         await writeSheetLoan(tx, { actorId, bookId: bookOf(loan.ref), loan });
       }
       for (const { bookId, userId } of lentToday) {
         // biome-ignore lint/performance/noAwaitInLoops: a transaction runs one query at a time.
-        await startLoan(tx, { actorId, bookId, source: "sheet", userId });
+        await startLoan(
+          tx,
+          { actorId, bookId, source: "sheet", userId },
+          notices
+        );
       }
       return {
         added: books.added.length,
         loans: lending.loans.length + lentToday.length,
+        loanUpdates: lending.updates.length,
         updated: books.changed.length,
       };
     });
+    sendReadyEmailsLater(notices);
+    return result;
   }),
 
   /** Whether a library sheet is set, and its title and link. */

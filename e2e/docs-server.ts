@@ -95,6 +95,17 @@ const LENDING_TAB = LENDING_SHEET.map((cells, row) =>
       )
 );
 
+/**
+ * The same library sheet a month later (#153): the librarian has added an
+ * October `extend` row for Dara's The Lantern Case, so a rerun updates it.
+ */
+export const E2E_LIBRARY_SHEET_LATER = "e2e-library-sheet-later";
+const LENDING_TAB_LATER = [
+  ...LENDING_TAB,
+  [],
+  ["2026", "Oktober", "The Lantern Case", "PERKI", prefixed("Dara"), "extend"],
+];
+
 /** Each stand-in sheet: its file name and tabs. */
 const SHEETS: Record<
   string,
@@ -103,6 +114,13 @@ const SHEETS: Record<
   [E2E_LIBRARY_SHEET]: {
     tabs: { [E2E_LIBRARY_TAB]: LIBRARY_TAB, [E2E_LENDING_TAB]: LENDING_TAB },
     title: "E2E Library books",
+  },
+  [E2E_LIBRARY_SHEET_LATER]: {
+    tabs: {
+      [E2E_LIBRARY_TAB]: LIBRARY_TAB,
+      [E2E_LENDING_TAB]: LENDING_TAB_LATER,
+    },
+    title: "E2E Library books, November",
   },
   [E2E_SHEET]: {
     tabs: { [E2E_POOL_TAB]: POOL_TAB },

@@ -25,6 +25,7 @@ import { QueryMessage } from "../admin-controls";
 type Preview = RouterOutputs["libraryImport"]["preview"];
 type Copy = Preview["added"][number];
 type Loan = Preview["lending"]["loans"][number];
+type LoanUpdate = Preview["lending"]["updates"][number];
 
 const FIELD_LABELS: Record<ImportedField, string> = {
   category: "Category",
@@ -39,6 +40,9 @@ const fieldValue = (field: ImportedField, value: string | null) => {
   }
   return field === "language" ? (languageLabel(value)?.name ?? value) : value;
 };
+
+const plural = (count: number, one: string, many: string) =>
+  `${count} ${count === 1 ? one : many}`;
 
 const rowsLabel = (rows: number[]) =>
   `${rows.length === 1 ? "row" : "rows"} ${rows.join(", ")}`;
@@ -96,6 +100,36 @@ function LoanCard({ loan }: { loan: Loan }) {
   );
 }
 
+/** "+1 extension · returned", "reopened", "returned". */
+function updateLabel(update: LoanUpdate) {
+  const parts = [
+    update.added > 0
+      ? `+${plural(update.added, "extension", "extensions")}`
+      : null,
+    update.action === "reopen" ? "reopened" : null,
+    update.action === "return" ? "returned" : null,
+  ];
+  return parts.filter(Boolean).join(" · ");
+}
+
+function UpdateCard({ update }: { update: LoanUpdate }) {
+  return (
+    <li className="rounded-xl bg-card p-4">
+      <p className="type-body break-words">{update.title}</p>
+      <p className="type-body-sm text-muted-foreground">
+        {update.borrower} · {monthRange(update.from, update.to)} ·{" "}
+        {updateLabel(update)}
+      </p>
+      <p className="type-caption mt-2 text-muted-foreground">
+        {update.returnedOn
+          ? `Returned ${dayLabel(update.returnedOn)}`
+          : `Still out · due ${dayLabel(update.dueOn)}`}{" "}
+        · {rowsLabel(update.rows)}
+      </p>
+    </li>
+  );
+}
+
 /** A lending history row with what's wrong with it. */
 function RowNote({
   item,
@@ -132,6 +166,16 @@ function LendingLists({ lending }: { lending: Preview["lending"] }) {
       >
         {lending.loans.map((loan) => (
           <LoanCard key={loan.key} loan={loan} />
+        ))}
+      </Group>
+
+      <Group
+        count={lending.updates.length}
+        description="Loans an earlier import wrote that the tab now extends, or that “Lent to” no longer or again names the borrower. Loans made or returned on the site are left alone."
+        title="Loans to update"
+      >
+        {lending.updates.map((update) => (
+          <UpdateCard key={update.key} update={update} />
         ))}
       </Group>
 
@@ -478,17 +522,17 @@ function SheetForm({
   );
 }
 
-const plural = (count: number, one: string, many: string) =>
-  `${count} ${count === 1 ? one : many}`;
-
-/** "Import 8 books and 7 loans", "Import 2 loans", or up to date. */
-const importLabel = (books: number, loans: number) => {
+/** "Import 8 books and 7 loans", "Update 1 loan", or up to date. */
+const importLabel = (books: number, loans: number, updates: number) => {
   const parts = [
     books > 0 ? plural(books, "book", "books") : null,
     loans > 0 ? plural(loans, "loan", "loans") : null,
   ].filter(Boolean);
-  return parts.length > 0
-    ? `Import ${parts.join(" and ")}`
+  if (parts.length > 0) {
+    return `Import ${parts.join(" and ")}`;
+  }
+  return updates > 0
+    ? `Update ${plural(updates, "loan", "loans")}`
     : "Everything is up to date";
 };
 
@@ -523,7 +567,7 @@ export default function LibraryImport() {
       await utils.library.invalidate();
       await utils.libraryImport.preview.invalidate();
       toast.success("Books imported", {
-        description: `${result.added} added, ${result.updated} updated, ${plural(result.loans, "loan", "loans")} added.`,
+        description: `${result.added} added, ${result.updated} updated, ${plural(result.loans, "loan", "loans")} added, ${plural(result.loanUpdates, "loan", "loans")} brought up to date.`,
       });
       router.push("/admin/library");
     },
@@ -544,6 +588,7 @@ export default function LibraryImport() {
   const { data } = preview;
   const booksToImport = data ? data.added.length + data.changed.length : 0;
   const loansToImport = data ? data.lending.loans.length : 0;
+  const loansToUpdate = data ? data.lending.updates.length : 0;
 
   return (
     <div className="@container space-y-6">
@@ -607,7 +652,8 @@ export default function LibraryImport() {
             {data.unchanged} up to date · {data.ownerUnlinked.length} waiting
             for their owner · {data.skipped.length} skipped ·{" "}
             {plural(data.lending.loans.length, "loan", "loans")} from the
-            lending history, {data.lending.imported} already imported
+            lending history, {data.lending.imported} already imported,{" "}
+            {loansToUpdate} to update
           </p>
 
           <PreviewLists
@@ -620,18 +666,21 @@ export default function LibraryImport() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              disabled={booksToImport + loansToImport === 0 || run.isPending}
+              disabled={
+                booksToImport + loansToImport + loansToUpdate === 0 ||
+                run.isPending
+              }
               onClick={() => run.mutate()}
               type="button"
             >
               {run.isPending
                 ? "Importing…"
-                : importLabel(booksToImport, loansToImport)}
+                : importLabel(booksToImport, loansToImport, loansToUpdate)}
             </Button>
             <p className="type-caption text-muted-foreground">
               One book per copy: each owner's, each format and each language,
-              then their loans. Nothing is deleted, and running it again only
-              adds what's new.
+              then their loans. Nothing is deleted, and running it again adds
+              what's new and brings imported loans up to date.
             </p>
           </div>
         </>
