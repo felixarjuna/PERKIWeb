@@ -725,9 +725,42 @@ export interface PlannedLoan {
 /** A loan an earlier import already took from the history tab. */
 export interface ImportedLoan {
   borrowerId: string;
+  dueOn: string;
+  /** Every extension, the site's included. */
+  extensions: number;
+  loanId: number;
   /** The month it started, `yyyy-MM`. */
   month: string;
   ref: string;
+  returnedAt: Date | null;
+  /** Set when staff marked it returned on the site. */
+  returnedById: string | null;
+  /** The `extended` lines an import wrote for it (`source: "sheet"`). */
+  sheetExtensions: number;
+}
+
+/**
+ * What a rerun changes on a loan an earlier import wrote: "extend" (the tab
+ * lists more `extend` rows; a returned loan stays returned, on the new date),
+ * "reopen" (returned by the import, now extended while "Lent to" names the
+ * borrower) or "return" (open, but "Lent to" no longer names the borrower).
+ */
+export interface LoanUpdate {
+  action: "extend" | "reopen" | "return";
+  /** The extensions the tab added since, in order. */
+  added: { dueOn: string; month: string }[];
+  borrower: string;
+  borrowerId: string;
+  dueOn: string;
+  extensions: number;
+  from: string;
+  loanId: number;
+  ref: string;
+  /** Null while it's out. */
+  returnedAt: Date | null;
+  rows: number[];
+  title: string;
+  to: string;
 }
 
 /** A book's open loan in the library now. */
@@ -758,6 +791,8 @@ export interface LendingPlan {
   skipped: SkippedRow[];
   /** `extend` rows with no earlier lend to that borrower, counted as a lend. */
   unmatchedExtends: LendingRowIssue[];
+  /** Loans an earlier import wrote that the tab or "Lent to" now changes. */
+  updates: LoanUpdate[];
 }
 
 export interface LendingInput {
@@ -769,6 +804,8 @@ export interface LendingInput {
   now: Date;
   /** The copies the book list places (`LibraryImportPlan.placed`). */
   placed: readonly PlacedCopy[];
+  /** Books someone waits for or has a hold on, by ref: never reopened. */
+  reserved?: readonly string[];
   sheet: LendingSheet;
   /** The book list's names without an account; the history's are added. */
   unmatched: UnmatchedName[];
@@ -834,6 +871,12 @@ const newLoan = (
 const gatheringOn = (day: string) => {
   const date = DateTime.fromISO(day, { zone: ZONE });
   return startOn({ day: date.day, month: date.month, year: date.year });
+};
+
+/** The gathering on `dueOn`, or now when that's still ahead. */
+const backOn = (dueOn: string, now: Date) => {
+  const back = gatheringOn(dueOn);
+  return back > now ? now : back;
 };
 
 /** The loan an `extend` row continues: the same title and borrower, earlier. */
@@ -926,18 +969,72 @@ function settleDates(
   }
   for (const loan of loans) {
     if (!loan.open) {
-      const back = gatheringOn(loan.dueOn);
-      loan.returnedAt = back > now ? now : back;
+      loan.returnedAt = backOn(loan.dueOn, now);
     }
   }
 }
 
 /**
+ * Brings a loan an earlier import wrote up to date with the tab: the `extend`
+ * rows it didn't have yet, and whether "Lent to" still names the borrower.
+ * A loan staff marked returned on the site is never touched; a returned one
+ * reopens only while its book is free.
+ */
+function updateFor(
+  input: LendingInput,
+  loan: PlannedLoan,
+  stored: ImportedLoan
+): LoanUpdate | null {
+  if (stored.returnedById) {
+    return null;
+  }
+  const added = loan.extended.slice(stored.sheetExtensions);
+  const dueOn =
+    added.length > 0 && loan.dueOn > stored.dueOn ? loan.dueOn : stored.dueOn;
+  const base = {
+    added,
+    borrower: loan.borrower,
+    borrowerId: loan.borrowerId,
+    dueOn,
+    extensions: stored.extensions + added.length,
+    from: loan.from,
+    loanId: stored.loanId,
+    ref: loan.ref,
+    rows: loan.rows,
+    title: loan.title,
+    to: loan.to,
+  };
+  if (stored.returnedAt === null) {
+    if (!loan.open) {
+      return {
+        ...base,
+        action: "return",
+        returnedAt: backOn(dueOn, input.now),
+      };
+    }
+    return added.length > 0
+      ? { ...base, action: "extend", returnedAt: null }
+      : null;
+  }
+  if (added.length === 0) {
+    return null;
+  }
+  const free = !(
+    input.current.some((item) => item.ref === loan.ref) ||
+    input.reserved?.includes(loan.ref)
+  );
+  return loan.open && free
+    ? { ...base, action: "reopen", returnedAt: null }
+    : { ...base, action: "extend", returnedAt: backOn(dueOn, input.now) };
+}
+
+/**
  * What importing the lending history would write. A loan already imported
- * (same book, borrower and first month) is counted, not written again. An
- * open loan replaces the loan an earlier import started today from "Lent to"
- * for the same borrower, and is left out when the book is out on the site
- * otherwise, since a loan made on the site is left alone.
+ * (same book, borrower and first month) is brought up to date (`updates`)
+ * instead of written again. An open loan replaces the loan an earlier import
+ * started today from "Lent to" for the same borrower, and is left out when
+ * the book is out on the site otherwise, since a loan made on the site is
+ * left alone.
  */
 export function planLendingHistory(input: LendingInput): LendingPlan {
   const plan: LendingPlan = {
@@ -947,22 +1044,39 @@ export function planLendingHistory(input: LendingInput): LendingPlan {
     problems: [],
     skipped: input.sheet.skipped,
     unmatchedExtends: [],
+    updates: [],
   };
   const loans = loansFromRows(input, plan);
   settleDates(loans, input.placed, input.now);
+  const fresh: PlannedLoan[] = [];
   for (const loan of loans) {
-    const done = input.imported.some(
+    const stored = input.imported.find(
       (item) =>
         item.ref === loan.ref &&
         item.borrowerId === loan.borrowerId &&
         item.month === loan.from
     );
-    if (done) {
-      plan.imported += 1;
-      continue;
+    const update = stored ? updateFor(input, loan, stored) : null;
+    if (update) {
+      plan.updates.push(update);
     }
+    if (stored) {
+      plan.imported += 1;
+    } else {
+      fresh.push(loan);
+    }
+  }
+  // A loan this run returns no longer keeps its book out.
+  const returning = new Set(
+    plan.updates
+      .filter((update) => update.action === "return")
+      .map((update) => update.loanId)
+  );
+  for (const loan of fresh) {
     const current = loan.open
-      ? input.current.find((item) => item.ref === loan.ref)
+      ? input.current.find(
+          (item) => item.ref === loan.ref && !returning.has(item.loanId)
+        )
       : undefined;
     if (!current) {
       plan.loans.push(loan);
@@ -1015,6 +1129,25 @@ const fromSheet = (month: string) => ({
   source: "sheet",
 });
 
+/** The history line of one extension from the sheet. */
+const extensionEvent = (extension: {
+  dueOn: string;
+  month: string;
+}): SheetLoanEvent => ({
+  at: firstOf(extension.month).toJSDate(),
+  details: { ...fromSheet(extension.month), dueOn: extension.dueOn },
+  type: "extended",
+});
+
+/** The history line of a loan from the sheet coming back. */
+const returnEvent = (returnedAt: Date): SheetLoanEvent => ({
+  at: returnedAt,
+  details: fromSheet(
+    DateTime.fromJSDate(returnedAt).setZone(ZONE).toFormat("yyyy-MM")
+  ),
+  type: "returned",
+});
+
 /**
  * The history lines of a loan from the sheet, each marked `source: "sheet"`
  * and `precision: "month"`, since the sheet never says the day.
@@ -1029,22 +1162,35 @@ export function sheetLoanEvents(loan: PlannedLoan): SheetLoanEvent[] {
       },
       type: "borrowed",
     },
-    ...loan.extended.map(
-      (extension): SheetLoanEvent => ({
-        at: firstOf(extension.month).toJSDate(),
-        details: { ...fromSheet(extension.month), dueOn: extension.dueOn },
-        type: "extended",
-      })
-    ),
+    ...loan.extended.map(extensionEvent),
   ];
   if (loan.returnedAt) {
-    events.push({
-      at: loan.returnedAt,
-      details: fromSheet(
-        DateTime.fromJSDate(loan.returnedAt).setZone(ZONE).toFormat("yyyy-MM")
-      ),
-      type: "returned",
-    });
+    events.push(returnEvent(loan.returnedAt));
   }
   return events;
+}
+
+/**
+ * The history lines a rerun writes for a loan: one `extended` per month the
+ * tab added (the first of a reopened loan says `reopened: true`) and, when it
+ * comes back now, a `returned` line. A returned loan that stays returned keeps
+ * its one `returned` line, moved to the new date (`moveReturn`).
+ */
+export function loanUpdateEvents(update: LoanUpdate): {
+  added: SheetLoanEvent[];
+  moveReturn: SheetLoanEvent | null;
+} {
+  const added = update.added.map(extensionEvent);
+  const [first] = added;
+  if (update.action === "reopen" && first) {
+    first.details = { ...first.details, reopened: true };
+  }
+  if (update.action === "return" && update.returnedAt) {
+    added.push(returnEvent(update.returnedAt));
+  }
+  const moveReturn =
+    update.action === "extend" && update.returnedAt
+      ? returnEvent(update.returnedAt)
+      : null;
+  return { added, moveReturn };
 }

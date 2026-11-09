@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { LENDING_SHEET, LIBRARY_SHEET } from "~/test/fixtures/library-sheet";
 import {
+  type CurrentLoan,
   firstSaturdayOfNextMonth,
+  type ImportedLoan,
   type LendingInput,
+  loanUpdateEvents,
   monthLabel,
   normaliseCategory,
   normalisePublisher,
@@ -395,6 +398,33 @@ describe("planLendingHistory", () => {
         copy.format === "physical" &&
         copy.ownerId === owner
     )?.ref;
+  /** The loans a run of `plan` stored, as the next import reads them. */
+  const importedFrom = (
+    plan: ReturnType<typeof planLendingHistory>
+  ): ImportedLoan[] =>
+    plan.loans.map((loan, index) => ({
+      borrowerId: loan.borrowerId,
+      dueOn: loan.dueOn,
+      extensions: loan.extended.length,
+      loanId: index + 1,
+      month: loan.from,
+      ref: loan.ref,
+      returnedAt: loan.returnedAt,
+      returnedById: null,
+      sheetExtensions: loan.extended.length,
+    }));
+  /** Today's open loans after a run of `plan`. */
+  const currentFrom = (
+    plan: ReturnType<typeof planLendingHistory>
+  ): CurrentLoan[] =>
+    importedFrom(plan)
+      .filter((loan) => loan.returnedAt === null)
+      .map((loan) => ({
+        borrowerId: loan.borrowerId,
+        fromLentTo: false,
+        loanId: loan.loanId,
+        ref: loan.ref,
+      }));
   const summary = (plan: ReturnType<typeof planLendingHistory>) =>
     plan.loans.map(
       (loan) =>
@@ -509,15 +539,265 @@ describe("planLendingHistory", () => {
           loanId: index + 1,
           ref: loan.ref,
         })),
-      imported: first.loans.map((loan) => ({
-        borrowerId: loan.borrowerId,
-        month: loan.from,
-        ref: loan.ref,
-      })),
+      imported: importedFrom(first),
     });
     expect(again.loans).toEqual([]);
     expect(again.onSite).toEqual([]);
+    expect(again.updates).toEqual([]);
     expect(again.imported).toBe(first.loans.length);
+  });
+
+  describe("on a rerun", () => {
+    const LENT_TO = 8;
+    /** The book list with `title`'s "Lent to" set to `name`. */
+    const lentTo = (title: string, name: string) =>
+      LIBRARY_SHEET.map((cells) => {
+        if (cells[1] !== title) {
+          return cells;
+        }
+        const row = [...cells];
+        while (row.length <= LENT_TO) {
+          row.push("");
+        }
+        row[LENT_TO] = name;
+        return row;
+      });
+    /** The import's input for a book list and lending tab. */
+    const planFor = (
+      books: string[][],
+      rows: string[][],
+      extra: Partial<LendingInput> = {}
+    ) => {
+      const accountFor = accounts();
+      const placed = planLibraryImport({
+        accountFor,
+        sheet: parseLibrarySheet(books),
+        stored: [],
+      });
+      return planLendingHistory({
+        accountFor,
+        current: [],
+        imported: [],
+        now: NOW,
+        placed: placed.placed,
+        sheet: parseLendingSheet([...LENDING_SHEET, [], ...rows]),
+        unmatched: placed.unmatched,
+        ...extra,
+      });
+    };
+    /** Plans `books` + `rows` after a first import of the fixture as it was. */
+    const rerun = (
+      books: string[][],
+      rows: string[][],
+      tweak: (stored: ImportedLoan[]) => ImportedLoan[] = (stored) => stored
+    ) => {
+      const first = planFor(LIBRARY_SHEET, []);
+      return planFor(books, rows, {
+        current: currentFrom(first),
+        imported: tweak(importedFrom(first)),
+      });
+    };
+    const loanIdOf = (title: string, borrower: string) => {
+      const first = planFor(LIBRARY_SHEET, []);
+      return (
+        first.loans.findIndex(
+          (loan) => loan.title === title && loan.borrower === borrower
+        ) + 1
+      );
+    };
+    const NOVEMBER_LAMPS = [
+      "2026",
+      "November",
+      "Small Lamps",
+      "Arlo",
+      "Nadia",
+      "extend",
+    ];
+
+    it("plans nothing when the tab didn't change", () => {
+      const plan = rerun(LIBRARY_SHEET, []);
+      expect(plan.updates).toEqual([]);
+      expect(plan.loans).toEqual([]);
+    });
+
+    it("extends a loan the tab extends again", () => {
+      const plan = rerun(LIBRARY_SHEET, [NOVEMBER_LAMPS]);
+      expect(plan.loans).toEqual([]);
+      expect(plan.updates).toEqual([
+        expect.objectContaining({
+          action: "extend",
+          added: [{ dueOn: "2026-12-05", month: "2026-11" }],
+          borrower: "Nadia",
+          dueOn: "2026-12-05",
+          extensions: 2,
+          from: "2026-08",
+          loanId: loanIdOf("Small Lamps", "Nadia"),
+          returnedAt: null,
+          title: "Small Lamps",
+          to: "2026-11",
+        }),
+      ]);
+      // Once written, a third run has nothing to do.
+      const written = planFor(LIBRARY_SHEET, [NOVEMBER_LAMPS]);
+      const third = planFor(LIBRARY_SHEET, [NOVEMBER_LAMPS], {
+        current: currentFrom(written),
+        imported: importedFrom(written),
+      });
+      expect(third.updates).toEqual([]);
+      expect(third.loans).toEqual([]);
+    });
+
+    const OCTOBER_LOWLY = [
+      "2026",
+      "Oktober",
+      "Lowly Paths",
+      "Kai",
+      "Arlo",
+      "extend",
+    ];
+
+    it("reopens a returned loan the tab extends while “Lent to” names the borrower", () => {
+      const plan = rerun(lentTo("Lowly Paths", "Arlo"), [OCTOBER_LOWLY]);
+      expect(plan.updates).toEqual([
+        expect.objectContaining({
+          action: "reopen",
+          added: [{ dueOn: "2026-11-07", month: "2026-10" }],
+          borrower: "Arlo",
+          dueOn: "2026-11-07",
+          extensions: 1,
+          returnedAt: null,
+          title: "Lowly Paths",
+        }),
+      ]);
+    });
+
+    it("keeps it returned, with the new return date, when the book is out on the site", () => {
+      const first = planFor(LIBRARY_SHEET, []);
+      const ref =
+        first.loans.find((loan) => loan.title === "Lowly Paths")?.ref ?? "";
+      const plan = planFor(lentTo("Lowly Paths", "Arlo"), [OCTOBER_LOWLY], {
+        current: [
+          ...currentFrom(first),
+          { borrowerId: "u-dara", fromLentTo: false, loanId: 99, ref },
+        ],
+        imported: importedFrom(first),
+      });
+      expect(plan.updates).toEqual([
+        expect.objectContaining({
+          action: "extend",
+          returnedAt: new Date("2026-11-07T14:30:00.000Z"),
+          title: "Lowly Paths",
+        }),
+      ]);
+    });
+
+    it("leaves a returned loan returned when “Lent to” doesn't name the borrower", () => {
+      const plan = rerun(LIBRARY_SHEET, [
+        ["2026", "Oktober", "Quiet Harbour", "Vito", "Kai", "extend"],
+      ]);
+      expect(plan.updates).toEqual([
+        expect.objectContaining({
+          action: "extend",
+          added: [{ dueOn: "2026-11-07", month: "2026-10" }],
+          borrower: "Kai",
+          dueOn: "2026-11-07",
+          extensions: 1,
+          returnedAt: new Date("2026-11-07T14:30:00.000Z"),
+          title: "Quiet Harbour",
+        }),
+      ]);
+    });
+
+    it("returns an open loan once “Lent to” no longer names the borrower", () => {
+      const plan = rerun(lentTo("Small Lamps", ""), []);
+      expect(plan.updates).toEqual([
+        expect.objectContaining({
+          action: "return",
+          added: [],
+          borrower: "Nadia",
+          dueOn: "2026-11-07",
+          extensions: 1,
+          returnedAt: new Date("2026-11-07T14:30:00.000Z"),
+          title: "Small Lamps",
+        }),
+      ]);
+    });
+
+    it("writes one month-precision line per added month", () => {
+      const [extend] = rerun(LIBRARY_SHEET, [NOVEMBER_LAMPS]).updates;
+      expect(extend && loanUpdateEvents(extend)).toEqual({
+        added: [
+          {
+            at: new Date("2026-10-31T23:00:00.000Z"),
+            details: {
+              dueOn: "2026-12-05",
+              month: "2026-11",
+              precision: "month",
+              source: "sheet",
+            },
+            type: "extended",
+          },
+        ],
+        moveReturn: null,
+      });
+      const [reopen] = rerun(lentTo("Lowly Paths", "Arlo"), [
+        OCTOBER_LOWLY,
+      ]).updates;
+      expect(reopen && loanUpdateEvents(reopen).added).toEqual([
+        expect.objectContaining({
+          details: expect.objectContaining({ reopened: true }),
+          type: "extended",
+        }),
+      ]);
+      const [back] = rerun(lentTo("Small Lamps", ""), []).updates;
+      expect(back && loanUpdateEvents(back).added).toEqual([
+        {
+          at: new Date("2026-11-07T14:30:00.000Z"),
+          details: { month: "2026-11", precision: "month", source: "sheet" },
+          type: "returned",
+        },
+      ]);
+      const [later] = rerun(LIBRARY_SHEET, [
+        ["2026", "Oktober", "Quiet Harbour", "Vito", "Kai", "extend"],
+      ]).updates;
+      expect(later && loanUpdateEvents(later).moveReturn).toEqual({
+        at: new Date("2026-11-07T14:30:00.000Z"),
+        details: { month: "2026-11", precision: "month", source: "sheet" },
+        type: "returned",
+      });
+    });
+
+    it("never touches a loan returned on the site", () => {
+      const lamps = loanIdOf("Small Lamps", "Nadia");
+      const plan = rerun(LIBRARY_SHEET, [NOVEMBER_LAMPS], (stored) =>
+        stored.map((loan) =>
+          loan.loanId === lamps
+            ? {
+                ...loan,
+                returnedAt: new Date("2026-11-01T10:00:00Z"),
+                returnedById: "u-staff",
+              }
+            : loan
+        )
+      );
+      expect(plan.updates).toEqual([]);
+    });
+
+    it("never updates a loan made on the site", () => {
+      const first = planFor(LIBRARY_SHEET, []);
+      const lamps = first.loans.find((loan) => loan.title === "Small Lamps");
+      const plan = planFor(LIBRARY_SHEET, [NOVEMBER_LAMPS], {
+        current: [
+          {
+            borrowerId: "u-nadia",
+            fromLentTo: false,
+            loanId: 50,
+            ref: lamps?.ref ?? "",
+          },
+        ],
+      });
+      expect(plan.updates).toEqual([]);
+    });
   });
 
   it("replaces a loan an earlier import started today, never one made on the site", () => {

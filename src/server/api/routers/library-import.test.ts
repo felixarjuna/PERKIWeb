@@ -122,7 +122,12 @@ describe("libraryImport", () => {
 
   it("writes books, the lending history and its events, skipping unlinked owners", async () => {
     const { admin, mita, people } = await setup();
-    expect(await admin.run()).toEqual({ added: 8, loans: 7, updated: 0 });
+    expect(await admin.run()).toEqual({
+      added: 8,
+      loans: 7,
+      loanUpdates: 0,
+      updated: 0,
+    });
 
     const books = await testDb.select().from(libraryBooks);
     expect(books).toHaveLength(8);
@@ -226,7 +231,12 @@ describe("libraryImport", () => {
     expect(again.unchanged).toBe(8);
     expect(again.lending.loans).toEqual([]);
     expect(again.lending.imported).toBe(7);
-    expect(await admin.run()).toEqual({ added: 0, loans: 0, updated: 0 });
+    expect(await admin.run()).toEqual({
+      added: 0,
+      loans: 0,
+      loanUpdates: 0,
+      updated: 0,
+    });
     expect(await testDb.select().from(libraryBooks)).toHaveLength(8);
     expect(await testDb.select().from(libraryLoans)).toHaveLength(7);
     expect(await testDb.select().from(libraryHistory)).toHaveLength(
@@ -236,7 +246,12 @@ describe("libraryImport", () => {
     const wren = await insertUser({ name: "Wren" });
     const nadia = await insertUser({ name: "Nadia" });
     // Nadia's Small Lamps (open since August) and Wren's Quiet Harbour.
-    expect(await admin.run()).toEqual({ added: 5, loans: 2, updated: 0 });
+    expect(await admin.run()).toEqual({
+      added: 5,
+      loans: 2,
+      loanUpdates: 0,
+      updated: 0,
+    });
     const open = await testDb
       .select()
       .from(libraryLoans)
@@ -347,6 +362,192 @@ describe("libraryImport", () => {
         )
       );
     expect(open.map((loan) => loan.borrowerId)).toEqual([people.get("Kai")]);
+  });
+
+  describe("on a rerun", () => {
+    const LENT_TO = 8;
+    /** The book list with `title`'s "Lent to" set to `name`. */
+    const lentTo = (title: string, name: string) =>
+      LIBRARY_SHEET.map((cells) => {
+        if (cells[1] !== title) {
+          return cells;
+        }
+        const row = [...cells];
+        while (row.length <= LENT_TO) {
+          row.push("");
+        }
+        row[LENT_TO] = name;
+        return row;
+      });
+    const loanOf = async (title: string, borrowerId: string | undefined) => {
+      const [book] = await testDb
+        .select()
+        .from(libraryBooks)
+        .where(eq(libraryBooks.title, title));
+      const [loan] = await testDb
+        .select()
+        .from(libraryLoans)
+        .where(
+          and(
+            eq(libraryLoans.bookId, book?.id ?? 0),
+            eq(libraryLoans.borrowerId, borrowerId ?? "")
+          )
+        );
+      return { book, loan };
+    };
+    const linesOf = async (loanId: number | undefined) =>
+      (
+        await testDb
+          .select()
+          .from(libraryHistory)
+          .where(eq(libraryHistory.loanId, loanId ?? 0))
+      ).map((event) => ({ details: event.details, type: event.type }));
+
+    it("applies extend rows added since, once", async () => {
+      const { admin, people } = await setup();
+      await admin.run();
+      const lines = (await testDb.select().from(libraryHistory)).length;
+      google.lending = [
+        ...LENDING_SHEET,
+        [],
+        ["2026", "Oktober", "The Lantern Case", "PERKI", "Dara", "extend"],
+      ];
+      const preview = await admin.preview();
+      expect(preview.lending.loans).toEqual([]);
+      expect(preview.lending.updates).toEqual([
+        expect.objectContaining({
+          action: "extend",
+          added: 1,
+          borrower: "Dara",
+          dueOn: "2026-11-07",
+          from: "2026-08",
+          returnedOn: null,
+          title: "The Lantern Case",
+          to: "2026-10",
+        }),
+      ]);
+      expect(await admin.run()).toEqual({
+        added: 0,
+        loans: 0,
+        loanUpdates: 1,
+        updated: 0,
+      });
+      const { loan } = await loanOf("The Lantern Case", people.get("Dara"));
+      expect(loan).toMatchObject({
+        dueOn: "2026-11-07",
+        extensions: 2,
+        returnedAt: null,
+      });
+      expect(await testDb.select().from(libraryLoans)).toHaveLength(7);
+      expect(await testDb.select().from(libraryHistory)).toHaveLength(
+        lines + 1
+      );
+      expect((await linesOf(loan?.id)).at(-1)).toEqual({
+        details: {
+          dueOn: "2026-11-07",
+          month: "2026-10",
+          precision: "month",
+          source: "sheet",
+        },
+        type: "extended",
+      });
+
+      expect(await admin.run()).toEqual({
+        added: 0,
+        loans: 0,
+        loanUpdates: 0,
+        updated: 0,
+      });
+      expect(await testDb.select().from(libraryHistory)).toHaveLength(
+        lines + 1
+      );
+    });
+
+    it("returns a loan once “Lent to” no longer names the borrower", async () => {
+      const { admin, people } = await setup();
+      await admin.run();
+      google.values = lentTo("The Lantern Case", "");
+      expect((await admin.preview()).lending.updates).toEqual([
+        expect.objectContaining({
+          action: "return",
+          returnedOn: "2026-10-03",
+        }),
+      ]);
+      expect(await admin.run()).toMatchObject({ loans: 0, loanUpdates: 1 });
+      const { book, loan } = await loanOf(
+        "The Lantern Case",
+        people.get("Dara")
+      );
+      expect(loan).toMatchObject({
+        returnedAt: new Date("2026-10-03T13:30:00Z"),
+        returnedById: null,
+      });
+      expect(book?.status).toBe("available");
+      expect((await linesOf(loan?.id)).at(-1)).toEqual({
+        details: { month: "2026-10", precision: "month", source: "sheet" },
+        type: "returned",
+      });
+      expect(await admin.run()).toMatchObject({ loans: 0, loanUpdates: 0 });
+    });
+
+    it("reopens a loan the import returned once the tab extends it", async () => {
+      const { admin, people } = await setup();
+      await admin.run();
+      google.values = lentTo("Lowly Paths", "Arlo");
+      google.lending = [
+        ...LENDING_SHEET,
+        [],
+        ["2026", "Oktober", "Lowly Paths", "Kai", "Arlo", "extend"],
+      ];
+      expect((await admin.preview()).lending.updates).toEqual([
+        expect.objectContaining({ action: "reopen", borrower: "Arlo" }),
+      ]);
+      expect(await admin.run()).toMatchObject({ loans: 0, loanUpdates: 1 });
+      const { book, loan } = await loanOf("Lowly Paths", people.get("Arlo"));
+      expect(loan).toMatchObject({
+        dueOn: "2026-11-07",
+        extensions: 1,
+        returnedAt: null,
+      });
+      expect(book?.status).toBe("borrowed");
+      // The import's guessed return is gone; the extension says it reopened.
+      expect(await linesOf(loan?.id)).toEqual([
+        expect.objectContaining({ type: "borrowed" }),
+        {
+          details: {
+            dueOn: "2026-11-07",
+            month: "2026-10",
+            precision: "month",
+            reopened: true,
+            source: "sheet",
+          },
+          type: "extended",
+        },
+      ]);
+      expect(await admin.run()).toMatchObject({ loans: 0, loanUpdates: 0 });
+    });
+
+    it("never touches a loan staff marked returned on the site", async () => {
+      const { admin, mita, people } = await setup();
+      await admin.run();
+      const before = await loanOf("The Lantern Case", people.get("Dara"));
+      await callerFor(mita.id).library.markReturned({
+        id: before.book?.id ?? 0,
+      });
+      google.lending = [
+        ...LENDING_SHEET,
+        [],
+        ["2026", "Oktober", "The Lantern Case", "PERKI", "Dara", "extend"],
+      ];
+      expect((await admin.preview()).lending.updates).toEqual([]);
+      expect(await admin.run()).toMatchObject({ loanUpdates: 0 });
+      const after = await loanOf("The Lantern Case", people.get("Dara"));
+      expect(after.loan).toMatchObject({
+        dueOn: "2026-10-03",
+        extensions: 1,
+        returnedById: mita.id,
+      });
+    });
   });
 
   it("fills in details staff left empty, never clearing one", async () => {
