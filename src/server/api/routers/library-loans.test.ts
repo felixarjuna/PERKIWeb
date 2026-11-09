@@ -124,6 +124,7 @@ describe("library lending", () => {
           dueOn: "2026-12-07",
           extendRefusal: null,
           extensions: 0,
+          language: null,
           loanId,
           overdue: false,
           title: "Mere Christianity",

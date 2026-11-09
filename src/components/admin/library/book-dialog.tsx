@@ -2,6 +2,7 @@
 
 import React from "react";
 import { toast } from "sonner";
+import { LanguagePicker, pickedLanguage } from "~/components/library/language";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -14,12 +15,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  MAX_AUTHOR,
-  MAX_DESCRIPTION,
-  MAX_LANGUAGE,
-  MAX_TITLE,
-} from "~/lib/library";
+import { MAX_AUTHOR, MAX_DESCRIPTION, MAX_TITLE } from "~/lib/library";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdminSegmented } from "../admin-controls";
 import { MemberPicker } from "../member-picker";
@@ -109,14 +105,19 @@ export function BookDialog({
   const update = api.library.update.useMutation({ onError, onSuccess });
   const pending = add.isPending || update.isPending;
   const needsOwner = draft.owned === "member" && !draft.ownerId;
+  // An older free-text language must be picked from the list first.
+  const language = pickedLanguage(draft.language);
   const owner = accounts.data?.find((account) => account.id === draft.ownerId);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (language === false) {
+      return;
+    }
     const input = {
       author: draft.author,
       description: draft.description,
-      language: draft.language,
+      language,
       ownerId: draft.owned === "member" ? draft.ownerId : null,
       title: draft.title,
     };
@@ -157,19 +158,11 @@ export function BookDialog({
               value={draft.author}
             />
           </Field>
-          <Field
-            hint="Optional, e.g. Indonesian."
+          <LanguagePicker
             id="book-language"
-            label="Language"
-          >
-            <Input
-              aria-describedby="book-language-hint"
-              id="book-language"
-              maxLength={MAX_LANGUAGE}
-              onChange={(event) => set("language")(event.target.value)}
-              value={draft.language}
-            />
-          </Field>
+            onChange={set("language")}
+            value={draft.language}
+          />
           <Field
             hint="Optional. A sentence or two about what it's about."
             id="book-description"
@@ -228,7 +221,7 @@ export function BookDialog({
             Cancel
           </Button>
           <Button
-            disabled={pending || needsOwner}
+            disabled={pending || needsOwner || language === false}
             form="book-form"
             type="submit"
           >

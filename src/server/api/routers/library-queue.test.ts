@@ -110,6 +110,7 @@ describe("library queue", () => {
         author: "C. S. Lewis",
         bookId: id,
         holdEndsOn: null,
+        language: null,
         position: 2,
         title: "Mere Christianity",
       },
@@ -410,7 +411,7 @@ describe("offering and lending your own book", () => {
     const { id } = await callerFor(citra.id).library.offer({
       author: "Dietrich Bonhoeffer",
       description: "",
-      language: "German",
+      language: "de",
       title: "Nachfolge",
     });
     expect(await stateFor(ana.id, id)).toMatchObject({

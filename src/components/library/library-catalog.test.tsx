@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MemberBookState } from "~/lib/library";
 import LibraryCatalog from "./library-catalog";
@@ -65,7 +66,7 @@ const book = (id: number, title: string, bookState = free) => ({
   author: "C. S. Lewis",
   description: id === 1 ? "On what Christians believe." : null,
   id,
-  language: id === 1 ? "English" : null,
+  language: id === 1 ? "de" : null,
   state: bookState,
   title,
 });
@@ -115,7 +116,10 @@ describe("LibraryCatalog", () => {
     expect(
       screen.getByRole("heading", { name: "Mere Christianity" })
     ).toBeTruthy();
-    expect(screen.getByText("C. S. Lewis · English")).toBeTruthy();
+    const card = screen
+      .getByRole("heading", { name: "Mere Christianity" })
+      .closest("article");
+    expect(card?.textContent).toContain("C. S. LewisDeutsch");
     expect(screen.getByText("Available")).toBeTruthy();
     expect(screen.getByText("Borrowed until 7 Dec")).toBeTruthy();
   });
@@ -256,7 +260,7 @@ describe("LibraryCatalog", () => {
     ).toBeTruthy();
   });
 
-  it("tells the member who offered a book to hand it over", () => {
+  it("tells the member who offered a book to hand it over", async () => {
     state.books = [
       book(1, "Nachfolge", { ...free, kind: "offered", mine: true }),
       book(2, "Miracles", { ...free, kind: "offered" }),
@@ -274,12 +278,16 @@ describe("LibraryCatalog", () => {
     fireEvent.change(screen.getByLabelText("Author"), {
       target: { value: "Dietrich Bonhoeffer" },
     });
+    await userEvent.click(screen.getByRole("combobox", { name: "Language" }));
+    await userEvent.click(
+      screen.getByRole("option", { name: "Bahasa Indonesia" })
+    );
     fireEvent.click(screen.getByRole("button", { name: "Offer book" }));
     expect(state.offered).toEqual([
       {
         author: "Dietrich Bonhoeffer",
         description: "",
-        language: "",
+        language: "id",
         title: "Life Together",
       },
     ]);
@@ -317,6 +325,7 @@ describe("LibraryCatalog", () => {
         holder: "Budi Santoso",
         id: 3,
         kind: "borrowed",
+        language: "de",
         loans: [
           {
             borrowedAt: new Date("2026-11-07T11:00:00Z"),
@@ -333,6 +342,7 @@ describe("LibraryCatalog", () => {
     expect(waiting.textContent).toContain("Reserved for you · until 14 Nov");
     expect(waiting.textContent).toContain("1st in line");
     const lent = screen.getByRole("region", { name: "Books you lend" });
+    expect(lent.textContent).toContain("Dietrich BonhoefferDeutsch");
     expect(lent.textContent).toContain("Borrowed by Budi Santoso until 7 Dec");
     expect(lent.textContent).toContain("Lent 1 time");
     // The lends only: who, from and to; never the librarian's event log.

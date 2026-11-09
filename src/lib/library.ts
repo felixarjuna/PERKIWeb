@@ -13,13 +13,45 @@ export const MAX_EXTENSIONS = 2;
 /** Days a returned book waits for the first in line, counted from the return. */
 export const HOLD_DAYS = 7;
 
-/** Longest title, author, language and description staff can save. */
+/** Longest title, author and description staff can save. */
 export const MAX_TITLE = 200;
 export const MAX_AUTHOR = 200;
-export const MAX_LANGUAGE = 50;
 export const MAX_DESCRIPTION = 1000;
 /** Longest note staff keep on a loan when they set its due date. */
 export const MAX_LOAN_NOTE = 300;
+
+/**
+ * The languages a book can be in (#145). `library_books.language` stores the
+ * code; a value from before the list (free text) is still shown as typed.
+ */
+export const LIBRARY_LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "de", name: "Deutsch" },
+  { code: "id", name: "Bahasa Indonesia" },
+] as const;
+export const LANGUAGE_CODES = ["en", "de", "id"] as const;
+export type LanguageCode = (typeof LANGUAGE_CODES)[number];
+
+export const isLanguageCode = (value: string): value is LanguageCode =>
+  (LANGUAGE_CODES as readonly string[]).includes(value);
+
+/**
+ * How a stored language reads: its code (for the flag) and name, or an older
+ * free-text value as it was typed, without a code. Null when the book has no
+ * language.
+ */
+export const languageLabel = (
+  stored: string | null
+): { code: LanguageCode | null; name: string } | null => {
+  const value = stored?.trim();
+  if (!value) {
+    return null;
+  }
+  const known = LIBRARY_LANGUAGES.find((language) => language.code === value);
+  return known
+    ? { code: known.code, name: known.name }
+    : { code: null, name: value };
+};
 
 export const BOOK_STATUSES = [
   "offered",

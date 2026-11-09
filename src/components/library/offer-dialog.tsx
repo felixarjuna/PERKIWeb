@@ -18,11 +18,11 @@ import { Textarea } from "~/components/ui/textarea";
 import {
   MAX_AUTHOR,
   MAX_DESCRIPTION,
-  MAX_LANGUAGE,
   MAX_TITLE,
   OFFERED_HINT,
 } from "~/lib/library";
 import { api } from "~/trpc/react";
+import { LanguagePicker, pickedLanguage } from "./language";
 
 const EMPTY = { author: "", description: "", language: "", title: "" };
 
@@ -73,7 +73,11 @@ export function OfferBook() {
             id="offer-form"
             onSubmit={(event) => {
               event.preventDefault();
-              offer.mutate(draft);
+              offer.mutate({
+                ...draft,
+                // The picker only offers codes and "".
+                language: pickedLanguage(draft.language) || null,
+              });
             }}
           >
             <div className="grid gap-2">
@@ -96,22 +100,13 @@ export function OfferBook() {
                 value={draft.author}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="offer-language">Language</Label>
-              <Input
-                aria-describedby="offer-language-hint"
-                id="offer-language"
-                maxLength={MAX_LANGUAGE}
-                onChange={set("language")}
-                value={draft.language}
-              />
-              <p
-                className="type-caption text-muted-foreground"
-                id="offer-language-hint"
-              >
-                Optional, e.g. Indonesian.
-              </p>
-            </div>
+            <LanguagePicker
+              id="offer-language"
+              onChange={(language) =>
+                setDraft((current) => ({ ...current, language }))
+              }
+              value={draft.language}
+            />
             <div className="grid gap-2">
               <Label htmlFor="offer-description">Description</Label>
               <Textarea

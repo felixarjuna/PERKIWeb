@@ -3,7 +3,7 @@ import { dayLabel, dueOnFrom, holdEndsOn } from "~/lib/library";
 import { localDay } from "~/lib/schedule-team";
 import { insertLibraryBook } from "./db";
 import { uniqueSuffix } from "./fixtures";
-import { adminLogin, createSignedInUser, toast } from "./helpers";
+import { adminLogin, createSignedInUser, selectOption, toast } from "./helpers";
 
 test.use({ viewport: { height: 844, width: 390 } });
 
@@ -133,12 +133,13 @@ test("a member offers their own book, the librarian accepts it, and the lender s
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Title").fill(title);
   await dialog.getByLabel("Author").fill("Dietrich Bonhoeffer");
-  await dialog.getByLabel("Language").fill("German");
+  await selectOption(page, "Language", "Bahasa Indonesia");
   await dialog.getByRole("button", { name: "Offer book" }).click();
   await expect(toast(page, "Thanks!")).toBeVisible();
   await search(page, suffix);
   const card = cardOf(page, title);
   await expect(card).toContainText("Offered");
+  await expect(card).toContainText("Bahasa Indonesia");
   await expect(card).toContainText(
     "Hand it to the librarian; it appears once accepted."
   );
