@@ -1,5 +1,8 @@
 import { createServer, type Server } from "node:http";
-import { LIBRARY_SHEET } from "../src/test/fixtures/library-sheet";
+import {
+  LENDING_SHEET,
+  LIBRARY_SHEET,
+} from "../src/test/fixtures/library-sheet";
 import { POOL_SHEET_2026 } from "../src/test/fixtures/serving-pool-sheet";
 import {
   NOTES,
@@ -58,23 +61,38 @@ const OWNER_COLUMN = 7;
 const LENT_TO_COLUMN = 8;
 const PERKI = /^perki$/i;
 
+/** A cell of names with each person prefixed; PERKI stays PERKI. */
+const prefixed = (cell: string) =>
+  cell
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name) => (PERKI.test(name) ? name : `${E2E_LIBRARY_PREFIX} ${name}`))
+    .join(", ");
+
 /** The fixture book list with each owner and borrower prefixed. */
 const LIBRARY_TAB = LIBRARY_SHEET.map((cells, row) =>
   row === 0
     ? cells
-    : cells.map((cell, column) => {
-        if (column !== OWNER_COLUMN && column !== LENT_TO_COLUMN) {
-          return cell;
-        }
-        return cell
-          .split(",")
-          .map((name) => name.trim())
-          .filter(Boolean)
-          .map((name) =>
-            PERKI.test(name) ? name : `${E2E_LIBRARY_PREFIX} ${name}`
-          )
-          .join(", ");
-      })
+    : cells.map((cell, column) =>
+        column === OWNER_COLUMN || column === LENT_TO_COLUMN
+          ? prefixed(cell)
+          : cell
+      )
+);
+
+/** The lending history tab (#149); Pemilik and Peminjam are prefixed. */
+export const E2E_LENDING_TAB = "Peminjaman";
+const PEMILIK_COLUMN = 3;
+const PEMINJAM_COLUMN = 4;
+const LENDING_TAB = LENDING_SHEET.map((cells, row) =>
+  row === 0
+    ? cells
+    : cells.map((cell, column) =>
+        column === PEMILIK_COLUMN || column === PEMINJAM_COLUMN
+          ? prefixed(cell)
+          : cell
+      )
 );
 
 /** Each stand-in sheet: its file name and tabs. */
@@ -83,7 +101,7 @@ const SHEETS: Record<
   { tabs: Record<string, string[][]>; title: string }
 > = {
   [E2E_LIBRARY_SHEET]: {
-    tabs: { [E2E_LIBRARY_TAB]: LIBRARY_TAB },
+    tabs: { [E2E_LIBRARY_TAB]: LIBRARY_TAB, [E2E_LENDING_TAB]: LENDING_TAB },
     title: "E2E Library books",
   },
   [E2E_SHEET]: {

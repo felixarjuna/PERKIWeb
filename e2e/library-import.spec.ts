@@ -10,7 +10,7 @@ import {
 import { E2E_LIBRARY_PREFIX, E2E_LIBRARY_SHEET } from "./docs-server";
 import { adminLogin, toast } from "./helpers";
 
-const IMPORT_BOOKS = /^Import \d+ books$/;
+const IMPORT_BOOKS = /^Import \d+ books and \d+ loans$/;
 const BORROWED_UNTIL = /^Borrowed until/;
 const person = (name: string) => `${E2E_LIBRARY_PREFIX} ${name}`;
 const WREN = person("Wren");
@@ -28,7 +28,7 @@ const search = async (page: Page, text: string) => {
 };
 
 // The stand-in book list prefixes every person, so only this spec's accounts match.
-test("staff import the library from the sheet, linking an owner first", async ({
+test("staff import the library and its lending history, linking an owner first", async ({
   page,
 }) => {
   await deleteLibraryBooksTitled(TITLES);
@@ -68,9 +68,40 @@ test("staff import the library from the sheet, linking an owner first", async ({
     page.getByRole("region", { name: "Waiting for their owner" })
   ).toHaveCount(0);
 
+  // The "Peminjaman" tab: Dara has had The Lantern Case since August.
+  const history = page.getByRole("region", { name: "Lending history" });
+  await expect(history.getByRole("listitem")).toHaveCount(8);
+  await expect(
+    history
+      .getByRole("listitem")
+      .filter({ hasText: "The Lantern Case" })
+      .filter({ hasText: person("Dara") })
+  ).toContainText("August – September 2026 · extended once");
+  const toCheck = page.getByRole("region", { name: "Lending rows to check" });
+  await expect(toCheck.getByText("Morning Psalms")).toBeVisible();
+  await expect(
+    toCheck.getByText("without an earlier lend", { exact: false })
+  ).toBeVisible();
+
   await page.getByRole("button", { name: IMPORT_BOOKS }).click();
   await expect(toast(page, "Books imported")).toBeVisible();
   await expect(page).toHaveURL("/admin/library");
+
+  await page.getByRole("searchbox", { name: "Search books" }).fill("Lantern");
+  await page
+    .getByRole("button", { name: "History of The Lantern Case" })
+    .click();
+  const lines = page.getByRole("list", { name: "History" });
+  await expect(
+    lines
+      .getByRole("listitem")
+      .filter({ hasText: "Borrowed" })
+      .filter({ hasText: "August 2026" })
+  ).toContainText(`to ${person("Dara")}`);
+  await expect(
+    lines.getByRole("listitem").filter({ hasText: "Returned" }).first()
+  ).toContainText(`from ${person("Kai")}`);
+  await page.keyboard.press("Escape");
 
   await page.goto("/library");
   const lantern = await search(page, "The Lantern Case");

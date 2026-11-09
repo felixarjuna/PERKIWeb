@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   historyLine,
+  historyWhen,
   lendHint,
   lendsByHand,
   type ShelfLending,
@@ -224,5 +225,22 @@ describe("withdrawRefusal", () => {
     );
     expect(withdrawRefusal(book({ kind: "available" }))).toBeNull();
     expect(withdrawRefusal(book({ kind: "reserved" }))).toBeNull();
+  });
+});
+
+describe("historyWhen", () => {
+  it("says the day and time, in Aachen", () => {
+    expect(
+      historyWhen({ at: new Date("2026-07-04T13:30:00Z"), details: {} })
+    ).toBe("4 Jul 2026, 15:30");
+  });
+
+  it("says only the month for a loan from the sheet", () => {
+    expect(
+      historyWhen({
+        at: new Date("2026-06-30T22:00:00Z"),
+        details: { month: "2026-07", precision: "month", source: "sheet" },
+      })
+    ).toBe("July 2026");
   });
 });

@@ -114,6 +114,35 @@ export const LIBRARY_SHEET: string[][] = [
   ["10"],
 ];
 
+/**
+ * An anonymised lending history ("Peminjaman"), laid out like the real tab:
+ * Tahun and Bulan written once per month and carried down, an empty row
+ * between months, "extend" in Catatan, owners spelled slightly differently
+ * ("Arlo."), a title missing from the book list and an extend without a lend.
+ */
+export const LENDING_SHEET: string[][] = [
+  ["Tahun", "Bulan", "Title", "Pemilik", "Peminjam", "Catatan"],
+  ["2025", "Desember", "Lowly Paths", "Kai", "Dara"],
+  [],
+  ["2026", "Juni", "The Lantern Case", "PERKI", "Kai"],
+  ["", "", "Quiet Harbour", "Arlo", "Dara"],
+  ["", "", "Lowly Paths", "Kai", "Vito"],
+  [],
+  ["", "Juli", "The Lantern Case", "Perki", "Kai", "extend"],
+  ["", "", "Quiet Harbour", "Arlo.", "Dara", "extend"],
+  [],
+  ["", "Agustus", "The Lantern Case", "PERKI", "Dara"],
+  ["", "", "Morning Psalms", "PERKI", "Kai"],
+  ["", "", "Small Lamps", "Arlo", "Nadia"],
+  [],
+  ["", "September", "The Lantern Case", "PERKI", "Dara", "extend"],
+  ["", "", "Lowly Paths", "Kai", "Arlo", "extend"],
+  ["", "", "Quiet Harbour", "Vito", "Kai"],
+  [],
+  ["", "Oktober", "Small Lamps", "Arlo", "Nadia", "extend"],
+  ["", "", "Quiet Harbour", "Wren", "Dara"],
+];
+
 /** The people the fixture names, by how it writes them. */
 export const LIBRARY_SHEET_PEOPLE = {
   borrowers: ["Dara", "Nadia"],

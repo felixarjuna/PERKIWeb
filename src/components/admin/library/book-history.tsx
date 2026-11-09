@@ -1,6 +1,5 @@
 "use client";
 
-import { DateTime } from "luxon";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
@@ -13,12 +12,7 @@ import {
 import { dayLabel, inLineLabel } from "~/lib/library";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { QueryMessage } from "../admin-controls";
-import { historyLine } from "./shelf-model";
-
-const when = (at: Date) =>
-  DateTime.fromJSDate(at)
-    .setZone("Europe/Berlin")
-    .toFormat("d LLL yyyy, HH:mm");
+import { historyLine, historyWhen } from "./shelf-model";
 
 type QueueEntry = RouterOutputs["library"]["history"]["queue"][number];
 
@@ -130,8 +124,14 @@ export function BookHistory({
                     </p>
                   ) : null}
                   <p className="type-caption text-muted-foreground tabular-nums">
-                    <time dateTime={event.at.toISOString()}>
-                      {when(event.at)}
+                    <time
+                      dateTime={
+                        event.details.precision === "month"
+                          ? String(event.details.month)
+                          : event.at.toISOString()
+                      }
+                    >
+                      {historyWhen(event)}
                     </time>
                   </p>
                 </li>

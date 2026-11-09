@@ -164,6 +164,8 @@ export const logEvent = (
   event: {
     /** Null when nobody did it, e.g. a hold that ran out. */
     actorId: string | null;
+    /** When it happened, if not now (a loan from the sheet's history). */
+    at?: Date;
     bookId: number;
     details?: Record<string, unknown>;
     loanId?: number;
@@ -173,6 +175,7 @@ export const logEvent = (
 ) =>
   tx.insert(libraryHistory).values({
     actorId: event.actorId,
+    ...(event.at ? { at: event.at } : {}),
     bookId: event.bookId,
     details: event.details ?? {},
     loanId: event.loanId ?? null,

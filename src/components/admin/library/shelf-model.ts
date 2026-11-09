@@ -1,4 +1,6 @@
+import { DateTime } from "luxon";
 import { addDays, type BookKind, dayLabel, eventLabel } from "~/lib/library";
+import { monthLabel } from "~/lib/library-import";
 
 /** What staff see of a book's lending, holder included. */
 export interface ShelfLending {
@@ -131,4 +133,21 @@ export function historyLine(event: HistoryEvent) {
     detail: parts.join(" · "),
     title: byHand ? "Lent by hand" : eventLabel(event.type),
   };
+}
+
+/**
+ * When a history line happened: "4 Jul 2026, 15:30", or just "July 2026" for
+ * a loan from the sheet's lending history, which only knows the month (#149).
+ */
+export function historyWhen(event: {
+  at: Date;
+  details: Record<string, unknown>;
+}) {
+  const month = text(event.details.month);
+  if (event.details.precision === "month" && month) {
+    return monthLabel(month);
+  }
+  return DateTime.fromJSDate(event.at)
+    .setZone("Europe/Berlin")
+    .toFormat("d LLL yyyy, HH:mm");
 }
