@@ -7,7 +7,11 @@ import {
   deleteUsersNamed,
   insertProfiledUser,
 } from "./db";
-import { E2E_LIBRARY_PREFIX, E2E_LIBRARY_SHEET } from "./docs-server";
+import {
+  E2E_LIBRARY_PREFIX,
+  E2E_LIBRARY_SHEET,
+  E2E_LIBRARY_SHEET_LATER,
+} from "./docs-server";
 import { adminLogin, toast } from "./helpers";
 
 const IMPORT_BOOKS = /^Import \d+ books and \d+ loans$/;
@@ -115,6 +119,29 @@ test("staff import the library and its lending history, linking an owner first",
   const rooted = await search(page, "Rooted Hearts");
   await expect(rooted.getByText(`Ebook · ask ${WREN_ACCOUNT}`)).toHaveCount(2);
 
+  await page.goto("/admin/library/import");
+  await expect(
+    page.getByRole("button", { name: "Everything is up to date" })
+  ).toBeDisabled();
+
+  // A month later the tab extends Dara's loan; a rerun brings it up to date.
+  await page.getByRole("button", { name: "Change the library sheet" }).click();
+  await page
+    .getByLabel("Sheet")
+    .fill(
+      `https://docs.google.com/spreadsheets/d/${E2E_LIBRARY_SHEET_LATER}/edit`
+    );
+  await page.getByRole("button", { name: "Save" }).click();
+  const updates = page.getByRole("region", { name: "Loans to update" });
+  await expect(updates.getByRole("listitem")).toHaveCount(1);
+  await expect(updates.getByRole("listitem")).toContainText(
+    `${person("Dara")} · August – October 2026 · +1 extension`
+  );
+  await expect(updates.getByRole("listitem")).toContainText("Still out · due");
+  await page.getByRole("button", { name: "Update 1 loan" }).click();
+  await expect(toast(page, "Books imported")).toContainText(
+    "1 loan brought up to date"
+  );
   await page.goto("/admin/library/import");
   await expect(
     page.getByRole("button", { name: "Everything is up to date" })
