@@ -12,7 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
-import { BookByline } from "~/components/library/language";
+import { BookByline, BookCategory } from "~/components/library/language";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,9 +62,10 @@ function setParam(key: string, value: string, replace: boolean) {
 const KIND_LABELS: Record<ShelfBook["kind"], string> = {
   available: "Available",
   borrowed: "Borrowed",
+  ebook: "Ebook",
   offered: "Offered",
   reserved: "Reserved",
-  withdrawn: "Withdrawn",
+  withdrawn: "Removed",
 };
 
 function variantOf(book: ShelfBook): BadgeProps["variant"] {
@@ -180,8 +181,13 @@ function ShelfRow({
     <li className="rounded-xl bg-card p-4 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
+          <BookCategory category={book.category} />
           <h2 className="type-subheading break-words">{book.title}</h2>
-          <BookByline author={book.author} language={book.language} />
+          <BookByline
+            author={book.author}
+            language={book.language}
+            publisher={book.publisher}
+          />
           <p className="type-caption mt-1 text-muted-foreground">
             {[
               book.owner ? `Lent by ${book.owner.name}` : "PERKI's book",
@@ -235,7 +241,7 @@ function ShelfRow({
             type="button"
             variant="ghost"
           >
-            Bring back
+            Put back
           </Button>
         ) : (
           <Button
@@ -246,7 +252,7 @@ function ShelfRow({
             type="button"
             variant="ghost"
           >
-            Withdraw
+            Remove from library
           </Button>
         )}
       </div>
@@ -283,7 +289,9 @@ export default function LibraryShelf() {
   const withdraw = api.library.withdraw.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: async () => {
-      toast.success(`“${withdrawing?.title ?? "The book"}” withdrawn`);
+      toast.success(
+        `“${withdrawing?.title ?? "The book"}” removed from the library`
+      );
       setWithdrawing(null);
       await utils.library.invalidate();
     },
@@ -439,12 +447,12 @@ export default function LibraryShelf() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Withdraw “{withdrawing?.title}”?
+              Remove “{withdrawing?.title}” from the library?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              It leaves the members' list, for example when its owner asks for
-              it back or it's lost. Its history stays, and you can bring it back
-              later.
+              For a book that has left the shelf: its owner took it back, or
+              it's lost. Members stop seeing it. Its history stays, and Put back
+              lists it again any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -458,7 +466,7 @@ export default function LibraryShelf() {
                 }
               }}
             >
-              Withdraw
+              Remove from library
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -53,6 +53,18 @@ export const languageLabel = (
     : { code: null, name: value };
 };
 
+/** How a book is held: on the shelf, or an ebook its owner shares (#147). */
+export const BOOK_FORMATS = ["physical", "ebook"] as const;
+export type BookFormat = (typeof BOOK_FORMATS)[number];
+export const FORMAT_LABELS: Record<BookFormat, string> = {
+  ebook: "Ebook",
+  physical: "Physical book",
+};
+
+/** Longest publisher and category staff can save. */
+export const MAX_PUBLISHER = 120;
+export const MAX_CATEGORY = 60;
+
 export const BOOK_STATUSES = [
   "offered",
   "available",
@@ -104,12 +116,12 @@ const EVENT_LABELS: Record<LibraryEventType, string> = {
   offered: "Offered to the library",
   queued: "Joined the queue",
   ready: "Reserved for the next in line",
-  restored: "Brought back",
+  restored: "Put back in the library",
   returned: "Returned",
-  withdrawn: "Withdrawn",
+  withdrawn: "Removed from the library",
 };
 
-/** A history line's heading, e.g. "Withdrawn". */
+/** A history line's heading, e.g. "Removed from the library". */
 export const eventLabel = (type: string) =>
   EVENT_LABELS[type as LibraryEventType] ?? type;
 
@@ -153,6 +165,8 @@ export interface ReservationLine {
 
 export type BookState =
   | { kind: "offered" }
+  /** An ebook on the list: never lent from the shelf, members ask its owner. */
+  | { kind: "ebook" }
   | { kind: "withdrawn" }
   | { kind: "available"; queue: number }
   | {
@@ -222,6 +236,17 @@ export function settleQueue(
   };
 }
 
+/** Why an ebook can't be borrowed, queued for or lent by hand. */
+export const EBOOK_REFUSAL = "Ebooks aren't lent from the shelf.";
+
+/**
+ * The status cached on `library_books` for a derived state. An ebook keeps
+ * "available", so the stored status stays within the statuses the previous
+ * release knows.
+ */
+export const cachedStatus = (state: BookState): BookStatus =>
+  state.kind === "ebook" ? "available" : state.kind;
+
 /**
  * A book's state on `today`. Offered and withdrawn come from the book; the
  * rest from its open loan and queue. Without a loan, the queue reads as
@@ -229,13 +254,16 @@ export function settleQueue(
  * person's turn even before anyone has written it.
  */
 export function bookState(
-  book: { status: BookStatus },
+  book: { format?: string; status: BookStatus },
   openLoan: OpenLoan | null | undefined,
   reservations: readonly ReservationLine[],
   today: string
 ): BookState {
   if (book.status === "offered" || book.status === "withdrawn") {
     return { kind: book.status };
+  }
+  if (book.format === "ebook") {
+    return { kind: "ebook" };
   }
   const line = queueOrder(reservations);
   if (openLoan) {
@@ -335,6 +363,8 @@ export function joinRefusal(
       break;
     case "available":
       return "It's on the shelf. Borrow it there.";
+    case "ebook":
+      return EBOOK_REFUSAL;
     case "offered":
       return "This book isn't on the shelf yet.";
     default:
@@ -348,6 +378,12 @@ export function joinRefusal(
  * reserved for, only whether that is them.
  */
 export interface MemberBookState {
+  /**
+   * For an ebook only: the account name of the member who shares it, or null
+   * when PERKI owns it (ask the librarian). Never set for a physical book, so
+   * the member list names no other owner.
+   */
+  askName: string | null;
   dueOn: string | null;
   holdEndsOn: string | null;
   kind: BookKind;
@@ -360,12 +396,15 @@ export interface MemberBookState {
 export function memberBookState(
   state: BookState,
   viewerId: string,
-  position: number | null = null
+  position: number | null = null,
+  /** The ebook's owner's account name; ignored for any other book. */
+  ownerName: string | null = null
 ): MemberBookState {
   switch (state.kind) {
     case "borrowed": {
       const mine = state.holderId === viewerId;
       return {
+        askName: null,
         dueOn: state.dueOn,
         holdEndsOn: null,
         kind: "borrowed",
@@ -377,6 +416,7 @@ export function memberBookState(
     case "reserved": {
       const mine = state.reservedFor === viewerId;
       return {
+        askName: null,
         dueOn: null,
         holdEndsOn: mine ? state.holdEndsOn : null,
         kind: "reserved",
@@ -387,6 +427,7 @@ export function memberBookState(
     }
     default:
       return {
+        askName: state.kind === "ebook" ? ownerName : null,
         dueOn: null,
         holdEndsOn: null,
         kind: state.kind,
@@ -419,8 +460,10 @@ export function stateLabel(state: MemberBookState): string {
       return "Reserved";
     case "offered":
       return "Offered";
+    case "ebook":
+      return `Ebook · ask ${state.askName ?? "the librarian"}`;
     case "withdrawn":
-      return "Withdrawn";
+      return "Removed";
     default:
       return "Available";
   }
@@ -481,10 +524,13 @@ const availability = (state: MemberBookState) => {
   if (borrowableBy(state)) {
     return 0;
   }
-  if (state.kind === "offered") {
+  if (state.kind === "ebook") {
     return 2;
   }
-  return state.kind === "withdrawn" ? 3 : 1;
+  if (state.kind === "offered") {
+    return 3;
+  }
+  return state.kind === "withdrawn" ? 4 : 1;
 };
 
 /** Sorts a member list in place by `sort`, title as the tie-breaker. */
@@ -553,7 +599,7 @@ export const SHELF_STATE_LABELS: Record<ShelfState, string> = {
   overdue: "Overdue",
   reserved: "Reserved",
   shelf: "In the library",
-  withdrawn: "Withdrawn",
+  withdrawn: "Removed from library",
 };
 
 export const shelfStateOf = (value: string | null): ShelfState =>
@@ -593,6 +639,8 @@ export function borrowRefusal(
       return state.reservedFor === borrowerId
         ? null
         : "This book is held for the next in line.";
+    case "ebook":
+      return EBOOK_REFUSAL;
     case "offered":
       return "This book isn't on the shelf yet.";
     default:
@@ -675,8 +723,10 @@ export function lentLabel(
       return "Held for the next in line";
     case "offered":
       return `Offered. ${OFFERED_HINT}`;
+    case "ebook":
+      return "Ebook: members ask you for it";
     case "withdrawn":
-      return "Withdrawn from the library";
+      return "Removed from the library";
     default:
       return "On the shelf";
   }

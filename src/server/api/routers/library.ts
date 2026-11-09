@@ -1,5 +1,14 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+} from "drizzle-orm";
 import { z } from "zod";
 import {
   libraryBooks,
@@ -9,6 +18,7 @@ import {
   users,
 } from "~/lib/db/schema/schema";
 import {
+  BOOK_FORMATS,
   type BookState,
   extendedDueOn,
   extendRefusal,
@@ -20,8 +30,10 @@ import {
   LIBRARY_SHOWS,
   LIBRARY_SORTS,
   MAX_AUTHOR,
+  MAX_CATEGORY,
   MAX_DESCRIPTION,
   MAX_LOAN_NOTE,
+  MAX_PUBLISHER,
   MAX_TITLE,
   memberBookState,
   placeInLine,
@@ -73,9 +85,12 @@ const optionalText = (max: number) =>
 /** What a member types when offering a book of their own. */
 const offerInput = z.object({
   author: z.string().trim().min(1, "Add the author.").max(MAX_AUTHOR),
+  category: optionalText(MAX_CATEGORY),
   description: optionalText(MAX_DESCRIPTION),
+  format: z.enum(BOOK_FORMATS).default("physical"),
   /** A code from `LIBRARY_LANGUAGES`, or none; never free text. */
   language: z.enum(LANGUAGE_CODES).nullable().default(null),
+  publisher: optionalText(MAX_PUBLISHER),
   title: z.string().trim().min(1, "Add the title.").max(MAX_TITLE),
 });
 
@@ -87,7 +102,10 @@ const bookInput = offerInput.extend({
 const EDITABLE = [
   "title",
   "author",
+  "publisher",
+  "category",
   "language",
+  "format",
   "description",
   "ownerId",
 ] as const;
@@ -158,6 +176,24 @@ async function peopleById(ids: (string | null | undefined)[]) {
       { image: row.image, name: row.name ?? "Unnamed account" },
     ])
   );
+}
+
+/**
+ * A book someone has or waits for can't become an ebook: its loan and queue
+ * would have nothing left to end them.
+ */
+async function refuseEbookWhileLent(
+  tx: Parameters<typeof loadLending>[0],
+  id: number
+) {
+  const { lines, loans } = await loadLending(tx, [id]);
+  if (loans.has(id) || (lines.get(id)?.length ?? 0) > 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "Someone has or waits for this book. Mark it returned and clear its queue before making it an ebook.",
+    });
+  }
 }
 
 const notInLine = () =>
@@ -283,6 +319,20 @@ export const libraryRouter = createTRPCRouter({
         return { id: input.reservationId };
       })
     ),
+
+  /**
+   * Signed-in members: the categories books already have, A to Z, for the
+   * add, edit and offer pickers.
+   */
+  categories: protectedProcedure.query(async () => {
+    const rows = await db
+      .selectDistinct({ category: libraryBooks.category })
+      .from(libraryBooks)
+      .where(isNotNull(libraryBooks.category));
+    return rows
+      .flatMap((row) => (row.category ? [row.category] : []))
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }),
 
   /**
    * The holder: moves the due date `LOAN_DAYS` on, at most `MAX_EXTENSIONS`
@@ -499,10 +549,13 @@ export const libraryRouter = createTRPCRouter({
         .select({
           addedAt: libraryBooks.createdAt,
           author: libraryBooks.author,
+          category: libraryBooks.category,
           description: libraryBooks.description,
+          format: libraryBooks.format,
           id: libraryBooks.id,
           language: libraryBooks.language,
           ownerId: libraryBooks.ownerId,
+          publisher: libraryBooks.publisher,
           status: libraryBooks.status,
           title: libraryBooks.title,
         })
@@ -518,6 +571,10 @@ export const libraryRouter = createTRPCRouter({
         .orderBy(asc(libraryBooks.id));
       const { lines, states } = await lendingOf(db, books);
       const viewerId = ctx.session.user.id;
+      // Only an ebook's owner is named ("ask …"); a physical book's never is.
+      const sharers = await peopleById(
+        books.map((book) => (book.format === "ebook" ? book.ownerId : null))
+      );
       const items = books
         .map(({ ownerId, status: _status, ...book }) => {
           const derived = states.get(book.id) ?? {
@@ -527,7 +584,10 @@ export const libraryRouter = createTRPCRouter({
           const state = memberBookState(
             derived,
             viewerId,
-            placeInLine(derived, lines.get(book.id) ?? [], viewerId).position
+            placeInLine(derived, lines.get(book.id) ?? [], viewerId).position,
+            ownerId && derived.kind === "ebook"
+              ? (sharers.get(ownerId)?.name ?? null)
+              : null
           );
           // An offered book is "mine" to the member who offered it, never
           // naming the owner to anyone else.
@@ -602,9 +662,11 @@ export const libraryRouter = createTRPCRouter({
         return {
           addedAt: book.createdAt,
           author: book.author,
+          category: book.category,
           description: book.description,
           dueOn: state.kind === "borrowed" ? state.dueOn : null,
           extensions: extensions.get(book.id) ?? 0,
+          format: book.format,
           holdEndsOn: state.kind === "reserved" ? state.holdEndsOn : null,
           holder: holderId ? (people.get(holderId)?.name ?? null) : null,
           id: book.id,
@@ -617,6 +679,7 @@ export const libraryRouter = createTRPCRouter({
                 name: people.get(book.ownerId)?.name ?? "Unnamed account",
               }
             : null,
+          publisher: book.publisher,
           queue: "queue" in state ? state.queue : 0,
           title: book.title,
         };
@@ -663,6 +726,7 @@ export const libraryRouter = createTRPCRouter({
     const loans = await db
       .select({
         author: libraryBooks.author,
+        bookFormat: libraryBooks.format,
         bookId: libraryLoans.bookId,
         bookStatus: libraryBooks.status,
         borrowedAt: libraryLoans.borrowedAt,
@@ -681,6 +745,7 @@ export const libraryRouter = createTRPCRouter({
     const waitingFor = await db
       .select({
         author: libraryBooks.author,
+        bookFormat: libraryBooks.format,
         bookId: libraryQueue.bookId,
         bookStatus: libraryBooks.status,
         language: libraryBooks.language,
@@ -701,6 +766,7 @@ export const libraryRouter = createTRPCRouter({
     const { lines, states } = await lendingOf(
       db,
       [...open, ...waitingFor].map((entry) => ({
+        format: entry.bookFormat,
         id: entry.bookId,
         status: entry.bookStatus,
       }))
@@ -729,16 +795,18 @@ export const libraryRouter = createTRPCRouter({
       })),
       past: past.slice(0, MAX_PAST_LOANS),
       /** Books they wait for: their place, or until when it's held for them. */
-      queue: waitingFor.flatMap(({ bookStatus: _status, ...entry }) => {
-        const state = states.get(entry.bookId);
-        const place = state
-          ? placeInLine(state, lines.get(entry.bookId) ?? [], viewerId)
-          : null;
-        // A hold that ran out and passed on is no longer theirs.
-        return place && (place.holdEndsOn || place.position)
-          ? [{ ...entry, ...place }]
-          : [];
-      }),
+      queue: waitingFor.flatMap(
+        ({ bookFormat: _format, bookStatus: _status, ...entry }) => {
+          const state = states.get(entry.bookId);
+          const place = state
+            ? placeInLine(state, lines.get(entry.bookId) ?? [], viewerId)
+            : null;
+          // A hold that ran out and passed on is no longer theirs.
+          return place && (place.holdEndsOn || place.position)
+            ? [{ ...entry, ...place }]
+            : [];
+        }
+      ),
     };
   }),
 
@@ -912,6 +980,9 @@ export const libraryRouter = createTRPCRouter({
           const changed = EDITABLE.filter((key) => book[key] !== values[key]);
           if (changed.length === 0) {
             return { id };
+          }
+          if (values.format === "ebook" && book.format !== "ebook") {
+            await refuseEbookWhileLent(tx, book.id);
           }
           await tx
             .update(libraryBooks)

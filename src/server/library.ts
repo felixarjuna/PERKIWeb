@@ -11,6 +11,7 @@ import {
   type BookStatus,
   bookState,
   borrowRefusal,
+  cachedStatus,
   dueOnFrom,
   type LibraryEventType,
   type OpenLoan,
@@ -82,7 +83,7 @@ type Lending = Awaited<ReturnType<typeof loadLending>>;
 
 /** Every given book's derived state on `today`, from lending already loaded. */
 function statesFrom(
-  books: readonly { id: number; status: string }[],
+  books: readonly { format: string; id: number; status: string }[],
   { lines, loans }: Lending,
   today: string
 ) {
@@ -90,7 +91,7 @@ function statesFrom(
     books.map((book) => [
       book.id,
       bookState(
-        { status: book.status as BookStatus },
+        { format: book.format, status: book.status as BookStatus },
         loans.get(book.id),
         lines.get(book.id) ?? [],
         today
@@ -102,7 +103,7 @@ function statesFrom(
 /** Every given book's derived state on `today`. */
 export async function statesOf(
   executor: Executor,
-  books: readonly { id: number; status: string }[],
+  books: readonly { format: string; id: number; status: string }[],
   today = libraryToday()
 ) {
   const lending = await loadLending(
@@ -115,7 +116,7 @@ export async function statesOf(
 /** Every given book's queue and derived state, loaded once. */
 export async function lendingOf(
   executor: Executor,
-  books: readonly { id: number; status: string }[],
+  books: readonly { format: string; id: number; status: string }[],
   today = libraryToday()
 ) {
   const lending = await loadLending(
@@ -144,10 +145,10 @@ export async function lockBook(tx: Tx, id: number) {
 /** Writes the cached `status` from the book's derived state. */
 export async function refreshStatus(
   tx: Tx,
-  book: { id: number; status: string }
+  book: { format: string; id: number; status: string }
 ) {
   const state = (await statesOf(tx, [book])).get(book.id);
-  const status = state?.kind ?? (book.status as BookStatus);
+  const status = state ? cachedStatus(state) : (book.status as BookStatus);
   if (status !== book.status) {
     await tx
       .update(libraryBooks)
@@ -199,11 +200,15 @@ export async function openLoanOf(tx: Tx, bookId: number) {
  */
 export async function settleBook(
   tx: Tx,
-  book: { id: number; status: string; title: string },
+  book: { format: string; id: number; status: string; title: string },
   today = libraryToday()
 ): Promise<{ notices: ReadyNotice[]; status: BookStatus }> {
-  if (book.status === "offered" || book.status === "withdrawn") {
-    return { notices: [], status: book.status };
+  if (
+    book.status === "offered" ||
+    book.status === "withdrawn" ||
+    book.format === "ebook"
+  ) {
+    return { notices: [], status: book.status as BookStatus };
   }
   if (await openLoanOf(tx, book.id)) {
     return { notices: [], status: await refreshStatus(tx, book) };
@@ -329,8 +334,16 @@ export async function startLoan(
     actorId,
     bookId,
     byHand = false,
+    source,
     userId,
-  }: { actorId: string; bookId: number; byHand?: boolean; userId: string },
+  }: {
+    actorId: string;
+    bookId: number;
+    byHand?: boolean;
+    /** "sheet" for a loan the library import starts from "Lent to". */
+    source?: "sheet";
+    userId: string;
+  },
   notices: ReadyNotice[] = []
 ) {
   const settled: ReadyNotice[] = [];
@@ -376,7 +389,11 @@ export async function startLoan(
   await logEvent(tx, {
     actorId,
     bookId: book.id,
-    details: byHand ? { byHand, dueOn } : { dueOn },
+    details: {
+      ...(byHand ? { byHand } : {}),
+      dueOn,
+      ...(source ? { source } : {}),
+    },
     loanId: loan.id,
     subjectId: userId,
     type: "borrowed",

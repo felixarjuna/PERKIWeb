@@ -52,6 +52,7 @@ export async function setSetting(
 
 /** The sheet the schedule import reads, or null until staff set one. */
 export const scheduleSheetId = () => getSetting(SETTING_KEYS.scheduleSheetId);
+export const librarySheetId = () => getSetting(SETTING_KEYS.librarySheetId);
 
 /**
  * Links shown around the site. The Drive folder falls back to the old

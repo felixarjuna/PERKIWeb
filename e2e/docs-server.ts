@@ -1,4 +1,5 @@
 import { createServer, type Server } from "node:http";
+import { LIBRARY_SHEET } from "../src/test/fixtures/library-sheet";
 import { POOL_SHEET_2026 } from "../src/test/fixtures/serving-pool-sheet";
 import {
   NOTES,
@@ -47,21 +48,69 @@ const POOL_TAB = POOL_SHEET_2026.map((cells, row) =>
     : cells
 );
 
-const SHEET_PATH = new RegExp(`^/v4/spreadsheets/${E2E_SHEET}(/values/.+)?$`);
+/** The library's book list (#147); set it as the library sheet to import. */
+export const E2E_LIBRARY_SHEET = "e2e-library-sheet";
+export const E2E_LIBRARY_TAB = "Books";
+/** Prefix of every person on the stand-in book list; only the import spec uses it. */
+export const E2E_LIBRARY_PREFIX = "E2E Lib";
 
-/** Answers the Sheets API's tab list and tab values for the fixture sheet. */
+const OWNER_COLUMN = 7;
+const LENT_TO_COLUMN = 8;
+const PERKI = /^perki$/i;
+
+/** The fixture book list with each owner and borrower prefixed. */
+const LIBRARY_TAB = LIBRARY_SHEET.map((cells, row) =>
+  row === 0
+    ? cells
+    : cells.map((cell, column) => {
+        if (column !== OWNER_COLUMN && column !== LENT_TO_COLUMN) {
+          return cell;
+        }
+        return cell
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) =>
+            PERKI.test(name) ? name : `${E2E_LIBRARY_PREFIX} ${name}`
+          )
+          .join(", ");
+      })
+);
+
+/** Each stand-in sheet: its file name and tabs. */
+const SHEETS: Record<
+  string,
+  { tabs: Record<string, string[][]>; title: string }
+> = {
+  [E2E_LIBRARY_SHEET]: {
+    tabs: { [E2E_LIBRARY_TAB]: LIBRARY_TAB },
+    title: "E2E Library books",
+  },
+  [E2E_SHEET]: {
+    tabs: { [E2E_POOL_TAB]: POOL_TAB },
+    title: "E2E Jadwal Pelayanan",
+  },
+};
+
+const SHEET_PATH = /^\/v4\/spreadsheets\/([\w-]+)(\/values\/.+)?$/;
+
+/** Answers the Sheets API's file title, tab list and tab values for the fixtures. */
 function sheetAnswer(pathname: string) {
   const match = SHEET_PATH.exec(pathname);
-  if (!match) {
+  const sheet = match ? SHEETS[match[1] ?? ""] : undefined;
+  if (!(match && sheet)) {
     return null;
   }
-  if (match[1]) {
-    const range = decodeURIComponent(match[1].slice("/values/".length));
-    return range === `'${E2E_POOL_TAB}'` ? { values: POOL_TAB } : null;
+  if (match[2]) {
+    const range = decodeURIComponent(match[2].slice("/values/".length));
+    const tab = Object.entries(sheet.tabs).find(
+      ([title]) => range === `'${title}'`
+    );
+    return tab ? { values: tab[1] } : null;
   }
   return {
-    properties: { title: "E2E Jadwal Pelayanan" },
-    sheets: [{ properties: { title: E2E_POOL_TAB } }],
+    properties: { title: sheet.title },
+    sheets: Object.keys(sheet.tabs).map((title) => ({ properties: { title } })),
   };
 }
 

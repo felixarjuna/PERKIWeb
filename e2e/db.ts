@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, like, lt, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lt, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -295,6 +295,30 @@ export const insertLibraryBook = async (
       throw new Error("Failed to insert the library book");
     }
     return book;
+  } finally {
+    await client.end();
+  }
+};
+
+/** Removes a setting, so a spec starts from "not set". */
+export const deleteSetting = async (key: string) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client).delete(settings).where(eq(settings.key, key));
+  } finally {
+    await client.end();
+  }
+};
+
+/** Deletes the library books with these titles, with their loans and history. */
+export const deleteLibraryBooksTitled = async (titles: string[]) => {
+  assertLocalDatabase(e2eEnv.DATABASE_URL);
+  const client = postgres(e2eEnv.DATABASE_URL, { max: 1 });
+  try {
+    await drizzle(client)
+      .delete(libraryBooks)
+      .where(inArray(libraryBooks.title, titles));
   } finally {
     await client.end();
   }

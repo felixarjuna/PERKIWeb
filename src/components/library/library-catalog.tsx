@@ -34,7 +34,7 @@ import {
 import { api, type RouterOutputs } from "~/trpc/react";
 import { BookStateBadge } from "./book-state-badge";
 import { BorrowDialog } from "./borrow-dialog";
-import { BookByline } from "./language";
+import { BookByline, BookCategory } from "./language";
 import MyBooks from "./my-books";
 import { OfferBook } from "./offer-dialog";
 
@@ -183,8 +183,13 @@ export function BookCard({
     <article className="rounded-xl bg-card p-4 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
+          <BookCategory category={book.category} />
           <h2 className="type-subheading break-words">{book.title}</h2>
-          <BookByline author={book.author} language={book.language} />
+          <BookByline
+            author={book.author}
+            language={book.language}
+            publisher={book.publisher}
+          />
         </div>
         <BookStateBadge className="sm:mt-0.5" state={book.state} />
       </div>

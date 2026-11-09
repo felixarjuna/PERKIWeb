@@ -29,6 +29,9 @@ vi.mock("~/trpc/react", () => {
     api: {
       library: {
         borrow: { useMutation: mutation(state.borrowed) },
+        categories: {
+          useQuery: () => ({ data: ["Apologetics"], isPending: false }),
+        },
         extend: { useMutation: mutation(state.extended) },
         joinQueue: { useMutation: mutation(state.joined) },
         leaveQueue: { useMutation: mutation(state.left) },
@@ -51,8 +54,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 const BORROW = /^Borrow/;
+const QUEUE = /queue/;
 
 const free: MemberBookState = {
+  askName: null,
   dueOn: null,
   holdEndsOn: null,
   kind: "available",
@@ -64,9 +69,12 @@ const free: MemberBookState = {
 const book = (id: number, title: string, bookState = free) => ({
   addedAt: new Date("2026-11-01"),
   author: "C. S. Lewis",
+  category: id === 1 ? "Apologetics" : null,
   description: id === 1 ? "On what Christians believe." : null,
+  format: bookState.kind === "ebook" ? "ebook" : "physical",
   id,
   language: id === 1 ? "de" : null,
+  publisher: id === 1 ? "HarperOne" : null,
   state: bookState,
   title,
 });
@@ -119,9 +127,23 @@ describe("LibraryCatalog", () => {
     const card = screen
       .getByRole("heading", { name: "Mere Christianity" })
       .closest("article");
-    expect(card?.textContent).toContain("C. S. LewisDeutsch");
+    expect(card?.textContent).toContain(
+      "Category: ApologeticsMere ChristianityC. S. LewisLanguage: Deutsch·Publisher: HarperOne"
+    );
     expect(screen.getByText("Available")).toBeTruthy();
     expect(screen.getByText("Borrowed until 7 Dec")).toBeTruthy();
+  });
+
+  it("tells members whom to ask for an ebook, with nothing to borrow or join", () => {
+    state.books = [
+      book(2, "Shared Ebook", { ...free, askName: "Budi", kind: "ebook" }),
+      book(3, "PERKI Ebook", { ...free, kind: "ebook" }),
+    ];
+    render(<LibraryCatalog />);
+    expect(screen.getByText("Ebook · ask Budi")).toBeTruthy();
+    expect(screen.getByText("Ebook · ask the librarian")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: BORROW })).toBeNull();
+    expect(screen.queryByRole("button", { name: QUEUE })).toBeNull();
   });
 
   it("confirms a Borrow with the lending time before starting the loan", () => {
@@ -282,12 +304,21 @@ describe("LibraryCatalog", () => {
     await userEvent.click(
       screen.getByRole("option", { name: "Bahasa Indonesia" })
     );
+    fireEvent.change(screen.getByLabelText("Publisher"), {
+      target: { value: "HarperOne" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Category" }));
+    await userEvent.click(screen.getByRole("option", { name: "Apologetics" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Ebook" }));
     fireEvent.click(screen.getByRole("button", { name: "Offer book" }));
     expect(state.offered).toEqual([
       {
         author: "Dietrich Bonhoeffer",
+        category: "Apologetics",
         description: "",
+        format: "ebook",
         language: "id",
+        publisher: "HarperOne",
         title: "Life Together",
       },
     ]);
@@ -342,7 +373,7 @@ describe("LibraryCatalog", () => {
     expect(waiting.textContent).toContain("Reserved for you · until 14 Nov");
     expect(waiting.textContent).toContain("1st in line");
     const lent = screen.getByRole("region", { name: "Books you lend" });
-    expect(lent.textContent).toContain("Dietrich BonhoefferDeutsch");
+    expect(lent.textContent).toContain("Dietrich BonhoefferLanguage: Deutsch");
     expect(lent.textContent).toContain("Borrowed by Budi Santoso until 7 Dec");
     expect(lent.textContent).toContain("Lent 1 time");
     // The lends only: who, from and to; never the librarian's event log.

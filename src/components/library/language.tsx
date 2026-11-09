@@ -10,7 +10,10 @@ import {
 import { cn } from "~/lib/utils";
 import { Flag } from "./flag";
 
-/** A book's language: its flag (hidden from screen readers) and its name. */
+/**
+ * A book's language: its flag (hidden from screen readers, the name carries
+ * the meaning) and its name, inline, no pill.
+ */
 export function LanguageChip({
   language,
   className,
@@ -23,31 +26,65 @@ export function LanguageChip({
     return null;
   }
   return (
-    <span
-      className={cn(
-        "type-caption inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground",
-        className
-      )}
-    >
+    <span className={cn("inline-flex items-center gap-1.5", className)}>
+      <span className="sr-only">Language: </span>
       {label.code ? <Flag code={label.code} /> : null}
       {label.name}
     </span>
   );
 }
 
-/** Author, then the language chip when the book has one. */
+/**
+ * The book's category as an eyebrow above its title, the way a catalogue
+ * card names its shelf section (#147). Nothing when the book has none.
+ */
+export function BookCategory({ category }: { category: string | null }) {
+  if (!category) {
+    return null;
+  }
+  return (
+    <p className="type-eyebrow mb-1 text-muted-foreground">
+      <span className="sr-only">Category: </span>
+      {category}
+    </p>
+  );
+}
+
+/**
+ * The author on one line, then the language (flag and name) and publisher
+ * as one quiet line of facts separated by a dot (#147). An ebook says so in
+ * its state badge; a physical book says nothing about its format.
+ */
 export function BookByline({
   author,
   language,
+  publisher = null,
 }: {
   author: string;
   language: string | null;
+  publisher?: string | null;
 }) {
+  const hasLanguage = languageLabel(language) !== null;
   return (
-    <p className="type-body-sm mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-      <span>{author}</span>
-      <LanguageChip language={language} />
-    </p>
+    <div className="mt-1">
+      <p className="type-body-sm text-muted-foreground">{author}</p>
+      {hasLanguage || publisher ? (
+        <p className="type-caption mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+          <LanguageChip language={language} />
+          {hasLanguage && publisher ? (
+            <span aria-hidden="true" className="opacity-50">
+              ·
+            </span>
+          ) : null}
+          {publisher ? (
+            <span>
+              <span className="sr-only">Publisher: </span>
+              {publisher}
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

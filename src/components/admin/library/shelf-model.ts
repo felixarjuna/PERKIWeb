@@ -38,7 +38,7 @@ export function shelfLabel(book: ShelfLending): string {
 
 /** Why staff can't withdraw a book now: a borrowed one needs its return first. */
 export const withdrawRefusal = (book: Pick<ShelfLending, "kind">) =>
-  book.kind === "borrowed" ? "Mark it returned before withdrawing it." : null;
+  book.kind === "borrowed" ? "Mark it returned before removing it." : null;
 
 /**
  * Whether staff can lend a book by hand: one on the shelf, or one held for
@@ -55,9 +55,12 @@ export const lendHint = (book: Pick<ShelfLending, "holder" | "kind">) =>
 
 const FIELD_LABELS: Record<string, string> = {
   author: "author",
+  category: "category",
   description: "description",
+  format: "format",
   language: "language",
   ownerId: "owner",
+  publisher: "publisher",
   title: "title",
 };
 
@@ -115,6 +118,9 @@ export function historyLine(event: HistoryEvent) {
   const expiresOn = text(event.details.expiresOn);
   if (expiresOn && event.type === "ready") {
     parts.push(`until ${dayLabel(expiresOn)}`);
+  }
+  if (event.details.source === "sheet") {
+    parts.push("from the sheet");
   }
   const note = text(event.details.note);
   if (note) {

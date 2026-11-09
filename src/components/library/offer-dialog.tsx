@@ -22,6 +22,11 @@ import {
   OFFERED_HINT,
 } from "~/lib/library";
 import { api } from "~/trpc/react";
+import {
+  type BookDetails,
+  BookDetailsFields,
+  NO_BOOK_DETAILS,
+} from "./book-fields";
 import { LanguagePicker, pickedLanguage } from "./language";
 
 const EMPTY = { author: "", description: "", language: "", title: "" };
@@ -33,6 +38,7 @@ const EMPTY = { author: "", description: "", language: "", title: "" };
 export function OfferBook() {
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState(EMPTY);
+  const [details, setDetails] = React.useState<BookDetails>(NO_BOOK_DETAILS);
   const set =
     (key: keyof typeof EMPTY) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -44,6 +50,7 @@ export function OfferBook() {
       toast.success(`Thanks! ${OFFERED_HINT}`);
       setOpen(false);
       setDraft(EMPTY);
+      setDetails(NO_BOOK_DETAILS);
       await utils.library.invalidate();
     },
   });
@@ -75,6 +82,7 @@ export function OfferBook() {
               event.preventDefault();
               offer.mutate({
                 ...draft,
+                ...details,
                 // The picker only offers codes and "".
                 language: pickedLanguage(draft.language) || null,
               });
@@ -106,6 +114,16 @@ export function OfferBook() {
                 setDraft((current) => ({ ...current, language }))
               }
               value={draft.language}
+            />
+            <BookDetailsFields
+              formatHint={
+                details.format === "ebook"
+                  ? "Members will see your name, to ask you for it."
+                  : "You hand the book to the librarian."
+              }
+              idPrefix="offer"
+              onChange={setDetails}
+              value={details}
             />
             <div className="grid gap-2">
               <Label htmlFor="offer-description">Description</Label>

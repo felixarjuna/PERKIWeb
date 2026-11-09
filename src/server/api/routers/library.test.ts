@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   libraryBooks,
@@ -71,10 +72,14 @@ describe("library", () => {
       {
         addedAt: expect.any(Date),
         author: "C. S. Lewis",
+        category: null,
         description: null,
+        format: "physical",
         id,
         language: "en",
+        publisher: null,
         state: {
+          askName: null,
           dueOn: null,
           holdEndsOn: null,
           kind: "available",
@@ -108,6 +113,7 @@ describe("library", () => {
 
     const [seen] = await callerFor(ana.id).library.list({});
     expect(seen?.state).toEqual({
+      askName: null,
       dueOn: "2026-12-07",
       holdEndsOn: null,
       kind: "borrowed",
@@ -260,5 +266,113 @@ describe("library", () => {
     await expect(
       testDb.insert(libraryQueue).values({ bookId: id, userId: ana.id })
     ).rejects.toThrow();
+  });
+
+  it("lists ebooks with whom to ask, and refuses to lend them", async () => {
+    const { ana, budi, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    const shared = await staff.add({
+      ...book,
+      format: "ebook",
+      ownerId: budi.id,
+      title: "Shared Ebook",
+    });
+    const perki = await staff.add({
+      ...book,
+      format: "ebook",
+      title: "PERKI Ebook",
+    });
+    const member = callerFor(ana.id).library;
+    const list = await member.list({ sort: "title" });
+    expect(
+      list.map((item) => ({
+        askName: item.state.askName,
+        format: item.format,
+        kind: item.state.kind,
+        title: item.title,
+      }))
+    ).toEqual([
+      { askName: null, format: "ebook", kind: "ebook", title: "PERKI Ebook" },
+      {
+        askName: "Budi Santoso",
+        format: "ebook",
+        kind: "ebook",
+        title: "Shared Ebook",
+      },
+    ]);
+    const refused = { message: "Ebooks aren't lent from the shelf." };
+    await expect(member.borrow({ id: shared.id })).rejects.toMatchObject(
+      refused
+    );
+    await expect(member.joinQueue({ id: perki.id })).rejects.toMatchObject(
+      refused
+    );
+    await expect(
+      staff.lend({ id: shared.id, userId: ana.id })
+    ).rejects.toMatchObject(refused);
+    await expect(staff.markReturned({ id: shared.id })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    expect(await member.list({ show: "available" })).toEqual([]);
+    const [stored] = await testDb
+      .select({ status: libraryBooks.status })
+      .from(libraryBooks)
+      .where(eq(libraryBooks.id, shared.id));
+    expect(stored?.status).toBe("available");
+  });
+
+  it("never names a physical book's owner to members", async () => {
+    const { ana, budi, mita } = await setup();
+    await callerFor(mita.id).library.add({
+      ...book,
+      ownerId: budi.id,
+      publisher: "HarperOne",
+    });
+    const [listed] = await callerFor(ana.id).library.list({});
+    expect(listed?.state.askName).toBeNull();
+    expect(listed?.publisher).toBe("HarperOne");
+    expect(JSON.stringify(listed)).not.toContain(budi.id);
+    expect(JSON.stringify(listed)).not.toContain("Budi");
+  });
+
+  it("won't turn a borrowed book into an ebook", async () => {
+    const { ana, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    const { id } = await staff.add(book);
+    await staff.lend({ id, userId: ana.id });
+    await expect(
+      staff.update({ ...book, format: "ebook", id })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("lists the categories in use, A to Z", async () => {
+    const { ana, mita } = await setup();
+    const staff = callerFor(mita.id).library;
+    await staff.add({ ...book, category: "Theology" });
+    await staff.add({ ...book, category: "apologetics" });
+    await staff.add({ ...book, category: "Theology", title: "Again" });
+    await staff.add({ ...book, title: "No category" });
+    expect(await callerFor(ana.id).library.categories()).toEqual([
+      "apologetics",
+      "Theology",
+    ]);
+    await expect(
+      callerFor(ana.id).library.offer({
+        ...book,
+        category: "Biography",
+        format: "ebook",
+        publisher: " IVP ",
+      })
+    ).resolves.toMatchObject({ id: expect.any(Number) });
+    const offered = await testDb
+      .select()
+      .from(libraryBooks)
+      .where(eq(libraryBooks.ownerId, ana.id));
+    expect(offered[0]).toMatchObject({
+      category: "Biography",
+      format: "ebook",
+      publisher: "IVP",
+      status: "offered",
+    });
   });
 });

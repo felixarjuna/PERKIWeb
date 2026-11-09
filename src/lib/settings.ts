@@ -4,6 +4,8 @@ export const SETTING_KEYS = {
   driveFolderUrl: "drive_folder_url",
   emailEnabled: "email_enabled",
   emailSender: "email_sender",
+  /** The library's book list "Import from sheet" reads (#147). */
+  librarySheetId: "library_sheet_id",
   scheduleSheetId: "schedule_sheet_id",
   takeawayDeadlineWeekday: "takeaway_deadline_weekday",
   /** The source "Import from Docs" last ran with. */

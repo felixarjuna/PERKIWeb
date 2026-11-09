@@ -18,7 +18,11 @@ import {
 import { relations } from "drizzle-orm/relations";
 import type { AdapterAccount } from "next-auth/adapters";
 import { z } from "zod";
-import { BOOK_STATUSES, RESERVATION_STATUSES } from "../../library";
+import {
+  BOOK_FORMATS,
+  BOOK_STATUSES,
+  RESERVATION_STATUSES,
+} from "../../library";
 import type { GeneratedSlot } from "../../plan-grid";
 import { REVIEW_TARGETS } from "../../review-target";
 import { SCHEDULE_FLAGS, type ScheduleFlag } from "../../schedule-flags";
@@ -833,6 +837,8 @@ export const libraryBooks = pgTable(
     /** When the librarian took it onto the shelf; null while only offered. */
     acceptedAt: timestamp("acceptedAt", { mode: "date", withTimezone: true }),
     author: text("author").notNull(),
+    /** A topic such as "Apologetics" (#147); free text, picked from those in use. */
+    category: text("category"),
     createdAt: timestamp("createdAt", {
       mode: "date",
       withTimezone: true,
@@ -843,18 +849,25 @@ export const libraryBooks = pgTable(
       onDelete: "set null",
     }),
     description: text("description"),
+    /** `physical` (lent from the shelf) or `ebook` (ask its owner) (#147). */
+    format: text("format").default("physical").notNull(),
     id: serial("id").primaryKey().notNull(),
-    /** Free text, e.g. "Indonesian". */
+    /** A `LIBRARY_LANGUAGES` code; older rows may hold free text. */
     language: text("language"),
     /** The member who lent it to the library; null means PERKI owns it. */
     ownerId: text("ownerId").references(() => users.id, {
       onDelete: "set null",
     }),
+    publisher: text("publisher"),
     status: text("status").default("available").notNull(),
     title: text("title").notNull(),
   },
   (t) => [
     index("library_books_owner").on(t.ownerId),
+    check(
+      "library_books_format_check",
+      sql`${t.format} in (${sqlList(BOOK_FORMATS)})`
+    ),
     check(
       "library_books_status_check",
       sql`${t.status} in (${sqlList(BOOK_STATUSES)})`
